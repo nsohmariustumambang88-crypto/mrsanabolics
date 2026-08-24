@@ -1,59 +1,70 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Instagram, Heart } from 'lucide-react';
-import { StaggerGroup, StaggerItem } from '@/components/animations/motion';
+import { MarbleBath } from '@/components/ebru/marble-bath';
+import { SectionHeading } from '@/components/product/section-heading';
+import { useCategories } from '@/components/providers/catalogue-provider';
+import { categoryPigment, slugSeed } from '@/lib/site';
 
-const images = [
-  { id: 3683099, likes: '2.4k' },
-  { id: 3683056, likes: '3.1k' },
-  { id: 3683094, likes: '1.8k' },
-  { id: 3683091, likes: '2.9k' },
-  { id: 3683063, likes: '4.2k' },
-  { id: 3683076, likes: '1.5k' },
-];
+/*
+  Was a fake Instagram strip — borrowed social proof this build cannot honestly claim.
+
+  Now it shows the real thing the site is made of: a sheet floated for each category from its
+  own pigment and its own seed, drawn live by the same engine as the hero. Nothing here is
+  stock, and nothing claims an audience we do not have.
+*/
 
 export function InstagramGallery() {
+  const categories = useCategories();
+  const shown = categories.slice(0, 6);
+
   return (
-    <section className="mx-auto max-w-7xl px-4 py-16 lg:px-6">
-      <div className="text-center">
-        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-          @MrAnabolics
-        </span>
-        <h2 className="mt-2 font-display text-3xl font-bold tracking-tight md:text-4xl">
-          Follow Our Journey
-        </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Tag us in your posts for a chance to be featured.
-        </p>
-      </div>
-      <StaggerGroup className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6" stagger={0.05}>
-        {images.map((img) => (
-          <StaggerItem key={img.id}>
+    <section className="border-b border-rule bg-paper-sunk">
+      <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
+        <SectionHeading
+          title="One sheet per pigment"
+          description="Each category carries its own colour through the whole site. These sheets are floated live in your browser from that pigment — same maths as the bath at the top of the page."
+          href="/categories"
+          hrefLabel="Open the index"
+        />
+
+        <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-px bg-rule md:grid-cols-3">
+          {shown.map((category) => (
             <Link
-              href="#"
-              className="group relative block aspect-square overflow-hidden rounded-xl bg-background"
+              key={category.slug}
+              href={`/shop?category=${category.slug}`}
+              className="group relative aspect-[4/3] overflow-hidden bg-card"
             >
-              <img
-                src={`https://images.pexels.com/photos/${img.id}/pexels-photo-${img.id}.jpeg?auto=compress&cs=tinysrgb&w=400`}
-                alt="Instagram post"
-                loading="lazy"
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+              <MarbleBath
+                className="absolute inset-0 h-full w-full"
+                seed={slugSeed(category.slug)}
+                density={0.45}
+                animate={false}
+                pigments={[
+                  '--size-coat',
+                  `--cat-${category.slug}`,
+                  '--paper-raised',
+                  '--pig-indigo',
+                ]}
               />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-100">
-                <div className="flex flex-col items-center gap-1 text-white">
-                  <Instagram className="h-6 w-6" />
-                  <span className="flex items-center gap-1 text-xs">
-                    <Heart className="h-3 w-3 fill-current" />
-                    {img.likes}
-                  </span>
-                </div>
+
+              <div className="absolute inset-x-0 bottom-0 flex items-center gap-2.5 bg-gradient-to-t from-card via-card/85 to-transparent p-4 pt-10">
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: categoryPigment(category.slug) }}
+                  aria-hidden="true"
+                />
+                <span className="text-sm font-medium transition-colors group-hover:text-pigment-indigo">
+                  {category.name}
+                </span>
+                <span className="ml-auto font-mono text-2xs text-ink-faint tabular">
+                  {category.productCount}
+                </span>
               </div>
             </Link>
-          </StaggerItem>
-        ))}
-      </StaggerGroup>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

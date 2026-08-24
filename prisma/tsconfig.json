@@ -1,0 +1,30 @@
+{
+  "//": "The seed is Node-side build tooling, not browser code. It runs under tsx and needs a modern target, so it is excluded from the app tsconfig (which compiles to ES5 for the browser) and typechecked against this one instead.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": [
+      "node"
+    ],
+    "baseUrl": "..",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "../lib/**/*.ts"
+  ]
+}

@@ -2,104 +2,213 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ArrowRight, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { SectionHeading } from '@/components/product/section-heading';
+import { ArrowRight } from 'lucide-react';
+import { MarbleBath } from '@/components/ebru/marble-bath';
 import { ProductCard } from '@/components/product/product-card';
-import { StaggerGroup, StaggerItem } from '@/components/animations/motion';
+import { ProductPlate } from '@/components/product/product-plate';
+import { stockState } from '@/components/product/product-card';
+import { formatPrice } from '@/lib/format';
 import type { Product } from '@/lib/types';
 
-function useCountdown(hoursFromNow: number) {
-  const [target] = React.useState(() => {
-    const d = new Date();
-    d.setHours(d.getHours() + hoursFromNow);
-    d.setMinutes(0, 0, 0);
-    return d.getTime();
-  });
-  const [remaining, setRemaining] = React.useState(target - Date.now());
+/*
+  The bath drains on a clock. A real countdown to the end of the week, computed from the
+  visitor's own clock rather than a fake number that resets on reload.
+*/
+
+function useWeekRemaining() {
+  const [parts, setParts] = React.useState<{ d: number; h: number; m: number; s: number } | null>(
+    null
+  );
+
   React.useEffect(() => {
-    const t = setInterval(() => setRemaining(target - Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [target]);
-  const total = Math.max(0, remaining);
-  const days = Math.floor(total / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
-  const minutes = Math.floor((total / (1000 * 60)) % 60);
-  const seconds = Math.floor((total / 1000) % 60);
-  return { days, hours, minutes, seconds };
+    const tick = () => {
+      const now = new Date();
+      const end = new Date(now);
+      /* End of the current week, Sunday 23:59:59 local. */
+      end.setDate(now.getDate() + ((7 - now.getDay()) % 7));
+      end.setHours(23, 59, 59, 999);
+      const diff = Math.max(0, end.getTime() - now.getTime());
+      setParts({
+        d: Math.floor(diff / 86400000),
+        h: Math.floor(diff / 3600000) % 24,
+        m: Math.floor(diff / 60000) % 60,
+        s: Math.floor(diff / 1000) % 60,
+      });
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return parts;
 }
 
-function TimeBox({ value, label }: { value: number; label: string }) {
+function Countdown() {
+  const parts = useWeekRemaining();
+
+  if (!parts) {
+    return <span className="font-mono text-sm text-ink-faint">—</span>;
+  }
+
+  const cells: [string, number][] = [
+    ['days', parts.d],
+    ['hrs', parts.h],
+    ['min', parts.m],
+    ['sec', parts.s],
+  ];
+
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-border/50 bg-secondary/50 font-display text-2xl font-bold tabular-nums backdrop-blur md:h-20 md:w-20 md:text-3xl">
-        <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent" />
-        <span className="relative">{String(value).padStart(2, '0')}</span>
-      </div>
-      <span className="mt-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
+    <div className="flex items-end gap-3">
+      {cells.map(([label, value]) => (
+        <div key={label} className="text-center">
+          <span className="block font-mono text-2xl font-medium leading-none tabular sm:text-3xl">
+            {String(value).padStart(2, '0')}
+          </span>
+          <span className="mt-1.5 block font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
+            {label}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
 
 export function WeeklyDeals({ products }: { products: Product[] }) {
-  const { days, hours, minutes, seconds } = useCountdown(72);
+  if (products.length === 0) return null;
+
+  const [lead, ...rest] = products;
+
+  const saved = products.reduce(
+    (sum, p) => sum + ((p.compareAtPrice ?? p.price) - p.price),
+    0
+  );
 
   return (
-    <section className="relative overflow-hidden bg-black py-24">
-      <div className="absolute inset-0 grid-bg grid-bg-fade opacity-20" />
-      <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-glow blur-3xl" />
-      <div className="relative mx-auto max-w-7xl px-4 lg:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="relative overflow-hidden rounded-3xl border border-border/30 bg-gradient-to-br from-secondary/40 via-card/40 to-transparent p-8 backdrop-blur md:p-14"
-        >
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
-          <div className="flex flex-col items-center text-center">
-            <Badge className="bg-destructive/15 text-destructive">
-              <Clock className="mr-1 h-3 w-3" /> Limited Time
-            </Badge>
-            <h2 className="mt-5 font-display text-4xl font-bold tracking-tight md:text-5xl">
-              Weekly Deals
+    <section className="border-b border-rule">
+      <div className="relative overflow-hidden border-b border-rule bg-field-indigo">
+        <MarbleBath
+          className="absolute inset-0 h-full w-full opacity-40"
+          seed={2291}
+          density={0.5}
+          animate={false}
+          pigments={[
+            '--pig-indigo',
+            '--pig-indigo-lift',
+            '--pig-madder',
+            '--pig-saffron',
+          ]}
+        />
+        <div className="relative mx-auto flex max-w-[86rem] flex-col gap-8 px-4 py-12 text-field-foreground sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-10 lg:py-14">
+          <div>
+            <h2 className="font-display text-[clamp(1.75rem,3.2vw,2.75rem)] font-semibold leading-[1.05] tracking-[-0.035em]">
+              This week&rsquo;s bath
             </h2>
-            <p className="mt-3 max-w-md text-sm text-muted-foreground md:text-base">
-              Save up to 30% on selected premium products. Offers expire when
-              the timer hits zero.
+            <p className="measure-tight mt-3 text-sm leading-relaxed text-field-foreground/80 sm:text-base">
+              {products.length} compounds marked down until Sunday midnight — a combined{' '}
+              <span className="tabular">{formatPrice(saved)}</span> off list.
             </p>
-            <div className="mt-10 flex items-center gap-3 md:gap-4">
-              <TimeBox value={days} label="Days" />
-              <span className="font-display text-3xl font-bold text-muted-foreground/40">:</span>
-              <TimeBox value={hours} label="Hours" />
-              <span className="font-display text-3xl font-bold text-muted-foreground/40">:</span>
-              <TimeBox value={minutes} label="Mins" />
-              <span className="font-display text-3xl font-bold text-muted-foreground/40">:</span>
-              <TimeBox value={seconds} label="Secs" />
-            </div>
-            <Button
-              asChild
-              className="group mt-10 gap-2 bg-accent font-semibold text-black hover:bg-accent/90"
-            >
-              <Link href="/shop?filter=deals">
-                Shop All Deals
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </Button>
           </div>
-        </motion.div>
+          <Countdown />
+        </div>
+      </div>
 
-        <StaggerGroup className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4" stagger={0.07}>
-          {products.map((p) => (
-            <StaggerItem key={p.id}>
-              <ProductCard product={p} />
-            </StaggerItem>
-          ))}
-        </StaggerGroup>
+      <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 lg:px-10">
+        <div className="grid gap-px bg-rule lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+          {/* The lead sheet, at the scale a marked-down compound deserves. */}
+          <article className="bg-card p-6 sm:p-8">
+            <Link href={`/product/${lead.slug}`} className="group block">
+              <div className="relative aspect-[16/10] overflow-hidden border border-rule bg-paper-sunk">
+                <ProductPlate product={lead} sizes="(min-width: 1024px) 45vw, 100vw" />
+              </div>
+              <h3 className="mt-6 font-display text-2xl font-semibold tracking-[-0.03em] transition-colors group-hover:text-pigment-indigo sm:text-3xl">
+                {lead.name}
+              </h3>
+            </Link>
+            <p className="measure mt-3 text-sm leading-relaxed text-ink-soft">
+              {lead.description}
+            </p>
+            <p className="mt-5 flex items-baseline gap-3">
+              <span className="font-display text-2xl font-semibold tabular">
+                {formatPrice(lead.price)}
+              </span>
+              {lead.compareAtPrice && (
+                <span className="text-sm text-ink-faint line-through tabular">
+                  {formatPrice(lead.compareAtPrice)}
+                </span>
+              )}
+            </p>
+          </article>
+
+          {/* The rest of the offer, as a register. */}
+          <div className="flex flex-col bg-card">
+            {rest.length === 0 ? (
+              <div className="p-8">
+                <ProductCard product={lead} />
+              </div>
+            ) : (
+              <ul>
+                {rest.map((p) => {
+                  const state = stockState(p);
+                  return (
+                    <li key={p.id} className="border-b border-rule last:border-0">
+                      <Link
+                        href={`/product/${p.slug}`}
+                        className="group flex items-center gap-4 p-5 transition-colors hover:bg-paper-sunk sm:p-6"
+                      >
+                        <span className="relative h-16 w-16 shrink-0 overflow-hidden border border-rule bg-paper-sunk">
+                          <ProductPlate product={p} showMarking={false} sizes="64px" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-display text-base font-semibold leading-snug tracking-[-0.02em] transition-colors group-hover:text-pigment-indigo">
+                            {p.name}
+                          </span>
+                          <span className="mt-1 block text-xs text-ink-faint">
+                            {p.brand}
+                            <span className="px-1.5 text-rule-strong" aria-hidden="true">
+                              /
+                            </span>
+                            <span className="tabular">
+                              {p.specifications[0]?.value ?? p.category}
+                            </span>
+                          </span>
+                          <span className={`mt-1.5 flex items-center gap-1.5 text-2xs ${state.tone}`}>
+                            <span
+                              className="h-1.5 w-1.5 rounded-full"
+                              style={{ backgroundColor: state.token }}
+                              aria-hidden="true"
+                            />
+                            {state.label}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-right">
+                          <span className="block text-base font-semibold tabular">
+                            {formatPrice(p.price)}
+                          </span>
+                          {p.compareAtPrice && (
+                            <span className="mt-0.5 block text-xs text-ink-faint line-through tabular">
+                              {formatPrice(p.compareAtPrice)}
+                            </span>
+                          )}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        <Link
+          href="/shop?filter=deals"
+          className="group mt-8 inline-flex items-center gap-2 border-b border-rule-strong pb-1 text-sm font-medium text-ink-soft transition-colors hover:border-pigment-indigo hover:text-pigment-indigo"
+        >
+          Everything on offer
+          <ArrowRight
+            className="h-4 w-4"
+            strokeWidth={1.75}
+          />
+        </Link>
       </div>
     </section>
   );

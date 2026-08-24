@@ -1,54 +1,67 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
-import { categories } from '@/lib/data/categories';
+import { ArrowUpRight } from 'lucide-react';
 import { SectionHeading } from '@/components/product/section-heading';
-import { StaggerGroup, StaggerItem } from '@/components/animations/motion';
+import { useCategories } from '@/components/providers/catalogue-provider';
+import { categoryPigment } from '@/lib/site';
 
-const iconMap: Record<string, string> = {
-  Syringe: '💉', Pill: '💊', FlaskConical: '🧪', ShieldPlus: '🛡️',
-  Dna: '🧬', Flame: '🔥', Activity: '📈', PackagePlus: '📦',
-  TestTube: '⚗️', Boxes: '🗃️', Wrench: '🔧',
-};
+/*
+  The pigment index.
+
+  This was a grid of eleven same-size cards, each icon-plus-heading-plus-text — the lazy
+  container, and one of two identical card grids carrying the page. It is now what it actually
+  is: an index. Ruled rows, a swatch of the category's own pigment, the count set in tabular
+  figures, read straight down like a plate list rather than scanned as tiles.
+*/
 
 export function FeaturedCategories() {
+  const categories = useCategories();
+
   return (
-    <section className="mx-auto max-w-7xl px-4 py-20 lg:px-6">
-      <SectionHeading
-        eyebrow="Browse"
-        title="Featured Categories"
-        description="Eleven specialized categories covering every stage of your research protocol."
-        href="/categories"
-      />
-      <StaggerGroup className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4" stagger={0.06}>
-        {categories.slice(0, 8).map((c) => (
-          <StaggerItem key={c.slug}>
-            <Link
-              href={`/shop?category=${c.slug}`}
-              className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/40 bg-card p-6 transition-all duration-500 hover:border-accent/30 hover:bg-secondary/30"
-            >
-              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-accent/5 transition-all duration-700 group-hover:scale-[2] group-hover:bg-accent/10" />
-              <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-2xl transition-transform duration-500 group-hover:scale-110">
-                {iconMap[c.icon] || '🔬'}
-              </div>
-              <h3 className="relative mt-4 text-base font-semibold">{c.name}</h3>
-              <p className="relative mt-1 line-clamp-2 text-xs text-muted-foreground">
-                {c.description}
-              </p>
-              <div className="relative mt-4 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">
-                  {c.productCount} products
+    <section className="border-b border-rule">
+      <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
+        <SectionHeading
+          title="Eleven pigments, one bath"
+          description="The catalogue is divided the way a marbler divides a palette. Each category carries one colour through the whole site."
+          href="/categories"
+          hrefLabel="Open the index"
+        />
+
+        <ul className="mt-8 sm:mt-10 grid border-t border-rule md:grid-cols-2 md:gap-x-12">
+          {categories.map((category) => (
+            <li key={category.slug}>
+              <Link
+                href={`/shop?category=${category.slug}`}
+                className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-baseline gap-3.5 border-b border-rule py-3.5 transition-colors hover:bg-paper-sunk sm:gap-5 sm:py-4"
+              >
+                <span
+                  className="h-2.5 w-2.5 shrink-0 translate-y-[-1px] rounded-full"
+                  style={{ backgroundColor: categoryPigment(category.slug) }}
+                  aria-hidden="true"
+                />
+
+                <span className="min-w-0">
+                  <span className="block font-display text-base font-semibold tracking-[-0.02em] transition-colors group-hover:text-pigment-indigo">
+                    {category.name}
+                  </span>
+                  <span className="mt-1 block text-sm leading-snug text-ink-faint">
+                    {category.description}
+                  </span>
                 </span>
-                <div className="flex h-7 w-7 items-center justify-center rounded-full border border-border/40 transition-all duration-300 group-hover:border-accent group-hover:bg-accent group-hover:text-black">
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </div>
-              </div>
-            </Link>
-          </StaggerItem>
-        ))}
-      </StaggerGroup>
+
+                <span className="flex items-center gap-3 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
+                  <span className="tabular">{category.listed}</span>
+                  <ArrowUpRight
+                    className="h-3.5 w-3.5 opacity-0 transition-colors duration-300 group-hover:opacity-100"
+                    strokeWidth={1.75}
+                  />
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }

@@ -2,28 +2,174 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  EBRU — the floated-pigment world.
+
+  Light theme  = the lifted sheet. Handmade paper, warm, fibrous, lit by daylight.
+  Dark theme   = the bath itself. Thickened water before the lift, pigment floating on a deep size.
+
+  Same pigments in both. Only the substrate changes. The historical ebru pigment set is the
+  entire palette, and every semantic role is drawn from it — nothing is invented to fill a slot.
+*/
+
 @layer base {
   :root {
-    --background: 0 0% 3.5%;
-    --foreground: 0 0% 100%;
-    --card: 0 0% 6.7%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 6.7%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 10.2%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 10.2%;
-    --muted-foreground: 0 0% 61%;
-    --accent: 156 78% 49%;
-    --accent-foreground: 0 0% 4%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 14%;
-    --input: 0 0% 14%;
-    --ring: 156 78% 49%;
-    --radius: 1rem;
+    /* --- Substrate: the lifted sheet --- */
+    --paper: 40 30% 94%;
+    --paper-raised: 42 38% 97%;
+    --paper-sunk: 38 24% 90%;
+    --size-bath: 40 30% 94%;
+
+    /* --- Pigments (kök boya, çivit, sarı, yeşil, is mürekkebi) --- */
+    --pig-indigo: 214 58% 26%;
+    --pig-indigo-lift: 212 46% 42%;
+    --pig-madder: 12 62% 45%;
+    --pig-saffron: 36 74% 42%;
+    --pig-verdigris: 162 34% 30%;
+    --pig-lampblack: 220 28% 11%;
+
+    /*
+      Large indigo fields are their own token.
+
+      Text and rules must lift on a dark substrate to stay legible, but a FIELD that lifts
+      turns into a pale block brighter than the page it sits on — an inverted palette rather
+      than one world under two lights. The field stays at bath depth in both themes and
+      carries cream on top of it in both.
+    */
+    --field-indigo: 214 58% 24%;
+    --on-field: 40 30% 94%;
+
+    /* The plate's own size and the band thrown across it. */
+    --plate-size: 38 24% 90%;
+    --plate-band: 42 38% 97%;
+
+    /* The marking stamped on the plate. Defined here and nowhere else on purpose: the plate
+       raster is generated once from these light values and served on both substrates, so an
+       ink that lifted on dark would leave pale text on a pale sheet. */
+    --plate-ink: 218 14% 38%;
+
+    /* The coat laid on the bath before any pigment is thrown. Never the sheet's own value. */
+    --size-coat: 214 22% 83%;
+
+    /* --- Ink on paper --- */
+    --ink: 220 28% 13%;
+    --ink-soft: 218 14% 38%;
+    --ink-faint: 216 12% 52%;
+    --rule: 38 18% 82%;
+    --rule-strong: 38 16% 72%;
+
+    /* --- shadcn contract, mapped onto the world --- */
+    --background: var(--paper);
+    --foreground: var(--ink);
+    --card: var(--paper-raised);
+    --card-foreground: var(--ink);
+    --popover: var(--paper-raised);
+    --popover-foreground: var(--ink);
+    --primary: var(--pig-indigo);
+    --primary-foreground: 42 38% 97%;
+    --secondary: var(--paper-sunk);
+    --secondary-foreground: var(--ink);
+    --muted: var(--paper-sunk);
+    --muted-foreground: var(--ink-soft);
+    --accent: var(--pig-madder);
+    --accent-foreground: 42 38% 97%;
+    --destructive: var(--pig-madder);
+    --destructive-foreground: 42 38% 97%;
+    --success: var(--pig-verdigris);
+    --warning: var(--pig-saffron);
+    --border: var(--rule);
+    --input: var(--rule-strong);
+    --ring: var(--pig-indigo-lift);
+    --radius: 0.25rem;
+
+    /* --- Category pigments: one drop per category, all from the same bath --- */
+    --cat-injectables: 214 58% 32%;
+    --cat-orals: 12 62% 45%;
+    --cat-sarms: 162 34% 32%;
+    --cat-pct: 36 74% 40%;
+    --cat-peptides: 268 32% 42%;
+    --cat-fat-burners: 24 68% 46%;
+    --cat-growth-hormone: 196 46% 34%;
+    --cat-ancillaries: 218 14% 40%;
+    --cat-testosterone: 232 44% 40%;
+    --cat-bundles: 340 38% 42%;
+    --cat-accessories: 96 26% 34%;
+
+    /* --- Paper fiber. A real material, not a gradient wash. --- */
+    --substrate-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23f)' opacity='0.42'/%3E%3C/svg%3E");
+    --deckle-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='24' preserveAspectRatio='none'%3E%3Cpath d='M0 0h240v14c-12 0-14 5-26 5s-15-6-27-6-16 7-28 7-14-5-26-5-16 6-28 6-15-7-27-7-16 5-28 5-14-4-26-4-8 3-14 3z' fill='%23fff'/%3E%3C/svg%3E");
+    --substrate-blend: multiply;
+    --substrate-opacity: 0.115;
+
+    --shadow-lift:
+      0 1px 2px -1px hsl(var(--pig-lampblack) / 0.14),
+      0 8px 22px -12px hsl(var(--pig-indigo) / 0.28);
+    --shadow-lift-strong:
+      0 2px 4px -2px hsl(var(--pig-lampblack) / 0.16),
+      0 18px 44px -20px hsl(var(--pig-indigo) / 0.34);
+  }
+
+  .dark {
+    /* --- Substrate: the bath. Thickened water with indigo in it, not slate. --- */
+    --paper: 215 46% 14%;
+    --paper-raised: 214 40% 18%;
+    --paper-sunk: 216 50% 11%;
+    --size-bath: 215 46% 14%;
+
+    /*
+      Same pigments, lifted for legibility on a dark size — never re-hued and never re-saturated.
+      Raising saturation as well as lightness is what turned madder into hot orange and
+      verdigris into lime; the saturations here track the light theme's.
+    */
+    --pig-indigo: 212 52% 66%;
+    --pig-indigo-lift: 210 56% 76%;
+    --pig-madder: 12 58% 60%;
+    --pig-saffron: 36 62% 58%;
+    --pig-verdigris: 162 32% 54%;
+    --pig-lampblack: 216 55% 6%;
+
+    /* Deeper than the page, never brighter: the bath does not glow in the dark. */
+    --field-indigo: 216 56% 20%;
+    --on-field: 40 28% 93%;
+
+    /* Lifted well clear of the page so the bands stay visible as pigment on water. */
+    --plate-size: 216 44% 17%;
+    --plate-band: 214 30% 34%;
+
+    --size-coat: 216 44% 19%;
+
+    --ink: 40 28% 93%;
+    --ink-soft: 214 20% 76%;
+    --ink-faint: 214 16% 62%;
+    --rule: 214 28% 26%;
+    --rule-strong: 214 26% 34%;
+
+    --primary-foreground: 213 45% 6%;
+    --accent-foreground: 213 45% 6%;
+    --destructive-foreground: 213 45% 6%;
+
+    --cat-injectables: 214 50% 64%;
+    --cat-orals: 12 54% 60%;
+    --cat-sarms: 162 30% 54%;
+    --cat-pct: 36 58% 58%;
+    --cat-peptides: 268 30% 64%;
+    --cat-fat-burners: 24 56% 60%;
+    --cat-growth-hormone: 196 40% 56%;
+    --cat-ancillaries: 214 16% 62%;
+    --cat-testosterone: 232 38% 64%;
+    --cat-bundles: 340 34% 62%;
+    --cat-accessories: 96 24% 54%;
+
+    /* On the bath the fiber becomes surface caustics — lighter, screened, not multiplied */
+    --substrate-blend: screen;
+    --substrate-opacity: 0.075;
+
+    --shadow-lift:
+      0 1px 2px -1px hsl(var(--pig-lampblack) / 0.6),
+      0 10px 26px -14px hsl(var(--pig-lampblack) / 0.8);
+    --shadow-lift-strong:
+      0 2px 6px -2px hsl(var(--pig-lampblack) / 0.7),
+      0 22px 50px -22px hsl(var(--pig-lampblack) / 0.9);
   }
 }
 
@@ -31,197 +177,166 @@
   * {
     @apply border-border;
   }
+
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "ss01", "cv01", "cv03", "cv11";
-    letter-spacing: -0.011em;
+    font-feature-settings: "kern", "liga", "calt";
+    position: relative;
   }
+
+  /* The substrate is a material the whole page sits on, not a decorative overlay. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: var(--substrate-texture);
+    background-repeat: repeat;
+    mix-blend-mode: var(--substrate-blend);
+    opacity: var(--substrate-opacity);
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display;
+    letter-spacing: -0.028em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Data reads as data: the assay figures line up in every table, price, and spec. */
+  .tabular,
+  th, td,
+  time,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* --- Browser surfaces we did not draw still belong to the world --- */
   ::selection {
-    background-color: hsl(var(--accent) / 0.25);
-    color: white;
+    background-color: hsl(var(--pig-indigo) / 0.22);
+    color: hsl(var(--foreground));
   }
+
+  :root {
+    caret-color: hsl(var(--pig-madder));
+    accent-color: hsl(var(--pig-indigo));
+    scrollbar-color: hsl(var(--rule-strong)) transparent;
+  }
+
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 11px;
+    height: 11px;
   }
   ::-webkit-scrollbar-track {
-    background: hsl(0 0% 4%);
+    background: hsl(var(--paper-sunk));
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(0 0% 16%);
-    border-radius: 9999px;
+    background: hsl(var(--rule-strong));
+    border-radius: 999px;
+    border: 3px solid hsl(var(--paper-sunk));
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(0 0% 22%);
+    background: hsl(var(--pig-indigo-lift));
   }
-  h1, h2, h3, h4, h5, h6 {
-    letter-spacing: -0.025em;
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--pig-indigo-lift));
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  a {
+    text-underline-offset: 0.22em;
+    text-decoration-thickness: from-font;
   }
 }
 
 @layer components {
-  .glass {
-    background: rgba(255, 255, 255, 0.025);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+  /*
+    The lift: content sits on a sheet drawn out of the bath — paper stock and a real shadow
+    with offset and blur, never a glass panel. The torn edge lives in .deckle-b, applied only
+    where a sheet actually meets the size.
+  */
+  .sheet {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-lift);
   }
-  .glass-strong {
-    background: rgba(10, 10, 10, 0.72);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+
+  .sheet-raised {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-lift-strong);
   }
-  .glass-card {
-    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+
+  /*
+    The deckle: the torn, fibrous edge of a hand-made sheet. Used where a sheet meets the bath
+    it was lifted from, never as a decorative frame around everything.
+  */
+  .deckle-b {
+    -webkit-mask-image: var(--deckle-mask);
+    mask-image: var(--deckle-mask);
+    -webkit-mask-size: 240px 100%;
+    mask-size: 240px 100%;
+    -webkit-mask-repeat: repeat-x;
+    mask-repeat: repeat-x;
   }
-  .text-gradient {
-    background: linear-gradient(180deg, #ffffff 0%, #9ca3af 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .text-gradient-accent {
-    background: linear-gradient(135deg, #5eead4 0%, #16c784 50%, #0fa968 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .text-gradient-hero {
-    background: linear-gradient(180deg, #ffffff 0%, #d1d5db 60%, #9ca3af 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .glow-accent {
-    box-shadow: 0 0 60px -12px rgba(22, 199, 132, 0.5);
-  }
-  .glow-accent-sm {
-    box-shadow: 0 0 30px -8px rgba(22, 199, 132, 0.35);
-  }
-  .grid-bg {
+
+  /* A drop of pigment: concentric rings spreading from one contact point. The mark of the house. */
+  .drop-mark {
     background-image:
-      linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
-    background-size: 64px 64px;
+      radial-gradient(circle at center,
+        hsl(var(--pig-madder)) 0 18%,
+        transparent 18.5% 34%,
+        hsl(var(--pig-indigo)) 34.5% 52%,
+        transparent 52.5% 70%,
+        hsl(var(--pig-indigo-lift)) 70.5% 86%,
+        transparent 86.5%);
   }
-  .grid-bg-fade {
-    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
-  }
-  .noise {
-    position: relative;
-  }
-  .noise::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
-    opacity: 0.03;
-    pointer-events: none;
-    mix-blend-mode: overlay;
-  }
-  .shimmer-bg {
-    background: linear-gradient(90deg, hsl(0 0% 8%) 25%, hsl(0 0% 12%) 50%, hsl(0 0% 8%) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s ease infinite;
-  }
-  .card-hover {
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
-  }
-  .card-hover:hover {
-    transform: translateY(-4px);
-  }
-  .gradient-border {
-    position: relative;
-  }
-  .gradient-border::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(135deg, rgba(22,199,132,0.3), rgba(255,255,255,0.05));
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
-}
 
-@layer utilities {
-  .animate-fade-up {
-    animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* Hairline rules in the pigment, used to divide the sheet like a plate mark. */
+  .rule-plate {
+    border-color: hsl(var(--rule));
   }
-  .animate-fade-in {
-    animation: fadeIn 0.6s ease-out both;
-  }
-  .animate-scale-in {
-    animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-  .animate-slide-up {
-    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-  .animate-marquee {
-    animation: marquee 40s linear infinite;
-  }
-  .animate-shimmer {
-    background: linear-gradient(90deg, hsl(0 0% 8%) 25%, hsl(0 0% 14%) 37%, hsl(0 0% 8%) 63%);
-    background-size: 400% 100%;
-    animation: shimmer 1.4s ease infinite;
-  }
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-  .animate-pulse-glow {
-    animation: pulseGlow 3s ease-in-out infinite;
-  }
-  .perspective-1000 {
-    perspective: 1000px;
-  }
-  .preserve-3d {
-    transform-style: preserve-3d;
-  }
-}
 
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(28px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(100%); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-@keyframes shimmer {
-  0% { background-position: 100% 50%; }
-  100% { background-position: 0 50%; }
-}
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
-}
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 40px -12px rgba(22, 199, 132, 0.4); }
-  50% { box-shadow: 0 0 60px -8px rgba(22, 199, 132, 0.6); }
+  /*
+    Duotone for editorial photography.
+
+    Journal images are real stock frames and stay real — printed in the house inks rather than
+    in whatever colour the photographer shot, so a photograph joins the pigment set instead of
+    shouting over it. The map lives in an SVG filter (see the root layout): CSS blend modes
+    only tint one end of the tonal range and leave the middle grey.
+  */
+  .duotone > img {
+    filter: url(#ebru-duotone) contrast(1.04);
+  }
+  .dark .duotone > img {
+    filter: url(#ebru-duotone-dark) contrast(1.04);
+  }
+
+  .measure {
+    max-width: 68ch;
+  }
+
+  .measure-tight {
+    max-width: 54ch;
+  }
 }

@@ -1,83 +1,132 @@
 'use client';
 
 import * as React from 'react';
-import { motion } from 'framer-motion';
-import { Mail, Check, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import Link from 'next/link';
+import { ArrowRight, Check } from 'lucide-react';
+import { MarbleBath } from '@/components/ebru/marble-bath';
+import { useSubscribe } from '@/components/marketing/use-subscribe';
+import { CONSENT } from '@/lib/marketing/consent';
+
+/*
+  The close. The page ends anchored: one full-bleed bath, one claim, one action — and the
+  action is to read a certificate, because that is the thing this catalogue actually offers
+  that a competitor cannot copy-paste.
+*/
 
 export function Newsletter() {
-  const [email, setEmail] = React.useState('');
-  const [submitted, setSubmitted] = React.useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email.trim()) setSubmitted(true);
-  };
+  /* Was a local boolean that pretended to subscribe. It now writes a real consent record. */
+  const { email, setEmail, consent, setConsent, busy, done: sent, error, submit } =
+    useSubscribe('newsletter');
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-20 lg:px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="relative overflow-hidden rounded-3xl border border-border/30 bg-gradient-to-br from-secondary/50 via-card to-card p-8 md:p-16"
-      >
-        <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-accent-glow blur-3xl" />
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
-        <div className="relative mx-auto max-w-2xl text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10">
-            <Mail className="h-7 w-7 text-accent" />
-          </div>
-          <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/5 px-3 py-1 text-xs font-medium text-accent">
-            <Sparkles className="h-3 w-3" />
-            Exclusive Access
-          </div>
-          <h2 className="mt-5 font-display text-3xl font-bold tracking-tight md:text-4xl">
-            Join the inner circle
+    <section className="relative overflow-hidden border-b border-rule bg-field-indigo">
+      <MarbleBath
+        className="absolute inset-0 h-full w-full opacity-40"
+        seed={5507}
+        density={0.55}
+        animate={false}
+        pigments={[
+          '--pig-indigo',
+          '--pig-indigo-lift',
+          '--pig-madder',
+          '--pig-saffron',
+          '--pig-verdigris',
+        ]}
+      />
+
+      <div className="relative mx-auto grid max-w-[86rem] gap-12 px-4 py-14 text-field-foreground sm:px-6 sm:py-20 lg:grid-cols-2 lg:px-10 lg:py-28">
+        <div>
+          <h2 className="font-display text-[clamp(2rem,4vw,3.5rem)] font-semibold leading-[1.02] tracking-[-0.04em]">
+            Read the certificate
+            <br />
+            before you buy.
           </h2>
-          <p className="mt-3 text-sm text-muted-foreground md:text-base">
-            Get exclusive offers, early access to new products, and
-            research-backed guides delivered to your inbox. No spam, ever.
+          <p className="measure-tight mt-6 text-base leading-relaxed text-field-foreground/80">
+            Every batch carries an independent assay, filed against the number printed on the
+            vial. You do not have to take our word for the concentration — that is the entire
+            point.
           </p>
-          {submitted ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="mt-8 flex items-center justify-center gap-2 rounded-xl border border-accent/40 bg-accent/10 p-4 text-accent"
-            >
-              <Check className="h-5 w-5" />
-              <span className="font-medium">
-                You&apos;re in. Check your inbox to confirm.
-              </span>
-            </motion.div>
-          ) : (
-            <form
-              onSubmit={handleSubmit}
-              className="mx-auto mt-8 flex max-w-md flex-col gap-3 sm:flex-row"
-            >
-              <Input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="h-12 bg-background"
-              />
-              <Button
-                type="submit"
-                className="h-12 bg-accent font-semibold text-black hover:bg-accent/90"
-              >
-                Subscribe
-              </Button>
-            </form>
-          )}
-          <p className="mt-4 text-xs text-muted-foreground">
-            By subscribing you agree to our Privacy Policy. Unsubscribe anytime.
-          </p>
+          <Link
+            href="/faq"
+            className="group mt-8 inline-flex items-center gap-2.5 rounded-full bg-paper px-6 py-3.5 text-sm font-medium text-ink transition-colors duration-300 hover:bg-paper-raised"
+          >
+            How testing works
+            <ArrowRight
+              className="h-4 w-4"
+              strokeWidth={1.75}
+            />
+          </Link>
         </div>
-      </motion.div>
+
+        <div className="lg:justify-self-end lg:pt-4">
+          <div className="w-full max-w-md border border-field-foreground/20 bg-pigment-lampblack/20 p-7">
+            <h3 className="font-display text-lg font-semibold tracking-[-0.025em]">
+              Batch release notes
+            </h3>
+            <p className="mt-2.5 text-sm leading-relaxed text-field-foreground/75">
+              One message when a batch clears testing, with its certificate attached. No
+              campaigns, no restock spam.
+            </p>
+
+            {sent ? (
+              <p className="mt-6 flex items-center gap-2 text-sm">
+                <Check className="h-4 w-4" strokeWidth={2} />
+                Added — watch for the next release note.
+              </p>
+            ) : (
+              <form onSubmit={submit} className="mt-6" noValidate>
+                <label htmlFor="close-email" className="sr-only">
+                  Email address
+                </label>
+                <div className="flex items-stretch border-b border-field-foreground/35 focus-within:border-primary-foreground">
+                  <input
+                    id="close-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@domain.com"
+                    className="w-full bg-transparent py-2.5 text-sm text-field-foreground outline-none placeholder:text-field-foreground/50"
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? 'close-email-error' : undefined}
+                  />
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="flex items-center px-2 transition-opacity hover:opacity-70 disabled:opacity-40"
+                    aria-label="Subscribe"
+                  >
+                    <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
+                  </button>
+                </div>
+
+                {/*
+                  The checkbox is the consent record. Its label is the exact sentence stored
+                  against the subscriber, imported from one place so the two cannot drift —
+                  see lib/marketing/consent.ts.
+                */}
+                <label className="mt-4 flex cursor-pointer items-start gap-2.5 text-xs leading-relaxed text-field-foreground/80">
+                  <input
+                    type="checkbox"
+                    checked={consent}
+                    onChange={(e) => setConsent(e.target.checked)}
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-pigment-saffron"
+                  />
+                  {CONSENT.newsletter}
+                </label>
+
+                {error && (
+                  <p
+                    id="close-email-error"
+                    className="mt-2 text-xs text-pigment-saffron"
+                  >
+                    {error}
+                  </p>
+                )}
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
     </section>
   );
 }

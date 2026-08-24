@@ -2,243 +2,213 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, X, Plus, Minus, Trash2, ArrowRight, Tag } from 'lucide-react';
+import { Minus, Plus, X, ArrowRight, ShoppingBag } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import { useStore } from '@/components/providers/store-provider';
+import { ProductPlate } from '@/components/product/product-plate';
+import { useProducts } from '@/components/providers/catalogue-provider';
 import { formatPrice } from '@/lib/format';
 
-const PROMO_CODES: Record<string, number> = {
-  WELCOME10: 0.1,
-  PRO15: 0.15,
-  STACK20: 0.2,
-};
+const FREE_SHIPPING_AT = 250;
+
+/* The cart stores a flat snapshot, so the full record is looked up to draw its plate. */
+function CartPlate({ slug, name }: { slug: string; name: string }) {
+  const products = useProducts();
+  const product = products.find((p) => p.slug === slug);
+  if (!product) {
+    return (
+      <span className="flex h-full w-full items-center justify-center bg-paper-sunk p-1 text-center font-mono text-2xs leading-tight text-ink-faint">
+        {name}
+      </span>
+    );
+  }
+  return <ProductPlate product={product} showMarking={false} sizes="80px" />;
+}
 
 export function CartDrawer() {
   const {
     cart,
     cartOpen,
     setCartOpen,
-    removeFromCart,
     updateQuantity,
+    removeFromCart,
     cartSubtotal,
+    cartCount,
   } = useStore();
 
-  const [promo, setPromo] = React.useState('');
-  const [appliedDiscount, setAppliedDiscount] = React.useState(0);
-  const [promoError, setPromoError] = React.useState('');
-
-  const applyPromo = () => {
-    const code = promo.trim().toUpperCase();
-    if (PROMO_CODES[code]) {
-      setAppliedDiscount(PROMO_CODES[code]);
-      setPromoError('');
-    } else {
-      setPromoError('Invalid promo code');
-      setAppliedDiscount(0);
-    }
-  };
-
-  const discount = cartSubtotal * appliedDiscount;
-  const shipping = cartSubtotal > 150 || cartSubtotal === 0 ? 0 : 14.95;
-  const tax = (cartSubtotal - discount) * 0.08;
-  const total = cartSubtotal - discount + shipping + tax;
+  const remaining = Math.max(0, FREE_SHIPPING_AT - cartSubtotal);
+  const progress = Math.min(100, (cartSubtotal / FREE_SHIPPING_AT) * 100);
 
   return (
     <Sheet open={cartOpen} onOpenChange={setCartOpen}>
-      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
-        <SheetHeader className="border-b border-border p-5">
-          <SheetTitle className="flex items-center gap-2 font-display">
-            <ShoppingBag className="h-5 w-5 text-accent" />
-            Your Cart
-            <span className="text-sm font-normal text-muted-foreground">
-              ({cart.reduce((s, i) => s + i.quantity, 0)})
+      <SheetContent
+        side="right"
+        className="flex w-full flex-col border-rule bg-paper p-0 sm:max-w-md"
+      >
+        <SheetHeader className="border-b border-rule px-5 py-4 text-left">
+          <SheetTitle className="flex items-baseline gap-2.5 font-display text-base tracking-[-0.02em]">
+            Your cart
+            <span className="font-mono text-2xs text-ink-faint tabular">
+              {cartCount} {cartCount === 1 ? 'item' : 'items'}
             </span>
           </SheetTitle>
         </SheetHeader>
 
         {cart.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-secondary">
-              <ShoppingBag className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="font-semibold">Your cart is empty</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Add some premium products to get started.
-              </p>
-            </div>
-            <Button
-              asChild
+          <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
+            <ShoppingBag
+              className="h-8 w-8 text-ink-faint"
+              strokeWidth={1.25}
+              aria-hidden="true"
+            />
+            <p className="mt-5 font-display text-lg font-semibold tracking-[-0.025em]">
+              Nothing lifted yet
+            </p>
+            <p className="measure-tight mt-2 text-sm leading-relaxed text-ink-soft">
+              Compounds you add will collect here, with the specification attached to each one.
+            </p>
+            <Link
+              href="/shop"
               onClick={() => setCartOpen(false)}
-              className="bg-accent text-black hover:bg-accent/90"
+              className="mt-6 rounded-full bg-pigment-indigo px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift"
             >
-              <Link href="/shop">Browse Products</Link>
-            </Button>
+              Browse the catalogue
+            </Link>
           </div>
         ) : (
           <>
-            <div className="flex-1 overflow-y-auto p-5">
-              <AnimatePresence initial={false}>
-                {cart.map((item) => (
-                  <motion.div
-                    key={item.productId}
-                    layout
-                    initial={{ opacity: 0, x: 40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -40 }}
-                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                    className="mb-4 flex gap-3 rounded-xl border border-border/40 bg-secondary/20 p-3"
-                  >
-                    <Link
-                      href={`/product/${item.slug}`}
-                      onClick={() => setCartOpen(false)}
-                      className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-background"
-                    >
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </Link>
-                    <div className="flex flex-1 flex-col">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <Link
-                            href={`/product/${item.slug}`}
-                            onClick={() => setCartOpen(false)}
-                            className="line-clamp-2 text-sm font-medium hover:text-accent"
-                          >
-                            {item.name}
-                          </Link>
-                          <p className="text-xs text-muted-foreground">
-                            {item.brand}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => removeFromCart(item.productId)}
-                          className="rounded-md p-1 text-muted-foreground transition-colors hover:text-destructive"
-                          aria-label="Remove item"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                      <div className="mt-auto flex items-center justify-between pt-2">
-                        <div className="flex items-center gap-1 rounded-lg border border-border">
-                          <button
-                            onClick={() =>
-                              updateQuantity(item.productId, item.quantity - 1)
-                            }
-                            className="flex h-7 w-7 items-center justify-center rounded-l-lg text-muted-foreground transition-colors hover:text-foreground"
-                            aria-label="Decrease quantity"
-                          >
-                            <Minus className="h-3 w-3" />
-                          </button>
-                          <span className="w-7 text-center text-sm font-medium">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() =>
-                              updateQuantity(item.productId, item.quantity + 1)
-                            }
-                            className="flex h-7 w-7 items-center justify-center rounded-r-lg text-muted-foreground transition-colors hover:text-foreground"
-                            aria-label="Increase quantity"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </button>
-                        </div>
-                        <span className="text-sm font-semibold">
-                          {formatPrice(item.price * item.quantity)}
-                        </span>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-
-              <div className="mt-5 rounded-xl border border-border/40 p-4">
-                <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                  <Tag className="h-3.5 w-3.5" /> Promo Code
+            <div className="border-b border-rule px-5 py-3.5">
+              {remaining > 0 ? (
+                <p className="text-xs text-ink-soft">
+                  <span className="tabular">{formatPrice(remaining)}</span> more for free
+                  tracked shipping
                 </p>
-                <div className="mt-2 flex gap-2">
-                  <Input
-                    value={promo}
-                    onChange={(e) => setPromo(e.target.value)}
-                    placeholder="Try WELCOME10"
-                    className="h-9 bg-background text-sm"
-                  />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={applyPromo}
-                    className="h-9"
-                  >
-                    Apply
-                  </Button>
-                </div>
-                {promoError && (
-                  <p className="mt-1.5 text-xs text-destructive">{promoError}</p>
-                )}
-                {appliedDiscount > 0 && (
-                  <p className="mt-1.5 text-xs text-accent">
-                    {appliedDiscount * 100}% discount applied
-                  </p>
-                )}
+              ) : (
+                <p className="text-xs text-pigment-verdigris">
+                  Free tracked shipping applied
+                </p>
+              )}
+              <div
+                className="mt-2 h-px w-full bg-rule"
+                role="progressbar"
+                aria-valuenow={Math.round(progress)}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Progress toward free shipping"
+              >
+                <div
+                  className="h-px bg-pigment-indigo transition-[width] duration-500 ease-lift"
+                  style={{ width: `${progress}%` }}
+                />
               </div>
             </div>
 
-            <div className="border-t border-border p-5">
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Subtotal</span>
-                  <span>{formatPrice(cartSubtotal)}</span>
-                </div>
-                {discount > 0 && (
-                  <div className="flex justify-between text-accent">
-                    <span>Discount</span>
-                    <span>-{formatPrice(discount)}</span>
+            <ul className="flex-1 overflow-y-auto">
+              {cart.map((item) => (
+                <li
+                  key={item.productId}
+                  className="flex gap-4 border-b border-rule px-5 py-4"
+                >
+                  <Link
+                    href={`/product/${item.slug}`}
+                    onClick={() => setCartOpen(false)}
+                    className="relative h-20 w-20 shrink-0 overflow-hidden border border-rule bg-paper-sunk"
+                  >
+                    <CartPlate slug={item.slug} name={item.name} />
+                  </Link>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
+                      {item.brand}
+                    </p>
+                    <Link
+                      href={`/product/${item.slug}`}
+                      onClick={() => setCartOpen(false)}
+                      className="mt-1 block text-sm font-medium leading-snug hover:text-pigment-indigo"
+                    >
+                      {item.name}
+                    </Link>
+
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <div className="flex items-center border border-rule">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateQuantity(item.productId, item.quantity - 1)
+                          }
+                          disabled={item.quantity <= 1}
+                          className="flex h-7 w-7 items-center justify-center text-ink-soft transition-colors hover:bg-paper-sunk disabled:opacity-40"
+                          aria-label={`Decrease quantity of ${item.name}`}
+                        >
+                          <Minus className="h-3 w-3" strokeWidth={2} />
+                        </button>
+                        <span className="w-8 text-center font-mono text-xs tabular">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateQuantity(item.productId, item.quantity + 1)
+                          }
+                          className="flex h-7 w-7 items-center justify-center text-ink-soft transition-colors hover:bg-paper-sunk"
+                          aria-label={`Increase quantity of ${item.name}`}
+                        >
+                          <Plus className="h-3 w-3" strokeWidth={2} />
+                        </button>
+                      </div>
+
+                      <span className="text-sm font-medium tabular">
+                        {formatPrice(item.price * item.quantity)}
+                      </span>
+                    </div>
                   </div>
-                )}
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Shipping</span>
-                  <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Estimated Tax</span>
-                  <span>{formatPrice(tax)}</span>
-                </div>
-                <Separator className="my-2" />
-                <div className="flex justify-between text-base font-semibold">
-                  <span>Total</span>
-                  <span>{formatPrice(total)}</span>
-                </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removeFromCart(item.productId)}
+                    className="h-fit text-ink-faint transition-colors hover:text-pigment-madder"
+                    aria-label={`Remove ${item.name} from cart`}
+                  >
+                    <X className="h-4 w-4" strokeWidth={1.75} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            <div className="border-t border-rule px-5 py-5">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm text-ink-soft">Subtotal</span>
+                <span className="font-display text-xl font-semibold tabular">
+                  {formatPrice(cartSubtotal)}
+                </span>
               </div>
-              <Button
-                asChild
+              <p className="mt-1.5 text-xs text-ink-faint">
+                Shipping and duties calculated at checkout.
+              </p>
+
+              <Link
+                href="/checkout"
                 onClick={() => setCartOpen(false)}
-                className="group mt-4 w-full gap-2 bg-accent text-base font-semibold text-black hover:bg-accent/90"
+                className="group mt-5 flex items-center justify-center gap-2.5 rounded-full bg-pigment-indigo px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift"
               >
-                <Link href="/checkout">
-                  Checkout
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
+                Checkout
+                <ArrowRight
+                  className="h-4 w-4"
+                  strokeWidth={1.75}
+                />
+              </Link>
+              <button
+                type="button"
                 onClick={() => setCartOpen(false)}
-                className="mt-2 w-full"
+                className="mt-3 w-full text-center text-sm text-ink-soft underline underline-offset-4 transition-colors hover:text-ink"
               >
-                <Link href="/shop">Continue Shopping</Link>
-              </Button>
+                Keep browsing
+              </button>
             </div>
           </>
         )}

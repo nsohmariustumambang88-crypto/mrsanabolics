@@ -140,7 +140,7 @@ export const products: Product[] = [
     shipping:
       'Ships within 24 hours in discreet packaging. Cold-chain options available for sensitive shipments.',
     returns: 'Unopened sealed products returnable within 14 days.',
-    images: [img(3683056), img(3683057), img(3683058)],
+    images: [img(3683056), img(3683057), img(3735703)],
     faqs: baseFaqs,
     reviews: sampleReviews(2),
   },
@@ -455,7 +455,7 @@ export const products: Product[] = [
     shipping:
       'Ships within 24 hours in discreet, insulated packaging with cold packs.',
     returns: 'Unopened sealed products returnable within 14 days.',
-    images: [img(3683060), img(3683061), img(3683062)],
+    images: [img(3822906), img(3683061), img(3683062)],
     faqs: baseFaqs,
     reviews: sampleReviews(9),
   },
@@ -616,7 +616,27 @@ export function getProductsByBrand(brandSlug: string): Product[] {
 }
 
 export function getRelatedProducts(product: Product, limit = 4): Product[] {
-  return products
-    .filter((p) => p.categorySlug === product.categorySlug && p.id !== product.id)
-    .slice(0, limit);
+  /*
+    Closest first, then top up. Several categories hold only one or two products, and
+    returning a single related item left the grid with three empty cells. Relatedness degrades
+    in a defined order — same category, then same manufacturer, then the rest of the
+    catalogue — so the row always fills and the most relevant entries still lead it.
+  */
+  const seen = new Set([product.id]);
+  const out: Product[] = [];
+
+  const take = (candidates: Product[]) => {
+    for (const candidate of candidates) {
+      if (out.length >= limit) return;
+      if (seen.has(candidate.id)) continue;
+      seen.add(candidate.id);
+      out.push(candidate);
+    }
+  };
+
+  take(products.filter((p) => p.categorySlug === product.categorySlug));
+  take(products.filter((p) => p.brandSlug === product.brandSlug));
+  take(products);
+
+  return out;
 }

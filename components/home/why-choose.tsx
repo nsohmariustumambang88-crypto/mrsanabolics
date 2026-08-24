@@ -1,78 +1,74 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import {
-  ShieldCheck,
-  FlaskConical,
-  Truck,
-  Lock,
-  Headphones,
-  Award,
-} from 'lucide-react';
 import { SectionHeading } from '@/components/product/section-heading';
-import { StaggerGroup, StaggerItem } from '@/components/animations/motion';
 
-const features = [
+/*
+  The chain a batch travels, in order, because the order is the argument.
+
+  This was four same-size cards of heading plus text — a banned page scaffold and the second
+  identical grid on the page. It is now a ruled sequence: large tabular numerals in the margin,
+  each stage a row, the document it produces set at the end of the line like a register entry.
+  The numbers are earned here — the sequence itself is the information.
+*/
+
+const stages = [
   {
-    icon: ShieldCheck,
-    title: 'Third-Party Verified',
-    desc: 'Every batch independently lab-tested for purity, potency, and contaminants. COAs available on request.',
+    n: '01',
+    title: 'Synthesised',
+    body: 'Produced in a GMP-certified facility against a written specification, with the concentration fixed before anything is filled.',
+    record: 'Specification set',
   },
   {
-    icon: FlaskConical,
-    title: '99%+ Purity',
-    desc: 'Pharmaceutical-grade raw materials synthesized in GMP-certified facilities across Europe and the US.',
+    n: '02',
+    title: 'Assayed',
+    body: 'A sample from every batch goes to an independent laboratory. We do not run the test that clears our own product.',
+    record: 'Independent lab',
   },
   {
-    icon: Truck,
-    title: 'Discreet Global Shipping',
-    desc: 'Plain packaging, tracked delivery to 40+ countries, with cold-chain options for sensitive compounds.',
+    n: '03',
+    title: 'Documented',
+    body: 'The certificate of analysis is filed against the batch number and published on the product page. You read it before you buy, not after.',
+    record: 'COA published',
   },
   {
-    icon: Lock,
-    title: 'Secure Encrypted Checkout',
-    desc: '256-bit SSL encryption. Pay by card, PayPal, crypto, or bank transfer — your data stays private.',
-  },
-  {
-    icon: Headphones,
-    title: '24/7 Expert Support',
-    desc: 'Real humans, real answers. Average response time under 2 hours, any day of the year.',
-  },
-  {
-    icon: Award,
-    title: 'Loyalty Pricing',
-    desc: 'Unlock exclusive tiered discounts and early access to new products after your third order.',
+    n: '04',
+    title: 'Lifted',
+    body: 'Packed unmarked, insulated where the compound requires it, and tracked from our door to yours.',
+    record: 'Tracked, unmarked',
   },
 ];
 
 export function WhyChoose() {
   return (
-    <section className="relative overflow-hidden py-20">
-      <div className="absolute inset-0 grid-bg grid-bg-fade opacity-15" />
-      <div className="absolute left-1/2 top-0 h-64 w-96 -translate-x-1/2 rounded-full bg-accent-glow blur-3xl opacity-50" />
-      <div className="relative mx-auto max-w-7xl px-4 lg:px-6">
+    <section className="border-b border-rule bg-paper-sunk">
+      <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-24">
         <SectionHeading
-          eyebrow="The MrAnabolics Difference"
-          title="Why Choose MrAnabolics"
-          description="Six pillars that make us the most trusted name in premium performance supplements."
-          align="center"
+          title="What happens before it ships"
+          description="Four stages, in order. Each one produces a document, and every document is attached to the batch number printed on your vial."
         />
-        <StaggerGroup className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3" stagger={0.07}>
-          {features.map((f) => (
-            <StaggerItem key={f.title}>
-              <div className="group relative h-full overflow-hidden rounded-2xl border border-border/40 bg-card p-6 transition-all duration-500 hover:border-accent/30">
-                <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-accent/5 transition-transform duration-700 group-hover:scale-[2] group-hover:bg-accent/10" />
-                <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 transition-transform duration-500 group-hover:scale-110">
-                  <f.icon className="h-6 w-6 text-accent" />
-                </div>
-                <h3 className="relative mt-4 text-lg font-semibold">{f.title}</h3>
-                <p className="relative mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {f.desc}
-                </p>
-              </div>
-            </StaggerItem>
+
+        <ol className="mt-8 border-t border-rule sm:mt-12">
+          {stages.map((stage) => (
+            <li
+              key={stage.n}
+              className="grid grid-cols-[2.75rem_minmax(0,1fr)] items-baseline gap-x-4 gap-y-2 border-b border-rule py-6 sm:grid-cols-[5rem_minmax(0,13rem)_minmax(0,1fr)_auto] sm:gap-x-8 sm:py-7 lg:py-9"
+            >
+              <span className="font-mono text-3xl leading-none text-pigment-indigo tabular sm:text-4xl">
+                {stage.n}
+              </span>
+
+              <h3 className="font-display text-xl font-semibold tracking-[-0.025em]">
+                {stage.title}
+              </h3>
+
+              <p className="col-start-2 text-sm leading-relaxed text-ink-soft sm:col-start-auto">{stage.body}</p>
+
+              <p className="col-start-2 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint sm:col-start-auto sm:text-right">
+                {stage.record}
+              </p>
+            </li>
           ))}
-        </StaggerGroup>
+        </ol>
       </div>
     </section>
   );

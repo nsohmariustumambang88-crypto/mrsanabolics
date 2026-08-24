@@ -2,35 +2,46 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Search, TrendingUp, Clock, X } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
+import { Search, CornerDownLeft } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useStore } from '@/components/providers/store-provider';
-import { products } from '@/lib/data/products';
+import { useProducts, useCategories } from '@/components/providers/catalogue-provider';
 import { formatPrice } from '@/lib/format';
-
-const popularSearches = ['Testosterone', 'SARMs', 'PCT', 'Peptides', 'Fat Burners'];
-const recentSearchesKey = 'mranabolics-recent-searches';
+import { ProductPlate } from '@/components/product/product-plate';
+import { categoryPigment } from '@/lib/site';
+import { cn } from '@/lib/utils';
 
 export function SearchDialog() {
+  const router = useRouter();
   const { searchOpen, setSearchOpen } = useStore();
+  const products = useProducts();
+  const categories = useCategories();
   const [query, setQuery] = React.useState('');
-  const [recent, setRecent] = React.useState<string[]>([]);
+  const [cursor, setCursor] = React.useState(0);
+
+  /* Cmd/Ctrl+K opens it from anywhere — the shortcut people already try. */
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [setSearchOpen]);
 
   React.useEffect(() => {
-    try {
-      const r = localStorage.getItem(recentSearchesKey);
-      if (r) setRecent(JSON.parse(r));
-    } catch {}
-  }, []);
+    if (!searchOpen) {
+      setQuery('');
+      setCursor(0);
+    }
+  }, [searchOpen]);
 
   const results = React.useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.toLowerCase();
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
     return products
       .filter(
         (p) =>
@@ -38,131 +49,142 @@ export function SearchDialog() {
           p.brand.toLowerCase().includes(q) ||
           p.category.toLowerCase().includes(q)
       )
-      .slice(0, 6);
-  }, [query]);
+      .slice(0, 7);
+  }, [query, products]);
 
-  const saveRecent = (term: string) => {
-    const updated = [term, ...recent.filter((r) => r !== term)].slice(0, 5);
-    setRecent(updated);
-    localStorage.setItem(recentSearchesKey, JSON.stringify(updated));
+  React.useEffect(() => setCursor(0), [query]);
+
+  const go = React.useCallback(
+    (href: string) => {
+      setSearchOpen(false);
+      router.push(href);
+    },
+    [router, setSearchOpen]
+  );
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setCursor((c) => Math.min(c + 1, Math.max(results.length - 1, 0)));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setCursor((c) => Math.max(c - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const hit = results[cursor];
+      if (hit) go(`/product/${hit.slug}`);
+      else if (query.trim()) go(`/shop?q=${encodeURIComponent(query.trim())}`);
+    }
   };
 
   return (
     <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-      <DialogContent className="top-[15%] max-w-2xl translate-y-0 gap-0 overflow-hidden p-0">
-        <DialogTitle className="sr-only">Search products</DialogTitle>
-        <div className="flex items-center border-b border-border px-4">
-          <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
-          <Input
+      <DialogContent className="top-[12%] max-w-xl translate-y-0 gap-0 border-rule bg-paper p-0 shadow-lift-strong">
+        <DialogTitle className="sr-only">Search the catalogue</DialogTitle>
+
+        <div className="flex items-center gap-3 border-b border-rule px-4">
+          <Search
+            className="h-4 w-4 shrink-0 text-ink-faint"
+            strokeWidth={1.6}
+            aria-hidden="true"
+          />
+          <label htmlFor="site-search" className="sr-only">
+            Search compounds, brands, and categories
+          </label>
+          <input
+            id="site-search"
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && query.trim()) {
-                saveRecent(query.trim());
-                setSearchOpen(false);
-                window.location.href = `/shop?q=${encodeURIComponent(query.trim())}`;
-              }
-            }}
-            placeholder="Search products, brands, categories..."
-            className="border-0 focus-visible:ring-0"
+            onKeyDown={onKeyDown}
+            placeholder="Search compounds, brands, categories"
+            className="w-full bg-transparent py-4 text-sm outline-none placeholder:text-ink-faint"
+            role="combobox"
+            aria-expanded={results.length > 0}
+            aria-controls="search-results"
           />
-          <button
-            onClick={() => setSearchOpen(false)}
-            className="rounded-md p-1 text-muted-foreground hover:text-foreground"
-            aria-label="Close search"
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
-        <div className="max-h-[60vh] overflow-y-auto p-4">
-          {!query.trim() ? (
-            <div className="space-y-6">
-              <div>
-                <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  <TrendingUp className="h-3.5 w-3.5" /> Popular Searches
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {popularSearches.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => {
-                        setQuery(s);
-                        saveRecent(s);
-                      }}
-                      className="rounded-full border border-border bg-secondary/50 px-3 py-1.5 text-sm transition-colors hover:border-accent hover:text-accent"
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {recent.length > 0 && (
-                <div>
-                  <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    <Clock className="h-3.5 w-3.5" /> Recent Searches
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {recent.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setQuery(s)}
-                        className="rounded-full border border-border bg-secondary/50 px-3 py-1.5 text-sm transition-colors hover:border-accent hover:text-accent"
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : results.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="text-sm text-muted-foreground">
-                No results for &ldquo;{query}&rdquo;
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {results.map((p) => (
-                <Link
-                  key={p.id}
-                  href={`/product/${p.slug}`}
-                  onClick={() => {
-                    saveRecent(query.trim());
-                    setSearchOpen(false);
-                  }}
-                  className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-secondary"
-                >
-                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-background">
-                    <img
-                      src={p.images[0]}
-                      alt={p.name}
-                      className="h-full w-full object-cover"
+        {query.trim() === '' ? (
+          <div className="px-4 py-5">
+            <p className="font-mono text-2xs uppercase tracking-[0.16em] text-ink-faint">
+              Jump to a category
+            </p>
+            <ul className="mt-3 flex flex-wrap gap-1.5">
+              {categories.slice(0, 8).map((c) => (
+                <li key={c.slug}>
+                  <button
+                    type="button"
+                    onClick={() => go(`/shop?category=${c.slug}`)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-rule px-2.5 py-1 text-xs text-ink-soft transition-colors hover:border-pigment-indigo-lift hover:text-ink"
+                  >
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: categoryPigment(c.slug) }}
+                      aria-hidden="true"
                     />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {p.brand} · {p.category}
-                    </p>
-                  </div>
-                  <span className="text-sm font-semibold">
-                    {formatPrice(p.price)}
-                  </span>
-                </Link>
+                    {c.name}
+                  </button>
+                </li>
               ))}
-              <Link
-                href={`/shop?q=${encodeURIComponent(query)}`}
-                onClick={() => setSearchOpen(false)}
-                className="block rounded-lg p-2 text-center text-sm font-medium text-accent transition-colors hover:bg-secondary"
-              >
-                View all results for &ldquo;{query}&rdquo;
-              </Link>
-            </div>
-          )}
-        </div>
+            </ul>
+          </div>
+        ) : results.length === 0 ? (
+          <div className="px-4 py-10 text-center">
+            <p className="text-sm text-ink-soft">
+              Nothing matches &ldquo;{query}&rdquo;.
+            </p>
+            <button
+              type="button"
+              onClick={() => go(`/shop?q=${encodeURIComponent(query.trim())}`)}
+              className="mt-3 text-sm text-pigment-indigo underline underline-offset-4"
+            >
+              Search the full catalogue anyway
+            </button>
+          </div>
+        ) : (
+          <ul id="search-results" role="listbox" className="max-h-[24rem] overflow-y-auto">
+            {results.map((p, i) => (
+              <li key={p.id} role="option" aria-selected={i === cursor}>
+                <Link
+                  href={`/product/${p.slug}`}
+                  onClick={() => setSearchOpen(false)}
+                  onMouseEnter={() => setCursor(i)}
+                  className={cn(
+                    'flex items-center gap-3.5 border-b border-rule px-4 py-3 transition-colors',
+                    i === cursor ? 'bg-paper-sunk' : 'hover:bg-paper-sunk'
+                  )}
+                >
+                  <span className="relative h-11 w-11 shrink-0 overflow-hidden border border-rule bg-paper-sunk">
+                    <ProductPlate product={p} showMarking={false} sizes="44px" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
+                      {p.brand}
+                    </span>
+                    <span className="mt-0.5 block truncate text-sm font-medium">
+                      {p.name}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-sm tabular">{formatPrice(p.price)}</span>
+                  {i === cursor && (
+                    <CornerDownLeft
+                      className="h-3.5 w-3.5 shrink-0 text-ink-faint"
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                    />
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <p className="flex items-center gap-3 border-t border-rule px-4 py-2.5 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
+          <span>↑↓ move</span>
+          <span>↵ open</span>
+          <span>esc close</span>
+        </p>
       </DialogContent>
     </Dialog>
   );

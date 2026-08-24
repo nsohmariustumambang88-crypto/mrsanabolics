@@ -34,3 +34,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+#local supabase storage 
+.env.local
+
+# generated dumps and local harness artifacts (not source)
+project-tree.txt
+.impeccable/review/
+.impeccable/*.log
+.impeccable/hook.cache.json

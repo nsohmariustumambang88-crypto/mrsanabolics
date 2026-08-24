@@ -1,34 +1,28 @@
 'use client';
 
 import { SectionHeading } from '@/components/product/section-heading';
-import { ProductRow } from '@/components/product/product-row';
-import { StaggerGroup } from '@/components/animations/motion';
+import { ProductGrid } from '@/components/product/product-grid';
 import type { Product } from '@/lib/types';
 
 export function ProductsSection({
-  eyebrow,
   title,
   description,
   href,
   products,
 }: {
-  eyebrow: string;
   title: string;
   description?: string;
   href?: string;
   products: Product[];
 }) {
+  if (products.length === 0) return null;
+
   return (
-    <section className="mx-auto max-w-7xl px-4 py-16 lg:px-6">
-      <SectionHeading
-        eyebrow={eyebrow}
-        title={title}
-        description={description}
-        href={href}
-      />
-      <StaggerGroup className="mt-10">
-        <ProductRow products={products} />
-      </StaggerGroup>
+    <section className="border-b border-rule">
+      <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
+        <SectionHeading title={title} description={description} href={href} />
+        <ProductGrid products={products} columns={4} className="mt-8 sm:mt-10" />
+      </div>
     </section>
   );
 }

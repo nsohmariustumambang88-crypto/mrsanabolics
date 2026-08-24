@@ -1,0 +1,11 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [
+      "app/admin/wp-admin.css",
+      "components/admin/**",
+      "app/admin/**"
+    ],
+    "ignoreValues": []
+  }
+}

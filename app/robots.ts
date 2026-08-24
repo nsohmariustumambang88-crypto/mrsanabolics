@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { SITE } from '@/lib/site';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -7,6 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/account', '/checkout', '/auth'],
     },
-    sitemap: 'https://mranabolics.example.com/sitemap.xml',
+    sitemap: `${SITE.url}/sitemap.xml`,
+    host: SITE.url,
   };
 }

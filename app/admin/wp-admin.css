@@ -1,0 +1,851 @@
+/*
+  The WordPress admin skin.
+
+  Every rule is scoped under `.wp-admin`. That is not tidiness — this file deliberately
+  imports a *different design system* from the one the storefront runs on, and the two must
+  not meet. The storefront is ebru: warm paper, historical pigments, hairline rules, tokens
+  that flip between two substrates. This is wp-admin: system fonts, #2271b1 blue, 1px grey
+  borders, and no substrate at all. Unscoped, a single `--border` would poison both.
+
+  Values are the WordPress "fresh" scheme (5.7+), which is what the reference screenshot
+  shows. They are literal here rather than derived, because they are quoted from another
+  product — deriving them from our own palette is how a copy drifts into an approximation.
+
+  Note what is NOT here: a dark-mode block. The fresh scheme is light-only, so these variables
+  are defined once and never redefined. If the storefront is in dark mode the admin still
+  looks exactly as WordPress ships it, which is the right answer for a borrowed system.
+*/
+
+.wp-admin {
+  /* Menu and admin bar */
+  --wp-menu-bg: #1d2327;
+  --wp-menu-submenu-bg: #2c3338;
+  --wp-menu-text: #f0f0f1;
+  --wp-menu-icon: #a7aaad;
+  --wp-menu-hover-bg: #2c3338;
+
+  /* Accent */
+  --wp-blue: #2271b1;
+  --wp-blue-hover: #135e96;
+  --wp-focus: #72aee6;
+
+  /* Surfaces */
+  --wp-body-bg: #f0f0f1;
+  --wp-card-bg: #fff;
+  --wp-stripe: #f6f7f7;
+  --wp-border: #c3c4c7;
+  --wp-border-soft: #dcdcde;
+
+  /* Ink */
+  --wp-text: #1d2327;
+  --wp-text-muted: #646970;
+
+  /* State */
+  --wp-success: #00a32a;
+  --wp-error: #d63638;
+  --wp-warning: #dba617;
+  --wp-info: #72aee6;
+  --wp-bubble: #d63638;
+
+  /* wp-admin is 32px on desktop and 46px on a phone — the bar is taller for thumbs. */
+  --wp-bar-h: 46px;
+  --wp-menu-w: 160px;
+
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu,
+    Cantarell, "Helvetica Neue", sans-serif;
+  font-size: 13px;
+  line-height: 1.4em;
+  color: var(--wp-text);
+  background: var(--wp-body-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (min-width: 783px) {
+  .wp-admin {
+    --wp-bar-h: 32px;
+  }
+}
+
+.wp-admin *,
+.wp-admin *::before,
+.wp-admin *::after {
+  box-sizing: border-box;
+}
+
+/* ---------------------------------------------------------------- admin bar */
+
+.wp-adminbar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  height: var(--wp-bar-h);
+  background: var(--wp-menu-bg);
+  color: #c3c4c7;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.wp-adminbar a {
+  color: #c3c4c7;
+  text-decoration: none;
+}
+
+.wp-adminbar-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--wp-bar-h);
+  padding: 0 10px;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  color: #c3c4c7;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.wp-adminbar-item:hover,
+.wp-adminbar-item:focus-visible {
+  background: var(--wp-menu-submenu-bg);
+  color: var(--wp-focus);
+  outline: none;
+}
+
+/* The comment/notification count. WordPress paints this in the notification colour so an
+   unread count is legible against the bar without relying on the icon beside it. */
+.wp-bubble {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--wp-bubble);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------- admin menu */
+
+.wp-adminmenu {
+  position: fixed;
+  top: var(--wp-bar-h);
+  bottom: 0;
+  left: 0;
+  z-index: 9990;
+  width: var(--wp-menu-w);
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--wp-menu-bg);
+  /* Off-canvas below 783px, exactly where WordPress switches. */
+  transform: translateX(-100%);
+}
+
+.wp-adminmenu[data-open="true"] {
+  transform: translateX(0);
+}
+
+@media (min-width: 783px) {
+  .wp-adminmenu {
+    transform: none;
+  }
+}
+
+.wp-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  background: none;
+  color: var(--wp-menu-text);
+  font-size: 14px;
+  line-height: 18px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.wp-menu-item svg {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: var(--wp-menu-icon);
+}
+
+.wp-menu-item:hover,
+.wp-menu-item:focus-visible {
+  background: var(--wp-menu-hover-bg);
+  color: var(--wp-focus);
+  outline: none;
+}
+
+.wp-menu-item:hover svg,
+.wp-menu-item:focus-visible svg {
+  color: var(--wp-focus);
+}
+
+/* The current item is the one place wp-admin spends its accent colour in the menu. */
+.wp-menu-item[aria-current="page"],
+.wp-menu-item.is-current {
+  background: var(--wp-blue);
+  color: #fff;
+  font-weight: 600;
+}
+
+.wp-menu-item[aria-current="page"] svg,
+.wp-menu-item.is-current svg {
+  color: #fff;
+}
+
+.wp-submenu {
+  padding: 4px 0;
+  background: var(--wp-menu-submenu-bg);
+}
+
+.wp-submenu a {
+  display: block;
+  padding: 6px 10px 6px 36px;
+  color: #c3c4c7;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.wp-submenu a:hover,
+.wp-submenu a:focus-visible {
+  color: var(--wp-focus);
+  outline: none;
+}
+
+.wp-submenu a[aria-current="page"] {
+  color: #fff;
+  font-weight: 600;
+}
+
+.wp-menu-separator {
+  height: 1px;
+  margin: 5px 0;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ---------------------------------------------------------------- content */
+
+.wp-content-area {
+  padding-top: var(--wp-bar-h);
+  min-height: 100vh;
+}
+
+@media (min-width: 783px) {
+  .wp-content-area {
+    margin-left: var(--wp-menu-w);
+  }
+}
+
+.wp-wrap {
+  margin: 10px 20px 0 22px;
+  padding-bottom: 65px;
+  max-width: 100%;
+}
+
+@media (max-width: 782px) {
+  .wp-wrap {
+    margin: 10px 12px 0;
+  }
+}
+
+.wp-heading-inline {
+  display: inline-block;
+  margin: 0 5px 0 0;
+  padding: 9px 0 4px;
+  font-size: 23px;
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--wp-text);
+}
+
+.wp-subtitle {
+  margin: 0 0 12px;
+  color: var(--wp-text-muted);
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------------- notices */
+
+.wp-notice {
+  position: relative;
+  margin: 5px 0 15px;
+  padding: 8px 12px;
+  border: 1px solid var(--wp-border-soft);
+  border-left: 4px solid var(--wp-border);
+  background: var(--wp-card-bg);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.wp-notice p {
+  margin: 0.5em 0;
+}
+
+.wp-notice p:first-child {
+  margin-top: 0;
+}
+
+.wp-notice p:last-child {
+  margin-bottom: 0;
+}
+
+.wp-notice-success {
+  border-left-color: var(--wp-success);
+}
+
+.wp-notice-error {
+  border-left-color: var(--wp-error);
+}
+
+.wp-notice-warning {
+  border-left-color: var(--wp-warning);
+}
+
+.wp-notice-info {
+  border-left-color: var(--wp-info);
+}
+
+.wp-notice-dismiss {
+  position: absolute;
+  top: 0;
+  right: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--wp-text-muted);
+  cursor: pointer;
+}
+
+.wp-notice-dismiss:hover {
+  color: var(--wp-error);
+}
+
+.wp-notice.is-dismissible {
+  padding-right: 38px;
+}
+
+/* ---------------------------------------------------------------- postbox */
+
+.wp-postbox {
+  margin-bottom: 20px;
+  border: 1px solid var(--wp-border);
+  background: var(--wp-card-bg);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.wp-postbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--wp-border);
+  background: var(--wp-card-bg);
+}
+
+.wp-postbox-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--wp-text);
+}
+
+.wp-postbox-inside {
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.wp-postbox-footer {
+  padding: 8px 12px;
+  border-top: 1px solid var(--wp-border-soft);
+  background: var(--wp-stripe);
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------------- buttons */
+
+.wp-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--wp-blue);
+  border-radius: 3px;
+  background: #f6f7f7;
+  color: var(--wp-blue);
+  font-size: 13px;
+  line-height: 2.15384615;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.wp-button:hover:not(:disabled) {
+  background: #f0f0f1;
+  border-color: var(--wp-blue-hover);
+  color: var(--wp-blue-hover);
+}
+
+.wp-button-primary {
+  border-color: var(--wp-blue);
+  background: var(--wp-blue);
+  color: #fff;
+}
+
+.wp-button-primary:hover:not(:disabled) {
+  background: var(--wp-blue-hover);
+  border-color: var(--wp-blue-hover);
+  color: #fff;
+}
+
+.wp-button-danger {
+  border-color: var(--wp-error);
+  color: var(--wp-error);
+}
+
+.wp-button-danger:hover:not(:disabled) {
+  background: var(--wp-error);
+  border-color: var(--wp-error);
+  color: #fff;
+}
+
+.wp-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.wp-button:focus-visible,
+.wp-adminbar-item:focus-visible {
+  box-shadow: 0 0 0 1px #fff, 0 0 0 3px var(--wp-blue);
+  outline: 2px solid transparent;
+}
+
+/* The bordered pill beside an h1, used for "Add New". */
+.wp-page-title-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--wp-blue);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--wp-blue);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 2.30769231;
+  text-decoration: none;
+  vertical-align: middle;
+}
+
+.wp-page-title-action:hover {
+  background: var(--wp-blue);
+  color: #fff;
+}
+
+/* ---------------------------------------------------------------- fields */
+
+.wp-input,
+.wp-select,
+.wp-textarea {
+  width: 100%;
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid #8c8f94;
+  border-radius: 3px;
+  background: #fff;
+  color: var(--wp-text);
+  font-size: 14px;
+  line-height: 2;
+}
+
+.wp-textarea {
+  padding: 6px 8px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.wp-input:focus,
+.wp-select:focus,
+.wp-textarea:focus {
+  border-color: var(--wp-blue);
+  box-shadow: 0 0 0 1px var(--wp-blue);
+  outline: 2px solid transparent;
+}
+
+.wp-select {
+  padding-right: 24px;
+}
+
+.wp-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--wp-text);
+}
+
+.wp-help {
+  margin-top: 4px;
+  color: var(--wp-text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* ---------------------------------------------------------------- list table */
+
+.wp-list-table {
+  width: 100%;
+  border-spacing: 0;
+  border: 1px solid var(--wp-border);
+  background: var(--wp-card-bg);
+  font-size: 13px;
+  clear: both;
+}
+
+.wp-list-table th,
+.wp-list-table td {
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.wp-list-table thead th {
+  border-bottom: 1px solid var(--wp-border);
+  font-weight: 400;
+  color: var(--wp-text);
+  white-space: nowrap;
+}
+
+.wp-list-table tbody tr {
+  border-top: 1px solid var(--wp-border-soft);
+}
+
+.wp-list-table tbody tr:nth-child(odd) {
+  background: var(--wp-stripe);
+}
+
+.wp-list-table tbody tr:hover {
+  background: #f0f6fc;
+}
+
+.wp-list-table .check-column {
+  width: 2.2em;
+  padding: 10px 0 10px 3px;
+  vertical-align: top;
+}
+
+.wp-list-table a.row-title {
+  color: var(--wp-blue);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.wp-list-table a.row-title:hover {
+  color: var(--wp-blue-hover);
+  text-decoration: underline;
+}
+
+/* Sortable headers carry the arrow only when they are the active sort, exactly as WordPress
+   does — a column of permanent arrows reads as decoration rather than as state. */
+.wp-list-table th.sortable a,
+.wp-list-table th.sorted a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.wp-list-table th.sorted a {
+  font-weight: 600;
+}
+
+.wp-list-table th.sortable a:hover {
+  color: var(--wp-blue);
+}
+
+/*
+  Row actions are revealed on hover on a pointer device, and always visible where there is no
+  hover to give. Using visibility rather than display keeps the row height identical between
+  the two states, so the table does not jump as the pointer crosses it.
+*/
+.row-actions {
+  margin-top: 2px;
+  color: var(--wp-text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  visibility: hidden;
+}
+
+tr:hover .row-actions,
+tr:focus-within .row-actions {
+  visibility: visible;
+}
+
+@media (hover: none) {
+  .row-actions {
+    visibility: visible;
+  }
+}
+
+.row-actions a {
+  color: var(--wp-blue);
+  text-decoration: none;
+}
+
+.row-actions a:hover {
+  color: var(--wp-blue-hover);
+  text-decoration: underline;
+}
+
+.row-actions .delete a,
+.row-actions button.delete {
+  color: var(--wp-error);
+}
+
+.row-actions span:not(:last-child)::after,
+.row-actions .sep::after {
+  content: " | ";
+  color: var(--wp-border);
+}
+
+/* ---------------------------------------------------------------- tablenav */
+
+.wp-tablenav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--wp-text-muted);
+}
+
+.wp-tablenav-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.wp-displaying-num {
+  color: var(--wp-text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------- subsubsub */
+
+/* The "All (12) | In stock (9) | Draft (3)" filter row above a list table. */
+.wp-subsubsub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--wp-text-muted);
+}
+
+.wp-subsubsub a {
+  padding: 2px 0;
+  color: var(--wp-blue);
+  text-decoration: none;
+}
+
+.wp-subsubsub a:hover {
+  color: var(--wp-blue-hover);
+}
+
+.wp-subsubsub a.current {
+  color: var(--wp-text);
+  font-weight: 600;
+}
+
+.wp-subsubsub li:not(:last-child)::after {
+  content: " |";
+  padding-left: 4px;
+  color: var(--wp-border);
+}
+
+.wp-count {
+  color: var(--wp-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------- screen meta */
+
+.wp-screen-meta-tabs {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 20px;
+  background: var(--wp-body-bg);
+}
+
+.wp-screen-tab {
+  padding: 3px 8px 4px;
+  border: 1px solid var(--wp-border);
+  border-top: 0;
+  border-radius: 0 0 4px 4px;
+  background: var(--wp-card-bg);
+  color: var(--wp-text-muted);
+  font-size: 13px;
+  line-height: 1.7;
+  cursor: pointer;
+}
+
+.wp-screen-tab + .wp-screen-tab {
+  margin-left: 3px;
+}
+
+.wp-screen-tab:hover {
+  color: var(--wp-text);
+}
+
+.wp-screen-panel {
+  padding: 12px 20px;
+  border: 1px solid var(--wp-border);
+  border-top: 0;
+  background: var(--wp-card-bg);
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------------- dashboard */
+
+.wp-admin a {
+  color: var(--wp-blue);
+}
+
+.wp-admin a:hover {
+  color: var(--wp-blue-hover);
+}
+
+.wp-muted {
+  color: var(--wp-text-muted);
+}
+
+.wp-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The dashboard widget field: one column on a phone, two from 783px, three when there is
+   genuinely room. Same steps wp-admin uses. */
+.wp-dashboard-columns {
+  display: grid;
+  gap: 0 20px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 783px) {
+  .wp-dashboard-columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1500px) {
+  .wp-dashboard-columns {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* "At a Glance" reads as a list of links with a leading icon, not as stat cards. */
+.wp-glance {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wp-glance a,
+.wp-glance span.wp-glance-static {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.wp-activity-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wp-activity-list li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--wp-border-soft);
+}
+
+.wp-activity-list li:last-child {
+  border-bottom: 0;
+}
+
+/* ------------------------------------------------------- overrides
+
+   These carry the .wp-admin prefix deliberately. The component classes above are a single
+   class each, so a Tailwind utility ties with them on specificity and then loses on source
+   order, because Next emits this sheet after Tailwind's. One extra class settles it without
+   reaching for !important. */
+
+.wp-admin .wp-w-auto {
+  width: auto;
+}
+
+.wp-admin .wp-input-narrow {
+  width: 4.5rem;
+  text-align: right;
+}
+
+.wp-admin .wp-input-search {
+  width: 100%;
+  max-width: 14rem;
+}
+
+@media (min-width: 783px) {
+  .wp-admin .wp-hide-desktop {
+    display: none;
+  }
+}
+
+@media (max-width: 782px) {
+  .wp-admin .wp-hide-mobile {
+    display: none;
+  }
+}
+
+.wp-screen-reader-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

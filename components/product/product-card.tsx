@@ -2,20 +2,41 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, ShoppingBag, Star, Check, Eye } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Heart, Plus, Check } from 'lucide-react';
 import { useStore } from '@/components/providers/store-provider';
 import { formatPrice } from '@/lib/format';
+import { ProductPlate } from '@/components/product/product-plate';
+import { categoryPigment } from '@/lib/site';
 import type { Product } from '@/lib/types';
 import { cn } from '@/lib/utils';
+
+/*
+  A product is a sheet lifted out of the bath.
+
+  Paper stock, a hairline plate rule in the category's own pigment, and a real shadow that
+  deepens as the sheet lifts on hover. Stock runs on the single state channel the whole site
+  uses — one dot, one word, one pigment — never a scattered set of badge colours.
+*/
+
+export function stockState(product: Product) {
+  if (!product.inStock) {
+    return { label: 'Out of bath', token: 'hsl(var(--pig-madder))', tone: 'text-destructive' };
+  }
+  if (product.stockCount <= 5) {
+    return {
+      label: `${product.stockCount} left`,
+      token: 'hsl(var(--pig-saffron))',
+      tone: 'text-warning',
+    };
+  }
+  return { label: 'In stock', token: 'hsl(var(--pig-verdigris))', tone: 'text-success' };
+}
 
 export function ProductCard({ product }: { product: Product }) {
   const { addToCart, toggleWishlist, isWishlisted } = useStore();
   const [added, setAdded] = React.useState(false);
-  const [hovered, setHovered] = React.useState(false);
   const wished = isWishlisted(product.id);
+  const state = stockState(product);
 
   const discount = product.compareAtPrice
     ? Math.round((1 - product.price / product.compareAtPrice) * 100)
@@ -24,9 +45,10 @@ export function ProductCard({ product }: { product: Product }) {
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!product.inStock) return;
     addToCart(product, 1);
     setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
+    setTimeout(() => setAdded(false), 1600);
   };
 
   const handleWishlist = (e: React.MouseEvent) => {
@@ -36,169 +58,116 @@ export function ProductCard({ product }: { product: Product }) {
   };
 
   return (
-    <motion.div
-      whileHover={{ y: -6 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/40 bg-card card-hover hover:border-accent/30 hover:shadow-2xl hover:shadow-black/50"
-    >
-      <Link
-        href={`/product/${product.slug}`}
-        className="relative aspect-square overflow-hidden bg-background"
-      >
-        {/* Image with crossfade on hover */}
-        <img
-          src={product.images[0]}
-          alt={product.name}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-        />
-        {product.images[1] && (
-          <img
-            src={product.images[1]}
-            alt={product.name}
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+    <article className="group relative flex h-full flex-col border border-rule bg-card shadow-lift transition-[box-shadow,border-color] duration-300 ease-lift hover:border-rule-strong hover:shadow-lift-strong focus-within:border-pigment-indigo">
+      {/* The plate rule: the category's pigment, one hairline, nothing thicker. */}
+      <span
+        className="block h-px w-full"
+        style={{ backgroundColor: categoryPigment(product.categorySlug) }}
+        aria-hidden="true"
+      />
+
+      <Link href={`/product/${product.slug}`} className="flex flex-1 flex-col outline-none">
+        <div className="relative aspect-square overflow-hidden bg-paper-sunk">
+          <ProductPlate
+            product={product}
+            sizes="(min-width: 1280px) 23vw, (min-width: 768px) 31vw, 50vw"
           />
-        )}
 
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-card/80 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-
-        {/* Badges */}
-        <div className="absolute left-3 top-3 flex flex-col gap-1.5">
-          {product.isNew && (
-            <Badge className="bg-accent text-[10px] font-bold text-black shadow-lg">
-              NEW
-            </Badge>
-          )}
           {discount > 0 && (
-            <Badge className="bg-destructive text-[10px] font-bold shadow-lg">
-              -{discount}%
-            </Badge>
-          )}
-          {product.isBestSeller && (
-            <Badge className="bg-amber-500 text-[10px] font-bold text-black shadow-lg">
-              BESTSELLER
-            </Badge>
-          )}
-        </div>
-
-        {/* Quick view on hover */}
-        <AnimatePresence>
-          {hovered && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.2 }}
-              className="absolute bottom-3 left-3 right-3 flex items-center justify-center gap-1.5 rounded-xl glass-strong px-3 py-2 text-xs font-medium text-muted-foreground"
-            >
-              <Eye className="h-3.5 w-3.5" />
-              Quick View
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {!product.inStock && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-            <span className="text-sm font-semibold text-muted-foreground">
-              Out of Stock
+            <span className="absolute left-3 top-3 bg-pigment-madder px-2 py-1 font-mono text-2xs uppercase tracking-[0.12em] text-primary-foreground tabular">
+              −{discount}%
             </span>
-          </div>
-        )}
-      </Link>
+          )}
 
-      {/* Wishlist button */}
-      <button
-        onClick={handleWishlist}
-        className={cn(
-          'absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur transition-all duration-300',
-          wished
-            ? 'border-accent bg-accent/20 text-accent'
-            : 'border-white/10 bg-background/60 text-muted-foreground hover:text-foreground'
-        )}
-        aria-label="Toggle wishlist"
-      >
-        <Heart className={cn('h-4 w-4 transition-transform', wished && 'fill-current scale-110')} />
-      </button>
-
-      <div className="flex flex-1 flex-col p-4">
-        <div className="flex items-center justify-between">
-          <Link href={`/brands/${product.brandSlug}`} className="text-xs font-medium uppercase tracking-wider text-accent transition-colors hover:underline">
-            {product.brand}
-          </Link>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-            <span className="font-medium">{product.rating}</span>
-            <span className="text-muted-foreground/60">({product.reviewCount})</span>
-          </div>
+          <button
+            type="button"
+            onClick={handleWishlist}
+            aria-pressed={wished}
+            aria-label={wished ? `Remove ${product.name} from wishlist` : `Save ${product.name}`}
+            className={cn(
+              'absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border transition-colors duration-300',
+              wished
+                ? 'border-pigment-madder bg-pigment-madder text-primary-foreground'
+                : 'border-rule bg-paper/90 text-ink-soft hover:border-pigment-madder hover:text-pigment-madder'
+            )}
+          >
+            <Heart
+              className="h-3.5 w-3.5"
+              strokeWidth={1.75}
+              fill={wished ? 'currentColor' : 'none'}
+            />
+          </button>
         </div>
-        <Link href={`/product/${product.slug}`}>
-          <h3 className="mt-1.5 line-clamp-2 text-sm font-semibold leading-snug transition-colors hover:text-accent">
+
+        <div className="flex flex-1 flex-col p-3 sm:p-4">
+          <h3 className="font-display text-sm font-semibold leading-snug sm:text-base tracking-[-0.02em] transition-colors group-hover:text-pigment-indigo">
             {product.name}
           </h3>
-        </Link>
-        <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-          {product.category}
-        </p>
 
-        <div className="mt-3 flex items-end justify-between">
-          <div className="flex flex-col">
-            <div className="flex items-baseline gap-2">
-              <span className="text-lg font-bold">
-                {formatPrice(product.price)}
-              </span>
-              {product.compareAtPrice && (
-                <span className="text-sm text-muted-foreground line-through">
-                  {formatPrice(product.compareAtPrice)}
+          {/* The chain, abbreviated: who made it, at what concentration. */}
+          <p className="mt-1.5 text-xs text-ink-faint">
+            {product.brand}
+            <span className="px-1.5 text-rule-strong" aria-hidden="true">
+              /
+            </span>
+            <span className="tabular">
+              {product.specifications[0]?.value ?? product.category}
+            </span>
+          </p>
+
+          <div className="mt-auto flex items-end justify-between gap-3 pt-3 sm:pt-4">
+            <div>
+              <p className="flex items-baseline gap-2">
+                <span className="text-base font-semibold tabular">
+                  {formatPrice(product.price)}
                 </span>
-              )}
+                {product.compareAtPrice && (
+                  <span className="text-xs text-ink-faint line-through tabular">
+                    {formatPrice(product.compareAtPrice)}
+                  </span>
+                )}
+              </p>
+              <p className={cn('mt-1.5 flex items-center gap-1.5 text-2xs', state.tone)}>
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: state.token }}
+                  aria-hidden="true"
+                />
+                {state.label}
+              </p>
             </div>
-            {product.inStock && product.stockCount < 60 && (
-              <span className="mt-0.5 text-[10px] text-amber-500/80">
-                Only {product.stockCount} left
-              </span>
-            )}
           </div>
         </div>
+      </Link>
 
-        <Button
-          onClick={handleAdd}
-          disabled={!product.inStock}
-          className={cn(
-            'mt-3 w-full gap-2 transition-all duration-300',
-            added
-              ? 'bg-accent text-black hover:bg-accent'
-              : 'bg-secondary text-foreground hover:bg-secondary/70'
-          )}
-        >
-          <AnimatePresence mode="wait">
-            {added ? (
-              <motion.span
-                key="added"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="flex items-center gap-2"
-              >
-                <Check className="h-4 w-4" /> Added
-              </motion.span>
-            ) : (
-              <motion.span
-                key="add"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="flex items-center gap-2"
-              >
-                <ShoppingBag className="h-4 w-4" /> Add to Cart
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </Button>
-      </div>
-    </motion.div>
+      <button
+        type="button"
+        onClick={handleAdd}
+        disabled={!product.inStock}
+        aria-label={`Add ${product.name} to cart`}
+        className={cn(
+          'flex items-center justify-center gap-2 border-t border-rule px-3 py-2.5 text-sm font-medium transition-colors duration-300 sm:px-4 sm:py-3',
+          !product.inStock
+            ? 'cursor-not-allowed text-ink-faint'
+            : added
+              ? 'bg-pigment-verdigris text-primary-foreground'
+              : 'text-ink-soft hover:bg-pigment-indigo hover:text-primary-foreground'
+        )}
+      >
+        {!product.inStock ? (
+          'Unavailable'
+        ) : added ? (
+          <>
+            <Check className="h-4 w-4" strokeWidth={2} />
+            In the cart
+          </>
+        ) : (
+          <>
+            <Plus className="h-4 w-4" strokeWidth={1.75} />
+            Add to cart
+          </>
+        )}
+      </button>
+    </article>
   );
 }

@@ -1,0 +1,268 @@
+// MrAnabolics — Neon Postgres via Prisma.
+//
+// The catalogue used to be hand-written arrays in lib/data/. This schema models the same
+// content relationally: a Product belongs to one Category and one Brand, and owns its
+// specifications, FAQs and reviews as real rows rather than nested JSON — so they can be
+// queried, counted and ordered independently.
+//
+// The application still consumes the flat `Product` shape declared in lib/types.ts. The
+// mapping from these rows to that shape lives in lib/db/catalogue.ts, which keeps every UI
+// component working unchanged.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // Pooled endpoint for runtime queries.
+  url       = env("DATABASE_URL")
+  // Unpooled endpoint for migrations: PgBouncer in transaction mode cannot run them.
+  directUrl = env("DIRECT_URL")
+}
+
+model Category {
+  id           String @id @default(cuid())
+  slug         String @unique
+  name         String
+  description  String
+  /// lucide icon name, kept from the original catalogue data
+  icon         String
+  /// Headline count shown in marketing copy; the real listed count is derived from products.
+  productCount Int    @default(0)
+  /// Display order of the pigment index.
+  position     Int    @default(0)
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("categories")
+}
+
+model Brand {
+  id           String @id @default(cuid())
+  slug         String @unique
+  name         String
+  description  String
+  productCount Int    @default(0)
+  position     Int    @default(0)
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("brands")
+}
+
+model Product {
+  id   String @id @default(cuid())
+  slug String @unique
+  name String
+
+  /// Decimal, not float: money must not accumulate binary rounding error.
+  price          Decimal  @db.Decimal(10, 2)
+  compareAtPrice Decimal? @db.Decimal(10, 2)
+
+  rating      Float @default(0)
+  reviewCount Int   @default(0)
+
+  inStock    Boolean @default(true)
+  stockCount Int     @default(0)
+
+  isNew        Boolean @default(false)
+  isBestSeller Boolean @default(false)
+  isTrending   Boolean @default(false)
+  isDeal       Boolean @default(false)
+
+  description     String @db.Text
+  longDescription String @db.Text
+  directions      String @db.Text
+  shipping        String @db.Text
+  returns         String @db.Text
+
+  /// Postgres text[] — these are ordered prose lists, not entities worth their own table.
+  benefits    String[]
+  ingredients String[]
+  images      String[]
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  brandId String
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Restrict)
+
+  specifications Specification[]
+  faqs           ProductFaq[]
+  reviews        Review[]
+
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([isBestSeller])
+  @@index([isNew])
+  @@index([isTrending])
+  @@index([isDeal])
+  @@map("products")
+}
+
+model Specification {
+  id       String @id @default(cuid())
+  label    String
+  value    String
+  position Int    @default(0)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("specifications")
+}
+
+model ProductFaq {
+  id       String @id @default(cuid())
+  question String
+  answer   String @db.Text
+  position Int    @default(0)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_faqs")
+}
+
+model Review {
+  id     String   @id @default(cuid())
+  author String
+  rating Int
+  date   DateTime @db.Date
+  title  String
+  body   String   @db.Text
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("reviews")
+}
+
+model BlogPost {
+  id       String   @id @default(cuid())
+  slug     String   @unique
+  title    String
+  excerpt  String   @db.Text
+  content  String   @db.Text
+  category String
+  author   String
+  date     DateTime @db.Date
+  readTime String
+  image    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+  @@map("blog_posts")
+}
+
+model Testimonial {
+  id       String @id @default(cuid())
+  name     String
+  role     String
+  location String
+  rating   Int
+  quote    String @db.Text
+  position Int    @default(0)
+
+  @@map("testimonials")
+}
+
+model Faq {
+  id       String @id @default(cuid())
+  question String
+  answer   String @db.Text
+  position Int    @default(0)
+
+  @@map("faqs")
+}
+
+model AdminUser {
+  id    String  @id @default(cuid())
+  email String  @unique
+  name  String?
+
+  /// bcrypt hash. The plaintext password is never stored, logged, or returned by any query.
+  passwordHash String
+
+  /// Bumped on password change and on "sign out everywhere". Sessions carry this number and
+  /// are rejected when it no longer matches, which is what makes a stolen cookie revocable —
+  /// a stateless JWT is otherwise valid until it expires, whatever the server thinks.
+  sessionVersion Int @default(1)
+
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("admin_users")
+}
+
+/// A marketing contact.
+///
+/// Every row is evidence of consent, not just an address. GDPR Article 7(1) puts the burden of
+/// proof on the sender, and PECR/CAN-SPAM both require a working opt-out — so the exact wording
+/// agreed to, the moment, the page it happened on and a hashed IP are stored alongside the
+/// address. Without those an address is a liability rather than an asset: unprovable consent is
+/// what turns a list into a fine and a blacklisted sending domain.
+///
+/// There is deliberately no way to write a row here without a consent action. Silent collection
+/// is not supported by this schema.
+model Subscriber {
+  id     String           @id @default(cuid())
+  email  String           @unique
+  status SubscriberStatus @default(SUBSCRIBED)
+
+  /// Which surface captured it — newsletter, exit intent, checkout. Drives segmentation and
+  /// tells you which capture point is actually earning its place.
+  source String
+
+  /// Consent evidence. `consentText` is the literal sentence shown at the time, because a
+  /// later wording change must not rewrite what a past subscriber agreed to.
+  consentAt   DateTime @default(now())
+  consentText String
+  consentPath String?
+  /// SHA-256 of the IP with a server-side secret. Proves origin without storing the address.
+  ipHash      String?
+
+  /// Single-use address for the unsubscribe link. Random, not derived from the email, so it
+  /// cannot be guessed for someone else's address.
+  unsubscribeToken String    @unique
+  unsubscribedAt   DateTime?
+
+  /// Light behavioural context for segmentation, only ever collected after consent.
+  pageViews    Int       @default(0)
+  lastSeenAt   DateTime?
+  lastSeenPath String?
+
+  /// Set when someone reached checkout and left without ordering. The value travels with it so
+  /// a recovery email can name the basket.
+  abandonedValue Decimal?  @db.Decimal(10, 2)
+  abandonedAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([source])
+  @@map("subscribers")
+}
+
+enum SubscriberStatus {
+  SUBSCRIBED
+  UNSUBSCRIBED
+}

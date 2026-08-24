@@ -3,17 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Search,
-  Heart,
-  User,
-  ShoppingBag,
-  Menu,
-  ChevronDown,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Search, Heart, User, ShoppingBag, Menu, X } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -28,274 +18,323 @@ import {
   AccordionContent,
 } from '@/components/ui/accordion';
 import { useStore } from '@/components/providers/store-provider';
-import { categories } from '@/lib/data/categories';
-import { brands } from '@/lib/data/brands';
+import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { DropMark } from '@/components/ebru/drop-mark';
+import { useCategories, useBrands } from '@/components/providers/catalogue-provider';
+import { categoryPigment } from '@/lib/site';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
-  { label: 'Home', href: '/' },
   { label: 'Shop', href: '/shop' },
-  { label: 'Categories', href: '/categories', hasMenu: true, menuType: 'categories' },
-  { label: 'Brands', href: '/brands', hasMenu: true, menuType: 'brands' },
-  { label: 'Blog', href: '/blog' },
-  { label: 'FAQ', href: '/faq' },
+  { label: 'Categories', href: '/categories', menu: 'categories' as const },
+  { label: 'Brands', href: '/brands', menu: 'brands' as const },
+  { label: 'Journal', href: '/blog' },
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
 ];
 
-function Logo() {
+function Wordmark({ compact }: { compact?: boolean }) {
   return (
-    <Link href="/" className="flex items-center gap-2.5 group">
-      <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-emerald-600 transition-transform group-hover:scale-105">
-        <span className="font-display text-lg font-extrabold text-black">M</span>
-        <div className="absolute inset-0 rounded-xl bg-accent/40 blur-md -z-10" />
-      </div>
-      <div className="flex flex-col leading-none">
-        <span className="font-display text-lg font-bold tracking-tight">
+    <Link
+      href="/"
+      className="group flex items-center gap-3 rounded-sm"
+      aria-label="MrAnabolics — home"
+    >
+      <DropMark
+        className={cn(
+          'shrink-0',
+          compact ? 'h-7 w-7' : 'h-9 w-9'
+        )}
+      />
+      <span className="flex flex-col leading-none">
+        <span
+          className={cn(
+            'font-display font-semibold tracking-[-0.03em] transition-colors duration-300',
+            compact ? 'text-base' : 'text-lg'
+          )}
+        >
           MrAnabolics
         </span>
-        <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-          Premium Performance
-        </span>
-      </div>
+        {!compact && (
+          <span className="mt-1 hidden font-mono text-2xs uppercase tracking-[0.18em] text-ink-faint sm:block">
+            Floated &amp; documented
+          </span>
+        )}
+      </span>
     </Link>
+  );
+}
+
+function CategoryMenu({ onNavigate }: { onNavigate?: () => void }) {
+  const categories = useCategories();
+  return (
+    <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 lg:grid-cols-3">
+      {categories.map((c) => (
+        <Link
+          key={c.slug}
+          href={`/shop?category=${c.slug}`}
+          onClick={onNavigate}
+          className="group flex items-baseline gap-3 border-b border-rule/60 py-2.5 last:border-0 hover:border-pigment-indigo-lift"
+        >
+          <span
+            className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+            style={{ backgroundColor: categoryPigment(c.slug) }}
+            aria-hidden="true"
+          />
+          <span className="flex-1">
+            <span className="block text-sm font-medium group-hover:text-pigment-indigo">
+              {c.name}
+            </span>
+            <span className="mt-0.5 block text-xs leading-snug text-ink-faint">
+              {c.description.split('.')[0]}.
+            </span>
+          </span>
+          <span className="font-mono text-2xs text-ink-faint tabular">
+            {c.listed}
+          </span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function BrandMenu({ onNavigate }: { onNavigate?: () => void }) {
+  const brands = useBrands();
+  return (
+    <div className="grid gap-x-8 gap-y-1 md:grid-cols-2">
+      {brands.map((b) => (
+        <Link
+          key={b.slug}
+          href={`/brands/${b.slug}`}
+          onClick={onNavigate}
+          className="group border-b border-rule/60 py-2.5 last:border-0 hover:border-pigment-indigo-lift"
+        >
+          <span className="flex items-baseline justify-between gap-4">
+            <span className="text-sm font-medium group-hover:text-pigment-indigo">
+              {b.name}
+            </span>
+            <span className="font-mono text-2xs text-ink-faint tabular">
+              {b.productCount}
+            </span>
+          </span>
+          <span className="mt-0.5 block text-xs leading-snug text-ink-faint">
+            {b.description.split('.')[0]}.
+          </span>
+        </Link>
+      ))}
+    </div>
   );
 }
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const { cartCount, wishlist, setCartOpen, setSearchOpen } = useStore();
-  const [scrolled, setScrolled] = React.useState(false);
-  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const { cartCount, setCartOpen, setSearchOpen, wishlist } = useStore();
   const [openMenu, setOpenMenu] = React.useState<string | null>(null);
+  const [condensed, setCondensed] = React.useState(false);
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const closeTimer = React.useRef<ReturnType<typeof setTimeout>>();
 
   React.useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    window.addEventListener('scroll', onScroll);
+    const onScroll = () => setCondensed(window.scrollY > 24);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname.startsWith(href);
+  React.useEffect(() => {
+    setOpenMenu(null);
+    setMobileOpen(false);
+  }, [pathname]);
+
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenMenu(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const enter = (menu: string) => {
+    clearTimeout(closeTimer.current);
+    setOpenMenu(menu);
+  };
+  const leave = () => {
+    closeTimer.current = setTimeout(() => setOpenMenu(null), 140);
+  };
 
   return (
     <header
       className={cn(
-        'sticky top-0 z-40 w-full transition-all duration-500',
-        scrolled
-          ? 'glass-strong border-b border-border/40 shadow-lg shadow-black/40'
-          : 'bg-transparent'
+        'sticky top-0 z-50 border-b bg-paper transition-[border-color,box-shadow] duration-300',
+        condensed ? 'border-rule-strong shadow-lift' : 'border-rule'
       )}
+      onMouseLeave={leave}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 lg:px-6">
-        <div className="flex items-center gap-3">
+      <div className="mx-auto flex max-w-[86rem] items-center gap-6 px-4 sm:px-6 lg:px-10">
+        <div
+          className={cn(
+            'flex items-center transition-colors duration-300',
+            condensed ? 'py-3' : 'py-5'
+          )}
+        >
+          <Wordmark compact={condensed} />
+        </div>
+
+        <nav
+          className="hidden flex-1 items-center gap-1 lg:flex"
+          aria-label="Primary"
+        >
+          {navLinks.map((link) => {
+            const active =
+              pathname === link.href ||
+              (link.href !== '/' && pathname.startsWith(link.href));
+            return (
+              <div
+                key={link.href}
+                className="relative"
+                onMouseEnter={() => (link.menu ? enter(link.menu) : setOpenMenu(null))}
+              >
+                <Link
+                  href={link.href}
+                  className={cn(
+                    'relative block px-3 py-2 font-display text-sm font-medium tracking-[-0.01em] transition-colors',
+                    active ? 'text-pigment-indigo' : 'text-ink-soft hover:text-ink'
+                  )}
+                  aria-expanded={link.menu ? openMenu === link.menu : undefined}
+                >
+                  {link.label}
+                  <span
+                    className={cn(
+                      'absolute -bottom-px left-3 right-3 h-px origin-left bg-pigment-indigo',
+                      active || openMenu === link.menu ? 'scale-x-100' : 'scale-x-0'
+                    )}
+                    aria-hidden="true"
+                  />
+                </Link>
+              </div>
+            );
+          })}
+        </nav>
+
+        <div className="ml-auto flex items-center gap-1 lg:gap-2">
+          <ThemeToggle className="mr-1 hidden sm:inline-flex" />
+
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-sm text-ink-soft transition-colors hover:bg-paper-sunk hover:text-ink"
+            aria-label="Search the catalogue"
+          >
+            <Search className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.6} />
+          </button>
+
+          <Link
+            href="/account?tab=wishlist"
+            className="relative hidden h-9 w-9 items-center justify-center rounded-sm text-ink-soft transition-colors hover:bg-paper-sunk hover:text-ink sm:flex"
+            aria-label={`Wishlist, ${wishlist.length} items`}
+          >
+            <Heart className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.6} />
+            {wishlist.length > 0 && (
+              <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-pigment-madder" />
+            )}
+          </Link>
+
+          <Link
+            href="/account"
+            className="hidden h-9 w-9 items-center justify-center rounded-sm text-ink-soft transition-colors hover:bg-paper-sunk hover:text-ink sm:flex"
+            aria-label="Account"
+          >
+            <User className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.6} />
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setCartOpen(true)}
+            className="relative ml-1 flex items-center gap-2 rounded-sm border border-rule-strong px-3 py-2 text-sm font-medium transition-colors hover:border-pigment-indigo hover:bg-paper-sunk"
+            aria-label={`Cart, ${cartCount} items`}
+          >
+            <ShoppingBag className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.6} />
+            <span className="font-mono text-xs tabular">{cartCount}</span>
+          </button>
+
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="lg:hidden"
+              <button
+                type="button"
+                className="flex h-9 w-9 items-center justify-center rounded-sm text-ink-soft transition-colors hover:bg-paper-sunk hover:text-ink lg:hidden"
                 aria-label="Open menu"
               >
-                <Menu className="h-5 w-5" />
-              </Button>
+                <Menu className="h-5 w-5" strokeWidth={1.6} />
+              </button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[320px] p-0">
-              <SheetHeader className="border-b border-border p-4">
-                <SheetTitle>
-                  <Logo />
-                </SheetTitle>
+            <SheetContent
+              side="right"
+              className="w-full border-rule bg-paper p-0 sm:max-w-md"
+            >
+              <SheetHeader className="border-b border-rule px-5 py-4 text-left">
+                <SheetTitle className="font-display text-base">Menu</SheetTitle>
               </SheetHeader>
-              <div className="px-4 py-4">
-                <Accordion type="multiple">
-                  <AccordionItem value="categories" className="border-b">
-                    <AccordionTrigger className="text-sm font-semibold">
+              <div className="h-[calc(100vh-4rem)] overflow-y-auto px-5 py-4">
+                <div className="mb-4 flex items-center justify-between border-b border-rule pb-4">
+                  <span className="text-sm text-ink-soft">Substrate</span>
+                  <ThemeToggle />
+                </div>
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="categories" className="border-rule">
+                    <AccordionTrigger className="font-display text-sm hover:no-underline">
                       Categories
                     </AccordionTrigger>
                     <AccordionContent>
-                      <div className="flex flex-col gap-1 pb-2">
-                        {categories.map((c) => (
-                          <Link
-                            key={c.slug}
-                            href={`/shop?category=${c.slug}`}
-                            onClick={() => setMobileOpen(false)}
-                            className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                          >
-                            {c.name}
-                          </Link>
-                        ))}
-                      </div>
+                      <CategoryMenu onNavigate={() => setMobileOpen(false)} />
                     </AccordionContent>
                   </AccordionItem>
-                  <AccordionItem value="brands" className="border-b">
-                    <AccordionTrigger className="text-sm font-semibold">
+                  <AccordionItem value="brands" className="border-rule">
+                    <AccordionTrigger className="font-display text-sm hover:no-underline">
                       Brands
                     </AccordionTrigger>
                     <AccordionContent>
-                      <div className="flex flex-col gap-1 pb-2">
-                        {brands.map((b) => (
-                          <Link
-                            key={b.slug}
-                            href={`/brands/${b.slug}`}
-                            onClick={() => setMobileOpen(false)}
-                            className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                          >
-                            {b.name}
-                          </Link>
-                        ))}
-                      </div>
+                      <BrandMenu onNavigate={() => setMobileOpen(false)} />
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
-                <nav className="mt-4 flex flex-col gap-1">
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={cn(
-                        'rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
-                        isActive(link.href)
-                          ? 'bg-secondary text-foreground'
-                          : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-                      )}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                  <Link
-                    href="/account"
-                    onClick={() => setMobileOpen(false)}
-                    className="rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                  >
-                    Account
-                  </Link>
+                <nav className="mt-2 flex flex-col" aria-label="Mobile">
+                  {navLinks
+                    .filter((l) => !l.menu)
+                    .concat([
+                      { label: 'FAQ', href: '/faq' },
+                      { label: 'Account', href: '/account' },
+                    ])
+                    .map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setMobileOpen(false)}
+                        className="border-b border-rule py-3.5 font-display text-sm font-medium last:border-0"
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
                 </nav>
               </div>
             </SheetContent>
           </Sheet>
-          <Logo />
         </div>
+      </div>
 
-        <nav className="hidden items-center gap-0.5 lg:flex">
-          {navLinks.map((link) => (
-            <div
-              key={link.href}
-              className="relative"
-              onMouseEnter={() => link.hasMenu && setOpenMenu(link.menuType!)}
-              onMouseLeave={() => setOpenMenu(null)}
-            >
-              <Link
-                href={link.href}
-                className={cn(
-                  'flex items-center gap-1 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors',
-                  isActive(link.href)
-                    ? 'text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {link.label}
-                {link.hasMenu && (
-                  <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', openMenu === link.menuType && 'rotate-180')} />
-                )}
-              </Link>
-              <AnimatePresence>
-                {link.hasMenu && openMenu === link.menuType && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
-                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute left-0 top-full z-50 w-72 pt-2"
-                  >
-                    <div className="glass-strong overflow-hidden rounded-2xl border border-white/10 p-2 shadow-2xl shadow-black/60">
-                      {link.menuType === 'categories' &&
-                        categories.slice(0, 8).map((c) => (
-                          <Link
-                            key={c.slug}
-                            href={`/shop?category=${c.slug}`}
-                            className="group flex items-center justify-between rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                          >
-                            {c.name}
-                            <span className="text-xs text-muted-foreground/60">{c.productCount}</span>
-                          </Link>
-                        ))}
-                      {link.menuType === 'brands' &&
-                        brands.slice(0, 8).map((b) => (
-                          <Link
-                            key={b.slug}
-                            href={`/brands/${b.slug}`}
-                            className="group flex items-center justify-between rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                          >
-                            {b.name}
-                            <span className="text-xs text-muted-foreground/60">{b.productCount}</span>
-                          </Link>
-                        ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </nav>
-
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Search"
-            onClick={() => setSearchOpen(true)}
-            className="relative"
-          >
-            <Search className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Wishlist"
-            asChild
-            className="relative"
-          >
-            <Link href="/account?tab=wishlist">
-              <Heart className="h-5 w-5" />
-              {wishlist.length > 0 && (
-                <Badge className="absolute -right-0.5 -top-0.5 h-4 min-w-4 justify-center bg-accent px-1 text-[10px] font-bold text-black">
-                  {wishlist.length}
-                </Badge>
-              )}
-            </Link>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Account"
-            asChild
-            className="hidden sm:flex"
-          >
-            <Link href="/account">
-              <User className="h-5 w-5" />
-            </Link>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Cart"
-            onClick={() => setCartOpen(true)}
-            className="relative"
-          >
-            <ShoppingBag className="h-5 w-5" />
-            {cartCount > 0 && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-              >
-                <Badge className="absolute -right-0.5 -top-0.5 h-4 min-w-4 justify-center bg-accent px-1 text-[10px] font-bold text-black">
-                  {cartCount}
-                </Badge>
-              </motion.div>
-            )}
-          </Button>
+      {/* The menu drops out of the header like pigment spreading from a contact point. */}
+      <div
+        className={cn(
+          'absolute inset-x-0 top-full hidden origin-top border-b bg-paper transition-colors duration-300 lg:block',
+          openMenu
+            ? 'visible border-rule-strong opacity-100 shadow-lift'
+            : 'invisible -translate-y-1 border-transparent opacity-0'
+        )}
+        onMouseEnter={() => clearTimeout(closeTimer.current)}
+        onMouseLeave={leave}
+      >
+        <div className="mx-auto max-w-[86rem] px-4 py-8 sm:px-6 lg:px-10">
+          {openMenu === 'categories' && <CategoryMenu />}
+          {openMenu === 'brands' && <BrandMenu />}
         </div>
       </div>
     </header>

@@ -1,4 +1,10 @@
 import type { Category } from '@/lib/types';
+import { products } from '@/lib/data/products';
+
+/** How many products in this catalogue actually sit under a category. */
+export function countByCategory(slug: string): number {
+  return products.filter((p) => p.categorySlug === slug).length;
+}
 
 export const categories: Category[] = [
   {

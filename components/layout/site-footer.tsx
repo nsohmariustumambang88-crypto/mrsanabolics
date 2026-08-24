@@ -1,220 +1,232 @@
+'use client';
+
+import * as React from 'react';
 import Link from 'next/link';
-import {
-  Mail,
-  Phone,
-  MapPin,
-  ShieldCheck,
-  Truck,
-  RotateCcw,
-  Lock,
-  Instagram,
-  Twitter,
-  Facebook,
-  Youtube,
-} from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { categories } from '@/lib/data/categories';
+import { ArrowRight, Check } from 'lucide-react';
+import { MarbleBath } from '@/components/ebru/marble-bath';
+import { DropMark } from '@/components/ebru/drop-mark';
+import { useCategories, useBrands } from '@/components/providers/catalogue-provider';
+import { categoryPigment } from '@/lib/site';
 
-const trustItems = [
-  { icon: ShieldCheck, title: 'Lab Verified', desc: 'Third-party tested' },
-  { icon: Truck, title: 'Fast Shipping', desc: '24h dispatch' },
-  { icon: RotateCcw, title: 'Easy Returns', desc: '14-day policy' },
-  { icon: Lock, title: 'Secure Checkout', desc: '256-bit encryption' },
+const shopLinks = [
+  { label: 'All compounds', href: '/shop' },
+  { label: 'Categories', href: '/categories' },
+  { label: 'Brands', href: '/brands' },
+  { label: 'Weekly deals', href: '/shop?filter=deals' },
 ];
 
-const linkGroups = [
-  {
-    title: 'Shop',
-    links: [
-      { label: 'All Products', href: '/shop' },
-      { label: 'Best Sellers', href: '/shop?filter=best-sellers' },
-      { label: 'New Arrivals', href: '/shop?filter=new' },
-      { label: 'Weekly Deals', href: '/shop?filter=deals' },
-      { label: 'Bundles', href: '/shop?category=bundles' },
-    ],
-  },
-  {
-    title: 'Company',
-    links: [
-      { label: 'About Us', href: '/about' },
-      { label: 'Contact', href: '/contact' },
-      { label: 'Blog', href: '/blog' },
-      { label: 'FAQ', href: '/faq' },
-      { label: 'My Account', href: '/account' },
-    ],
-  },
-  {
-    title: 'Support',
-    links: [
-      { label: 'Shipping Info', href: '/faq' },
-      { label: 'Returns & Refunds', href: '/faq' },
-      { label: 'Privacy Policy', href: '/faq' },
-      { label: 'Terms of Service', href: '/faq' },
-      { label: 'Track Order', href: '/account?tab=orders' },
-    ],
-  },
+const readLinks = [
+  { label: 'Journal', href: '/blog' },
+  { label: 'Questions', href: '/faq' },
+  { label: 'About', href: '/about' },
+  { label: 'Contact', href: '/contact' },
 ];
 
-const socials = [
-  { icon: Instagram, href: '#', label: 'Instagram' },
-  { icon: Twitter, href: '#', label: 'Twitter' },
-  { icon: Facebook, href: '#', label: 'Facebook' },
-  { icon: Youtube, href: '#', label: 'YouTube' },
+const accountLinks = [
+  { label: 'Your account', href: '/account' },
+  { label: 'Orders', href: '/account?tab=orders' },
+  { label: 'Wishlist', href: '/account?tab=wishlist' },
+  { label: 'Sign in', href: '/auth' },
 ];
+
+function LinkColumn({
+  heading,
+  links,
+}: {
+  heading: string;
+  links: { label: string; href: string }[];
+}) {
+  return (
+    <div>
+      <h3 className="font-mono text-2xs uppercase tracking-[0.18em] text-ink-faint">
+        {heading}
+      </h3>
+      <ul className="mt-4 space-y-2.5">
+        {links.map((l) => (
+          <li key={l.href + l.label}>
+            <Link
+              href={l.href}
+              className="text-sm text-ink-soft transition-colors hover:text-pigment-indigo"
+            >
+              {l.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function Newsletter() {
+  const [email, setEmail] = React.useState('');
+  const [sent, setSent] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('That address is missing an @ or a domain.');
+      return;
+    }
+    setError(null);
+    setSent(true);
+  };
+
+  return (
+    <div>
+      <h3 className="font-mono text-2xs uppercase tracking-[0.18em] text-ink-faint">
+        New batches
+      </h3>
+      <p className="measure-tight mt-4 text-sm leading-relaxed text-ink-soft">
+        One note when a batch is released, with its certificate attached. Nothing else.
+      </p>
+
+      {sent ? (
+        <p className="mt-4 flex items-center gap-2 text-sm text-pigment-verdigris">
+          <Check className="h-4 w-4" strokeWidth={2} />
+          Added. Watch for the next release note.
+        </p>
+      ) : (
+        <form onSubmit={submit} className="mt-4" noValidate>
+          <div className="flex items-stretch border-b border-rule-strong focus-within:border-pigment-indigo">
+            <label htmlFor="footer-email" className="sr-only">
+              Email address
+            </label>
+            <input
+              id="footer-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@domain.com"
+              className="w-full bg-transparent py-2 text-sm text-ink outline-none placeholder:text-ink-faint"
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? 'footer-email-error' : undefined}
+            />
+            <button
+              type="submit"
+              className="flex items-center px-2 text-ink-soft transition-colors hover:text-pigment-indigo"
+              aria-label="Subscribe"
+            >
+              <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
+            </button>
+          </div>
+          {error && (
+            <p id="footer-email-error" className="mt-2 text-xs text-destructive">
+              {error}
+            </p>
+          )}
+        </form>
+      )}
+    </div>
+  );
+}
 
 export function SiteFooter() {
-  return (
-    <footer className="relative mt-24 border-t border-border/60 bg-black">
-      <div className="mx-auto max-w-7xl px-4 py-16 lg:px-6">
-        <div className="grid gap-8 lg:grid-cols-4">
-          {trustItems.map((item, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-3 rounded-2xl border border-border/40 bg-secondary/30 p-4"
-            >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10">
-                <item.icon className="h-5 w-5 text-accent" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">{item.title}</p>
-                <p className="text-xs text-muted-foreground">{item.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+  const categories = useCategories();
+  const brands = useBrands();
 
-        <div className="mt-16 grid gap-10 lg:grid-cols-12">
-          <div className="lg:col-span-4">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-emerald-600">
-                <span className="font-display text-lg font-extrabold text-black">
-                  M
-                </span>
-              </div>
-              <span className="font-display text-lg font-bold tracking-tight">
+  return (
+    <footer className="relative mt-24 border-t border-rule bg-paper-sunk">
+      {/* The edge of the bath: the sheet ends, the size continues. */}
+      <div className="relative h-24 overflow-hidden border-b border-rule sm:h-32">
+        <MarbleBath
+          className="absolute inset-0 h-full w-full"
+          seed={412}
+          density={0.45}
+          animate={false}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-paper-sunk via-paper-sunk/40 to-transparent" />
+      </div>
+
+      <div className="mx-auto max-w-[86rem] px-4 sm:px-6 lg:px-10">
+        <div className="grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-5 lg:gap-8">
+          <div className="lg:col-span-2">
+            <Link href="/" className="flex items-center gap-3">
+              <DropMark className="h-9 w-9" />
+              <span className="font-display text-lg font-semibold tracking-[-0.03em]">
                 MrAnabolics
               </span>
             </Link>
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
-              Premium, lab-tested performance supplements for serious athletes
-              and researchers. Discreet shipping to over 40 countries, backed by
-              independent third-party testing on every batch.
+            <p className="measure-tight mt-5 text-sm leading-relaxed text-ink-soft">
+              Every compound is a suspension held at a concentration. We publish the
+              specification, the batch, and the protocol for each one, then let you read it
+              before you decide.
             </p>
-            <div className="mt-6 space-y-2 text-sm text-muted-foreground">
-              <a
-                href="mailto:support@mranabolics.example.com"
-                className="flex items-center gap-2 transition-colors hover:text-foreground"
-              >
-                <Mail className="h-4 w-4 text-accent" />
-                support@mranabolics.example.com
-              </a>
-              <a
-                href="tel:+18005550100"
-                className="flex items-center gap-2 transition-colors hover:text-foreground"
-              >
-                <Phone className="h-4 w-4 text-accent" />
-                +1 (800) 555-0100
-              </a>
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-accent" />
-                Zurich, Switzerland
-              </div>
-            </div>
-            <div className="mt-6 flex gap-2">
-              {socials.map((s) => (
-                <a
-                  key={s.label}
-                  href={s.href}
-                  aria-label={s.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 text-muted-foreground transition-colors hover:border-accent hover:text-accent"
+            <div className="mt-6 flex flex-wrap gap-1.5">
+              {categories.slice(0, 8).map((c) => (
+                <Link
+                  key={c.slug}
+                  href={`/shop?category=${c.slug}`}
+                  className="group inline-flex items-center gap-1.5 rounded-full border border-rule px-2.5 py-1 text-xs text-ink-soft transition-colors hover:border-pigment-indigo-lift hover:text-ink"
                 >
-                  <s.icon className="h-4 w-4" />
-                </a>
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: categoryPigment(c.slug) }}
+                    aria-hidden="true"
+                  />
+                  {c.name}
+                </Link>
               ))}
             </div>
           </div>
 
-          {linkGroups.map((group) => (
-            <div key={group.title} className="lg:col-span-2">
-              <h4 className="text-sm font-semibold uppercase tracking-wider">
-                {group.title}
-              </h4>
-              <ul className="mt-4 space-y-2.5">
-                {group.links.map((link) => (
-                  <li key={link.label}>
+          <LinkColumn heading="Shop" links={shopLinks} />
+          <LinkColumn heading="Read" links={readLinks} />
+          <LinkColumn heading="Account" links={accountLinks} />
+        </div>
+
+        <div className="border-t border-rule py-10">
+          <div className="grid gap-10 md:grid-cols-2">
+            <Newsletter />
+            <div>
+              <h3 className="font-mono text-2xs uppercase tracking-[0.18em] text-ink-faint">
+                Manufacturers
+              </h3>
+              <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5">
+                {brands.map((b) => (
+                  <li key={b.slug}>
                     <Link
-                      href={link.href}
-                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      href={`/brands/${b.slug}`}
+                      className="text-sm text-ink-soft transition-colors hover:text-pigment-indigo"
                     >
-                      {link.label}
+                      {b.name}
                     </Link>
                   </li>
                 ))}
               </ul>
             </div>
-          ))}
-
-          <div className="lg:col-span-2">
-            <h4 className="text-sm font-semibold uppercase tracking-wider">
-              Categories
-            </h4>
-            <ul className="mt-4 space-y-2.5">
-              {categories.slice(0, 6).map((c) => (
-                <li key={c.slug}>
-                  <Link
-                    href={`/shop?category=${c.slug}`}
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    {c.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
 
-        <div className="mt-12 rounded-2xl border border-border/40 bg-gradient-to-br from-secondary/40 to-transparent p-6">
-          <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h3 className="font-display text-xl font-bold">
-                Join the inner circle
-              </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Exclusive offers, new product alerts, and research guides —
-                straight to your inbox.
-              </p>
-            </div>
-            <form className="flex w-full max-w-md gap-2">
-              <Input
-                type="email"
-                placeholder="your@email.com"
-                className="bg-background"
-              />
-              <Button type="submit" className="bg-accent text-black hover:bg-accent/90">
-                Subscribe
-              </Button>
-            </form>
-          </div>
+        {/*
+          Honest labelling. PRODUCT.md records every synthetic fixture in this build, and the
+          page that shows them is the page that has to say so.
+        */}
+        <div className="border-t border-rule py-6">
+          <p className="measure text-xs leading-relaxed text-ink-faint">
+            <span className="font-medium text-ink-soft">Demonstration build.</span>{' '}
+            This is a portfolio storefront. Product plates are drawn illustrations of the
+            vessel each compound ships in, not photographs, and all reviews, testimonials,
+            ratings, purity figures, and shipping claims shown here are synthetic fixtures
+            authored for the demo — not verified business facts, and not a commercial offer.
+          </p>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border/40 pt-8 text-sm text-muted-foreground md:flex-row">
-          <p>© {new Date().getFullYear()} MrAnabolics. All rights reserved.</p>
-          <div className="flex gap-6">
-            <Link href="/faq" className="transition-colors hover:text-foreground">
-              Privacy
-            </Link>
-            <Link href="/faq" className="transition-colors hover:text-foreground">
-              Terms
-            </Link>
-            <Link href="/faq" className="transition-colors hover:text-foreground">
-              Refund Policy
-            </Link>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <Lock className="h-3.5 w-3.5 text-accent" />
-            <span>Secure 256-bit SSL encryption</span>
-          </div>
+        <div className="flex flex-col gap-4 border-t border-rule py-6 sm:flex-row sm:items-center sm:justify-between">
+          <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
+            © {new Date().getFullYear()} MrAnabolics
+          </p>
+          <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-2">
+            {['Terms', 'Privacy', 'Shipping', 'Returns'].map((l) => (
+              <Link
+                key={l}
+                href="/faq"
+                className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint transition-colors hover:text-ink-soft"
+              >
+                {l}
+              </Link>
+            ))}
+          </nav>
         </div>
       </div>
     </footer>

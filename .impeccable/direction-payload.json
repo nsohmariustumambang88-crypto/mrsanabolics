@@ -1,0 +1,118 @@
+{
+  "title": "Choose the visual world for MrAnabolics",
+  "question": "The roll assigned The Meet. Keep it, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "The Meet",
+      "kicker": "THE ROLL",
+      "lineage": "sanctioned powerlifting competition - attempt cards, three-light judging, calibrated plates",
+      "thesis": "A claim adjudicated in public. The meet is the one place this audience knows where you either made the lift or you did not, and three lights say so instantly - which is exactly what a purity claim has to do. Refuses the category near-black-plus-acid-green hype page AND the soft DTC wellness grid.",
+      "palette": ["#F7F5F1", "#1740C4", "#D42A1E", "#E8B923", "#8C9199", "#17161A"],
+      "materials": ["attempt-card stock", "calibrated plate color", "chrome bar and knurl", "scoreboard tabular numerals", "judge lamps"],
+      "viewport": "A live attempt board, not a hero image. Left: the featured compound set as an attempt card on white stock - lot number, class, and a row of three judge lamps resolving to white/white/white for tested, verified, in stock. Right: the loaded bar, where each calibrated plate is a category and its standardized color IS that category color for the rest of the site. Primary action sits where a judge signs.",
+      "risk": "Sports signage slides into gym-bro loudness - the exact thing this redesign is escaping. The meet is bureaucratic and precise, not hype. If the condensed caps grow or a second red appears, it becomes a supplement ad.",
+      "raised": [
+        {"from": "challenger-kiln-shelf", "raise": "Every product now shows its causal chain as one connected read - compound to concentration to half-life to protocol - instead of a flat spec dump."},
+        {"from": "challenger-understory", "raise": "State runs on one consistent channel with a visible trailing state (the lamps), never ad-hoc badge colors scattered per component."},
+        {"from": "challenger-ebru", "raise": "Surfaces are built from the real materials of the system - card stock, plate color, chrome rule - never gradient-and-glass chrome standing in for a material."}
+      ],
+      "board": "https://impeccable.style/worlds/cards/signals-instruments-night-flight-six-pack.webp"
+    },
+    {
+      "id": "model-pick",
+      "label": "The Monograph",
+      "kicker": "IMPECCABLE PICK",
+      "lineage": "printed pharmacopoeia - USP / Martindale drug reference",
+      "thesis": "The catalog as a drug reference. Every compound is a monograph entry: ruled two-column text, structural formula, assay figures in monospace, thumb-index tabs down the edge for categories.",
+      "palette": ["#FBFAF7", "#14161A", "#B2231C", "#9AA0A6"],
+      "materials": ["ruled reference typography", "thumb index", "assay tables", "bible-thin paper"],
+      "viewport": "A single monograph spread - the featured compound entry, opened, with the index rail alongside it.",
+      "risk": "This is where most careful runs in this category land: dense reference typography reads as serious almost automatically. It is the safe destination, and it under-serves the general-fitness half of the audience you asked me to split."
+    },
+    {
+      "id": "challenger-instruments",
+      "label": "Night Instrument Panel",
+      "verdict": "competitive",
+      "lineage": "small-aircraft night instrument six-pack",
+      "thesis": "Six calm gauges, each owning one truth, read in a practiced cross-check sweep.",
+      "palette": ["#0E0F11", "#E8E6E1", "#63D68A", "#E8B923"],
+      "materials": ["matte instrument panel", "luminous markings", "damped needles"],
+      "viewport": "Products as gauge faces; deviation tilts the needle before any alarm fires.",
+      "case": "Holds product clarity outright - trend-as-well-as-value is a genuinely better spec display than mine. Loses the other axis on your own brief: its native world is a matte black panel with a glowing green needle, which is both the category rut and the dark-only treatment you are rejecting.",
+      "risk": "Rendered honestly it is a dark cockpit, and lightening it destroys the thing that makes it work.",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-night-flight-six-pack-hero.webp"
+    },
+    {
+      "id": "challenger-vhs",
+      "label": "The Rental Wall",
+      "verdict": "competitive",
+      "lineage": "friday-night video store, clamshells packed by genre",
+      "thesis": "Browse sideways along spines; pull a box face-out to consider it; an empty slot with a tag is what out-of-stock looks like.",
+      "palette": ["#121212", "#C1272D", "#2B6CB0", "#F2C230"],
+      "materials": ["clamshell spines", "marker shelf talkers", "cut vinyl genre headers"],
+      "viewport": "A full wall of spines by category, the featured product pulled face-out.",
+      "case": "Holds clarity - present/absent as stock state and flip-to-read-spec is an excellent product-card model I would happily steal. Loses audience identification: video-store nostalgia is not native to anyone loading a bar, and the split audience would not see themselves in it.",
+      "risk": "Reads as a themed novelty store rather than a place you trust with a purity claim.",
+      "hero": "https://impeccable.style/worlds/cards/vernacular-ephemera-vhs-rental-wall-hero.webp"
+    },
+    {
+      "id": "challenger-movida",
+      "label": "Movida Scene Cover",
+      "verdict": "competitive",
+      "lineage": "post-dictatorship Madrid scene magazine",
+      "thesis": "Hard-cropped flash portrait, hand-inked masthead, cover lines thrown at angles in three fluorescent inks with no grid holding them.",
+      "palette": ["#FF2D95", "#D9FF00", "#00E5FF", "#101010"],
+      "materials": ["fluorescent ink", "hand lettering", "hard flash photography"],
+      "viewport": "The homepage as one cover: a cropped figure under a hand-drawn masthead, cover lines scattered over it.",
+      "case": "Holds audience identification - the subcultural, slightly-underground energy genuinely rhymes with this scene. Loses product clarity decisively: no grid and angled cover lines destroy the specification tables that are the entire argument of this product.",
+      "risk": "Everything legible about the catalog dies to make the cover work.",
+      "hero": "https://impeccable.style/worlds/cards/posters-covers-sleeves-movida-scene-magazine-hero.webp"
+    },
+    {
+      "id": "challenger-kiln-shelf",
+      "label": "Fracture Glaze Shelf",
+      "verdict": "declined",
+      "lineage": "kiln shelf under running glaze",
+      "palette": ["#EFEDE6", "#1B3FA0", "#0B1A44"],
+      "materials": ["kiln shelf", "molten glaze", "recipe cards"],
+      "case": "Loses both. Lifters do not live in ceramics, and a world whose whole drama is uncontrolled variability argues the opposite of a purity claim.",
+      "kept": "Cause and effect made visible per sample - recipe, thickness, position, final pool as one chain.",
+      "hero": "https://impeccable.style/worlds/cards/clay-ceramics-fracture-glaze-river-shelf-hero.webp"
+    },
+    {
+      "id": "challenger-understory",
+      "label": "Luminescent Understory",
+      "verdict": "declined",
+      "lineage": "alien forest floor at nightfall",
+      "palette": ["#07090A", "#4DE0E8", "#B79BFF"],
+      "materials": ["spore glow", "pulsing root veins"],
+      "case": "Loses both. Near-black plus a glowing accent is precisely the treatment you asked me to remove, and attention-as-illumination hides the information this catalog has to show.",
+      "kept": "One coherent state channel - attention, dormancy, bloom as luminance with afterglow.",
+      "hero": "https://impeccable.style/worlds/cards/dream-surreal-impossible-worlds-luminescent-alien-understory-hero.webp"
+    },
+    {
+      "id": "challenger-ebru",
+      "label": "Floated Pigment",
+      "verdict": "declined",
+      "lineage": "ebru marbling bath",
+      "palette": ["#F0EAD8", "#1D3557", "#C1462B"],
+      "materials": ["thickened water", "floated pigment", "single-contact lift"],
+      "case": "Loses both. Marbling says nothing about dosage or purity, and its irreversible one-shot mark has no counterpart anywhere in a storefront.",
+      "kept": "Every mark made by moving the real medium rather than drawing an imitation of it.",
+      "hero": "https://impeccable.style/worlds/cards/medium-native-ebru-floated-pigment-hero.webp"
+    }
+  ],
+  "reroll": {"registers": ["safer", "bolder"]},
+  "buildPath": {"value": "code", "toggle": false},
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "The clean DTC wellness storefront, played straight and built impeccably: big product photography, generous white space, one accent, review stars, sticky add-to-cart.",
+    "palette": ["#FFFFFF", "#1A1A1A", "#2F6F4E", "#EFEAE3"],
+    "materials": ["airy grid", "lifestyle photography", "soft neutrals"],
+    "viewport": "The arrangement a visitor already expects, at full craft.",
+    "risk": "Indistinguishable from every competitor by design - which is sometimes exactly what converts."
+  },
+  "steer": true
+}

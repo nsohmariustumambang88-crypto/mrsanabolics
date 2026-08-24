@@ -1,0 +1,344 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-21T00:00:00Z",
+  "title": "Design System: MrAnabolics",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Handmade Paper",
+        "canonical": "hsl(40 30% 94%)",
+        "darkCounterpart": "hsl(215 46% 14%)",
+        "tonalRamp": ["hsl(40 30% 20%)", "hsl(40 30% 32%)", "hsl(40 30% 44%)", "hsl(40 30% 56%)", "hsl(40 30% 68%)", "hsl(40 30% 80%)", "hsl(40 30% 90%)", "hsl(40 30% 97%)"]
+      },
+      "paper-raised": {
+        "role": "neutral",
+        "displayName": "Lifted Sheet",
+        "canonical": "hsl(42 38% 97%)",
+        "darkCounterpart": "hsl(214 40% 18%)",
+        "tonalRamp": ["hsl(42 38% 22%)", "hsl(42 38% 34%)", "hsl(42 38% 46%)", "hsl(42 38% 58%)", "hsl(42 38% 70%)", "hsl(42 38% 82%)", "hsl(42 38% 92%)", "hsl(42 38% 98%)"]
+      },
+      "paper-sunk": {
+        "role": "neutral",
+        "displayName": "Sunk Paper",
+        "canonical": "hsl(38 24% 90%)",
+        "darkCounterpart": "hsl(216 50% 11%)",
+        "tonalRamp": ["hsl(38 24% 18%)", "hsl(38 24% 30%)", "hsl(38 24% 42%)", "hsl(38 24% 54%)", "hsl(38 24% 66%)", "hsl(38 24% 78%)", "hsl(38 24% 88%)", "hsl(38 24% 96%)"]
+      },
+      "bath": {
+        "role": "neutral",
+        "displayName": "The Bath (thickened size)",
+        "canonical": "hsl(215 46% 14%)",
+        "tonalRamp": ["hsl(215 46% 8%)", "hsl(215 46% 14%)", "hsl(215 46% 24%)", "hsl(215 46% 36%)", "hsl(215 46% 48%)", "hsl(215 46% 62%)", "hsl(215 46% 78%)", "hsl(215 46% 92%)"]
+      },
+      "bath-raised": {
+        "role": "neutral",
+        "displayName": "Raised Size",
+        "canonical": "hsl(214 40% 18%)",
+        "tonalRamp": ["hsl(214 40% 8%)", "hsl(214 40% 18%)", "hsl(214 40% 28%)", "hsl(214 40% 40%)", "hsl(214 40% 52%)", "hsl(214 40% 66%)", "hsl(214 40% 80%)", "hsl(214 40% 93%)"]
+      },
+      "bath-sunk": {
+        "role": "neutral",
+        "displayName": "Deep Size",
+        "canonical": "hsl(216 50% 11%)",
+        "tonalRamp": ["hsl(216 50% 6%)", "hsl(216 50% 11%)", "hsl(216 50% 22%)", "hsl(216 50% 34%)", "hsl(216 50% 46%)", "hsl(216 50% 60%)", "hsl(216 50% 76%)", "hsl(216 50% 92%)"]
+      },
+      "pigment-indigo": {
+        "role": "primary",
+        "displayName": "Çivit Indigo",
+        "canonical": "hsl(214 58% 26%)",
+        "darkCounterpart": "hsl(212 52% 66%)",
+        "tonalRamp": ["hsl(214 58% 15%)", "hsl(214 58% 26%)", "hsl(214 58% 34%)", "hsl(214 58% 44%)", "hsl(214 58% 56%)", "hsl(214 58% 68%)", "hsl(214 58% 82%)", "hsl(214 58% 94%)"]
+      },
+      "pigment-indigo-lift": {
+        "role": "primary",
+        "displayName": "Lifted Indigo",
+        "canonical": "hsl(212 46% 42%)",
+        "darkCounterpart": "hsl(210 56% 76%)",
+        "tonalRamp": ["hsl(212 46% 15%)", "hsl(212 46% 25%)", "hsl(212 46% 34%)", "hsl(212 46% 42%)", "hsl(212 46% 55%)", "hsl(212 46% 68%)", "hsl(212 46% 82%)", "hsl(212 46% 94%)"]
+      },
+      "pigment-madder": {
+        "role": "secondary",
+        "displayName": "Kök Boya Madder",
+        "canonical": "hsl(12 62% 45%)",
+        "darkCounterpart": "hsl(12 58% 60%)",
+        "tonalRamp": ["hsl(12 62% 15%)", "hsl(12 62% 25%)", "hsl(12 62% 35%)", "hsl(12 62% 45%)", "hsl(12 62% 57%)", "hsl(12 62% 69%)", "hsl(12 62% 82%)", "hsl(12 62% 94%)"]
+      },
+      "pigment-saffron": {
+        "role": "secondary",
+        "displayName": "Sarı Saffron",
+        "canonical": "hsl(36 74% 42%)",
+        "darkCounterpart": "hsl(36 62% 58%)",
+        "tonalRamp": ["hsl(36 74% 15%)", "hsl(36 74% 24%)", "hsl(36 74% 33%)", "hsl(36 74% 42%)", "hsl(36 74% 54%)", "hsl(36 74% 67%)", "hsl(36 74% 81%)", "hsl(36 74% 94%)"]
+      },
+      "pigment-verdigris": {
+        "role": "secondary",
+        "displayName": "Yeşil Verdigris",
+        "canonical": "hsl(162 34% 30%)",
+        "darkCounterpart": "hsl(162 32% 54%)",
+        "tonalRamp": ["hsl(162 34% 15%)", "hsl(162 34% 22%)", "hsl(162 34% 30%)", "hsl(162 34% 40%)", "hsl(162 34% 52%)", "hsl(162 34% 66%)", "hsl(162 34% 80%)", "hsl(162 34% 94%)"]
+      },
+      "pigment-lampblack": {
+        "role": "neutral",
+        "displayName": "İs Mürekkebi Lamp Black",
+        "canonical": "hsl(220 28% 11%)",
+        "darkCounterpart": "hsl(216 55% 6%)",
+        "tonalRamp": ["hsl(220 28% 6%)", "hsl(220 28% 11%)", "hsl(220 28% 20%)", "hsl(220 28% 32%)", "hsl(220 28% 45%)", "hsl(220 28% 60%)", "hsl(220 28% 77%)", "hsl(220 28% 93%)"]
+      },
+      "field-indigo": {
+        "role": "tertiary",
+        "displayName": "Field Indigo (bath depth, both themes)",
+        "canonical": "hsl(214 58% 24%)",
+        "darkCounterpart": "hsl(216 56% 20%)",
+        "tonalRamp": ["hsl(214 58% 12%)", "hsl(214 58% 18%)", "hsl(214 58% 24%)", "hsl(214 58% 34%)", "hsl(214 58% 46%)", "hsl(214 58% 60%)", "hsl(214 58% 78%)", "hsl(214 58% 93%)"]
+      },
+      "on-field": {
+        "role": "tertiary",
+        "displayName": "Cream On Field",
+        "canonical": "hsl(40 30% 94%)",
+        "darkCounterpart": "hsl(40 28% 93%)",
+        "tonalRamp": ["hsl(40 30% 20%)", "hsl(40 30% 32%)", "hsl(40 30% 44%)", "hsl(40 30% 56%)", "hsl(40 30% 68%)", "hsl(40 30% 80%)", "hsl(40 30% 90%)", "hsl(40 30% 97%)"]
+      },
+      "size-coat": {
+        "role": "tertiary",
+        "displayName": "Size Ground Coat",
+        "canonical": "hsl(214 22% 83%)",
+        "darkCounterpart": "hsl(216 44% 19%)",
+        "tonalRamp": ["hsl(214 22% 16%)", "hsl(214 22% 28%)", "hsl(214 22% 40%)", "hsl(214 22% 52%)", "hsl(214 22% 64%)", "hsl(214 22% 76%)", "hsl(214 22% 86%)", "hsl(214 22% 95%)"]
+      },
+      "plate-size": {
+        "role": "tertiary",
+        "displayName": "Plate Ground",
+        "canonical": "hsl(38 24% 90%)",
+        "darkCounterpart": "hsl(216 44% 17%)",
+        "tonalRamp": ["hsl(38 24% 18%)", "hsl(38 24% 30%)", "hsl(38 24% 42%)", "hsl(38 24% 54%)", "hsl(38 24% 66%)", "hsl(38 24% 78%)", "hsl(38 24% 88%)", "hsl(38 24% 96%)"]
+      },
+      "plate-band": {
+        "role": "tertiary",
+        "displayName": "Plate Band",
+        "canonical": "hsl(42 38% 97%)",
+        "darkCounterpart": "hsl(214 30% 34%)",
+        "tonalRamp": ["hsl(42 38% 22%)", "hsl(42 38% 34%)", "hsl(42 38% 46%)", "hsl(42 38% 58%)", "hsl(42 38% 70%)", "hsl(42 38% 82%)", "hsl(42 38% 92%)", "hsl(42 38% 98%)"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "hsl(220 28% 13%)",
+        "darkCounterpart": "hsl(40 28% 93%)",
+        "tonalRamp": ["hsl(220 28% 8%)", "hsl(220 28% 13%)", "hsl(220 28% 22%)", "hsl(220 28% 34%)", "hsl(220 28% 46%)", "hsl(220 28% 62%)", "hsl(220 28% 78%)", "hsl(220 28% 93%)"]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Soft Ink",
+        "canonical": "hsl(218 14% 38%)",
+        "darkCounterpart": "hsl(214 20% 76%)",
+        "tonalRamp": ["hsl(218 14% 15%)", "hsl(218 14% 26%)", "hsl(218 14% 38%)", "hsl(218 14% 50%)", "hsl(218 14% 62%)", "hsl(218 14% 74%)", "hsl(218 14% 85%)", "hsl(218 14% 95%)"]
+      },
+      "ink-faint": {
+        "role": "neutral",
+        "displayName": "Faint Ink",
+        "canonical": "hsl(216 12% 52%)",
+        "darkCounterpart": "hsl(214 16% 62%)",
+        "tonalRamp": ["hsl(216 12% 16%)", "hsl(216 12% 28%)", "hsl(216 12% 40%)", "hsl(216 12% 52%)", "hsl(216 12% 64%)", "hsl(216 12% 76%)", "hsl(216 12% 86%)", "hsl(216 12% 95%)"]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Plate Rule",
+        "canonical": "hsl(38 18% 82%)",
+        "darkCounterpart": "hsl(214 28% 26%)",
+        "tonalRamp": ["hsl(38 18% 18%)", "hsl(38 18% 30%)", "hsl(38 18% 42%)", "hsl(38 18% 54%)", "hsl(38 18% 66%)", "hsl(38 18% 76%)", "hsl(38 18% 86%)", "hsl(38 18% 95%)"]
+      },
+      "rule-strong": {
+        "role": "neutral",
+        "displayName": "Strong Plate Rule",
+        "canonical": "hsl(38 16% 72%)",
+        "darkCounterpart": "hsl(214 26% 34%)",
+        "tonalRamp": ["hsl(38 16% 18%)", "hsl(38 16% 28%)", "hsl(38 16% 40%)", "hsl(38 16% 52%)", "hsl(38 16% 62%)", "hsl(38 16% 72%)", "hsl(38 16% 84%)", "hsl(38 16% 94%)"]
+      }
+    },
+    "categoryPigments": {
+      "note": "Bare HSL triplets; valid only through categoryPigment(slug), which wraps them in hsl(). Dark values lift lightness only and track the light theme's saturation.",
+      "light": {
+        "injectables": "214 58% 32%",
+        "orals": "12 62% 45%",
+        "sarms": "162 34% 32%",
+        "pct": "36 74% 40%",
+        "peptides": "268 32% 42%",
+        "fat-burners": "24 68% 46%",
+        "growth-hormone": "196 46% 34%",
+        "ancillaries": "218 14% 40%",
+        "testosterone": "232 44% 40%",
+        "bundles": "340 38% 42%",
+        "accessories": "96 26% 34%"
+      },
+      "dark": {
+        "injectables": "214 50% 64%",
+        "orals": "12 54% 60%",
+        "sarms": "162 30% 54%",
+        "pct": "36 58% 58%",
+        "peptides": "268 30% 64%",
+        "fat-burners": "24 56% 60%",
+        "growth-hormone": "196 40% 56%",
+        "ancillaries": "214 16% 62%",
+        "testosterone": "232 38% 64%",
+        "bundles": "340 34% 62%",
+        "accessories": "96 24% 54%"
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The hero claim only. One per page, line-broken by hand, one clause in indigo." },
+      "headline": { "displayName": "Headline", "purpose": "Section headings. Never preceded by an eyebrow." },
+      "title": { "displayName": "Title", "purpose": "Product card names, plate and panel headings; shifts to indigo on card hover." },
+      "body": { "displayName": "Body", "purpose": "Running text in soft ink, held to a 68ch measure (54ch lead/column)." },
+      "label": { "displayName": "Label", "purpose": "Mono uppercase column headings, filter groups, badges, legal. Beside or below content, never above a heading." },
+      "assay": { "displayName": "Assay", "purpose": "Mono tabular figures: prices, concentrations, counts, dates, spec tables." }
+    },
+    "shadows": [
+      { "name": "lift", "value": "0 1px 2px -1px hsl(220 28% 11% / 0.14), 0 8px 22px -12px hsl(214 58% 26% / 0.28)", "purpose": "A sheet resting on the size: product cards, floated labels over the bath, the condensed header. Cast in lamp black and indigo, never neutral grey." },
+      { "name": "lift-strong", "value": "0 2px 4px -2px hsl(220 28% 11% / 0.16), 0 18px 44px -20px hsl(214 58% 26% / 0.34)", "purpose": "A sheet being drawn out: card hover, overlays, dialogs." },
+      { "name": "lift-dark", "value": "0 1px 2px -1px hsl(216 55% 6% / 0.6), 0 10px 26px -14px hsl(216 55% 6% / 0.8)", "purpose": "The bath substrate's resting shadow — lamp black only, deeper." },
+      { "name": "lift-strong-dark", "value": "0 2px 6px -2px hsl(216 55% 6% / 0.7), 0 22px 50px -22px hsl(216 55% 6% / 0.9)", "purpose": "The bath substrate's hover and overlay shadow." }
+    ],
+    "motion": [
+      { "name": "ease-lift", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "The lift: fast contact, long settle. Default easing for hover, header condensation, and the hero reveal." },
+      { "name": "ease-spread", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Pigment spreading outward from a contact point." },
+      { "name": "duration-state", "value": "300ms", "purpose": "Standard state transition (colour, border, elevation)." },
+      { "name": "duration-plate", "value": "700ms", "purpose": "The product plate's scale on card hover." },
+      { "name": "spread", "value": "spread 0.8s cubic-bezier(0.16, 1, 0.3, 1) both", "purpose": "Scale 0.4 to 1 with opacity — the one authored reveal, used for the bath lift. Reduced motion skips it." }
+    ],
+    "materials": [
+      { "name": "substrate-fibre-light", "value": "fractalNoise baseFrequency 0.85, 4 octaves, desaturated; mix-blend-mode: multiply; opacity: 0.115", "purpose": "Paper fibre under the whole sheet. A fixed material layer, not a decorative overlay." },
+      { "name": "substrate-fibre-dark", "value": "same turbulence; mix-blend-mode: screen; opacity: 0.075", "purpose": "On the bath the same fibre reads as surface caustics." },
+      { "name": "deckle", "value": "SVG torn-edge mask, 240px x 100%, repeat-x", "purpose": "The torn edge where a sheet meets the bath it was lifted from. Bottom edges only; disabled via .mask-none where the seam turns vertical." },
+      { "name": "duotone", "value": "filter: url(#ebru-duotone) contrast(1.04); dark variant url(#ebru-duotone-dark)", "purpose": "Prints editorial photography in the house inks. CSS blend modes are not a substitute — they leave midtones grey." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" },
+      { "name": "container", "value": "86rem" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The lead action: indigo pill with a trailing arrow that slides on hover.",
+      "html": "<a class=\"ds-btn-primary\" href=\"#\">Browse the catalogue<svg class=\"ds-btn-primary__arrow\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" width=\"16\" height=\"16\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></a>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 0.625rem; background: hsl(var(--pig-indigo, 214 58% 26%)); color: hsl(var(--primary-foreground, 42 38% 97%)); font-family: var(--font-archivo), sans-serif; font-size: 0.875rem; font-weight: 500; padding: 0.875rem 1.5rem; border-radius: 999px; text-decoration: none; transition: background-color 300ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-primary__arrow { transition: transform 300ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-primary:hover { background: hsl(var(--pig-indigo-lift, 212 46% 42%)); } .ds-btn-primary:hover .ds-btn-primary__arrow { transform: translateX(4px); } .ds-btn-primary:focus-visible { outline: 2px solid hsl(var(--pig-indigo-lift, 212 46% 42%)); outline-offset: 2px; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "The secondary action: a hairline pill that takes indigo and sunk paper on hover.",
+      "html": "<a class=\"ds-btn-outline\" href=\"#\">How testing works</a>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; gap: 0.625rem; background: transparent; color: hsl(var(--ink, 220 28% 13%)); font-family: var(--font-archivo), sans-serif; font-size: 0.875rem; font-weight: 500; padding: 0.875rem 1.5rem; border: 1px solid hsl(var(--rule-strong, 38 16% 72%)); border-radius: 999px; text-decoration: none; transition: border-color 300ms, background-color 300ms; } .ds-btn-outline:hover { border-color: hsl(var(--pig-indigo, 214 58% 26%)); background: hsl(var(--paper-sunk, 38 24% 90%)); } .ds-btn-outline:focus-visible { outline: 2px solid hsl(var(--pig-indigo-lift, 212 46% 42%)); outline-offset: 2px; }"
+    },
+    {
+      "name": "Product Sheet Card",
+      "kind": "card",
+      "refersTo": "card-sheet",
+      "description": "A product lifted out of the bath: square paper stock, a category plate rule on the top edge, and a deeper shadow on hover.",
+      "html": "<article class=\"ds-card\"><span class=\"ds-card__plate\"></span><div class=\"ds-card__well\"></div><div class=\"ds-card__body\"><h3 class=\"ds-card__title\">Testosterone Enanthate</h3><p class=\"ds-card__chain\">Halberd Labs<span class=\"ds-card__sep\">/</span><span class=\"ds-card__num\">250 mg/mL</span></p><div class=\"ds-card__foot\"><span class=\"ds-card__price\">$74.00</span><span class=\"ds-card__state\"><span class=\"ds-card__dot\"></span>In stock</span></div></div><button class=\"ds-card__action\" type=\"button\">Add to cart</button></article>",
+      "css": ".ds-card { display: flex; flex-direction: column; width: 17rem; background: hsl(var(--card, 42 38% 97%)); border: 1px solid hsl(var(--rule, 38 18% 82%)); border-radius: 0; box-shadow: 0 1px 2px -1px hsl(220 28% 11% / 0.14), 0 8px 22px -12px hsl(214 58% 26% / 0.28); transition: transform 300ms cubic-bezier(0.16,1,0.3,1), box-shadow 300ms cubic-bezier(0.16,1,0.3,1), border-color 300ms; font-family: var(--font-archivo), sans-serif; color: hsl(var(--ink, 220 28% 13%)); } .ds-card:hover { transform: translateY(-4px); border-color: hsl(var(--rule-strong, 38 16% 72%)); box-shadow: 0 2px 4px -2px hsl(220 28% 11% / 0.16), 0 18px 44px -20px hsl(214 58% 26% / 0.34); } .ds-card__plate { display: block; height: 1px; width: 100%; background: hsl(214 58% 32%); } .ds-card__well { aspect-ratio: 4/5; background: hsl(var(--paper-sunk, 38 24% 90%)); } .ds-card__body { padding: 1rem; } .ds-card__title { font-family: var(--font-familjen), sans-serif; font-size: 1rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; } .ds-card:hover .ds-card__title { color: hsl(var(--pig-indigo, 214 58% 26%)); } .ds-card__chain { margin: 0.375rem 0 0; font-size: 0.75rem; color: hsl(var(--ink-faint, 216 12% 52%)); } .ds-card__sep { padding: 0 0.375rem; color: hsl(var(--rule-strong, 38 16% 72%)); } .ds-card__num { font-variant-numeric: tabular-nums; } .ds-card__foot { display: flex; align-items: flex-end; justify-content: space-between; padding-top: 1rem; } .ds-card__price { font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; } .ds-card__state { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.6875rem; color: hsl(var(--pig-verdigris, 162 34% 30%)); } .ds-card__dot { width: 6px; height: 6px; border-radius: 999px; background: hsl(var(--pig-verdigris, 162 34% 30%)); } .ds-card__action { display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; border: 0; border-top: 1px solid hsl(var(--rule, 38 18% 82%)); background: transparent; color: hsl(var(--ink-soft, 218 14% 38%)); font: inherit; font-size: 0.875rem; font-weight: 500; padding: 0.75rem 1rem; cursor: pointer; transition: background-color 300ms, color 300ms; } .ds-card__action:hover { background: hsl(var(--pig-indigo, 214 58% 26%)); color: hsl(var(--primary-foreground, 42 38% 97%)); }"
+    },
+    {
+      "name": "Category Chip",
+      "kind": "chip",
+      "refersTo": "chip-pigment",
+      "description": "An opaque pill carrying one category's pigment as a dot; safe to float over live marbling.",
+      "html": "<a class=\"ds-chip\" href=\"#\"><span class=\"ds-chip__dot\"></span>Peptides</a>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 0.375rem; background: hsl(var(--paper, 40 30% 94%)); color: hsl(var(--ink-soft, 218 14% 38%)); border: 1px solid hsl(var(--rule, 38 18% 82%)); border-radius: 999px; padding: 0.25rem 0.625rem; font-family: var(--font-archivo), sans-serif; font-size: 0.75rem; text-decoration: none; transition: border-color 300ms, color 300ms; } .ds-chip__dot { width: 6px; height: 6px; border-radius: 999px; background: hsl(268 32% 42%); } .ds-chip:hover { border-color: hsl(var(--pig-indigo-lift, 212 46% 42%)); color: hsl(var(--ink, 220 28% 13%)); } .ds-chip:focus-visible { outline: 2px solid hsl(var(--pig-indigo-lift, 212 46% 42%)); outline-offset: 2px; }"
+    },
+    {
+      "name": "Underline Input",
+      "kind": "input",
+      "refersTo": "input-underline",
+      "description": "The only input shape in layout chrome: transparent on one hairline, submit inline at the right edge.",
+      "html": "<div class=\"ds-field\"><input class=\"ds-field__input\" type=\"email\" placeholder=\"you@example.com\" aria-label=\"Email\"><button class=\"ds-field__submit\" type=\"button\" aria-label=\"Subscribe\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" width=\"16\" height=\"16\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></button></div>",
+      "css": ".ds-field { display: flex; align-items: stretch; width: 20rem; border-bottom: 1px solid hsl(var(--rule-strong, 38 16% 72%)); transition: border-color 300ms; } .ds-field:focus-within { border-bottom-color: hsl(var(--pig-indigo, 214 58% 26%)); } .ds-field__input { flex: 1; background: transparent; border: 0; outline: none; padding: 0.5rem 0; font-family: var(--font-archivo), sans-serif; font-size: 0.875rem; color: hsl(var(--ink, 220 28% 13%)); caret-color: hsl(var(--pig-madder, 12 62% 45%)); } .ds-field__input::placeholder { color: hsl(var(--ink-faint, 216 12% 52%)); } .ds-field__submit { display: flex; align-items: center; padding: 0 0.5rem; background: transparent; border: 0; color: hsl(var(--ink-soft, 218 14% 38%)); cursor: pointer; transition: color 300ms; } .ds-field__submit:hover { color: hsl(var(--pig-indigo, 214 58% 26%)); }"
+    },
+    {
+      "name": "Site Header",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Sticky header on the page ground with a bottom hairline; condenses and takes the lift shadow on scroll.",
+      "html": "<header class=\"ds-nav\"><a class=\"ds-nav__brand\" href=\"#\"><svg viewBox=\"0 0 32 32\" fill=\"none\" width=\"32\" height=\"32\"><circle cx=\"16\" cy=\"16\" r=\"15\" stroke=\"hsl(214 58% 26%)\" stroke-width=\"1.5\"/><circle cx=\"16\" cy=\"16\" r=\"10.5\" stroke=\"hsl(212 46% 42%)\" stroke-width=\"1.25\" opacity=\"0.9\"/><circle cx=\"16\" cy=\"16\" r=\"6.25\" stroke=\"hsl(214 58% 26%)\" stroke-width=\"1.25\" opacity=\"0.7\"/><circle cx=\"16\" cy=\"16\" r=\"3\" fill=\"hsl(12 62% 45%)\"/></svg><span class=\"ds-nav__wordmark\">MrAnabolics<span class=\"ds-nav__sub\">Floated &amp; documented</span></span></a><nav class=\"ds-nav__links\"><a href=\"#\">Shop</a><a class=\"is-active\" href=\"#\">Categories</a><a href=\"#\">Journal</a></nav><span class=\"ds-nav__cart\"><span class=\"ds-nav__count\">3</span></span></header>",
+      "css": ".ds-nav { display: flex; align-items: center; gap: 1.5rem; background: hsl(var(--paper, 40 30% 94%)); border-bottom: 1px solid hsl(var(--rule, 38 18% 82%)); padding: 0.75rem 1.5rem; font-family: var(--font-archivo), sans-serif; color: hsl(var(--ink, 220 28% 13%)); box-shadow: 0 1px 2px -1px hsl(220 28% 11% / 0.14), 0 8px 22px -12px hsl(214 58% 26% / 0.28); } .ds-nav__brand { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit; } .ds-nav__wordmark { display: flex; flex-direction: column; font-family: var(--font-familjen), sans-serif; font-size: 1.125rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1; } .ds-nav__sub { margin-top: 0.25rem; font-family: var(--font-jetbrains), monospace; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.18em; color: hsl(var(--ink-faint, 216 12% 52%)); } .ds-nav__links { display: flex; gap: 0.25rem; margin-left: 1rem; } .ds-nav__links a { padding: 0.5rem 0.75rem; border-radius: 0; font-size: 0.875rem; color: hsl(var(--ink-soft, 218 14% 38%)); text-decoration: none; transition: background-color 300ms, color 300ms; } .ds-nav__links a:hover { background: hsl(var(--paper-sunk, 38 24% 90%)); color: hsl(var(--ink, 220 28% 13%)); } .ds-nav__links a.is-active { color: hsl(var(--pig-indigo, 214 58% 26%)); } .ds-nav__cart { margin-left: auto; display: inline-flex; align-items: center; gap: 0.5rem; border: 1px solid hsl(var(--rule-strong, 38 16% 72%)); padding: 0.5rem 0.75rem; } .ds-nav__count { font-family: var(--font-jetbrains), monospace; font-size: 0.75rem; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Section Heading",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The only section heading pattern: title, optional measured description, optional underlined link. No eyebrow, by design.",
+      "html": "<div class=\"ds-heading\"><div><h2 class=\"ds-heading__title\">Every batch, floated and documented</h2><p class=\"ds-heading__desc\">We publish the specification, the batch, and the protocol for each compound before you decide.</p></div><a class=\"ds-heading__link\" href=\"#\">View all<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" width=\"16\" height=\"16\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></a></div>",
+      "css": ".ds-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.25rem; font-family: var(--font-archivo), sans-serif; color: hsl(var(--ink, 220 28% 13%)); } .ds-heading__title { margin: 0; font-family: var(--font-familjen), sans-serif; font-size: clamp(1.75rem, 3.2vw, 2.75rem); font-weight: 600; line-height: 1.05; letter-spacing: -0.035em; text-wrap: balance; } .ds-heading__desc { max-width: 68ch; margin: 0.75rem 0 0; font-size: 0.9375rem; line-height: 1.625; color: hsl(var(--ink-soft, 218 14% 38%)); } .ds-heading__link { display: inline-flex; align-items: center; gap: 0.5rem; flex-shrink: 0; padding-bottom: 0.25rem; border-bottom: 1px solid hsl(var(--rule-strong, 38 16% 72%)); font-size: 0.875rem; font-weight: 500; color: hsl(var(--ink-soft, 218 14% 38%)); text-decoration: none; transition: color 300ms, border-color 300ms; } .ds-heading__link:hover { color: hsl(var(--pig-indigo, 214 58% 26%)); border-bottom-color: hsl(var(--pig-indigo, 214 58% 26%)); } .ds-heading__link:hover svg { transform: translateX(4px); } .ds-heading__link svg { transition: transform 300ms cubic-bezier(0.16,1,0.3,1); }"
+    },
+    {
+      "name": "Drop Mark",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The house mark: one drop of pigment seen from above, stating the palette wherever it appears.",
+      "html": "<svg class=\"ds-mark\" viewBox=\"0 0 32 32\" fill=\"none\" role=\"img\" aria-label=\"MrAnabolics\"><circle cx=\"16\" cy=\"16\" r=\"15\" stroke=\"hsl(var(--pig-indigo, 214 58% 26%))\" stroke-width=\"1.5\"/><circle cx=\"16\" cy=\"16\" r=\"10.5\" stroke=\"hsl(var(--pig-indigo-lift, 212 46% 42%))\" stroke-width=\"1.25\" opacity=\"0.9\"/><circle cx=\"16\" cy=\"16\" r=\"6.25\" stroke=\"hsl(var(--pig-indigo, 214 58% 26%))\" stroke-width=\"1.25\" opacity=\"0.7\"/><circle cx=\"16\" cy=\"16\" r=\"3\" fill=\"hsl(var(--pig-madder, 12 62% 45%))\"/></svg>",
+      "css": ".ds-mark { width: 40px; height: 40px; display: block; }"
+    },
+    {
+      "name": "Field Band",
+      "kind": "custom",
+      "refersTo": "field-band",
+      "description": "A large indigo field carrying cream: announcement bar, deals band, closing newsletter. Stays at bath depth in both themes.",
+      "html": "<section class=\"ds-field-band\"><h2 class=\"ds-field-band__title\">Read the assay before you decide.</h2><p class=\"ds-field-band__body\">Certificates of analysis are published with every batch.</p><a class=\"ds-field-band__cta\" href=\"#\">How testing works</a></section>",
+      "css": ".ds-field-band { background: hsl(var(--field-indigo, 214 58% 24%)); color: hsl(var(--on-field, 40 30% 94%)); padding: 3rem 2.5rem; border-radius: 0; font-family: var(--font-archivo), sans-serif; } .ds-field-band__title { margin: 0; font-family: var(--font-familjen), sans-serif; font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 600; line-height: 1.02; letter-spacing: -0.04em; } .ds-field-band__body { max-width: 54ch; margin: 1.5rem 0 0; font-size: 1rem; line-height: 1.625; color: hsl(var(--on-field, 40 30% 94%) / 0.8); } .ds-field-band__cta { display: inline-flex; align-items: center; gap: 0.625rem; margin-top: 2rem; background: hsl(var(--paper, 40 30% 94%)); color: hsl(var(--ink, 220 28% 13%)); border-radius: 999px; padding: 0.875rem 1.5rem; font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: background-color 300ms; } .ds-field-band__cta:hover { background: hsl(var(--paper-raised, 42 38% 97%)); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Floated Pigment",
+    "overview": "A compound is a substance suspended at a concentration; ebru is the craft of exactly that. The whole system is built on one physical model: pigment is thrown onto a thickened bath, combed, and lifted onto a sheet of handmade paper in a single contact. Every surface in the build is either the bath or the sheet, and every colour in it comes from one historical pigment set — indigo, madder, saffron, verdigris, lamp black. Nothing is invented to fill a semantic slot.\n\nThe two themes are not a light mode and a dark mode of the same page. Light is the lifted sheet: warm, fibrous paper under daylight, ink and hairline plate rules on top of it. Dark is the bath: thickened water with indigo in it, before the lift. The same pigments run in both; only the substrate changes, and pigments lift in lightness for legibility while their saturation stays where the sheet put it. The result is one world under two lights rather than two palettes.\n\nDensity is that of a technical register, not a marketing page: hairline-ruled grids, tabular assay figures, mono labels for anything measured, generous measure limits on running text (68ch / 54ch). The build refuses the two arrangements this category ships — the near-black page with one acid accent, and the soft DTC wellness card grid — and it refuses the materials that carry them: no glass panels, no gradient text, no glow, no stock product photography, no eyebrow above a heading.",
+    "keyCharacteristics": [
+      "One historical pigment set on two substrates; nothing invented to fill a slot.",
+      "Paper stock and real offset-and-blur shadow instead of translucency; no glass anywhere.",
+      "Hairline plate rules everywhere; grids are drawn by a 1px gap showing the container colour.",
+      "Mono, tabular figures for every assay number, price, and label.",
+      "Authored SVG catalogue imagery — a drawn vessel per category, deterministic per slug.",
+      "One authored motion moment: the hero bath lifting, and pointer combing."
+    ],
+    "rules": [
+      { "name": "The One Bath Rule", "body": "Every colour on every surface comes from the pigment set or the substrate tokens. If a new state needs a colour, it takes one of the five pigments and a role, never a new hue.", "section": "colors" },
+      { "name": "The Lift Lightness, Never Saturation Rule", "body": "Moving a pigment from the sheet to the bath raises its lightness only. Re-saturating is what turned madder into hot orange and verdigris into lime; both dark ramps track their light counterparts' saturation.", "section": "colors" },
+      { "name": "The Field Stays Deep Rule", "body": "Text and rules lift on the bath; large indigo fields do not. Fields use the dedicated field pair and stay at bath depth in both themes — a field that lifts becomes a pale block brighter than the page, which is an inverted palette rather than one world under two lights.", "section": "colors" },
+      { "name": "The Coat Is Not The Sheet Rule", "body": "The bath's ground coat is its own token and must never be set to the sheet's paper value. When it was, roughly half the marbled field read as bare paper.", "section": "colors" },
+      { "name": "The Wrapped Pigment Rule", "body": "The category tokens are bare HSL triplets, not colours. They are only valid through categoryPigment(slug), which wraps them in hsl(). Handing a raw var(--cat-…) to a style paints nothing, silently, and no error is raised.", "section": "colors" },
+      { "name": "The No-Eyebrow Rule", "body": "No kicker, eyebrow, or label sits above a heading anywhere. The shared section heading component has no eyebrow prop, by design; a heading carries its own weight.", "section": "typography" },
+      { "name": "The Mono Is Measurement Rule", "body": "Monospace marks data — a figure, a batch, a unit, a category label. It is never a technical costume on prose, and it never sets a sentence.", "section": "typography" },
+      { "name": "The Tabular Assay Rule", "body": "Every number a reader might compare or align is tabular. Tabular figures are applied globally to table cells, times, and anything carrying the numeric marker, plus an explicit class on prices and specs.", "section": "typography" },
+      { "name": "The Closed Row Rule", "body": "Because the rules are gaps, an incomplete final row leaves a bare rule-coloured cell. Every hairline grid must close its short row with the grid filler component (or render through the product grid), filling the remainder with the page ground so a short row reads as an empty slot in a ruled table.", "section": "layout" },
+      { "name": "The Lift-On-Contact Rule", "body": "Elevation is a response to pointer contact, not a resting decoration. A card rests on lift and moves to lift-strong with a 1px rise on hover, over 300ms on the lift easing.", "section": "elevation" },
+      { "name": "The Opaque-Over-Pigment Rule", "body": "Anything set over live marbling — a chip, a label, a card — takes a solid substrate colour and a hairline rule. Never a translucent panel.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do draw every colour from the pigment set and the substrate tokens; give a new state a role, not a new hue.",
+      "Do route every category colour through categoryPigment(slug); the raw token is not a valid CSS colour.",
+      "Do close every hairline grid's short final row with the grid fillers, or render through the product grid.",
+      "Do set prices, concentrations, counts, and dates in mono with tabular figures.",
+      "Do keep anything sitting over live pigment opaque, with a hairline rule.",
+      "Do use 1px rules only, and express emphasis by changing the rule's colour, not its weight.",
+      "Do hold running text to the 68ch measure (54ch for lead and column copy).",
+      "Do keep motion to the one authored moment — the hero's lift and pointer combing — on the lift easing (cubic-bezier(0.16, 1, 0.3, 1)), with reduced motion honoured.",
+      "Do keep routes as server components owning metadata and JSON-LD, with interactivity in client children."
+    ],
+    "donts": [
+      "Don't put a kicker, eyebrow, or label above a heading. Ever.",
+      "Don't use glass, backdrop blur, glow, or gradient text. A tonal scrim fading a bath into the page ground is the only gradient the world uses.",
+      "Don't cast a hard offset shadow; the only shadows are the two lift shadows, with blur, in lamp black and indigo.",
+      "Don't raise a pigment's saturation when moving it to the bath, and don't lift a large indigo field — use the field pair.",
+      "Don't set the bath's ground coat to the sheet's paper value, or dress a product plate in the page's paper tokens.",
+      "Don't add stock product photography; catalogue imagery is authored and deterministic.",
+      "Don't add a scrolling marquee or per-section entrance animation.",
+      "Don't use emoji or mixed-weight glyph icons; icons are lucide or authored SVG at a consistent 1.5–1.75 stroke.",
+      "Don't thicken a border, add a second accent colour to a badge set, or introduce a boxed input to layout chrome."
+    ]
+  }
+}
