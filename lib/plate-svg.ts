@@ -1,5 +1,5 @@
 import { seededRandom } from '@/components/ebru/marbling';
-import type { Product } from '@/lib/types';
+import type { ProductSummary } from '@/lib/types';
 
 /*
   The product plate, as SVG markup.
@@ -33,23 +33,22 @@ export type Vessel = 'vial' | 'capsule' | 'dropper' | 'syringe' | 'carton';
 export function vesselFor(categorySlug: string): Vessel {
   switch (categorySlug) {
     case 'orals':
-    case 'pct':
+    case 'post-cycle':
     case 'fat-burners':
+    case 'sexual-health':
+    case 'skin-health':
       return 'capsule';
-    case 'sarms':
-      return 'dropper';
-    case 'ancillaries':
-    case 'accessories':
-      return 'syringe';
-    case 'bundles':
+    case 'immune-boosters':
       return 'carton';
+    case 'syringes-needles':
+      return 'syringe';
     default:
       return 'vial';
   }
 }
 
 /** The strength marking on the label, if the specification carries one. */
-export function markingFor(product: Product): string {
+export function markingFor(product: ProductSummary): string {
   const spec = product.specifications.find((s) =>
     /concentration|strength|dose|volume/i.test(s.label)
   );
@@ -131,7 +130,7 @@ export type PlateOptions = {
  * alternating pigment and size, a hairline plate rule, and the vessel drawn over a paper
  * backing plate so it stays legible.
  */
-export function buildPlateSvg(product: Product, options: PlateOptions): string {
+export function buildPlateSvg(product: ProductSummary, options: PlateOptions): string {
   const { colors, showMarking = true, fontFamily, standalone = false } = options;
   const rand = seededRandom(slugSeed(product.slug));
 

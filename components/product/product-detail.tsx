@@ -21,8 +21,10 @@ import {
 } from '@/components/ui/accordion';
 import { useStore } from '@/components/providers/store-provider';
 import { stockState } from '@/components/product/product-card';
+import { useSiteSettings } from '@/components/providers/settings-provider';
 import { ProductGrid } from '@/components/product/product-grid';
-import { ProductPlate } from '@/components/product/product-plate';
+import { ProductPlate, isPhotograph } from '@/components/product/product-plate';
+import { ReviewForm } from '@/components/product/review-form';
 import { SectionHeading } from '@/components/product/section-heading';
 import { formatPrice } from '@/lib/format';
 import { categoryPigment } from '@/lib/site';
@@ -36,6 +38,15 @@ import { cn } from '@/lib/utils';
 */
 
 function Rating({ value, count }: { value: number; count?: number }) {
+  /* Nothing to rate with yet. Five hollow stars and "0.0" would read as a bad score. Per-review
+     stars pass no count at all and keep rendering. */
+  if (count === 0) {
+    return (
+      <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
+        No reviews yet
+      </p>
+    );
+  }
   return (
     <p className="flex items-center gap-2.5">
       <span className="flex gap-0.5" role="img" aria-label={`${value} out of 5`}>
@@ -107,16 +118,20 @@ function ProtocolChain({ product }: { product: Product }) {
 export function ProductDetail({
   product,
   related,
+  reviewsOpen = false,
 }: {
   product: Product;
   related: Product[];
+  /** Whether the site is accepting new reviews. Read from settings on the server. */
+  reviewsOpen?: boolean;
 }) {
   const { addToCart, toggleWishlist, isWishlisted } = useStore();
   const [active, setActive] = React.useState(0);
   const [qty, setQty] = React.useState(1);
   const [added, setAdded] = React.useState(false);
   const wished = isWishlisted(product.id);
-  const state = stockState(product);
+  const { lowStockThreshold } = useSiteSettings();
+  const state = stockState(product, lowStockThreshold);
 
   const discount = product.compareAtPrice
     ? Math.round((1 - product.price / product.compareAtPrice) * 100)
@@ -149,6 +164,19 @@ export function ProductDetail({
               {product.category}
             </Link>
           </li>
+          {product.subcategory && product.subcategoryName && (
+            <>
+              <ChevronRight className="h-3 w-3" strokeWidth={1.75} aria-hidden="true" />
+              <li>
+                <Link
+                  href={`/shop?category=${product.categorySlug}&group=${product.subcategory}`}
+                  className="transition-colors hover:text-ink"
+                >
+                  {product.subcategoryName}
+                </Link>
+              </li>
+            </>
+          )}
           <ChevronRight className="h-3 w-3" strokeWidth={1.75} aria-hidden="true" />
           <li className="text-ink-soft" aria-current="page">
             {product.name}
@@ -174,7 +202,9 @@ export function ProductDetail({
             </div>
 
             <p className="mt-3 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
-              Plate drawn from the batch record — not a photograph of the vial
+              {isPhotograph(product.images[0])
+                ? 'Photograph of the product as supplied'
+                : 'Plate drawn from the batch record — not a photograph of the vial'}
             </p>
           </div>
 
@@ -401,34 +431,56 @@ export function ProductDetail({
               {product.returns}
             </p>
 
-            <h3 className="mt-10 font-display text-lg font-semibold tracking-[-0.025em]">
-              Common questions
-            </h3>
-            <Accordion type="single" collapsible className="mt-3">
-              {product.faqs.map((faq, i) => (
-                <AccordionItem key={i} value={`faq-${i}`} className="border-rule">
-                  <AccordionTrigger className="text-left text-sm font-medium hover:no-underline">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-sm leading-relaxed text-ink-soft">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+            {product.faqs.length > 0 && (
+              <>
+                <h3 className="mt-10 font-display text-lg font-semibold tracking-[-0.025em]">
+                  Common questions
+                </h3>
+                <Accordion type="single" collapsible className="mt-3">
+                  {product.faqs.map((faq, i) => (
+                    <AccordionItem key={i} value={`faq-${i}`} className="border-rule">
+                      <AccordionTrigger className="text-left text-sm font-medium hover:no-underline">
+                        {faq.question}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm leading-relaxed text-ink-soft">
+                        {faq.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Reviews */}
+      {/*
+        Reviews.
+
+        The section appears when there is something to read OR somewhere to write — an empty
+        grid under "0 buyers rated this 0.0" is a hole, but so is a product nobody can review.
+        Every review shown here is APPROVED: `lib/db/catalogue.ts` filters on status, and the
+        rating above is recomputed from approved rows only, so the stars and the reviews under
+        them can never disagree.
+      */}
+      {(product.reviews.length > 0 || reviewsOpen) && (
       <section className="border-b border-rule">
         <div className="mx-auto max-w-[86rem] px-4 py-14 sm:px-6 lg:px-10">
           <SectionHeading
             title="Reviews"
-            description={`${product.reviewCount} buyers rated this compound ${product.rating.toFixed(1)} out of 5.`}
+            description={
+              product.reviewCount > 0
+                ? `${product.reviewCount} ${product.reviewCount === 1 ? 'buyer has' : 'buyers have'} rated this compound ${product.rating.toFixed(1)} out of 5.`
+                : 'Nobody has reviewed this compound yet.'
+            }
           />
 
-          <div className="mt-8 grid gap-px bg-rule md:grid-cols-3">
+          <div
+            className={cn(
+              'grid gap-px bg-rule md:grid-cols-3',
+              product.reviews.length > 0 && 'mt-8'
+            )}
+          >
             {product.reviews.map((r) => (
               <article key={r.id} className="flex flex-col bg-card p-6">
                 <Rating value={r.rating} />
@@ -443,12 +495,21 @@ export function ProductDetail({
             ))}
           </div>
 
-          <p className="mt-6 text-xs text-ink-faint">
-            Demonstration content — reviews, ratings, and reviewer names on this build are
-            authored fixtures, not real customer submissions.
-          </p>
+          {product.reviews.length > 0 && (
+            <p className="mt-6 text-xs text-ink-faint">
+              Every review here was submitted by a buyer and read by a person before it was
+              published. The rating above counts published reviews only.
+            </p>
+          )}
+
+          {reviewsOpen && (
+            <div className="mt-10 border-t border-rule pt-10">
+              <ReviewForm productId={product.id} productName={product.name} />
+            </div>
+          )}
         </div>
       </section>
+      )}
 
       {related.length > 0 && (
         <section className="border-b border-rule">

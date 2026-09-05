@@ -62,6 +62,10 @@ model Product {
   slug String @unique
   name String
 
+  /// Order lines that reference this product. The relation is optional from the line's side, so
+  /// deleting a product blanks the link rather than destroying the record of what was sold.
+  orderItems OrderItem[]
+
   /// Decimal, not float: money must not accumulate binary rounding error.
   price          Decimal  @db.Decimal(10, 2)
   compareAtPrice Decimal? @db.Decimal(10, 2)
@@ -90,6 +94,13 @@ model Product {
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  /// The second level of the catalogue folder a product came from — "boldenone" under
+  /// "injectables", "sarms" under "peptides". Plain columns rather than a table because the
+  /// list is small, comes from the folder structure, and is only ever used to filter within a
+  /// category. Null for categories that have no second level.
+  subcategory     String?
+  subcategoryName String?
 
   brandId String
   brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Restrict)
@@ -137,6 +148,15 @@ model ProductFaq {
   @@map("product_faqs")
 }
 
+/// A product review.
+///
+/// Reviews arrive from the storefront and are PENDING until a person approves them. Publishing
+/// unmoderated free text under a product is how a catalogue ends up hosting spam, abuse, and
+/// medical claims nobody at this business made — and on this catalogue in particular, an
+/// unreviewed "cured my X" is a claim the shop is publishing, whoever typed it.
+///
+/// A product's `rating` and `reviewCount` are recomputed from APPROVED rows only, so the star
+/// figure and the reviews under it can never disagree.
 model Review {
   id     String   @id @default(cuid())
   author String
@@ -145,11 +165,32 @@ model Review {
   title  String
   body   String   @db.Text
 
+  status ReviewStatus @default(PENDING)
+
+  /// Captured only when the reviewer typed one. Never shown publicly, never mailed: it exists
+  /// so a moderator can recognise a repeat submitter, and it grants no marketing permission.
+  email String?
+
+  /// Who approved or rejected it, and when. Null while it is still waiting.
+  moderatedAt DateTime?
+  moderatedBy String?
+  /// SHA-256 of the submitter's IP with the same salt the subscriber table uses.
+  ipHash      String?
+
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
+  createdAt DateTime @default(now())
+
   @@index([productId])
+  @@index([status])
   @@map("reviews")
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model BlogPost {
@@ -254,6 +295,13 @@ model Subscriber {
   abandonedValue Decimal?  @db.Decimal(10, 2)
   abandonedAt    DateTime?
 
+  /// The CRM record for this person.
+  ///
+  /// Optional, and the direction matters: a Contact never implies consent, but a Subscriber
+  /// always has one, because consenting is itself a relationship worth recording.
+  contactId String?  @unique
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -265,4 +313,616 @@ model Subscriber {
 enum SubscriberStatus {
   SUBSCRIBED
   UNSUBSCRIBED
+}
+
+/// A person the business has a relationship with.
+///
+/// Deliberately NOT the same row as Subscriber, and the distinction is the whole design.
+/// Subscriber is a *marketing consent record*: it cannot exist without evidence that someone
+/// ticked a box, and the schema offers no way to write one otherwise. Contact is *the person*.
+///
+/// Someone who writes to support has a real relationship with the business and has consented
+/// to nothing. Collapsing the two would force a choice between refusing to record that enquiry
+/// and manufacturing a consent row for it — the second being exactly how a list quietly fills
+/// with addresses nobody agreed to send to.
+///
+/// So: a Contact row is never permission to email anyone. The linked Subscriber is the only
+/// thing that grants that, and `marketingConsent` in lib/crm/contacts.ts is the only way to ask.
+model Contact {
+  id    String  @id @default(cuid())
+  email String  @unique
+  name  String?
+  phone String?
+
+  stage ContactStage @default(LEAD)
+
+  /// Staff-applied segmentation labels. Free-form on purpose: the useful segments on a real
+  /// list are discovered, not designed up front.
+  tags String[] @default([])
+
+  /// The surface this person first appeared on — an enquiry subject, or a sign-up source.
+  firstSource String
+
+  /// Set when this contact is linked from a Subscriber row. See Subscriber.contactId.
+  subscriber Subscriber?
+
+  enquiries  Enquiry[]
+  notes      ContactNote[]
+  activities ContactActivity[]
+  orders     Order[]
+  visitors   Visitor[]
+  messages   OutboundMessage[]
+
+  /// Denormalised so the list can sort by "who moved most recently" without touching the
+  /// activity table for every row.
+  lastActivityAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([stage])
+  @@index([lastActivityAt])
+  @@map("contacts")
+}
+
+/// Where someone sits in the relationship. Deliberately has no CUSTOMER value: no order can be
+/// placed on this build, so a "customer" stage could only ever be asserted, never earned.
+enum ContactStage {
+  LEAD
+  ENGAGED
+  QUALIFIED
+  DORMANT
+}
+
+/// A message sent through the public contact form.
+///
+/// Answering someone who wrote to you is a reply, not marketing, so this needs no consent box —
+/// but it is also not permission to send anything else, which is why storing one never creates
+/// or modifies a Subscriber.
+model Enquiry {
+  id String @id @default(cuid())
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  /// Captured as typed, alongside the Contact. The contact's name can be corrected by staff
+  /// later; this preserves what the message itself actually said.
+  name    String
+  email   String
+  subject String
+  message String @db.Text
+
+  status EnquiryStatus @default(NEW)
+
+  path   String?
+  /// SHA-256 of the IP with the same server-side salt the subscriber table uses.
+  ipHash String?
+
+  /// Who dealt with it, and when. Null while it is still open.
+  handledAt DateTime?
+  handledBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("enquiries")
+}
+
+enum EnquiryStatus {
+  NEW
+  OPEN
+  ANSWERED
+  CLOSED
+}
+
+/// An internal note about a contact. Never shown to the contact.
+model ContactNote {
+  id String @id @default(cuid())
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  body String @db.Text
+
+  /// The admin who wrote it, stored as an address rather than a foreign key: the note should
+  /// survive the account being deleted, because who said what is part of the record.
+  authorEmail String
+
+  createdAt DateTime @default(now())
+
+  @@index([contactId])
+  @@map("contact_notes")
+}
+
+/// One line of a contact's history.
+///
+/// Append-only: nothing here is ever edited or deleted, because a timeline you can rewrite
+/// answers no question you would ask a timeline. Consent events are recorded here too, which
+/// is what lets "when did they opt in, and from where" be answered on one screen.
+model ContactActivity {
+  id String @id @default(cuid())
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  type    ContactActivityType
+  /// One line, already written for a human. Rendering must not need to reconstruct it.
+  summary String
+  detail  String?             @db.Text
+
+  /// Null for anything the system recorded on its own.
+  actorEmail String?
+
+  occurredAt DateTime @default(now())
+
+  @@index([contactId, occurredAt])
+  @@map("contact_activities")
+}
+
+enum ContactActivityType {
+  CONTACT_CREATED
+  ENQUIRY_RECEIVED
+  ENQUIRY_STATUS_CHANGED
+  SUBSCRIBED
+  UNSUBSCRIBED
+  NOTE_ADDED
+  STAGE_CHANGED
+  TAGS_CHANGED
+  DETAILS_UPDATED
+  ORDER_PLACED
+  ORDER_STATUS_CHANGED
+  MESSAGE_RECORDED
+  REVIEW_SUBMITTED
+}
+
+/// An order, as a fulfilment record.
+///
+/// There are deliberately NO payment fields on this model — no amount paid, no transaction id,
+/// no gateway reference, no payment status. That is not an omission to be filled in later: this
+/// build does not collect money, and a half-present payment column is worse than none, because
+/// it invites a screen that says "paid" on the strength of somebody ticking it.
+///
+/// What this does model is everything after the money question: what was ordered, at what price,
+/// where it is going, and where it has got to.
+model Order {
+  id String @id @default(cuid())
+
+  /// The human-facing reference, quoted in messages and on paperwork. Separate from `id` because
+  /// a cuid cannot be read down a phone line or copied off a label without errors.
+  reference String @unique
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  status OrderStatus @default(NEW)
+
+  /// The address is captured onto the order rather than read from the contact at render time.
+  /// People move; where a past parcel actually went is a fact about that parcel, and rewriting
+  /// it when someone updates their details would quietly falsify the record.
+  shipName     String
+  shipLine1    String
+  shipLine2    String?
+  shipCity     String
+  shipPostcode String
+  shipCountry  String
+
+  /// Stored, never recomputed from the catalogue. A price change must not restate the value of
+  /// an order somebody already placed.
+  subtotal Decimal @db.Decimal(10, 2)
+  shipping Decimal @db.Decimal(10, 2)
+  total    Decimal @db.Decimal(10, 2)
+  currency String  @default("USD")
+
+  /// The discount as applied, snapshotted like everything else here: editing or deleting the
+  /// Discount row later must not restate what this order was actually given. Still not a
+  /// payment field — it records what was charged, not what was collected.
+  discountCode  String?
+  discountTotal Decimal @default(0) @db.Decimal(10, 2)
+
+  /// Which delivery rate was chosen, by name. Snapshotted for the same reason.
+  shippingMethod String?
+
+  /// Internal. Never shown to the customer.
+  notes String? @db.Text
+
+  items  OrderItem[]
+  events OrderEvent[]
+
+  /// Stamped once, the first time the order reaches each milestone. Moving backwards does not
+  /// clear them — how long something took is a fact, and reopening does not undo it.
+  confirmedAt DateTime?
+  shippedAt   DateTime?
+  cancelledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([contactId])
+  @@map("orders")
+}
+
+/// Where an order has got to. No payment states, for the reason given on Order.
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+/// One line of an order.
+///
+/// The product name and unit price are COPIED here rather than read through the relation. An
+/// order line has to keep saying what was bought and what it cost on the day, even after the
+/// product is renamed, repriced, or deleted — which is also why productId is nullable and set
+/// null on delete rather than cascading the line away.
+model OrderItem {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  /// Snapshots, taken when the line was created.
+  name String
+  slug String
+
+  unitPrice Decimal @db.Decimal(10, 2)
+  quantity  Int
+  lineTotal Decimal @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+/// One line of an order's history. Append-only, like ContactActivity and for the same reason.
+model OrderEvent {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  /// Written for a human at the point it happens.
+  summary String
+  detail  String? @db.Text
+
+  /// Null for anything the system recorded on its own.
+  actorEmail String?
+
+  occurredAt DateTime @default(now())
+
+  @@index([orderId, occurredAt])
+  @@map("order_events")
+}
+
+/// A returning visitor, identified ONLY by a random first-party token in a cookie.
+///
+/// The token is generated server-side and is not derived from an IP address, a fingerprint, or
+/// anything about the person — so it identifies a browser that keeps coming back and nothing
+/// else, and clearing cookies genuinely resets it. No raw IP is stored anywhere on this model:
+/// the country comes from the edge header the host already provides, which is coarse enough to
+/// be useful for shipping and not enough to locate anybody.
+///
+/// `contactId` is filled in only when the person themselves handed over an address — subscribed,
+/// or wrote in. Analytics never gets to work out who somebody is; the person tells it.
+model Visitor {
+  id    String @id @default(cuid())
+  token String @unique
+
+  /// Two-letter code from the CDN's geo header, when the host sets one. Null otherwise.
+  country String?
+
+  /// Referrer host on first arrival, or "direct". Kept as the acquisition source.
+  source String @default("direct")
+
+  viewCount   Int      @default(0)
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+  lastPath    String?
+
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  pageViews PageView[]
+  searches  SearchQuery[]
+
+  @@index([lastSeenAt])
+  @@index([country])
+  @@index([contactId])
+  @@map("visitors")
+}
+
+/// One page view. Append-only, like every other timeline here.
+model PageView {
+  id String @id @default(cuid())
+
+  visitorId String
+  visitor   Visitor @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+
+  path     String
+  /// Referrer host only, never the full URL: a full referrer can carry someone else's query
+  /// string, which is their data leaking into ours.
+  referrer String?
+
+  occurredAt DateTime @default(now())
+
+  @@index([visitorId, occurredAt])
+  @@index([occurredAt])
+  @@index([path])
+  @@map("page_views")
+}
+
+/// What someone typed into the search box, and how many products came back.
+///
+/// A search with no results is the single most actionable row in an analytics table: it is a
+/// customer telling you, in their own words, what they came for and could not find.
+model SearchQuery {
+  id String @id @default(cuid())
+
+  /// As typed, for reading.
+  term       String
+  /// Lower-cased and space-collapsed, for grouping.
+  normalized String
+
+  resultCount Int
+
+  visitorId String?
+  visitor   Visitor? @relation(fields: [visitorId], references: [id], onDelete: SetNull)
+
+  occurredAt DateTime @default(now())
+
+  @@index([normalized])
+  @@index([occurredAt])
+  @@index([resultCount])
+  @@map("search_queries")
+}
+
+/// A discount code.
+///
+/// `usageCount` is incremented on the order that redeems it, and DiscountRedemption records
+/// each one, so "how many are left" is answerable and a limit is enforceable rather than
+/// advisory.
+model Discount {
+  id   String @id @default(cuid())
+  /// Stored upper-case; matching is case-insensitive at the door.
+  code String @unique
+
+  description String?
+
+  type  DiscountType
+  /// Percentage points for PERCENTAGE, money for FIXED, ignored for FREE_SHIPPING.
+  value Decimal      @db.Decimal(10, 2)
+
+  status DiscountStatus @default(ACTIVE)
+
+  /// Minimum basket before this applies at all.
+  minSubtotal Decimal? @db.Decimal(10, 2)
+
+  startsAt DateTime?
+  endsAt   DateTime?
+
+  /// Null means unlimited. Enforced against usageCount.
+  usageLimit      Int?
+  usageCount      Int  @default(0)
+  /// Null means unlimited per person.
+  perContactLimit Int?
+
+  /// Scope: null applies to the whole catalogue.
+  categoryId String?
+
+  redemptions DiscountRedemption[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@map("discounts")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+  FREE_SHIPPING
+}
+
+enum DiscountStatus {
+  ACTIVE
+  PAUSED
+  EXPIRED
+}
+
+/// One use of a discount.
+///
+/// The order is referenced by its human reference rather than by a foreign key, so deleting an
+/// order does not silently free up a limited-use code that was genuinely used. The order keeps
+/// its own snapshot of the code and the amount besides.
+model DiscountRedemption {
+  id String @id @default(cuid())
+
+  discountId String
+  discount   Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+
+  orderReference String?
+  contactId      String?
+
+  amount Decimal @db.Decimal(10, 2)
+
+  occurredAt DateTime @default(now())
+
+  @@index([discountId])
+  @@index([contactId])
+  @@map("discount_redemptions")
+}
+
+/// A group of countries that share delivery options.
+model DeliveryZone {
+  id   String @id @default(cuid())
+  name String
+
+  /// ISO two-letter codes. An empty list means "everywhere not matched by another zone",
+  /// which is how a rest-of-world zone is expressed.
+  countries String[] @default([])
+
+  active   Boolean @default(true)
+  position Int     @default(0)
+
+  rates DeliveryRate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("delivery_zones")
+}
+
+/// One delivery option within a zone.
+model DeliveryRate {
+  id String @id @default(cuid())
+
+  zoneId String
+  zone   DeliveryZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  name  String
+  price Decimal @db.Decimal(10, 2)
+
+  /// Below this basket value the option is not offered at all.
+  minSubtotal      Decimal? @db.Decimal(10, 2)
+  /// At or above this basket value the option costs nothing. Null means never free.
+  freeOverSubtotal Decimal? @db.Decimal(10, 2)
+
+  /// Working days, as a range. Shown to the customer as "3-5 working days".
+  estimateMinDays Int?
+  estimateMaxDays Int?
+
+  active   Boolean @default(true)
+  position Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([zoneId])
+  @@map("delivery_rates")
+}
+
+/// A message to the whole list, or a segment of it.
+///
+/// THIS BUILD SENDS NO EMAIL, and the model says so honestly: there is no "send" this system
+/// can perform. A campaign is written here, its audience is counted here, and when a person
+/// sends it from a real sending platform they record that here — sentBy and sentVia name who
+/// did it and through what. A SENT row is a person's statement, never the system's.
+model Campaign {
+  id      String @id @default(cuid())
+  name    String
+  subject String
+  body    String @db.Text
+
+  status CampaignStatus @default(DRAFT)
+
+  /// Which consented subscribers this is for. See lib/campaigns for the resolver.
+  segment String @default("subscribed")
+
+  /// The audience size at the moment it was marked sent. Snapshotted, because the list moves.
+  recipientCount Int @default(0)
+
+  scheduledFor DateTime?
+  sentAt       DateTime?
+  sentBy       String?
+  sentVia      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@map("campaigns")
+}
+
+enum CampaignStatus {
+  DRAFT
+  READY
+  SENT
+  CANCELLED
+}
+
+/// One-to-one correspondence with a contact, recorded after the fact.
+///
+/// Same honesty as Campaign: nothing here sends anything. A person replies from their own mail
+/// client — or rings — and records what they said, so the next person to open that contact can
+/// see the conversation instead of guessing at it. recordedBy is who says they sent it.
+model OutboundMessage {
+  id String @id @default(cuid())
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  /// The enquiry this answers, when it answers one.
+  enquiryId String?
+
+  channel MessageChannel @default(EMAIL)
+  subject String?
+  body    String         @db.Text
+
+  sentAt     DateTime @default(now())
+  recordedBy String
+
+  createdAt DateTime @default(now())
+
+  @@index([contactId, sentAt])
+  @@index([enquiryId])
+  @@map("outbound_messages")
+}
+
+enum MessageChannel {
+  EMAIL
+  PHONE
+  OTHER
+}
+
+/// A payment method offered at checkout.
+///
+/// connected exists and is false for every row, and there is deliberately NO field for a wallet
+/// address, a merchant id, or an API key. This build collects no money; a plausible destination
+/// stored here is the single most dangerous thing this table could hold, because somebody would
+/// send real funds to it. Turning a method on controls whether it is LISTED, never whether it
+/// can take payment.
+model PaymentMethod {
+  id  String @id @default(cuid())
+  key String @unique
+
+  label  String
+  /// The sentence shown in that method's panel at the point of entry.
+  notice String @db.Text
+
+  /// Whether the method appears at checkout at all.
+  enabled   Boolean @default(true)
+  /// Whether it can actually take money. False everywhere, and the UI reads it.
+  connected Boolean @default(false)
+
+  position Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payment_methods")
+}
+
+/// Site settings, as one row per key.
+///
+/// A key/value table rather than a single settings row: a new setting is then a write, not a
+/// migration, and two administrators editing different settings cannot overwrite each other.
+model SiteSetting {
+  key   String @id
+  value String @db.Text
+
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@map("site_settings")
 }

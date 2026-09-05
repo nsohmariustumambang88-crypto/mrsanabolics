@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { unsubscribeSubscriber } from '@/app/admin/actions';
 import { formatPrice } from '@/lib/format';
+import { runAction } from '@/components/admin/run-action';
 
 /*
   The subscriber list table.
@@ -42,7 +43,7 @@ export function SubscribersTable({ rows }: { rows: SubscriberRow[] }) {
     if (!window.confirm(`Remove ${row.email} from the mailing list?`)) return;
 
     setBusy(row.id);
-    const result = await unsubscribeSubscriber(row.id);
+    const result = await runAction(() => unsubscribeSubscriber(row.id));
     setBusy(null);
 
     if (result.ok) {

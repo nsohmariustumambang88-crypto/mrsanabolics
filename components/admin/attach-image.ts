@@ -1,6 +1,7 @@
 'use client';
 
 import { setProductImage } from '@/app/admin/actions';
+import { runAction } from '@/components/admin/run-action';
 
 /*
   Upload a file to Cloudinary and attach the result to a product.
@@ -51,7 +52,13 @@ export async function uploadAndAttach(
     return { ok: false, error: error instanceof Error ? error.message : 'Upload failed.' };
   }
 
-  const attached = await setProductImage(productId, publicId);
+  /*
+    Wrapped, like every other action call. The upload above has already succeeded by this point,
+    so a rejection here — a Neon cold start is the usual one — must come back as a sentence the
+    form can show, not as a thrown promise that freezes the caller mid-upload with the asset
+    already sitting in Cloudinary and nothing on screen to say so.
+  */
+  const attached = await runAction(() => setProductImage(productId, publicId));
   if (!attached.ok) {
     return { ok: false, error: `Uploaded, but could not attach it: ${attached.error}` };
   }

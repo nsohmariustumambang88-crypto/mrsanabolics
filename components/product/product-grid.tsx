@@ -2,7 +2,7 @@
 
 import { ProductCard } from '@/components/product/product-card';
 import { GridFillers } from '@/components/layout/grid-fillers';
-import type { Product } from '@/lib/types';
+import type { ProductSummary } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 /*
@@ -25,7 +25,7 @@ export function ProductGrid({
   columns = 4,
   className,
 }: {
-  products: Product[];
+  products: ProductSummary[];
   columns?: 3 | 4;
   className?: string;
 }) {

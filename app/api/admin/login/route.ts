@@ -103,6 +103,16 @@ export async function POST(request: Request) {
     return backToLogin(request, next, 'invalid');
   }
 
+  /*
+    Signing in successfully clears the attempt counter.
+
+    Without this the limiter counts every attempt, right or wrong, so nine correct sign-ins
+    inside the window lock the real administrator out of their own admin — and on localhost, where
+    there is no X-Forwarded-For, every session shares the single "local" key, so ordinary
+    development hits it quickly. Throttling is meant to slow guessing, not successful use.
+  */
+  attempts.delete(clientKey(request));
+
   await prisma.adminUser.update({
     where: { id: user.id },
     data: { lastLoginAt: new Date() },

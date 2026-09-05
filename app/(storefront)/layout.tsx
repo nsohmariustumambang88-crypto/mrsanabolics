@@ -1,4 +1,5 @@
 import { CatalogueProvider } from '@/components/providers/catalogue-provider';
+import { SettingsProvider } from '@/components/providers/settings-provider';
 import { StoreProvider } from '@/components/providers/store-provider';
 import { AnnouncementBar } from '@/components/layout/announcement-bar';
 import { SiteHeader } from '@/components/layout/site-header';
@@ -6,7 +7,9 @@ import { SiteFooter } from '@/components/layout/site-footer';
 import { CartDrawer } from '@/components/cart/cart-drawer';
 import { SearchDialog } from '@/components/search/search-dialog';
 import { ExitCapture } from '@/components/marketing/exit-capture';
-import { getProducts, getCategories, getBrands } from '@/lib/db/catalogue';
+import { VisitTracker } from '@/components/analytics/visit-tracker';
+import { getProductSummaries, getCategories, getBrands } from '@/lib/db/catalogue';
+import { getSettingsSafe, asBoolean, asNumber } from '@/lib/settings';
 
 /*
   The storefront shell.
@@ -31,14 +34,29 @@ export default async function StorefrontLayout({
   children: React.ReactNode;
 }) {
   /* One read per render, shared with every client component through the provider. */
-  const [products, categories, brands] = await Promise.all([
-    getProducts(),
+  /*
+    Settings come through `getSettingsSafe`, which falls back to the declared defaults rather
+    than throwing: the announcement line is a refinement, and a sleeping database should cost
+    the site its custom wording, never its home page.
+  */
+  const [products, categories, brands, settings] = await Promise.all([
+    getProductSummaries(),
     getCategories(),
     getBrands(),
+    getSettingsSafe(),
   ]);
 
   return (
     <CatalogueProvider value={{ products, categories, brands }}>
+      <SettingsProvider
+        value={{
+          lowStockThreshold: asNumber(settings.low_stock_threshold, 5),
+          freeShippingOver: asNumber(settings.free_shipping_over, 0),
+          currency: settings.currency || 'USD',
+          supportEmail: settings.support_email,
+          supportPhone: settings.support_phone,
+        }}
+      >
       <StoreProvider>
         <a
           href="#main"
@@ -48,7 +66,9 @@ export default async function StorefrontLayout({
         </a>
 
         <div className="relative z-10 flex min-h-screen flex-col">
-          <AnnouncementBar />
+          {asBoolean(settings.announcement_enabled) && (
+            <AnnouncementBar text={settings.announcement_text} />
+          )}
           <SiteHeader />
           <main id="main" className="flex-1">
             {children}
@@ -59,7 +79,15 @@ export default async function StorefrontLayout({
         <CartDrawer />
         <SearchDialog />
         <ExitCapture />
+        {/*
+          Storefront only, and only when the analytics_enabled setting is on. It sends a path
+          and a referrer host to /api/track, which sets a random first-party token: no IP is
+          stored, and nothing here identifies a person. The admin is outside this layout, so
+          administrative browsing is never counted as traffic.
+        */}
+        {asBoolean(settings.analytics_enabled) && <VisitTracker />}
       </StoreProvider>
+      </SettingsProvider>
     </CatalogueProvider>
   );
 }

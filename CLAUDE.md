@@ -93,6 +93,85 @@ Without a cloud name every helper returns the source URL untouched, so the site 
 
 **`sizes` is load-bearing.** Every `<Image fill>` sets it. It tells the browser which srcset candidate to take before layout, and getting it wrong pulls a 3840w file into a 112px thumbnail. Measured: a card at 431px correctly requests the 640w WebP at ~15KB, against a 72KB JPEG origin.
 
+**The photo library lives under `mranabolics/library/`, never `mranabolics/products/`.** Real product
+photography (the `mranabolic files` folder: `<category>/<subcategory>/<Name - Brand>.<ext>`) is
+uploaded by `npm run images:upload-library -- "<folder>"`, which mirrors the folder tree into
+Cloudinary as `mranabolics/library/<category>/<subcategory>/<name-slug>` and writes
+[prisma/image-library.json](prisma/image-library.json): public ID, delivery URL, parsed brand,
+dimensions and an MD5 per file. It keeps the products folder untouched because that folder's
+public IDs are product slugs with `overwrite: true` — uploading library files there under guessed
+names is how one product's image silently replaces another's. Attaching a library image to a
+product is a separate step: copy the public ID into `Product.images`.
+
+The script refuses to run if two files would slugify to the same public ID, keeps the source
+format rather than `uploadBuffer`'s PNG default, and is resumable — the manifest records each
+source file's size and mtime, so a re-run uploads only what changed (`--force` re-uploads all,
+`--dry-run` prints the plan). Each asset is tagged `library`, its category and subcategory, so the
+Media Library can be filtered the same way the folder is.
+
+## The catalogue is the photo library
+
+**Products come from the store's own photographs, not from hand-written arrays.** The folder
+`mranabolic files` is the taxonomy: its top level is the category, its second level (where there
+is one) is the compound group, and each named file is a product. `npm run db:seed-catalogue`
+([prisma/seed-catalogue.ts](prisma/seed-catalogue.ts)) reads [prisma/image-library.json](prisma/image-library.json)
+against [lib/catalogue/taxonomy.ts](lib/catalogue/taxonomy.ts) and writes Category, Brand and
+Product rows — 9 categories, 41 manufacturers, ~790 products, each with its photograph as
+`images[0]`. The 12 template fixture products and `lib/data/{products,categories,brands}.ts` are
+gone; `prisma/seed.ts` now seeds only blog, testimonials and FAQs.
+
+**What the seed refuses to invent.** No ratings, review counts or reviews (zero and empty — the
+product page hides the review block and says "No reviews yet"; the JSON-LD omits
+`aggregateRating`). No dosing. No copy beyond what the file name and folder state. It DOES set
+placeholder prices from `baselinePrice()` in the taxonomy, because a shop with no prices cannot
+be browsed; the footer disclosure says so, and the admin's inline price editor is where real
+prices go. Merchandising flags (best seller / new / deal / trending) are the first four listings
+of each group, deterministically — a starting position for staff to change, not a judgement.
+
+**Name parsing is the fragile part.** Files are `Name - Brand.ext`, inconsistently. `splitTitle`
+recognises the manufacturer by matching the END of the title against `BRAND_ALIASES` (longest
+alias first, after collapsing case and punctuation), so a dash inside a product name cannot be
+mistaken for the separator and "Hilma Pharma" / "Hima Biocare" fold onto one brand. A strength
+is the LAST number standing on its own — "CJC-1295", "MK677", "3-Test" are names — with a
+short exclusion list (`NUMBER_IS_NAME`) for peptides whose number IS the name ("BPC 157").
+Files named by a 32-hex hash are skipped; 35 are byte-identical to a named file, 10 have no
+named twin. `--dry-run` prints every parsed row without touching the database; use it before
+adding aliases.
+
+**Two levels, one `Category` table.** `Product.subcategory` / `subcategoryName` carry the second
+folder level as plain columns rather than a table, because the list is small and only ever
+filters within a category. `/shop?category=x&group=y` is the address; the shop browser derives
+the group list from the products themselves and drops `group` whenever `category` changes.
+Product breadcrumbs (visible and JSON-LD) carry the group. `ContactStage` still has no CUSTOMER.
+
+**The browser gets a projection.** With ~800 products the full record in the RSC payload was
+megabytes on every page, so the storefront layout now ships `ProductSummary` (lib/types.ts) through
+the catalogue provider — id, names, slugs, price, flags, short description, first image, first
+specification. Cards, search, filters and the cart are typed against it; the product page reads
+the full `Product` server-side. If the catalogue grows again, the next step is a route handler
+for search so the browser holds nothing.
+
+**Photographs and plates coexist.** `isPhotograph()` in product-plate.tsx tells them apart by
+public-ID prefix (`mranabolics/library/` vs `mranabolics/products/`). Photographs render
+`object-contain` with no marking overlay (their label is in the picture; 17% are not square and
+a cover crop took their caps off); plates keep `object-cover` and the live marking. The gallery
+caption switches with them. `npm run images:generate` now skips any product that already has a
+photograph — rendering a plate for one would overwrite the photo's public ID.
+
+**Seeding Neon in bulk means `createMany`, and existing rows are left alone.** One statement per
+row through the pooler — even inside a batched `$transaction([...])` — was 792 × 3 statements at
+~1.2s each, three quarters of an hour. The seed writes products with `createMany` a hundred at a
+time, reads their ids back in one query, and `createMany`s the specifications: about twenty round
+trips. It re-checks slugs against the database at the moment of each flush, because a run
+interrupted mid-batch keeps landing rows after the next run has looked. A row that already
+exists is NOT rewritten — after the first run the admin owns prices, stock and flags, and a re-run
+must add new photographs without undoing that work; `--refresh` forces the slow per-row rewrite
+when the taxonomy or copy generator changes. If you stop a seed with TaskStop, check for the
+orphaned `node … seed-catalogue.ts` process before starting another: two writers collide on
+the unique slug and the second one dies mid-batch.
+
+Category pigments: the `--cat-*` tokens in globals.css and `vesselFor()` in plate-svg.ts are
+keyed to the nine real slugs; a category added to the taxonomy needs both.
 ## The design system: ebru
 
 The visual world is **ebru** (Turkish paper marbling), chosen by the user. Read the direction contract in `app/layout.tsx` before making visual decisions; `DESIGN.md` records the system as built.
@@ -186,10 +265,13 @@ The upload route keeps the source container — `FORMAT_FOR[file.type]` — inst
 vector art; re-encoding a photograph to PNG can triple it, and the plan has a storage cap.
 Delivery still negotiates AVIF/WebP per request through `f_auto`.
 
-**Harnesses.** `node .impeccable/wp-shot.mjs '[{"name":..,"path":..,"width":..}]'` logs in and
+**Harnesses.** All of them take `--env-file=.env`, because the admin sign-in comes from
+`ADMIN_EMAIL` / `ADMIN_PASSWORD` there and none of them carries a fallback literal.
+`node --env-file=.env .impeccable/wp-shot.mjs '[{"name":..,"path":..,"width":..}]'` logs in and
 captures admin screens, failing loudly if it lands on the login page or finds no stylesheet.
-`node .impeccable/wp-e2e.mjs` creates a product through Quick Add, asserts it reaches the list
-table, the right category and the public product page, then deletes it again.
+`node --env-file=.env .impeccable/wp-e2e.mjs` creates a product through Quick Add, asserts it
+reaches the list table, the right category and the public product page, then deletes it again —
+confirming the delete against the database rather than against the re-rendered table.
 `node --env-file=.env .impeccable/wp-upload-e2e.mjs` does the same with a file attached, following
 it into Cloudinary, into the Neon row, back into the list as a thumbnail and onto the storefront,
 then deletes both the row and the asset.
@@ -252,7 +334,380 @@ limiter — a test that depends on how recently it last ran is worse than no tes
 point `DIRECT_URL` at the pooled URL for that one command. Real migrations would still need a
 reachable direct endpoint.
 
+## The CRM
+
+**`Contact` and `Subscriber` are separate tables, and that separation is the whole design.**
+`Subscriber` is a *marketing consent record* — the schema offers no way to write one without
+evidence someone ticked a box. `Contact` is *the person*. Somebody who writes to support has a
+real relationship with the business and has consented to nothing; collapsing the two would force
+a choice between refusing to record that enquiry and manufacturing consent for it.
+
+So **a Contact row is never permission to email anyone.** The linked `Subscriber` is the only
+thing that grants that, and `marketingConsent()` in [lib/crm/contacts.ts](lib/crm/contacts.ts) is
+the only way to ask. It is a function rather than a boolean column because a flag copied onto the
+contact goes stale the moment someone unsubscribes, and the failure mode is mailing people who
+opted out.
+
+[lib/crm/contacts.ts](lib/crm/contacts.ts) is the write path: `upsertContact`, `recordActivity`,
+`attachContactForSubscriber`. There is deliberately **no** "add contact and subscribe them"
+helper — the moment one exists, somebody calls it from a form that showed no checkbox.
+
+Staff **can** add a contact by hand at `/admin/contacts/new`, which is ordinary CRM work: you met
+them, they rang you. `createContact` stamps `firstSource` as `added by staff` and has no path to
+the subscriber table, so a typed-in row can never later be mistaken for someone who opted in. The
+screen says so before it asks for anything, and there is no consent checkbox on it — a box an
+administrator ticks on someone's behalf is evidence of nothing.
+
+**Deleting a contact keeps their Subscriber row.** That row is the suppression record: deleting it
+would make an opt-out reversible by the next sign-up. What deletion does do is end live consent —
+a SUBSCRIBED contact is unsubscribed as part of the delete, because removing someone from the CRM
+while still mailing them is incoherent, and fewer emails is always the safe direction. Enquiries,
+notes and activity cascade away with the person.
+
+**No interactive transactions in this area, deliberately.** `prisma.$transaction(async tx => …)`
+holds a connection open across several remote round trips; against Neon behind PgBouncer that blew
+Prisma's 5s ceiling and then deadlocked two admin writes against each other. Everything here is
+either a single nested write (atomic on its own) or a batched `prisma.$transaction([...])`, which
+is one round trip. `recordActivity` nests the activity row into the `lastActivityAt` bump for the
+same reason. If you add a CRM write, follow that shape.
+
+**`ContactActivity` is append-only.** Nothing edits or deletes a row; a timeline you can rewrite
+answers no question you would ask a timeline. Consent events land there too, which is what lets
+"when did they opt in, and from where" be answered on one screen. Each summary is written for a
+human *at the point it happens* — reconstructing a sentence later from a type and a foreign key
+is how timelines end up saying "status changed" and nothing else.
+
+**Enquiries.** `/contact` now posts to [app/api/enquiry/route.ts](app/api/enquiry/route.ts) →
+[lib/crm/enquiries.ts](lib/crm/enquiries.ts). Rules it holds, all covered by the harness:
+
+- **An enquiry never touches the subscriber table.** Replying to someone who wrote to you is
+  correspondence and needs no opt-in; it is also not permission to send anything else.
+- Subjects come from [lib/crm/subjects.ts](lib/crm/subjects.ts), imported by both the form and
+  the route — the same trick as `consent.ts`, for the same reason.
+- Rate limited per IP, and it carries a **honeypot** that answers exactly like a success. Telling
+  a bot it was caught is telling it how to pass.
+- It never reveals whether an address is already known, for the same membership-oracle reason
+  `/api/subscribe` does not.
+
+`handledAt` is stamped once, when an enquiry first leaves the open states, and reopening never
+clears it — how long somebody waited for an answer is a fact.
+
+The contact form's "not connected" notice is **gone, because it is no longer true**. It now says
+the message is stored and reaches the queue but no automatic email is sent. Keep that precise: a
+reply comes from a person, in a mail client, because this build sends no email.
+
+`/api/admin/contacts.csv` exports the current tab. It carries a **`marketing_consent`** column
+derived from the linked Subscriber, never from the contact — a contact export that travels without
+it is how a CRM list ends up loaded into a sending platform as though every row were mailable.
+
+**Admin screens** are `/admin/contacts`, `/admin/contacts/new`, `/admin/contacts/[id]` and
+`/admin/enquiries`, under a CRM menu group whose bubble counts enquiries awaiting a person — the
+position wp-admin uses for comments awaiting moderation. Both list tables are WP_List_Table shaped
+and keep the behaviours products-table.tsx calls correctness rather than style: selection pruned
+when the visible rows change, and delete naming what it is about to remove. On the contact screen the consent panel comes first and is stated
+in a sentence, because "SUBSCRIBED" sitting next to a stage of "Qualified" invites reading a
+staff judgement and a person's own decision as the same kind of fact.
+
+`ContactStage` deliberately has **no CUSTOMER value**: no order can be placed on this build, so
+that stage could only ever be asserted, never earned.
+
+Admin forms use `onSubmit` + `new FormData(event.currentTarget)`, never `<form action={fn}>` with a
+client function. This is React 18: that is a React 19 feature and here it fails silently — the
+button looks like it worked and no row is ever written.
+
+```bash
+npm run db:backfill-crm   # one-off: give pre-existing subscribers a contact. Idempotent.
+node --env-file=.env .impeccable/crm-e2e.mjs           # the public path and its refusals
+node --env-file=.env .impeccable/crm-admin-e2e.mjs     # the admin: add by hand, select-all, delete
+node --env-file=.env .impeccable/crm-controls-e2e.mjs  # every control, checked against the database
+```
+
+`crm-e2e.mjs` asserts the refusals and the honeypot, and above all that a submitted enquiry leaves
+**no** subscriber row and **no** `SUBSCRIBED` activity behind. `crm-admin-e2e.mjs` drives the real
+admin and asserts the two things that would be expensive to get wrong: adding a contact by hand
+writes no consent, and deleting a subscribed contact leaves the suppression record standing.
+
+Both admin harnesses wait on a heading rather than `waitForURL` after a delete or a create:
+`router.push` is a client-side transition, so no `load` event fires and `waitForURL` times out on a
+flow that worked perfectly.
+
+Note for anyone editing the other harnesses: subscribing now also creates a contact, so
+`marketing-e2e.mjs` cleans up `@example.test` contacts as well. A suite that removes only the
+subscriber leaves an orphan person behind and the contact list fills with probes.
+
+## Orders
+
+**The `Order` model has no payment fields, and that is the design rather than a gap.** No amount
+paid, no transaction id, no gateway reference, no payment status. This build collects no money, so
+a half-present payment column would be worse than none: it invites a screen that says "paid" on
+the strength of somebody ticking it. `orders-e2e.mjs` asserts the absence against
+`information_schema`, not against the Prisma client, so a column added later fails the suite.
+
+What the model does cover is everything after the money question — what was ordered, at what price,
+where it is going, and how far along it is.
+
+**The storefront checkout does not create orders.** It cannot take payment, so there is nothing for
+it to complete. Orders are recorded from `/admin/orders/new`, which is the back-office path for one
+placed by phone or email. `/checkout` keeps its existing notices; do not wire it to `createOrder`
+without dealing with payment first.
+
+**Lines are snapshots.** `OrderItem` copies the product's name, slug and unit price at the moment
+the line is created and never reads them back through the relation. Renaming or repricing a product
+must not restate what somebody bought last month — which is also why `productId` is nullable and
+`onDelete: SetNull`: deleting a product blanks the link rather than destroying the record of the
+sale. Totals are stored for the same reason, never recomputed from today's catalogue.
+
+**The delivery address is captured onto the order,** not read from the contact at render time.
+People move; where a past parcel went is a fact about that parcel.
+
+**Milestone stamps are set once.** `confirmedAt`, `shippedAt` and `cancelledAt` are written the
+first time an order reaches each state and are never cleared by moving it back — the same rule as
+`handledAt` on `Enquiry`. How long something took is a fact.
+
+`reference` (`MRA-XXXXXX`) exists because `id` is a cuid nobody can read down a phone line. Its
+alphabet omits O/0 and I/1/l, and `uniqueReference()` retries on collision rather than trusting
+randomness.
+
+Order milestones also land on the customer's `ContactActivity` timeline (`ORDER_PLACED`,
+`ORDER_STATUS_CHANGED`), so one screen answers the whole relationship. Deleting an order leaves
+those lines: the order existed, and the timeline is append-only.
+
+```bash
+node --env-file=.env .impeccable/orders-e2e.mjs
+```
+
+## The admin, in full
+
+The menu is Dashboard, Products, Orders, Delivery, Discounts, CRM, Audience (Analytics,
+Subscribers, Messages, Campaigns), Reviews, Search, Media, Journal, Payments, Email, Settings.
+`components/admin/wp-chrome.tsx` owns it; a section whose highlight covers more routes than its
+own href needs an entry in `FAMILIES` (Products, CRM and Audience each have one). The bar bubble
+counts **pending reviews** and links to the moderation queue, which is the position wp-admin uses
+for comments awaiting moderation. Menu bubbles count open enquiries, open orders and pending
+reviews — things a person still has to act on, never totals.
+
+Each area owns its own action file (`discount-actions.ts`, `delivery-actions.ts`,
+`review-actions.ts`, `campaign-actions.ts`, `message-actions.ts`, `settings-actions.ts`,
+`analytics-actions.ts`). They are separate so that a change to one area cannot break another's
+imports, and every one of them follows the same three rules: `requireAdmin()` first inside the
+action, `{ok}|{ok:false,error}` back, and `runAction` at every call site.
+
+### Analytics, and what is deliberately not collected
+
+**A visitor is a random token in a first-party cookie and nothing else.** `mra_vid` is generated
+server-side by `/api/track`; it is not derived from an IP, a fingerprint or anything about the
+person, so clearing cookies genuinely resets it. **No raw IP is stored on `Visitor` or
+`PageView`.** Country comes from the CDN's own geo header (`x-vercel-ip-country`, `x-nf-geo`,
+`cf-ipcountry`) or is null. Referrers are reduced to a bare hostname before storage — a full
+referrer URL can carry someone else's query string, which is their data leaking into ours — and
+query strings are stripped from the path.
+
+`Visitor.contactId` is written in exactly one kind of moment: somebody typed their own address
+into the newsletter or the contact form and submitted it. `lib/analytics/identify.ts` does it
+from `/api/subscribe` and `/api/enquiry`, scoped to rows where `contactId` is still null so the
+first identification wins and a shared browser cannot reassign an earlier person's history.
+Analytics never works out who somebody is; the person tells it. That module is separate from
+`track.ts` on purpose — the tracker must not be able to do this on its own.
+
+The whole thing is behind the `analytics_enabled` setting, checked in `recordView`/`recordSearch`
+*and* at the mount point in the storefront layout. `/api/track` always answers 204 and never
+throws: a failed analytics write must never be the reason a page misbehaves.
+
+`/admin/search` is the more valuable of the two screens. A term that returned nothing is a
+customer telling you in their own words what they came for and could not find — the only
+analytics row that names a gap in the catalogue rather than describing traffic. Searches are
+reported by `components/analytics/use-search-log.ts`, debounced ~900ms so "test" arrives as one
+row rather than four prefixes, and deduplicated per mount.
+
+### Discounts
+
+`evaluateDiscount` is the only door. It runs server-side at `/api/discount/validate` and again
+when an order is recorded, because **a price the browser works out is a price the browser can
+change** — the checkout hook holds a quote, never an authority. The clock beats the status
+column: a past `endsAt` is refused even while the row still says ACTIVE, so `expireDiscountsPastEnd()`
+is housekeeping rather than enforcement.
+
+**`not-found` and `expired` are the same sentence to a shopper.** Distinguishing them turns the
+box into a way to enumerate live codes — the same reasoning that stops `/api/subscribe` revealing
+whether an address is on the list. The true reason is exported separately for admin surfaces.
+Do not let a later "clearer error messages" pass split them.
+
+`Order.discountCode` and `Order.discountTotal` are snapshots, like the line prices: editing or
+deleting a `Discount` later must not restate what an order was actually given. Neither is a
+payment field — they record what was charged, not what was collected, and `orders-e2e.mjs` still
+passes its column check.
+
+**`createOrder` re-evaluates the code and is the only place the money is decided.** The admin form
+posts a CODE, never an amount; `lib/orders/orders.ts` calls `evaluateDiscount` again against the
+live table, applies it, and only then calls `redeemDiscount` — after the order row exists, so a
+crash between the two undercounts rather than consuming a limited code on an order that never
+landed. A code that has lapsed between quoting and saving does **not** fail the order: somebody is
+on the phone, and refusing to record what they bought is the wrong trade, so it is simply not
+applied.
+
+`/admin/orders/new` renders a capped, searchable slice of the catalogue rather than all ~790
+products. Any product with a quantity on it stays listed whatever the search says — the server
+pairs `productId` and `quantity` by index across the rendered inputs, so a row that is filtered
+out is a line that was never ordered.
+
+### Delivery
+
+A named zone beats the catch-all regardless of `position`; `position` only breaks ties between
+two zones that both name the country. An **empty `countries` list is the rest-of-world zone**, and
+deactivating a zone hands its countries back to that catch-all rather than blackholing them.
+`/admin/delivery` warns when there is no active catch-all, when there are two, when two active
+zones claim the same country, and when a zone has no active rate — each of those is a state where
+some customer is offered nothing and nobody would otherwise notice.
+
+`quoteDelivery` returns `{ zone, options }` rather than a bare array, because "no zone covers this
+country" and "the zone covers it but this basket qualifies for nothing" need different copy. The
+preview panel on the admin screen is what makes a rates table trustworthy: without it nobody can
+tell whether the zones actually work.
+
+### Reviews
+
+**An unapproved review is never visible, and the star rating never counts one.** Both halves
+matter. `lib/db/catalogue.ts` filters `reviews` on `status: 'APPROVED'` in `productInclude`, and
+`Product.rating`/`reviewCount` are recomputed from approved rows only — reading every row while
+the rating counted approved ones would put the two into permanent disagreement, which is exactly
+what moderation exists to prevent. On a controlled-substance catalogue an unreviewed "cured my X"
+is a claim the shop is publishing, whoever typed it.
+
+`/api/review` rate-limits per IP, hashes the address with `lib/ip-hash.ts` and carries a honeypot
+that answers exactly like a success. It **never touches the subscriber table**: writing a review
+is not consent to be emailed. `moderatedAt`/`moderatedBy` are re-stamped on every decision, unlike
+`Enquiry.handledAt` and the order milestones — those record how long somebody waited, which is a
+fact; this records who is answerable for what is on the page now.
+
+### Campaigns and Messages
+
+**There is no Send button anywhere, because this build sends no email.** A campaign is written and
+its audience counted; when a person sends it from a real platform they *record* that — the control
+says "Record as sent" and asks who and through what. `setCampaignStatus` refuses SENT outright;
+SENT is reachable only through `recordCampaignSent(id, sentVia)`, which stamps `sentBy` from the
+session and snapshots `recipientCount`. A status dropdown offering "Sent" would let somebody assert
+a send with no author and no platform.
+
+`segmentWhere()` in `lib/campaigns/index.ts` is the only place `status: 'SUBSCRIBED'` appears, and
+every exported query goes through it — a segment's own clause is ANDed on and **cannot widen the
+set**. An unsubscribed address is unreachable from campaigns by construction, not by a filter
+someone might forget. Editing a READY campaign drops it back to DRAFT; editing a SENT one is
+refused, because its words are the record of what reached people.
+
+Recording a message appends a `MESSAGE_RECORDED` line to the contact timeline with a summary
+written for a human at the point it happens. Deleting the message leaves that line standing —
+`ContactActivity` is append-only.
+
+### Payments, Email, Settings
+
+`lib/settings.ts` is the only way to read or write a setting, and it is a **declared registry**: a
+key that is not in `SETTINGS` cannot be read or written, so a typo is a missing entry rather than a
+silently empty value. Every key has a default and `getSettingsSafe()` falls back to it, so a fresh
+database — or a sleeping one — renders the site correctly with no settings rows at all.
+
+A settings form posts a hidden `__fields` manifest naming the keys it rendered. Without it,
+"absent from the FormData" and "set to empty" are indistinguishable, and saving the Email screen
+would blank the announcement bar. It also settles the checkbox problem: an unticked box sends
+nothing at all. `saveSettings` validates before writing, so one bad number cannot half-save.
+
+**`/admin/payments` controls whether a method is LISTED, never whether it can take money.**
+`connected` is false on every row and no screen can set it. There is deliberately no field for a
+wallet address, a merchant id or an API key, and adding one is not a small change: an address
+stored there that is nobody's — or somebody else's — is the most expensive mistake this page could
+make. The checkout panels now render their notice from the database, so the sentence a customer
+reads at the point of entry is the one an administrator wrote.
+
+The System box on `/admin/settings` reports **set / not set, never a value**, and the database
+*host* only. A connection string on screen is a leak.
+
+```bash
+npm run db:seed-operations   # payment methods + delivery zones. Idempotent, edits preserved.
+
+node --env-file=.env .impeccable/admin-areas-e2e.mjs      # the invariants, against the database
+node --env-file=.env .impeccable/admin-screens-e2e.mjs    # every screen loads and is in the menu
+node --env-file=.env .impeccable/discount-order-e2e.mjs   # a discount actually applies to an order
+```
+
+**Every harness needs `--env-file=.env` now, including the ones that do not touch Postgres.** The
+admin sign-in comes from `ADMIN_EMAIL` / `ADMIN_PASSWORD` there, and the harnesses refuse to run
+without them rather than falling back to a literal — a password committed to a repository is a
+password nobody can rotate without a commit, private repo or not. `.env.example` documents the
+two keys.
+
+`discount-order-e2e.mjs` is the one that proves the feature is *connected* rather than merely
+present: everything else about discounts can pass while the order is still written at full price
+with no redemption recorded, which is exactly the state it was written to catch. It records an
+order through the real admin and then checks the money, the snapshot, and the counter.
+
+**Both browser suites navigate with `waitUntil: 'networkidle'`, and that is not incidental.**
+Typing into an admin form before React has hydrated sets the DOM value without React seeing the
+change event — the quantity is invisible to the component, the submit button never unlocks, and
+the failure reads as a broken form rather than a racing test. The same trap sends the login form
+to `/api/admin/login` as a bare POST, which answers JSON and strands the browser on the endpoint.
+
+Settings are not seeded: the registry's defaults already cover an unwritten key, and writing them
+into the table would only create rows nobody chose.
+
+`admin-areas-e2e.mjs` asserts against Postgres rather than importing `lib/*` — those modules begin
+with `import 'server-only'` and throw in plain Node, and a harness that imported the
+implementation could only prove it agrees with itself. It re-derives each rule instead: the rating
+from approved rows, the delivery coverage from the zone table, the absence of an IP column from
+`information_schema`. It leaves the database as it found it.
+
+## Every admin action is wrapped in `runAction`
+
+[components/admin/run-action.ts](components/admin/run-action.ts) exists because of a failure mode
+that made the admin look broken while every line of it was correct.
+
+Admin actions return `{ok:true} | {ok:false,error}` for expected failures. But a server action can
+also **reject**, and against Neon that is routine: the endpoint suspends when idle and refuses the
+first connection that wakes it, so an admin left open for ten minutes hits it on the next click. A
+handler shaped like
+
+```ts
+setBusy(true);
+const result = await someAction(...);
+setBusy(false);            // never runs
+```
+
+then leaves the button stuck on "Saving…", shows no message, and writes nothing — indistinguishable
+from a control that silently does not work. Wrap every action call:
+
+```ts
+const result = await runAction(() => someAction(...));
+```
+
+That turns a rejection into an ordinary `{ok:false}` the existing notice UI already renders. Every
+call site across the admin goes through it; add new ones the same way.
+
+**This drifted once and was worth catching.** Ten call sites had been added without the wrapper —
+including the entire product path (`products-table`, `product-form`, `product-create-form`,
+`wp-quick-product`), `subscribers-table`, and `attach-image`, plus `inline-editor`, which is the
+edit control for Categories, Manufacturers *and* the Journal, so one unwrapped call there froze
+three screens. Two of them are the shapes to watch for, because neither looks like a call site:
+
+- a helper module that calls an action on a component's behalf (`attach-image.ts`);
+- a component that receives the action as a **prop** (`inline-editor.tsx`), where the call reads
+  `action(form)` and greps for the action's name find nothing.
+
+To check the rule holds, look for an `await` on anything from `@/app/admin/*actions` that is not
+inside `runAction(() => ...)`. Note that a wrapped call must read its FormData *before* the await:
+`event.currentTarget` is null by the time a promise resolves.
+
 ## Gotchas
+
+- **A sleeping Neon endpoint fails the whole build, and the catalogue now retries for it.**
+  Neon suspends when idle and refuses the connection that wakes it. The admin survives that
+  because every action goes through `runAction`; a static build has nobody to press the button
+  again, so one cold start took down all 882 pages with `PrismaClientInitializationError`.
+  `withWakeRetry` in [lib/db/catalogue.ts](lib/db/catalogue.ts) retries a CONNECTION failure
+  four times with backoff, and rethrows anything else immediately — retrying a constraint
+  violation only fails slower. If you add another prerendered read that talks to Postgres
+  directly, give it the same treatment or a `.catch` fallback, as `/checkout` has.
+
+- **Do not run `next build` while `next dev` is running.** They share `.next`, and the dev
+  server then serves corrupted chunks — the same failure documented below for clearing `.next`
+  mid-start. Stop the dev server first and let it exit.
 
 - **`String.replace` with a replacement STRING interprets `$` patterns.** `$&`, `` $` ``, `$'`
   and `$1` are substitutions, not literals — and `` $` `` means *the entire string before the

@@ -14,6 +14,14 @@ import {
   Images,
   FileText,
   Mail,
+  Users,
+  BarChart3,
+  Truck,
+  Tag,
+  Star,
+  CreditCard,
+  Settings,
+  ShoppingCart,
   FolderTree,
   ChevronsLeft,
   X,
@@ -58,22 +66,86 @@ const MENU: MenuItem[] = [
       { href: '/admin/brands', label: 'Manufacturers' },
     ],
   },
+  {
+    href: '/admin/orders',
+    label: 'Orders',
+    icon: ShoppingCart,
+    submenu: [
+      { href: '/admin/orders', label: 'All Orders', exact: true },
+      { href: '/admin/orders/new', label: 'Record Order' },
+    ],
+  },
+  { href: '/admin/delivery', label: 'Delivery', icon: Truck },
+  { href: '/admin/discounts', label: 'Discounts', icon: Tag },
+  {
+    href: '/admin/contacts',
+    label: 'CRM',
+    icon: Users,
+    submenu: [
+      { href: '/admin/contacts', label: 'Contacts', exact: true },
+      { href: '/admin/contacts/new', label: 'Add New' },
+      { href: '/admin/enquiries', label: 'Enquiries' },
+    ],
+  },
+  {
+    /*
+      Audience groups the four screens that are about people in aggregate rather than one at a
+      time. Subscribers used to sit at the top level; it belongs here, next to the analytics
+      that explain where those addresses came from.
+    */
+    href: '/admin/analytics',
+    label: 'Audience',
+    icon: BarChart3,
+    submenu: [
+      { href: '/admin/analytics', label: 'Analytics', exact: true },
+      { href: '/admin/subscribers', label: 'Subscribers' },
+      { href: '/admin/messages', label: 'Messages' },
+      { href: '/admin/campaigns', label: 'Campaigns' },
+    ],
+  },
+  { href: '/admin/reviews', label: 'Reviews', icon: Star },
+  { href: '/admin/search', label: 'Search', icon: Search },
   { href: '/admin/media', label: 'Media', icon: Images },
   { href: '/admin/blog', label: 'Journal', icon: FileText },
-  { href: '/admin/subscribers', label: 'Subscribers', icon: Mail },
+  { href: '/admin/payments', label: 'Payments', icon: CreditCard },
+  { href: '/admin/email', label: 'Email', icon: Mail },
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
 /* Categories and Manufacturers are reachable from the Products submenu, but they are also
    destinations in their own right — a direct hit on either should light the parent. */
 const PRODUCTS_FAMILY = ['/admin/products', '/admin/categories', '/admin/brands'];
 
+/* Same idea for the CRM: enquiries are a submenu entry, not a top-level destination. */
+const CRM_FAMILY = ['/admin/contacts', '/admin/enquiries'];
+
+/* Audience owns four screens, none of which is a child route of the others. */
+const AUDIENCE_FAMILY = [
+  '/admin/analytics',
+  '/admin/subscribers',
+  '/admin/messages',
+  '/admin/campaigns',
+];
+
+/* Sections whose highlight covers more routes than their own href. */
+const FAMILIES: Record<string, string[]> = {
+  '/admin/products': PRODUCTS_FAMILY,
+  '/admin/contacts': CRM_FAMILY,
+  '/admin/analytics': AUDIENCE_FAMILY,
+};
+
 export function WpChrome({
   email,
-  reviewCount,
+  pendingReviews,
+  openEnquiries,
+  openOrders,
   categories,
 }: {
   email: string;
-  reviewCount: number;
+  /** Reviews still waiting for a person. This is what the bar bubble counts, as in wp-admin. */
+  pendingReviews: number;
+  openEnquiries: number;
+  openOrders: number;
   categories: { slug: string; name: string; listed: number }[];
 }) {
   const pathname = usePathname();
@@ -86,12 +158,13 @@ export function WpChrome({
     setAccountOpen(false);
   }, [pathname]);
 
-  const inFamily = (item: MenuItem) =>
-    item.exact
-      ? pathname === item.href
-      : item.href === '/admin/products'
-        ? PRODUCTS_FAMILY.some((p) => pathname.startsWith(p))
-        : pathname.startsWith(item.href);
+  const inFamily = (item: MenuItem) => {
+    if (item.exact) return pathname === item.href;
+    const family = FAMILIES[item.href];
+    return family
+      ? family.some((route) => pathname.startsWith(route))
+      : pathname.startsWith(item.href);
+  };
 
   return (
     <>
@@ -124,14 +197,16 @@ export function WpChrome({
           <span className="wp-screen-reader-text">Search products</span>
         </Link>
 
+        {/* WordPress puts comments awaiting moderation here. Ours is the review queue, which is
+            the same job: the count of things a person still has to look at. */}
         <Link
-          href="/admin/products?sort=name"
+          href="/admin/reviews?status=pending"
           className="wp-adminbar-item"
-          title={`${reviewCount} reviews`}
+          title={`${pendingReviews} reviews awaiting moderation`}
         >
           <MessageSquare className="h-4 w-4" strokeWidth={1.9} />
-          <span className="wp-bubble">{reviewCount}</span>
-          <span className="wp-screen-reader-text">reviews</span>
+          <span className="wp-bubble">{pendingReviews}</span>
+          <span className="wp-screen-reader-text">reviews awaiting moderation</span>
         </Link>
 
         <Link href="/admin/products/new" className="wp-adminbar-item" title="Add new product">
@@ -209,6 +284,16 @@ export function WpChrome({
                 >
                   <Icon strokeWidth={1.9} />
                   {item.label}
+                  {/* WordPress puts the count of things awaiting a person right on the menu. */}
+                  {item.href === '/admin/contacts' && openEnquiries > 0 && (
+                    <span className="wp-bubble ml-auto">{openEnquiries}</span>
+                  )}
+                  {item.href === '/admin/orders' && openOrders > 0 && (
+                    <span className="wp-bubble ml-auto">{openOrders}</span>
+                  )}
+                  {item.href === '/admin/reviews' && pendingReviews > 0 && (
+                    <span className="wp-bubble ml-auto">{pendingReviews}</span>
+                  )}
                 </Link>
 
                 {/* WordPress only opens the submenu of the section you are in. */}

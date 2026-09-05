@@ -11,6 +11,7 @@ import {
 } from '@/components/providers/catalogue-provider';
 import { formatPrice } from '@/lib/format';
 import { categoryPigment } from '@/lib/site';
+import { useSearchLog } from '@/components/analytics/use-search-log';
 import { cn } from '@/lib/utils';
 
 /*
@@ -50,6 +51,8 @@ export function ShopBrowser() {
   const PRICE_CEILING = React.useMemo(() => priceCeiling(products), [products]);
 
   const category = params.get('category') ?? '';
+  /* The compound group — the folder's second level. Only meaningful inside a category. */
+  const group = category ? params.get('group') ?? '' : '';
   const brand = params.get('brand') ?? '';
   const filter = params.get('filter') ?? '';
   const query = params.get('q') ?? '';
@@ -66,6 +69,8 @@ export function ShopBrowser() {
       const next = new URLSearchParams(Array.from(params.entries()));
       if (!value) next.delete(key);
       else next.set(key, value);
+      /* A group belongs to its category: changing or clearing the category drops it. */
+      if (key === 'category') next.delete('group');
       const qs = next.toString();
       router.replace(qs ? `/shop?${qs}` : '/shop', { scroll: false });
     },
@@ -78,6 +83,7 @@ export function ShopBrowser() {
     let list = products.slice();
 
     if (category) list = list.filter((p) => p.categorySlug === category);
+    if (group) list = list.filter((p) => p.subcategory === group);
     if (brand) list = list.filter((p) => p.brandSlug === brand);
     if (filter === 'best-sellers') list = list.filter((p) => p.isBestSeller);
     if (filter === 'new') list = list.filter((p) => p.isNew);
@@ -92,6 +98,7 @@ export function ShopBrowser() {
           p.name.toLowerCase().includes(q) ||
           p.brand.toLowerCase().includes(q) ||
           p.category.toLowerCase().includes(q) ||
+          (p.subcategoryName ?? '').toLowerCase().includes(q) ||
           p.description.toLowerCase().includes(q)
       );
     }
@@ -108,16 +115,34 @@ export function ShopBrowser() {
       default:
         return list;
     }
-  }, [products, category, brand, filter, query, sort, maxPrice, PRICE_CEILING]);
+  }, [products, category, group, brand, filter, query, sort, maxPrice, PRICE_CEILING]);
+
+  /* The groups the selected category actually holds, from the products themselves. */
+  const groups = React.useMemo(() => {
+    if (!category) return [];
+    const seen = new Map<string, { slug: string; name: string; count: number }>();
+    for (const p of products) {
+      if (p.categorySlug !== category || !p.subcategory || !p.subcategoryName) continue;
+      const entry = seen.get(p.subcategory) ?? { slug: p.subcategory, name: p.subcategoryName, count: 0 };
+      entry.count += 1;
+      seen.set(p.subcategory, entry);
+    }
+    return Array.from(seen.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [products, category]);
+
+  /* The committed ?q= search, reported once the results are known. */
+  useSearchLog(query, visible.length);
 
   const activeCount =
     (category ? 1 : 0) +
+    (group ? 1 : 0) +
     (brand ? 1 : 0) +
     (filter ? 1 : 0) +
     (query ? 1 : 0) +
     (maxPrice < PRICE_CEILING ? 1 : 0);
 
   const heading =
+    groups.find((g) => g.slug === group)?.name ??
     categories.find((c) => c.slug === category)?.name ??
     brands.find((b) => b.slug === brand)?.name ??
     NAMED_FILTERS.find((f) => f.value === filter)?.label ??
@@ -161,9 +186,34 @@ export function ShopBrowser() {
                 />
                 <span className="flex-1">{c.name}</span>
                 <span className="font-mono text-2xs text-ink-faint tabular">
-                  {c.productCount}
+                  {c.listed}
                 </span>
               </button>
+
+              {/* The category's compound groups, indented under it while it is selected. */}
+              {category === c.slug && groups.length > 0 && (
+                <ul className="mb-2 ml-4 mt-1 space-y-0.5 border-l border-rule pl-3">
+                  {groups.map((g) => (
+                    <li key={g.slug}>
+                      <button
+                        type="button"
+                        onClick={() => setParam('group', group === g.slug ? null : g.slug)}
+                        className={cn(
+                          'flex w-full items-center gap-2 py-1 text-left text-xs transition-colors',
+                          group === g.slug
+                            ? 'font-medium text-pigment-indigo'
+                            : 'text-ink-soft hover:text-ink'
+                        )}
+                      >
+                        <span className="flex-1">{g.name}</span>
+                        <span className="font-mono text-2xs text-ink-faint tabular">
+                          {g.count}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>
@@ -335,6 +385,12 @@ export function ShopBrowser() {
                   <FilterChip
                     label={categories.find((c) => c.slug === category)?.name ?? category}
                     onClear={() => setParam('category', null)}
+                  />
+                )}
+                {group && (
+                  <FilterChip
+                    label={groups.find((g) => g.slug === group)?.name ?? group}
+                    onClear={() => setParam('group', null)}
                   />
                 )}
                 {brand && (

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Check, AlertCircle, Loader2 } from 'lucide-react';
 import { updateProduct, type ActionResult } from '@/app/admin/actions';
 import { cn } from '@/lib/utils';
+import { runAction } from '@/components/admin/run-action';
 
 export type ProductFormValues = {
   id: string;
@@ -128,7 +129,7 @@ export function ProductForm({ product }: { product: ProductFormValues }) {
     setState(null);
 
     const form = new FormData(event.currentTarget);
-    const result = await updateProduct(product.id, form);
+    const result = await runAction(() => updateProduct(product.id, form));
 
     setState(result);
     setBusy(false);

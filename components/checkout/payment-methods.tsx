@@ -25,16 +25,30 @@ import { cn } from '@/lib/utils';
 export type PaymentMethod = 'card' | 'cashapp' | 'crypto';
 export type CryptoAsset = 'BTC' | 'ETH' | 'USDT';
 
-const METHODS: {
-  id: PaymentMethod;
+/**
+ * A method as administered at /admin/payments: which ones are listed, and the sentence each
+ * shows at the point of entry, are database rows now rather than constants here.
+ */
+export type PaymentMethodOption = {
+  key: string;
   label: string;
-  hint: string;
-  icon: typeof CreditCard;
-}[] = [
-  { id: 'card', label: 'Card', hint: 'Visa, Mastercard, American Express', icon: CreditCard },
-  { id: 'cashapp', label: 'Cash App', hint: 'Pay from your Cash App balance', icon: Smartphone },
-  { id: 'crypto', label: 'Cryptocurrency', hint: 'Bitcoin, Ethereum or USDT', icon: Bitcoin },
-];
+  notice: string;
+};
+
+/*
+  The icon and hint belong to the code, not the database.
+
+  A row could carry them, but then a typo in an admin field would render a broken icon name,
+  and the hint is a description of how a rail behaves rather than something a shop configures.
+  What the admin owns is the label, the notice, and whether the method appears at all.
+*/
+const PRESENTATION: Record<string, { hint: string; icon: typeof CreditCard }> = {
+  card: { hint: 'Visa, Mastercard, American Express', icon: CreditCard },
+  cashapp: { hint: 'Pay from your Cash App balance', icon: Smartphone },
+  crypto: { hint: 'Bitcoin, Ethereum or USDT', icon: Bitcoin },
+};
+
+const FALLBACK_PRESENTATION = { hint: 'Alternative payment method', icon: CreditCard };
 
 const ASSETS: { id: CryptoAsset; label: string; network: string }[] = [
   { id: 'BTC', label: 'Bitcoin', network: 'Bitcoin network' },
@@ -46,12 +60,18 @@ export function PaymentMethods({
   total,
   method,
   onMethodChange,
+  methods,
 }: {
   total: number;
   method: PaymentMethod;
   onMethodChange: (m: PaymentMethod) => void;
+  /** Enabled methods from the database, in administered order. */
+  methods: PaymentMethodOption[];
 }) {
   const [asset, setAsset] = React.useState<CryptoAsset>('BTC');
+
+  /* The notice for whichever method is showing, so each panel states its own position. */
+  const notice = methods.find((m) => m.key === method)?.notice ?? '';
 
   return (
     <div>
@@ -60,13 +80,18 @@ export function PaymentMethods({
           How would you like to pay?
         </legend>
 
-        <div className="mt-5 grid gap-px border border-rule bg-rule sm:grid-cols-3">
-          {METHODS.map((m) => {
-            const Icon = m.icon;
-            const active = method === m.id;
+        <div
+          className={cn(
+            'mt-5 grid gap-px border border-rule bg-rule',
+            methods.length > 2 ? 'sm:grid-cols-3' : methods.length === 2 && 'sm:grid-cols-2'
+          )}
+        >
+          {methods.map((m) => {
+            const { hint, icon: Icon } = PRESENTATION[m.key] ?? FALLBACK_PRESENTATION;
+            const active = method === m.key;
             return (
               <label
-                key={m.id}
+                key={m.key}
                 className={cn(
                   'flex cursor-pointer flex-col gap-2 bg-card p-4 transition-colors',
                   active ? 'bg-paper-sunk' : 'hover:bg-paper-sunk'
@@ -76,9 +101,9 @@ export function PaymentMethods({
                   <input
                     type="radio"
                     name="payment-method"
-                    value={m.id}
+                    value={m.key}
                     checked={active}
-                    onChange={() => onMethodChange(m.id)}
+                    onChange={() => onMethodChange(m.key as PaymentMethod)}
                     className="h-4 w-4 accent-pigment-indigo"
                   />
                   <Icon
@@ -87,7 +112,7 @@ export function PaymentMethods({
                   />
                   <span className="text-sm font-medium">{m.label}</span>
                 </span>
-                <span className="text-xs leading-relaxed text-ink-faint">{m.hint}</span>
+                <span className="text-xs leading-relaxed text-ink-faint">{hint}</span>
               </label>
             );
           })}
@@ -95,10 +120,10 @@ export function PaymentMethods({
       </fieldset>
 
       <div className="mt-6">
-        {method === 'card' && <CardPanel />}
-        {method === 'cashapp' && <CashAppPanel total={total} />}
+        {method === 'card' && <CardPanel notice={notice} />}
+        {method === 'cashapp' && <CashAppPanel total={total} notice={notice} />}
         {method === 'crypto' && (
-          <CryptoPanel total={total} asset={asset} onAssetChange={setAsset} />
+          <CryptoPanel total={total} asset={asset} onAssetChange={setAsset} notice={notice} />
         )}
       </div>
     </div>
@@ -107,7 +132,7 @@ export function PaymentMethods({
 
 /* ------------------------------------------------------------------ card */
 
-function CardPanel() {
+function CardPanel({ notice }: { notice: string }) {
   return (
     <div className="space-y-4">
       <Field id="card" label="Card number" placeholder="0000 0000 0000 0000" />
@@ -117,17 +142,15 @@ function CardPanel() {
       </div>
       <Field id="card-name" label="Name on card" autoComplete="cc-name" />
 
-      <NotConnected>
-        No payment processor is connected. Nothing typed here is transmitted or stored — do
-        not enter a real card number.
-      </NotConnected>
+      {/* The sentence itself is administered at /admin/payments; only its placement is here. */}
+      <NotConnected>{notice}</NotConnected>
     </div>
   );
 }
 
 /* --------------------------------------------------------------- cash app */
 
-function CashAppPanel({ total }: { total: number }) {
+function CashAppPanel({ total, notice }: { total: number; notice: string }) {
   return (
     <div className="space-y-4">
       <p className="text-sm leading-relaxed text-ink-soft">
@@ -147,10 +170,7 @@ function CashAppPanel({ total }: { total: number }) {
         </p>
       </div>
 
-      <NotConnected>
-        No Cash App account is connected to this build, so there is no destination to send to
-        and no payment can be made.
-      </NotConnected>
+      <NotConnected>{notice}</NotConnected>
     </div>
   );
 }
@@ -161,10 +181,12 @@ function CryptoPanel({
   total,
   asset,
   onAssetChange,
+  notice,
 }: {
   total: number;
   asset: CryptoAsset;
   onAssetChange: (a: CryptoAsset) => void;
+  notice: string;
 }) {
   return (
     <div className="space-y-4">
@@ -227,10 +249,13 @@ function CryptoPanel({
         </p>
       </div>
 
-      <NotConnected>
-        No wallet is connected to this build. On-chain payments are irreversible, so this is
-        the one method where a half-finished integration could lose someone real money.
-      </NotConnected>
+      {/*
+        The one panel where the standing rule matters most: there is no wallet address here,
+        and no field anywhere in the admin that could put one here. On-chain payments are
+        irreversible, so a plausible address that is nobody's — or somebody else's — is the
+        most expensive thing this page could contain.
+      */}
+      <NotConnected>{notice}</NotConnected>
     </div>
   );
 }

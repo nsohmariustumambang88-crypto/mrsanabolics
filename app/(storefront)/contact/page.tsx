@@ -4,22 +4,39 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Mail, MessageSquare, Clock, Check, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ENQUIRY_SUBJECTS, MIN_MESSAGE_LENGTH } from '@/lib/crm/subjects';
+import { useSiteSettings } from '@/components/providers/settings-provider';
 
-const SUBJECTS = [
-  'An order I placed',
-  'A batch certificate',
-  'Shipping or customs',
-  'Returns',
-  'Something else',
-];
+/*
+  The subjects come from lib/crm/subjects.ts, which the API route validates against too. A local
+  copy here would be a second source of truth, and the drift shows up as a visitor picking an
+  option the server then rejects as unknown.
+*/
+const SUBJECTS = ENQUIRY_SUBJECTS;
 
-const channels = [
+/*
+  The support address comes from site settings, so an administrator changes it in one place and
+  it changes here. `channels` is therefore built inside the component rather than at module
+  scope. An unset address falls back to the one the site shipped with rather than rendering a
+  blank line — a contact page with no way to make contact is worse than a stale address.
+*/
+const channelsFor = (supportEmail: string, supportPhone: string) => [
   {
     icon: Mail,
     title: 'Write to us',
-    body: 'support@mranabolics.example.com',
+    body: supportEmail || 'support@mranabolics.example.com',
     note: 'Answered in the order received.',
   },
+  ...(supportPhone
+    ? [
+        {
+          icon: MessageSquare,
+          title: 'Call us',
+          body: supportPhone,
+          note: 'During the hours below.',
+        },
+      ]
+    : []),
   {
     icon: Clock,
     title: 'Hours',
@@ -43,24 +60,61 @@ export default function ContactPage() {
     subject: SUBJECTS[0],
     message: '',
   });
+  const { supportEmail, supportPhone } = useSiteSettings();
+  const channels = React.useMemo(
+    () => channelsFor(supportEmail, supportPhone),
+    [supportEmail, supportPhone]
+  );
   const [errors, setErrors] = React.useState<Errors>({});
   const [sent, setSent] = React.useState(false);
+  const [sending, setSending] = React.useState(false);
+  const [failure, setFailure] = React.useState<string | null>(null);
+  /* Honeypot: hidden from people, filled by bots. Never read by a human. */
+  const [company, setCompany] = React.useState('');
 
   const set = (key: keyof typeof values) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => setValues((v) => ({ ...v, [key]: e.target.value }));
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const next: Errors = {};
     if (!values.name.trim()) next.name = 'Tell us who to reply to.';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email))
       next.email = 'That address is missing an @ or a domain.';
-    if (values.message.trim().length < 10)
+    if (values.message.trim().length < MIN_MESSAGE_LENGTH)
       next.message = 'A little more detail helps us answer in one reply.';
 
     setErrors(next);
-    if (Object.keys(next).length === 0) setSent(true);
+    if (Object.keys(next).length > 0) return;
+
+    setSending(true);
+    setFailure(null);
+
+    try {
+      const response = await fetch('/api/enquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...values, company, path: window.location.pathname }),
+      });
+
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+
+      if (!response.ok) {
+        /*
+          Say what went wrong and keep everything they typed. Clearing a message someone spent
+          five minutes on because the network blinked is the worst thing this form could do.
+        */
+        setFailure(data?.error ?? 'That did not send. Try again in a moment.');
+        return;
+      }
+
+      setSent(true);
+    } catch {
+      setFailure('That did not send — check your connection and try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -95,8 +149,9 @@ export default function ContactPage() {
                   strokeWidth={1.75}
                 />
                 <span>
-                  This form is not connected on the demonstration build. It validates and
-                  confirms, but no message is delivered.
+                  This form is connected: your message is stored and reaches the team&rsquo;s
+                  queue. No automatic email is sent, so a reply comes from a person and takes as
+                  long as that takes.
                 </span>
               </p>
 
@@ -110,13 +165,14 @@ export default function ContactPage() {
                     Message accepted
                   </h2>
                   <p className="measure-tight mx-auto mt-2 text-sm leading-relaxed text-ink-soft">
-                    In a connected build this would reach support and you would get a reply
-                    within one working day.
+                    It is in the support queue. You have not been added to any mailing list —
+                    writing in is not a subscription.
                   </p>
                   <button
                     type="button"
                     onClick={() => {
                       setSent(false);
+                      setFailure(null);
                       setValues({ name: '', email: '', subject: SUBJECTS[0], message: '' });
                     }}
                     className="mt-6 text-sm text-pigment-indigo underline underline-offset-4"
@@ -188,11 +244,35 @@ export default function ContactPage() {
                     )}
                   </div>
 
+                  {/* Off-screen rather than display:none — some bots skip hidden inputs. */}
+                  <div
+                    aria-hidden
+                    className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden"
+                  >
+                    <label htmlFor="company">Company</label>
+                    <input
+                      id="company"
+                      name="company"
+                      type="text"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={company}
+                      onChange={(e) => setCompany(e.target.value)}
+                    />
+                  </div>
+
+                  {failure && (
+                    <p role="alert" className="text-sm text-destructive">
+                      {failure}
+                    </p>
+                  )}
+
                   <button
                     type="submit"
-                    className="rounded-full bg-pigment-indigo px-7 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift"
+                    disabled={sending}
+                    className="rounded-full bg-pigment-indigo px-7 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift disabled:opacity-60"
                   >
-                    Send message
+                    {sending ? 'Sending…' : 'Send message'}
                   </button>
                 </form>
               )}

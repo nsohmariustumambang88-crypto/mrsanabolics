@@ -10,6 +10,7 @@ import { useProducts, useCategories } from '@/components/providers/catalogue-pro
 import { formatPrice } from '@/lib/format';
 import { ProductPlate } from '@/components/product/product-plate';
 import { categoryPigment } from '@/lib/site';
+import { useSearchLog } from '@/components/analytics/use-search-log';
 import { cn } from '@/lib/utils';
 
 export function SearchDialog() {
@@ -53,6 +54,9 @@ export function SearchDialog() {
   }, [query, products]);
 
   React.useEffect(() => setCursor(0), [query]);
+
+  /* What people ask for, and whether the catalogue answered. See components/analytics. */
+  useSearchLog(query, results.length);
 
   const go = React.useCallback(
     (href: string) => {

@@ -2,7 +2,7 @@
 
 import { SectionHeading } from '@/components/product/section-heading';
 import { ProductGrid } from '@/components/product/product-grid';
-import type { Product } from '@/lib/types';
+import type { ProductSummary } from '@/lib/types';
 
 export function ProductsSection({
   title,
@@ -13,7 +13,7 @@ export function ProductsSection({
   title: string;
   description?: string;
   href?: string;
-  products: Product[];
+  products: ProductSummary[];
 }) {
   if (products.length === 0) return null;
 

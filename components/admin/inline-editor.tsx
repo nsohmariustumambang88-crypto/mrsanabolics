@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Check, AlertCircle, Loader2, ChevronDown } from 'lucide-react';
 import type { ActionResult } from '@/app/admin/actions';
 import { cn } from '@/lib/utils';
+import { runAction } from '@/components/admin/run-action';
 
 /*
   One editor for the small records — categories, manufacturers, journal posts.
@@ -50,7 +51,14 @@ export function InlineEditor({
     setBusy(true);
     setState(null);
 
-    const result = await action(new FormData(event.currentTarget));
+    /*
+      Wrapped even though the action arrives as a prop: this one component is the edit path for
+      Categories, Manufacturers and the Journal, so an unwrapped rejection here freezes three
+      screens at once. The form data has to be read before the await — `event.currentTarget` is
+      null by the time a promise resolves.
+    */
+    const form = new FormData(event.currentTarget);
+    const result = await runAction(() => action(form));
 
     setState(result);
     setBusy(false);

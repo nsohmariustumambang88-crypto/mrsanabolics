@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { buildPlateSvg, markingFor } from '@/lib/plate-svg';
 import { categoryPigment } from '@/lib/site';
-import type { Product } from '@/lib/types';
+import type { ProductSummary } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 /*
@@ -25,6 +25,14 @@ import { cn } from '@/lib/utils';
   the same geometry in lib/plate-svg.ts so the two cannot drift.
 */
 
+/**
+ * Photographs live under mranabolics/library/ (see prisma/upload-library.ts); generated
+ * plates live under mranabolics/products/. The prefix is the only difference the UI needs.
+ */
+export function isPhotograph(source: string | undefined): boolean {
+  return Boolean(source && source.startsWith('mranabolics/library/'));
+}
+
 export function ProductPlate({
   product,
   className,
@@ -32,7 +40,7 @@ export function ProductPlate({
   sizes = '(min-width: 1280px) 25vw, (min-width: 640px) 33vw, 50vw',
   priority = false,
 }: {
-  product: Product;
+  product: ProductSummary;
   className?: string;
   showMarking?: boolean;
   /** Which srcset candidate to take. Wrong values pull a 1200px file into a 44px thumbnail. */
@@ -64,6 +72,14 @@ export function ProductPlate({
     ) : null;
 
   if (source) {
+    /*
+      Two kinds of uploaded image. A generated plate fills its frame and carries the marking
+      as live text over it. A photograph from the store's library is shown whole — most are
+      square, the rest would lose their caps or labels to a cover crop — and carries no
+      marking, because the label in the picture already says what the vial holds and a second
+      line of text over a photograph is clutter, not information.
+    */
+    const photograph = isPhotograph(source);
     return (
       <>
         <Image
@@ -72,9 +88,9 @@ export function ProductPlate({
           fill
           sizes={sizes}
           priority={priority}
-          className={cn('object-cover', className)}
+          className={cn(photograph ? 'object-contain' : 'object-cover', className)}
         />
-        {markingOn('text-plate-ink')}
+        {photograph ? null : markingOn('text-plate-ink')}
       </>
     );
   }

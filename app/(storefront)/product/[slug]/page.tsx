@@ -6,6 +6,7 @@ import {
   getProductSlugs,
 } from '@/lib/db/catalogue';
 import { ProductDetail } from '@/components/product/product-detail';
+import { getSettingsSafe, asBoolean } from '@/lib/settings';
 import { SITE } from '@/lib/site';
 
 /*
@@ -61,6 +62,10 @@ export default async function ProductPage({ params }: Params) {
   if (!product) notFound();
 
   const related = await getRelatedProducts(product);
+  /* Whether the review form is offered at all is an administrator's decision, not a build-time
+     one. Submitted reviews still wait for approval either way. */
+  const settings = await getSettingsSafe();
+  const reviewsOpen = asBoolean(settings.reviews_open);
   const url = `${SITE.url}/product/${product.slug}`;
 
   const schema = [
@@ -89,23 +94,28 @@ export default async function ProductPage({ params }: Params) {
         itemCondition: 'https://schema.org/NewCondition',
         seller: { '@id': `${SITE.url}/#organization` },
       },
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: product.rating,
-        reviewCount: product.reviewCount,
-      },
-      review: product.reviews.map((r) => ({
-        '@type': 'Review',
-        author: { '@type': 'Person', name: r.author },
-        datePublished: r.date,
-        name: r.title,
-        reviewBody: r.body,
-        reviewRating: {
-          '@type': 'Rating',
-          ratingValue: r.rating,
-          bestRating: 5,
-        },
-      })),
+      /* A rating of 0 from 0 reviews is not a rating; search engines flag it as invalid. */
+      ...(product.reviewCount > 0
+        ? {
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: product.rating,
+              reviewCount: product.reviewCount,
+            },
+            review: product.reviews.map((r) => ({
+              '@type': 'Review',
+              author: { '@type': 'Person', name: r.author },
+              datePublished: r.date,
+              name: r.title,
+              reviewBody: r.body,
+              reviewRating: {
+                '@type': 'Rating',
+                ratingValue: r.rating,
+                bestRating: 5,
+              },
+            })),
+          }
+        : {}),
     },
     {
       '@context': 'https://schema.org',
@@ -118,18 +128,38 @@ export default async function ProductPage({ params }: Params) {
           name: product.category,
           item: `${SITE.url}/shop?category=${product.categorySlug}`,
         },
-        { '@type': 'ListItem', position: 3, name: product.name, item: url },
+        /* The compound group, where the category has one — the folder's second level. */
+        ...(product.subcategory && product.subcategoryName
+          ? [
+              {
+                '@type': 'ListItem',
+                position: 3,
+                name: product.subcategoryName,
+                item: `${SITE.url}/shop?category=${product.categorySlug}&group=${product.subcategory}`,
+              },
+            ]
+          : []),
+        {
+          '@type': 'ListItem',
+          position: product.subcategory ? 4 : 3,
+          name: product.name,
+          item: url,
+        },
       ],
     },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: product.faqs.map((f) => ({
-        '@type': 'Question',
-        name: f.question,
-        acceptedAnswer: { '@type': 'Answer', text: f.answer },
-      })),
-    },
+    ...(product.faqs.length > 0
+      ? [
+          {
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: product.faqs.map((f) => ({
+              '@type': 'Question',
+              name: f.question,
+              acceptedAnswer: { '@type': 'Answer', text: f.answer },
+            })),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -138,7 +168,7 @@ export default async function ProductPage({ params }: Params) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
       />
-      <ProductDetail product={product} related={related} />
+      <ProductDetail product={product} related={related} reviewsOpen={reviewsOpen} />
     </>
   );
 }

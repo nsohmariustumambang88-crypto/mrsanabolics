@@ -101,10 +101,19 @@ async function main() {
   const tokens = readTokens();
   console.log(`Read ${tokens.size} design tokens from app/globals.css`);
 
-  const rows = await prisma.product.findMany({
+  const all = await prisma.product.findMany({
     include: { category: true, brand: true, specifications: { orderBy: { position: 'asc' } } },
     orderBy: { position: 'asc' },
   });
+
+  /*
+    Only products with no picture get a plate. The catalogue now carries real photography
+    under mranabolics/library/, and this script writes `images` back — rendering a plate for a
+    photographed product would replace the photograph with a drawing. A generated plate is a
+    fallback for a product nobody has photographed, not a substitute for one somebody has.
+  */
+  const rows = all.filter((row) => !row.images[0] || row.images[0].startsWith(PRODUCT_FOLDER));
+  console.log(`${all.length - rows.length} products carry photographs and are left alone.`);
 
   console.log(`Rendering ${rows.length} plates at ${240 * SCALE}x${260 * SCALE} …\n`);
 

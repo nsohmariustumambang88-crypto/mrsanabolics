@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { createProduct } from '@/app/admin/actions';
+import { runAction } from '@/components/admin/run-action';
 import { ImageField } from '@/components/admin/image-field';
 import { uploadAndAttach } from '@/components/admin/attach-image';
 
@@ -43,7 +44,8 @@ export function WpQuickProduct({
     setError(null);
     setSaved(null);
 
-    const result = await createProduct(new FormData(event.currentTarget));
+    const form = new FormData(event.currentTarget);
+    const result = await runAction(() => createProduct(form));
 
     if (!result.ok) {
       setBusy(false);

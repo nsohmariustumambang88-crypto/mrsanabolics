@@ -85,15 +85,13 @@
     /* --- Category pigments: one drop per category, all from the same bath --- */
     --cat-injectables: 214 58% 32%;
     --cat-orals: 12 62% 45%;
-    --cat-sarms: 162 34% 32%;
-    --cat-pct: 36 74% 40%;
     --cat-peptides: 268 32% 42%;
+    --cat-post-cycle: 36 74% 40%;
     --cat-fat-burners: 24 68% 46%;
-    --cat-growth-hormone: 196 46% 34%;
-    --cat-ancillaries: 218 14% 40%;
-    --cat-testosterone: 232 44% 40%;
-    --cat-bundles: 340 38% 42%;
-    --cat-accessories: 96 26% 34%;
+    --cat-sexual-health: 340 38% 42%;
+    --cat-immune-boosters: 162 34% 32%;
+    --cat-skin-health: 196 46% 34%;
+    --cat-syringes-needles: 218 14% 40%;
 
     /* --- Paper fiber. A real material, not a gradient wash. --- */
     --substrate-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23f)' opacity='0.42'/%3E%3C/svg%3E");
@@ -150,15 +148,13 @@
 
     --cat-injectables: 214 50% 64%;
     --cat-orals: 12 54% 60%;
-    --cat-sarms: 162 30% 54%;
-    --cat-pct: 36 58% 58%;
     --cat-peptides: 268 30% 64%;
+    --cat-post-cycle: 36 58% 58%;
     --cat-fat-burners: 24 56% 60%;
-    --cat-growth-hormone: 196 40% 56%;
-    --cat-ancillaries: 214 16% 62%;
-    --cat-testosterone: 232 38% 64%;
-    --cat-bundles: 340 34% 62%;
-    --cat-accessories: 96 24% 54%;
+    --cat-sexual-health: 340 34% 62%;
+    --cat-immune-boosters: 162 30% 54%;
+    --cat-skin-health: 196 40% 56%;
+    --cat-syringes-needles: 214 16% 62%;
 
     /* On the bath the fiber becomes surface caustics — lighter, screened, not multiplied */
     --substrate-blend: screen;

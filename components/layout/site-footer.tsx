@@ -205,10 +205,11 @@ export function SiteFooter() {
         <div className="border-t border-rule py-6">
           <p className="measure text-xs leading-relaxed text-ink-faint">
             <span className="font-medium text-ink-soft">Demonstration build.</span>{' '}
-            This is a portfolio storefront. Product plates are drawn illustrations of the
-            vessel each compound ships in, not photographs, and all reviews, testimonials,
-            ratings, purity figures, and shipping claims shown here are synthetic fixtures
-            authored for the demo — not verified business facts, and not a commercial offer.
+            This is a portfolio storefront. Product photographs are the store&apos;s own
+            listing images; where a product has none, a drawn plate of its vessel stands in.
+            Prices are placeholders pending review, and all reviews, testimonials, ratings,
+            purity figures, and shipping claims shown here are synthetic fixtures authored for
+            the demo — not verified business facts, and not a commercial offer.
           </p>
         </div>
 

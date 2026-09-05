@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Upload, Check, AlertCircle, Loader2 } from 'lucide-react';
 import { setProductImage } from '@/app/admin/actions';
+import { runAction } from '@/components/admin/run-action';
 
 /*
   Product image upload.
@@ -61,7 +62,7 @@ export function ImageUpload({
         return;
       }
 
-      const attached = await setProductImage(productId, json.publicId);
+      const attached = await runAction(() => setProductImage(productId, json.publicId));
 
       if (!attached.ok) {
         setMessage({

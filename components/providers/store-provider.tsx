@@ -1,14 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import type { CartItem, Product } from '@/lib/types';
+import type { CartItem, ProductSummary } from '@/lib/types';
 
 type StoreState = {
   cart: CartItem[];
   wishlist: string[];
   cartOpen: boolean;
   searchOpen: boolean;
-  addToCart: (product: Product, quantity?: number) => void;
+  addToCart: (product: ProductSummary, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -50,7 +50,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (hydrated) localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlist));
   }, [wishlist, hydrated]);
 
-  const addToCart = React.useCallback((product: Product, quantity = 1) => {
+  const addToCart = React.useCallback((product: ProductSummary, quantity = 1) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.productId === product.id);
       if (existing) {

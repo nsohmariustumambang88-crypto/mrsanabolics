@@ -1,5 +1,18 @@
 import Link from 'next/link';
-import { Package, FolderTree, Factory, FileText, Images, Star } from 'lucide-react';
+import {
+  Package,
+  FolderTree,
+  Factory,
+  FileText,
+  Images,
+  Star,
+  Users,
+  Inbox,
+  ShoppingCart,
+  Mail,
+  BarChart3,
+  Tag,
+} from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { formatPrice } from '@/lib/format';
@@ -35,6 +48,10 @@ export default async function AdminDashboard() {
     recent,
     categoryRows,
     brandRows,
+    contacts,
+    openEnquiries,
+    orders,
+    openOrders,
   ] = await Promise.all([
     prisma.product.count(),
     prisma.category.count(),
@@ -61,6 +78,35 @@ export default async function AdminDashboard() {
     }),
     prisma.category.findMany({ orderBy: { position: 'asc' }, select: { id: true, name: true } }),
     prisma.brand.findMany({ orderBy: { position: 'asc' }, select: { id: true, name: true } }),
+    prisma.contact.count(),
+    prisma.enquiry.count({ where: { status: { in: ['NEW', 'OPEN'] } } }),
+    prisma.order.count(),
+    prisma.order.count({ where: { status: { in: ['NEW', 'CONFIRMED', 'PACKED'] } } }),
+  ]);
+
+  /*
+    The newer areas, counted in a second batch purely to keep the first one readable. Each of
+    these is a thing somebody has to act on, which is why they feed the attention notice rather
+    than only the glance list.
+  */
+  const since = (days: number) => new Date(Date.now() - days * 86_400_000);
+  const [
+    pendingReviews,
+    subscribers,
+    visitorsToday,
+    activeDiscounts,
+    draftCampaigns,
+    deadSearches,
+    catchAllZones,
+  ] = await Promise.all([
+    prisma.review.count({ where: { status: 'PENDING' } }),
+    prisma.subscriber.count({ where: { status: 'SUBSCRIBED' } }),
+    prisma.visitor.count({ where: { lastSeenAt: { gte: since(1) } } }),
+    prisma.discount.count({ where: { status: 'ACTIVE' } }),
+    prisma.campaign.count({ where: { status: { in: ['DRAFT', 'READY'] } } }),
+    prisma.searchQuery.count({ where: { resultCount: 0, occurredAt: { gte: since(7) } } }),
+    /* A zone with an empty country list is the rest-of-world catch-all. */
+    prisma.deliveryZone.count({ where: { active: true, countries: { isEmpty: true } } }),
   ]);
 
   const glance = [
@@ -69,10 +115,55 @@ export default async function AdminDashboard() {
     { icon: Factory, label: 'Manufacturers', value: brands, href: '/admin/brands' },
     { icon: FileText, label: posts === 1 ? 'Journal post' : 'Journal posts', value: posts, href: '/admin/blog' },
     { icon: Images, label: 'With an image', value: withImage, href: '/admin/media' },
-    { icon: Star, label: reviews === 1 ? 'Review' : 'Reviews', value: reviews, href: '/admin/products' },
+    { icon: Star, label: reviews === 1 ? 'Review' : 'Reviews', value: reviews, href: '/admin/reviews' },
+    { icon: Users, label: contacts === 1 ? 'Contact' : 'Contacts', value: contacts, href: '/admin/contacts' },
+    { icon: Inbox, label: 'Open enquiries', value: openEnquiries, href: '/admin/enquiries' },
+    { icon: ShoppingCart, label: orders === 1 ? 'Order' : 'Orders', value: orders, href: '/admin/orders' },
+    { icon: Mail, label: 'Subscribers', value: subscribers, href: '/admin/subscribers' },
+    { icon: BarChart3, label: 'Visitors today', value: visitorsToday, href: '/admin/analytics' },
+    { icon: Tag, label: 'Active discounts', value: activeDiscounts, href: '/admin/discounts' },
   ];
 
   const attention: { text: string; href: string }[] = [];
+  if (pendingReviews > 0) {
+    /* Somebody wrote this and it is not on the site yet, which makes it the oldest debt here. */
+    attention.push({
+      text: `${pendingReviews} review${pendingReviews === 1 ? '' : 's'} waiting to be read`,
+      href: '/admin/reviews?status=pending',
+    });
+  }
+  if (catchAllZones === 0) {
+    /* Without a rest-of-world zone some customers are offered no delivery at all. */
+    attention.push({
+      text: 'No catch-all delivery zone — some countries get no delivery option',
+      href: '/admin/delivery',
+    });
+  }
+  if (deadSearches > 0) {
+    attention.push({
+      text: `${deadSearches} search${deadSearches === 1 ? '' : 'es'} returned nothing this week`,
+      href: '/admin/search?filter=no-results',
+    });
+  }
+  if (draftCampaigns > 0) {
+    attention.push({
+      text: `${draftCampaigns} campaign${draftCampaigns === 1 ? '' : 's'} unsent`,
+      href: '/admin/campaigns',
+    });
+  }
+  if (openOrders > 0) {
+    attention.push({
+      text: `${openOrders} order${openOrders === 1 ? '' : 's'} still to fulfil`,
+      href: '/admin/orders?filter=open',
+    });
+  }
+  if (openEnquiries > 0) {
+    /* Someone outside the business is waiting on this one, which is why it leads. */
+    attention.push({
+      text: `${openEnquiries} enquir${openEnquiries === 1 ? 'y is' : 'ies are'} waiting on a reply`,
+      href: '/admin/enquiries',
+    });
+  }
   if (outOfStock > 0) {
     attention.push({
       text: `${outOfStock} product${outOfStock === 1 ? ' is' : 's are'} out of stock`,
@@ -104,8 +195,8 @@ export default async function AdminDashboard() {
         help={
           <div>
             <p className="mt-0">
-              <strong>At a Glance</strong> counts what is in the catalogue — each line links to
-              the screen that edits it.
+              <strong>At a Glance</strong> counts what is in the catalogue and who is in the
+              CRM — each line links to the screen that works on it.
             </p>
             <p>
               <strong>Quick Add</strong> writes a real product row. Image and full copy can be

@@ -1,4 +1,5 @@
 import { chromium } from 'playwright-core';
+import { PrismaClient } from '@prisma/client';
 
 /*
   End-to-end proof that the admin still does the job, not just that it looks the part.
@@ -6,11 +7,34 @@ import { chromium } from 'playwright-core';
   Adds a product through the dashboard's Quick Add widget, into a named category, then checks
   it reached the list table and the public storefront. Finally deletes it again, so running
   this leaves the catalogue exactly as it found it.
+
+  The delete is confirmed by POLLING THE DATABASE rather than re-reading the table after a fixed
+  sleep. The row disappears from the page only once `router.refresh()` has round-tripped, which
+  against a dev server and a database a second away takes longer than any sleep worth writing —
+  so the old fixed 2.5s wait reported a working delete as a failure. The database is what the
+  assertion is actually about.
+
+    node --env-file=.env .impeccable/wp-e2e.mjs
 */
 
 const BASE = 'http://localhost:3000';
-const EMAIL = 'petzyrockchendi@gmail.com';
-const PASSWORD = 'harbour-lantern-ferment-1542';
+const EMAIL = process.env.ADMIN_EMAIL;
+const PASSWORD = process.env.ADMIN_PASSWORD;
+
+/*
+  Credentials come from the environment, never from this file.
+
+  A password written into a harness is a password in the repository, and a password in the
+  repository is one nobody can rotate without a commit. Run with --env-file=.env, which is
+  gitignored and holds the real values.
+*/
+if (!EMAIL || !PASSWORD) {
+  console.error(
+    'Set ADMIN_EMAIL and ADMIN_PASSWORD (they live in .env). Run with: node --env-file=.env ' +
+      process.argv[1]
+  );
+  process.exit(1);
+}
 const NAME = 'E2E Probe Compound 999';
 
 const browser = await chromium.launch();
@@ -68,15 +92,21 @@ const delRow = page.locator('tbody tr', { hasText: NAME }).first();
 if (await delRow.count()) {
   await delRow.hover();
   await delRow.locator('button:has-text("Delete permanently")').click();
-  await page.waitForTimeout(2500);
 }
-await page.goto(`${BASE}/admin/products?q=${encodeURIComponent('E2E Probe')}`, {
-  waitUntil: 'networkidle',
-});
-ok(
-  'row-action delete removes it again',
-  (await page.locator('tbody tr', { hasText: NAME }).count()) === 0
-);
+
+/* Poll the database: the write is the thing being tested, not how fast the table re-renders. */
+const prisma = new PrismaClient();
+let remaining = 1;
+for (let attempt = 0; attempt < 45 && remaining > 0; attempt++) {
+  remaining = await prisma.product.count({ where: { name: NAME } });
+  if (remaining > 0) await new Promise((r) => setTimeout(r, 1000));
+}
+ok('row-action delete removes it again', remaining === 0, `${remaining} left`);
+
+/* Leave nothing behind even if the control failed — a probe row in a real catalogue is worse
+   than a failing test. */
+if (remaining > 0) await prisma.product.deleteMany({ where: { name: NAME } });
+await prisma.$disconnect();
 
 await browser.close();
 console.log(fails.length ? `\n${fails.length} FAILED` : '\nall checks passed');

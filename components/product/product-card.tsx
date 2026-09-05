@@ -7,7 +7,8 @@ import { useStore } from '@/components/providers/store-provider';
 import { formatPrice } from '@/lib/format';
 import { ProductPlate } from '@/components/product/product-plate';
 import { categoryPigment } from '@/lib/site';
-import type { Product } from '@/lib/types';
+import { useSiteSettings } from '@/components/providers/settings-provider';
+import type { ProductSummary } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 /*
@@ -18,11 +19,11 @@ import { cn } from '@/lib/utils';
   uses — one dot, one word, one pigment — never a scattered set of badge colours.
 */
 
-export function stockState(product: Product) {
+export function stockState(product: ProductSummary, lowStockThreshold = 5) {
   if (!product.inStock) {
     return { label: 'Out of bath', token: 'hsl(var(--pig-madder))', tone: 'text-destructive' };
   }
-  if (product.stockCount <= 5) {
+  if (product.stockCount <= lowStockThreshold) {
     return {
       label: `${product.stockCount} left`,
       token: 'hsl(var(--pig-saffron))',
@@ -32,11 +33,12 @@ export function stockState(product: Product) {
   return { label: 'In stock', token: 'hsl(var(--pig-verdigris))', tone: 'text-success' };
 }
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product }: { product: ProductSummary }) {
   const { addToCart, toggleWishlist, isWishlisted } = useStore();
   const [added, setAdded] = React.useState(false);
   const wished = isWishlisted(product.id);
-  const state = stockState(product);
+  const { lowStockThreshold } = useSiteSettings();
+  const state = stockState(product, lowStockThreshold);
 
   const discount = product.compareAtPrice
     ? Math.round((1 - product.price / product.compareAtPrice) * 100)

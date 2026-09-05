@@ -6,6 +6,9 @@ export type Product = {
   brandSlug: string;
   category: string;
   categorySlug: string;
+  /** Second level of the catalogue folder, where the category has one. */
+  subcategory?: string;
+  subcategoryName?: string;
   price: number;
   compareAtPrice?: number;
   rating: number;
@@ -34,6 +37,44 @@ export type Product = {
     title: string;
     body: string;
   }[];
+};
+
+/**
+ * What the client-side catalogue carries per product.
+ *
+ * The storefront layout hands every product to the browser through the catalogue provider, on
+ * every page. With 800+ products the full record — long copy, FAQs, reviews, ingredients — is
+ * megabytes of RSC payload nobody reads on a listing. This is the projection that cards, search,
+ * filters and the cart actually use; the product page reads the full record server-side.
+ *
+ * A full Product is assignable to this, so server pages can pass either.
+ */
+export type ProductSummary = Pick<
+  Product,
+  | 'id'
+  | 'slug'
+  | 'name'
+  | 'brand'
+  | 'brandSlug'
+  | 'category'
+  | 'categorySlug'
+  | 'subcategory'
+  | 'subcategoryName'
+  | 'price'
+  | 'compareAtPrice'
+  | 'rating'
+  | 'reviewCount'
+  | 'inStock'
+  | 'stockCount'
+  | 'isNew'
+  | 'isBestSeller'
+  | 'isTrending'
+  | 'isDeal'
+  | 'description'
+  | 'images'
+> & {
+  /** The leading specification only — the card and the plate marking read nothing else. */
+  specifications: { label: string; value: string }[];
 };
 
 export type Category = {

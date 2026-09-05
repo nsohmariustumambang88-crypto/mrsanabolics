@@ -27,30 +27,30 @@ Evidence-forward retail: every product carries a full specification table, ingre
 
 - Browsing is split across `/shop` (filterable, query-param driven), `/categories`, and `/brands`.
 - Evaluation happens on `/product/[slug]`, which carries images, specs, benefits, ingredients, directions, shipping/returns, per-product FAQs, and reviews.
-- Cart and wishlist persist client-side across sessions; checkout is a five-step wizard (Shipping → Billing → Review → Payment → Confirmation).
+- Cart and wishlist persist client-side across sessions; checkout is a five-step wizard (Shipping → Billing → Review → Payment → Confirmation). Delivery options and discount codes are quoted by the server against the administered tables; payment methods and their notices are read from the database.
 - `/blog` carries editorial content; `/faq`, `/about`, `/contact` carry trust and support content.
 - Account area is tab-driven via `?tab=`.
 
 ## Capabilities and Constraints
 
 - **Stack:** Next.js 13.5 App Router, TypeScript (strict), Tailwind + shadcn/ui, deployed to Netlify. No database, no API routes, no server actions.
-- **Data:** static typed arrays in `lib/data/` (12 products, categories, brands, blog posts, testimonials, FAQs). All lookups synchronous.
-- **Images:** remote Pexels URLs; `next.config.js` sets `images.unoptimized: true`.
+- **Data:** Neon Postgres via Prisma. The catalogue — 9 categories, 41 manufacturers, ~790 products — is built from the store's own product photographs (`npm run db:seed-catalogue`); blog posts, testimonials and FAQs still come from `lib/data/`.
+- **Images:** product photographs uploaded to Cloudinary under `mranabolics/library/`, mirroring the source folder; journal photography is stock, fetched through Cloudinary.
 - **Auth is not implemented.** `/auth` is a UI mock; `@supabase/supabase-js` is installed with empty env vars on branch `feature/supabase`. Nothing imports it yet.
 - **Current SEO ceiling:** every route is a client component, so no route can export `metadata` or emit server-rendered JSON-LD. This is a known defect the redesign must fix, not a constraint to preserve.
-- **Undecided:** payment processing, order persistence, real inventory, and account backend are all unbuilt.
+- **Undecided:** payment processing and the account backend are unbuilt. Orders, delivery rates, discounts, review moderation, analytics, campaigns and site settings are built and administered at /admin.
 
 ## Brand Commitments
 
 - **Name:** MrAnabolics. Fixed.
-- **Product catalog and copy:** all 12 products, their descriptions, specifications, benefits, ingredients, directions, and the blog content are fixed and must survive the redesign verbatim.
+- **Product catalog:** the photographed catalogue and its folder taxonomy are the product truth. Product names and manufacturers are transcribed from the file names; copy is generated from the folder, the name and the manufacturer and adds no claims. The blog content is fixed and must survive verbatim.
 - **Open:** color, typography, layout, component language, and the existing dark-only treatment carry no commitment and may be replaced.
 
 ## Evidence on Hand
 
-- Real: the product catalog's structure, specification tables, and category/brand taxonomy.
-- **Synthetic and must be labeled as such:** all reviews and reviewer names, all testimonials, the "99.2% purity" lab figure, the "over 40 countries" shipping claim, star ratings, and review counts. These are demo fixtures authored for a portfolio build, not verified business facts.
-- No real logo, photography, lab certificates, or customer data exist. Catalogue imagery is drawn in-house as vessel plates — illustrations of the container each compound ships in, in its category pigment — and is labelled as such. Editorial imagery on the journal remains stock photography.
+- Real: the product photographs, their names and manufacturers, and the category/compound-group taxonomy (all from the store's own files).
+- **Synthetic and must be labeled as such:** all prices (placeholders pending review), all testimonials, the "over 40 countries" shipping claim, and any review or rating that appears. Photographed products carry no reviews or ratings at all. These are demo fixtures authored for a portfolio build, not verified business facts.
+- No real logo, lab certificates, or customer data exist. Catalogue imagery is the store's own product photography; a product with no photograph falls back to a drawn vessel plate in its category pigment, labelled as such. Editorial imagery on the journal remains stock photography.
 - This project is a **portfolio / demo template**. Nothing here is a live commercial offer; any real deployment would require the claims above to be replaced with verified material and reviewed for jurisdictional compliance.
 
 ## Product Principles

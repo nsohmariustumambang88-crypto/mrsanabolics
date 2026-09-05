@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { subscribe } from '@/lib/marketing/subscribe';
 import { SOURCES, type ConsentSource } from '@/lib/marketing/consent';
+import { attachVisitorByEmail, visitorTokenFrom } from '@/lib/analytics/identify';
 
 /*
   Marketing sign-up.
@@ -88,6 +89,13 @@ export async function POST(request: Request) {
   });
 
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
+
+  /*
+    They typed their own address and submitted it, so the browsing this browser has already
+    done can be joined to the person. This is the only kind of moment where that link is made —
+    analytics never works out who somebody is on its own. It cannot fail the sign-up.
+  */
+  await attachVisitorByEmail(visitorTokenFrom(request), body.email);
 
   /* One answer whether the address was new, returning, or already present. */
   return NextResponse.json({ ok: true }, { status: 201 });

@@ -136,6 +136,13 @@ try {
   const gone = await prisma.subscriber.deleteMany({
     where: { email: { in: [EMAIL, EMAIL2] } },
   });
+
+  /*
+    Subscribing now also creates a CRM contact (lib/crm/contacts.ts), so removing only the
+    subscriber leaves an orphan person behind and the contact list fills with probes after every
+    run. Contacts go second, because the subscriber row holds the foreign key.
+  */
+  await prisma.contact.deleteMany({ where: { email: { endsWith: '@example.test' } } });
   console.log(`\ncleanup: removed ${gone.count} probe subscriber(s)`);
   await prisma.$disconnect();
 }

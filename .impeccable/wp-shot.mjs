@@ -14,8 +14,23 @@ import { mkdirSync } from 'node:fs';
 mkdirSync('.impeccable/review', { recursive: true });
 
 const BASE = process.env.BASE ?? 'http://localhost:3000';
-const EMAIL = process.env.ADMIN_EMAIL ?? 'petzyrockchendi@gmail.com';
-const PASSWORD = process.env.ADMIN_PASSWORD ?? 'harbour-lantern-ferment-1542';
+const EMAIL = process.env.ADMIN_EMAIL;
+const PASSWORD = process.env.ADMIN_PASSWORD;
+
+/*
+  Credentials come from the environment, never from this file.
+
+  A password written into a harness is a password in the repository, and a password in the
+  repository is one nobody can rotate without a commit. Run these with --env-file=.env, which
+  is gitignored and holds the real values.
+*/
+if (!EMAIL || !PASSWORD) {
+  console.error(
+    'Set ADMIN_EMAIL and ADMIN_PASSWORD (they live in .env). Run with: node --env-file=.env ' +
+      process.argv[1]
+  );
+  process.exit(1);
+}
 
 const shots = JSON.parse(process.argv[2] ?? '[]');
 if (shots.length === 0) {

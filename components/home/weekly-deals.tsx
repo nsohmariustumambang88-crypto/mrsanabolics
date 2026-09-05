@@ -7,8 +7,9 @@ import { MarbleBath } from '@/components/ebru/marble-bath';
 import { ProductCard } from '@/components/product/product-card';
 import { ProductPlate } from '@/components/product/product-plate';
 import { stockState } from '@/components/product/product-card';
+import { useSiteSettings } from '@/components/providers/settings-provider';
 import { formatPrice } from '@/lib/format';
-import type { Product } from '@/lib/types';
+import type { ProductSummary } from '@/lib/types';
 
 /*
   The bath drains on a clock. A real countdown to the end of the week, computed from the
@@ -73,7 +74,8 @@ function Countdown() {
   );
 }
 
-export function WeeklyDeals({ products }: { products: Product[] }) {
+export function WeeklyDeals({ products }: { products: ProductSummary[] }) {
+  const { lowStockThreshold } = useSiteSettings();
   if (products.length === 0) return null;
 
   const [lead, ...rest] = products;
@@ -148,7 +150,7 @@ export function WeeklyDeals({ products }: { products: Product[] }) {
             ) : (
               <ul>
                 {rest.map((p) => {
-                  const state = stockState(p);
+                  const state = stockState(p, lowStockThreshold);
                   return (
                     <li key={p.id} className="border-b border-rule last:border-0">
                       <Link

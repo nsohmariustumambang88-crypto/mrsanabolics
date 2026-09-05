@@ -39,19 +39,27 @@ export default async function AdminLayout({
 
   /* The menu carries live counts, so a category with nothing in it is visibly empty rather
      than looking like a route that failed. */
-  const [categories, reviewCount] = await Promise.all([
+  const [categories, pendingReviews, openEnquiries, openOrders] = await Promise.all([
     prisma.category.findMany({
       orderBy: { position: 'asc' },
       select: { slug: true, name: true, _count: { select: { products: true } } },
     }),
-    prisma.review.count(),
+    /* Reviews awaiting a person, not all reviews — the bubble is a queue, not a total. */
+    prisma.review.count({ where: { status: 'PENDING' } }),
+    /* The menu bubble counts messages still waiting on a person, the way wp-admin counts
+       comments awaiting moderation. */
+    prisma.enquiry.count({ where: { status: { in: ['NEW', 'OPEN'] } } }),
+    /* Orders still needing somebody to act, counted the same way. */
+    prisma.order.count({ where: { status: { in: ['NEW', 'CONFIRMED', 'PACKED'] } } }),
   ]);
 
   return (
     <div className="wp-admin">
       <WpChrome
         email={admin.email}
-        reviewCount={reviewCount}
+        pendingReviews={pendingReviews}
+        openEnquiries={openEnquiries}
+        openOrders={openOrders}
         categories={categories.map((c) => ({
           slug: c.slug,
           name: c.name,

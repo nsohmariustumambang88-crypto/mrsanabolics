@@ -1,438 +1,54 @@
-'use client';
-
-import * as React from 'react';
-import Link from 'next/link';
-import { Check, ArrowLeft, ArrowRight, Lock, Info, ShoppingBag } from 'lucide-react';
-import { useStore } from '@/components/providers/store-provider';
-import { DropMark } from '@/components/ebru/drop-mark';
-import { ProductPlate } from '@/components/product/product-plate';
-import { useProducts } from '@/components/providers/catalogue-provider';
-import { formatPrice } from '@/lib/format';
-import {
-  PaymentMethods,
-  type PaymentMethod,
-} from '@/components/checkout/payment-methods';
-import { useSubscribe } from '@/components/marketing/use-subscribe';
-import { CONSENT } from '@/lib/marketing/consent';
-import { cn } from '@/lib/utils';
+import type { Metadata } from 'next';
+import { prisma } from '@/lib/prisma';
+import { CheckoutFlow } from '@/components/checkout/checkout-flow';
 
 /*
-  The lift: one contact, and the sheet is committed. The wizard mirrors that — each step is a
-  decision you can walk back until the final contact, which cannot be undone.
+  Checkout.
 
-  Payment is not connected on this build. The confirmation step says so rather than staging a
-  fake transaction.
+  A server page now, where it used to be a client one. The reason is the payment panel: which
+  methods appear, and the sentence each one shows at the point of entry, are administered at
+  /admin/payments and live in the database. Reading them here means the first response already
+  carries the right panels — a client fetch would flash the wrong set of methods, or none, on
+  every load.
+
+  The wizard itself stays a client component; it is five steps of local state. Nothing about
+  this page is indexable (robots.ts disallows /checkout), so there is no SEO reason for the
+  split — only the data.
+
+  Payment is still not connected, and this page does not pretend otherwise. `enabled` controls
+  whether a method is LISTED; `connected` is false on every row and no screen in the admin can
+  set it. See the note on the PaymentMethod model.
 */
 
-const STEPS = ['Shipping', 'Billing', 'Review', 'Payment', 'Done'] as const;
-const FREE_SHIPPING_AT = 250;
-const SHIPPING_FLAT = 14;
-const TAX_RATE = 0.08;
+export const metadata: Metadata = {
+  title: 'Checkout',
+  robots: { index: false, follow: false },
+};
 
-export default function CheckoutPage() {
-  const { cart, cartSubtotal, clearCart, cartCount } = useStore();
-  const products = useProducts();
-  const [step, setStep] = React.useState(0);
-  const [placed, setPlaced] = React.useState(false);
-  const [method, setMethod] = React.useState<PaymentMethod>('card');
+/* The methods are configuration, not catalogue: re-read every minute like everything else. */
+export const revalidate = 60;
 
+export default async function CheckoutPage() {
   /*
-    Abandoned-cart capture.
-
-    The address is asked for at the shipping step because an order needs one anyway, and the
-    marketing consent sits beside it as a separate, unticked box — bundling the two would make
-    the consent invalid, since it would not be freely given. The basket value travels with the
-    sign-up so a recovery email can name what was left behind.
+    A checkout that renders no payment methods is a dead end, so a failed read falls back to
+    the card panel rather than an empty step. The admin refuses to disable the last method for
+    the same reason; this covers the other way of getting there, which is the database being
+    briefly unreachable.
   */
-  const marketing = useSubscribe('checkout', cartSubtotal);
+  const methods = await prisma.paymentMethod
+    .findMany({ where: { enabled: true }, orderBy: { position: 'asc' } })
+    .catch(() => []);
 
-  const shipping = cartSubtotal >= FREE_SHIPPING_AT || cartSubtotal === 0 ? 0 : SHIPPING_FLAT;
-  const tax = cartSubtotal * TAX_RATE;
-  const total = cartSubtotal + shipping + tax;
+  const paymentMethods = methods.length
+    ? methods.map((m) => ({ key: m.key, label: m.label, notice: m.notice }))
+    : [
+        {
+          key: 'card',
+          label: 'Card',
+          notice:
+            'Card payment is not connected on this build. Nothing is charged and no card details are transmitted or stored.',
+        },
+      ];
 
-  const next = () => {
-    /*
-      Record the sign-up on the way out of the shipping step, not on the confirmation screen.
-      Someone who abandons at payment is exactly the person a recovery email is for, and by
-      then they have already left.
-    */
-    if (step === 0 && marketing.consent && !marketing.done) void marketing.submit();
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
-  };
-  const back = () => setStep((s) => Math.max(s - 1, 0));
-
-  const place = () => {
-    setPlaced(true);
-    clearCart();
-    setStep(STEPS.length - 1);
-  };
-
-  if (cart.length === 0 && !placed) {
-    return (
-      <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-4 text-center">
-        <ShoppingBag className="h-8 w-8 text-ink-faint" strokeWidth={1.25} />
-        <h1 className="mt-5 font-display text-2xl font-semibold tracking-[-0.03em]">
-          Nothing to check out
-        </h1>
-        <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-          Your cart is empty. Add a compound and its specification will travel with it through
-          checkout.
-        </p>
-        <Link
-          href="/shop"
-          className="mt-7 rounded-full bg-pigment-indigo px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift"
-        >
-          Browse the catalogue
-        </Link>
-      </div>
-    );
-  }
-
-  if (placed) {
-    return (
-      <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 py-16 text-center">
-        <DropMark className="h-16 w-16" />
-        <h1 className="mt-8 font-display text-3xl font-semibold tracking-[-0.035em]">
-          Lifted
-        </h1>
-        <p className="measure-tight mt-4 text-sm leading-relaxed text-ink-soft">
-          In a connected build your order would be confirmed here with a reference number, and
-          the certificate for each batch would be attached to the confirmation email.
-        </p>
-        <p className="mt-6 flex gap-2.5 border border-rule bg-paper-sunk p-3.5 text-left text-xs leading-relaxed text-ink-soft">
-          <Info
-            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-pigment-saffron"
-            strokeWidth={1.75}
-          />
-          <span>
-            No payment was taken and no order was created. This is a demonstration build with
-            no payment processor or order backend connected.
-          </span>
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link
-            href="/shop"
-            className="rounded-full bg-pigment-indigo px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift"
-          >
-            Keep browsing
-          </Link>
-          <Link
-            href="/account?tab=orders"
-            className="rounded-full border border-rule-strong px-6 py-3 text-sm font-medium transition-colors hover:border-pigment-indigo"
-          >
-            Your orders
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <section className="border-b border-rule">
-        <div className="mx-auto max-w-[86rem] px-4 py-8 sm:px-6 lg:px-10">
-          <h1 className="font-display text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
-            Checkout
-          </h1>
-
-          <ol className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-2">
-            {STEPS.slice(0, 4).map((label, i) => (
-              <li key={label} className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    'flex h-6 w-6 items-center justify-center rounded-full border font-mono text-2xs tabular transition-colors',
-                    i < step
-                      ? 'border-pigment-verdigris bg-pigment-verdigris text-primary-foreground'
-                      : i === step
-                        ? 'border-pigment-indigo bg-pigment-indigo text-primary-foreground'
-                        : 'border-rule-strong text-ink-faint'
-                  )}
-                >
-                  {i < step ? <Check className="h-3 w-3" strokeWidth={2.5} /> : i + 1}
-                </span>
-                <span
-                  className={cn(
-                    'text-sm',
-                    i === step ? 'font-medium text-ink' : 'text-ink-faint'
-                  )}
-                >
-                  {label}
-                </span>
-                {i < 3 && (
-                  <span
-                    className={cn(
-                      'ml-1 hidden h-px w-8 sm:block',
-                      i < step ? 'bg-pigment-verdigris' : 'bg-rule'
-                    )}
-                    aria-hidden="true"
-                  />
-                )}
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/*
-        The vertical padding belongs to the container, not the grid. A hairline grid draws its
-        rules by letting its own background show through a 1px gap — so padding on the grid
-        itself is 40px of bare rule colour banded across the top and bottom, which is what this
-        page had. Same failure mode as a short final row, different cause.
-      */}
-      <div className="mx-auto max-w-[86rem] px-4 py-10 sm:px-6 lg:px-10">
-        <div className="grid gap-px bg-rule lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-px">
-          <div className="bg-card p-6 sm:p-8">
-            <p className="mb-8 flex gap-2.5 border border-rule bg-paper-sunk p-3.5 text-xs leading-relaxed text-ink-soft">
-              <Info
-                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-pigment-saffron"
-                strokeWidth={1.75}
-              />
-              <span>
-                Demonstration checkout — no payment processor is connected and no card details
-                are transmitted or stored. Do not enter real card numbers.
-              </span>
-            </p>
-
-            {step === 0 && (
-              <Fieldset legend="Where it ships">
-                <div>
-                  <label htmlFor="checkout-email" className="block text-sm font-medium">
-                    Email address
-                  </label>
-                  <input
-                    id="checkout-email"
-                    type="email"
-                    autoComplete="email"
-                    value={marketing.email}
-                    onChange={(e) => marketing.setEmail(e.target.value)}
-                    placeholder="you@domain.com"
-                    className="mt-2 w-full border-b border-rule-strong bg-transparent py-2.5 text-sm outline-none focus:border-pigment-indigo"
-                  />
-                  <p className="mt-1.5 text-xs text-ink-faint">
-                    Where the order confirmation would go.
-                  </p>
-
-                  {/*
-                    Separate and unticked. Consent bundled into a required field is not freely
-                    given, and an address collected that way cannot lawfully be marketed to.
-                  */}
-                  <label className="mt-3 flex cursor-pointer items-start gap-2.5 text-xs leading-relaxed text-ink-soft">
-                    <input
-                      type="checkbox"
-                      checked={marketing.consent}
-                      onChange={(e) => marketing.setConsent(e.target.checked)}
-                      className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-pigment-indigo"
-                    />
-                    {CONSENT.checkout}
-                  </label>
-
-                  {marketing.error && (
-                    <p role="alert" className="mt-2 text-xs text-destructive">
-                      {marketing.error}
-                    </p>
-                  )}
-                </div>
-
-                <Row>
-                  <Input id="first" label="First name" autoComplete="given-name" />
-                  <Input id="last" label="Last name" autoComplete="family-name" />
-                </Row>
-                <Input id="addr1" label="Address" autoComplete="address-line1" />
-                <Input
-                  id="addr2"
-                  label="Apartment, suite (optional)"
-                  autoComplete="address-line2"
-                  required={false}
-                />
-                <Row>
-                  <Input id="city" label="City" autoComplete="address-level2" />
-                  <Input id="post" label="Postal code" autoComplete="postal-code" />
-                </Row>
-                <Input id="country" label="Country" autoComplete="country-name" />
-              </Fieldset>
-            )}
-
-            {step === 1 && (
-              <Fieldset legend="Who is paying">
-                <Input id="bill-name" label="Name on the account" autoComplete="name" />
-                <Input id="bill-addr" label="Billing address" autoComplete="billing street-address" />
-                <Row>
-                  <Input id="bill-city" label="City" />
-                  <Input id="bill-post" label="Postal code" />
-                </Row>
-                <label className="flex items-center gap-2.5 pt-2 text-sm text-ink-soft">
-                  <input type="checkbox" defaultChecked className="accent-pigment-indigo" />
-                  Billing address is the same as shipping
-                </label>
-              </Fieldset>
-            )}
-
-            {step === 2 && (
-              <div>
-                <h2 className="font-display text-lg font-semibold tracking-[-0.025em]">
-                  Check the order
-                </h2>
-                <ul className="mt-5 border-t border-rule">
-                  {cart.map((item) => (
-                    <li
-                      key={item.productId}
-                      className="flex items-center gap-4 border-b border-rule py-4"
-                    >
-                      <span className="relative h-14 w-14 shrink-0 overflow-hidden border border-rule bg-paper-sunk">
-                        {(() => {
-                          const record = products.find((p) => p.slug === item.slug);
-                          return record ? (
-                            <ProductPlate product={record} showMarking={false} sizes="56px" />
-                          ) : null;
-                        })()}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
-                          {item.brand}
-                        </span>
-                        <span className="mt-0.5 block text-sm font-medium">{item.name}</span>
-                      </span>
-                      <span className="font-mono text-xs text-ink-faint tabular">
-                        ×{item.quantity}
-                      </span>
-                      <span className="text-sm font-medium tabular">
-                        {formatPrice(item.price * item.quantity)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {step === 3 && (
-              <PaymentMethods total={total} method={method} onMethodChange={setMethod} />
-            )}
-
-            <div className="mt-8 flex items-center justify-between gap-4 border-t border-rule pt-6">
-              <button
-                type="button"
-                onClick={back}
-                disabled={step === 0}
-                className="inline-flex items-center gap-2 text-sm text-ink-soft transition-colors hover:text-ink disabled:opacity-40"
-              >
-                <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
-                Back
-              </button>
-
-              {step < 3 ? (
-                <button
-                  type="button"
-                  onClick={next}
-                  className="group inline-flex items-center gap-2.5 rounded-full bg-pigment-indigo px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift"
-                >
-                  Continue
-                  <ArrowRight
-                    className="h-4 w-4"
-                    strokeWidth={1.75}
-                  />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={place}
-                  className="inline-flex items-center gap-2.5 rounded-full bg-pigment-indigo px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift"
-                >
-                  <Lock className="h-4 w-4" strokeWidth={1.75} />
-                  Place order · {formatPrice(total)}
-                </button>
-              )}
-            </div>
-          </div>
-
-          <aside className="bg-card p-6 sm:p-8">
-            <h2 className="font-mono text-2xs uppercase tracking-[0.16em] text-ink-faint">
-              Order summary
-            </h2>
-            <p className="mt-2 text-sm text-ink-soft tabular">
-              {cartCount} {cartCount === 1 ? 'item' : 'items'}
-            </p>
-
-            <dl className="mt-6 space-y-3 border-t border-rule pt-5 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-ink-soft">Subtotal</dt>
-                <dd className="tabular">{formatPrice(cartSubtotal)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-ink-soft">Shipping</dt>
-                <dd className={cn('tabular', shipping === 0 && 'text-pigment-verdigris')}>
-                  {shipping === 0 ? 'Free' : formatPrice(shipping)}
-                </dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-ink-soft">Estimated tax</dt>
-                <dd className="tabular">{formatPrice(tax)}</dd>
-              </div>
-              <div className="flex items-baseline justify-between border-t border-rule pt-4">
-                <dt className="font-medium">Total</dt>
-                <dd className="font-display text-xl font-semibold tabular">
-                  {formatPrice(total)}
-                </dd>
-              </div>
-            </dl>
-
-            <p className="mt-6 text-xs leading-relaxed text-ink-faint">
-              Ships unmarked and tracked. Certificates of analysis for each batch are attached
-              to the confirmation.
-            </p>
-          </aside>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function Fieldset({
-  legend,
-  children,
-}: {
-  legend: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <fieldset>
-      <legend className="font-display text-lg font-semibold tracking-[-0.025em]">
-        {legend}
-      </legend>
-      <div className="mt-5 space-y-5">{children}</div>
-    </fieldset>
-  );
-}
-
-function Row({ children }: { children: React.ReactNode }) {
-  return <div className="grid gap-5 sm:grid-cols-2">{children}</div>;
-}
-
-function Input({
-  id,
-  label,
-  placeholder,
-  autoComplete,
-  required = true,
-}: {
-  id: string;
-  label: string;
-  placeholder?: string;
-  autoComplete?: string;
-  required?: boolean;
-}) {
-  return (
-    <div>
-      <label htmlFor={id} className="block text-sm font-medium">
-        {label}
-      </label>
-      <input
-        id={id}
-        name={id}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        required={required}
-        className="mt-2 w-full border-b border-rule-strong bg-transparent py-2.5 text-sm outline-none placeholder:text-ink-faint focus:border-pigment-indigo"
-      />
-    </div>
-  );
+  return <CheckoutFlow paymentMethods={paymentMethods} />;
 }

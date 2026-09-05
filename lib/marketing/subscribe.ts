@@ -1,8 +1,10 @@
 import 'server-only';
 
-import { createHash, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { prisma } from '@/lib/prisma';
 import { CONSENT, type ConsentSource, looksLikeEmail, normaliseEmail } from '@/lib/marketing/consent';
+import { hashIp } from '@/lib/ip-hash';
+import { attachContactForSubscriber, recordUnsubscribeActivity } from '@/lib/crm/contacts';
 
 /*
   Writing and revoking marketing consent.
@@ -20,18 +22,6 @@ import { CONSENT, type ConsentSource, looksLikeEmail, normaliseEmail } from '@/l
   There is no function here that records an address without a consent action, because the
   product does not support silent collection.
 */
-
-/** Never store a raw IP. The hash proves two sign-ups came from one place; it is not reversible. */
-function hashIp(ip: string | null): string | null {
-  const salt = process.env.SUBSCRIBER_IP_SALT;
-  /*
-    No salt, no hash. A hardcoded fallback would be worse than nothing: an unsalted SHA-256 of
-    an IPv4 address is trivially reversed by hashing all four billion of them, so it would look
-    like protection while being plaintext.
-  */
-  if (!ip || !salt) return null;
-  return createHash('sha256').update(salt).update(ip).digest('hex');
-}
 
 export type SubscribeInput = {
   email: string;
@@ -78,6 +68,16 @@ export async function subscribe(input: SubscribeInput): Promise<SubscribeResult>
         unsubscribeToken: randomBytes(24).toString('base64url'),
       },
     });
+
+    await attachContactForSubscriber({
+      email,
+      source: input.source,
+      consentText,
+      path: input.path ?? null,
+      resubscribed: false,
+      logConsent: true,
+    });
+
     return { ok: true, created: true, resubscribed: false };
   }
 
@@ -92,6 +92,16 @@ export async function subscribe(input: SubscribeInput): Promise<SubscribeResult>
       unsubscribedAt: null,
       pageViews: { increment: 1 },
     },
+  });
+
+  await attachContactForSubscriber({
+    email,
+    source: input.source,
+    consentText,
+    path: input.path ?? null,
+    resubscribed,
+    /* Already subscribed and simply asked again: refresh the link, not the timeline. */
+    logConsent: resubscribed,
   });
 
   return { ok: true, created: false, resubscribed };
@@ -114,6 +124,9 @@ export async function unsubscribeByToken(
     where: { unsubscribeToken: token },
     data: { status: 'UNSUBSCRIBED', unsubscribedAt: new Date() },
   });
+
+
+  await recordUnsubscribeActivity(found.email);
 
   return { ok: true, email: found.email };
 }

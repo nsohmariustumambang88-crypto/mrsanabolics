@@ -10,10 +10,14 @@
     "typecheck": "tsc --noEmit",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
+    "db:backfill-crm": "node --env-file=.env --import tsx prisma/backfill-crm.ts",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
     "images:generate": "node --env-file=.env --import tsx prisma/generate-plates.ts",
-    "admin:create": "node --env-file=.env --import tsx prisma/create-admin.ts"
+    "admin:create": "node --env-file=.env --import tsx prisma/create-admin.ts",
+    "images:upload-library": "node --env-file=.env --import tsx prisma/upload-library.ts",
+    "db:seed-catalogue": "node --env-file=.env --import tsx prisma/seed-catalogue.ts",
+    "db:seed-operations": "node --env-file=.env --import tsx prisma/seed-operations.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

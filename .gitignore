@@ -43,3 +43,6 @@ project-tree.txt
 .impeccable/review/
 .impeccable/*.log
 .impeccable/hook.cache.json
+.env*
+# ...but the tracked template must stay tracked: it holds no real values.
+!.env.example

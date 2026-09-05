@@ -13,6 +13,7 @@ import {
 import { formatPrice } from '@/lib/format';
 import { cloudinaryUrl } from '@/lib/cloudinary';
 import { cn } from '@/lib/utils';
+import { runAction } from '@/components/admin/run-action';
 
 /*
   The catalogue list table, built to WordPress's WP_List_Table shape.
@@ -180,7 +181,7 @@ export function ProductsTable({
 
     setBusy(true);
     setNotice(null);
-    const result = await bulkUpdateProducts(Array.from(selected), bulk);
+    const result = await runAction(() => bulkUpdateProducts(Array.from(selected), bulk));
     setBusy(false);
 
     if (result.ok) {
@@ -201,7 +202,7 @@ export function ProductsTable({
 
     setBusy(true);
     setNotice(null);
-    const result = await deleteProduct(row.id);
+    const result = await runAction(() => deleteProduct(row.id));
     setBusy(false);
 
     if (result.ok) {
@@ -217,7 +218,7 @@ export function ProductsTable({
     if (!Number.isFinite(units) || units < 0 || units === row.stockCount) return;
 
     setBusy(true);
-    const result = await setStock(row.id, units);
+    const result = await runAction(() => setStock(row.id, units));
     setBusy(false);
 
     if (result.ok) router.refresh();

@@ -3,6 +3,7 @@ import 'server-only';
 import { prisma } from '@/lib/prisma';
 import type {
   Product,
+  ProductSummary,
   Category,
   Brand,
   BlogPost,
@@ -48,6 +49,52 @@ const TTL_MS = 60_000;
 */
 const resetters: Array<() => void> = [];
 
+/*
+  Neon suspends an idle endpoint and refuses the connection that wakes it.
+
+  The admin survives this because every action goes through `runAction`, which turns a rejection
+  into a message and a button you can press again. A static build has nobody to press it: the
+  first prerender after an idle spell throws PrismaClientInitializationError, and because 882
+  pages all read this module, one cold start fails the whole build. That is not a hypothetical —
+  it is how the last build died.
+
+  So a read retries a CONNECTION failure a few times, backing off long enough for the endpoint
+  to finish waking (Neon typically takes a few seconds). A query that fails for any other reason
+  is thrown immediately: retrying a malformed query or a constraint violation just fails slower.
+*/
+const WAKE_ATTEMPTS = 4;
+const WAKE_BACKOFF_MS = [1_000, 3_000, 6_000];
+
+function isColdStart(error: unknown): boolean {
+  const name = (error as { name?: string })?.name ?? '';
+  const code = (error as { errorCode?: string; code?: string })?.errorCode
+    ?? (error as { code?: string })?.code
+    ?? '';
+  const message = (error as { message?: string })?.message ?? '';
+
+  return (
+    name === 'PrismaClientInitializationError' ||
+    /^P1(00[0-9]|01[0-7])$/.test(code) ||
+    /ECONNRESET|ETIMEDOUT|ECONNREFUSED|Closed/i.test(message)
+  );
+}
+
+async function withWakeRetry<T>(read: () => Promise<T>): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < WAKE_ATTEMPTS; attempt++) {
+    try {
+      return await read();
+    } catch (error) {
+      lastError = error;
+      if (!isColdStart(error) || attempt === WAKE_ATTEMPTS - 1) throw error;
+      await new Promise((resolve) => setTimeout(resolve, WAKE_BACKOFF_MS[attempt]));
+    }
+  }
+
+  throw lastError;
+}
+
 function cached<T>(read: () => Promise<T>): () => Promise<T> {
   let at = 0;
   let inFlight: Promise<T> | null = null;
@@ -61,7 +108,7 @@ function cached<T>(read: () => Promise<T>): () => Promise<T> {
     if (inFlight && Date.now() - at < TTL_MS) return inFlight;
 
     at = Date.now();
-    inFlight = read().catch((error) => {
+    inFlight = withWakeRetry(read).catch((error) => {
       /* Never cache a failure: drop it so the next caller gets a fresh attempt. */
       inFlight = null;
       at = 0;
@@ -92,7 +139,17 @@ const productInclude = {
   brand: true,
   specifications: { orderBy: { position: 'asc' } },
   faqs: { orderBy: { position: 'asc' } },
-  reviews: { orderBy: { date: 'desc' } },
+  /*
+    APPROVED ONLY, and this `where` is load-bearing.
+
+    Reviews arrive from the storefront as PENDING and a person decides whether they are
+    published. `Product.rating` and `reviewCount` are recomputed from approved rows alone, so
+    reading every row here would put an unmoderated review on the page while the star figure
+    above it refused to count it — the two disagreeing is precisely the state the moderation
+    design exists to prevent. It would also mean anything anyone typed into the form appeared
+    under a controlled-substance listing before a human read it.
+  */
+  reviews: { where: { status: 'APPROVED' }, orderBy: { date: 'desc' } },
 } as const;
 
 type ProductRow = Awaited<
@@ -108,6 +165,8 @@ function toProduct(row: ProductRow): Product {
     brandSlug: row.brand.slug,
     category: row.category.name,
     categorySlug: row.category.slug,
+    subcategory: row.subcategory ?? undefined,
+    subcategoryName: row.subcategoryName ?? undefined,
     price: row.price.toNumber(),
     compareAtPrice: money(row.compareAtPrice),
     rating: row.rating,
@@ -150,6 +209,43 @@ export const getProducts = cached(
     return rows.map(toProduct);
   },
 );
+
+/**
+ * The projection the browser gets. See ProductSummary in lib/types.ts: the storefront layout
+ * ships every product to every page through the catalogue provider, and at 800 products the
+ * full record is megabytes. Cards, search, filters and the cart need only this.
+ */
+export function toSummary(p: Product): ProductSummary {
+  return {
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    brand: p.brand,
+    brandSlug: p.brandSlug,
+    category: p.category,
+    categorySlug: p.categorySlug,
+    subcategory: p.subcategory,
+    subcategoryName: p.subcategoryName,
+    price: p.price,
+    compareAtPrice: p.compareAtPrice,
+    rating: p.rating,
+    reviewCount: p.reviewCount,
+    inStock: p.inStock,
+    stockCount: p.stockCount,
+    isNew: p.isNew,
+    isBestSeller: p.isBestSeller,
+    isTrending: p.isTrending,
+    isDeal: p.isDeal,
+    description: p.description,
+    images: p.images.slice(0, 1),
+    specifications: p.specifications.slice(0, 1),
+  };
+}
+
+export async function getProductSummaries(): Promise<ProductSummary[]> {
+  const all = await getProducts();
+  return all.map(toSummary);
+}
 
 export const getCategories = cached(
   async (): Promise<(Category & { listed: number })[]> => {

@@ -1,27 +1,28 @@
 'use client';
 
 import * as React from 'react';
-import type { Product, Category, Brand } from '@/lib/types';
+import type { ProductSummary, Category, Brand } from '@/lib/types';
 
 /*
   The catalogue, handed from the server to the client once.
 
   Navigation, search, the cart drawer and several home sections all need the catalogue, and
-  none of them can query Postgres — they run in the browser. The root layout (a server
+  none of them can query Postgres — they run in the browser. The storefront layout (a server
   component) reads Neon once per render and passes the result down through this context, so
   the data is genuinely database-backed everywhere while the connection stays on the server.
 
-  SCALE NOTE: this ships the whole catalogue in the RSC payload. At twelve products that is a
-  few tens of kilobytes and buys enormous simplicity. It is the wrong shape at a few hundred:
-  at that point, give this provider a summary projection (no longDescription, reviews or FAQs)
-  and let product pages fetch full records server-side, or move search to a route handler.
+  SCALE NOTE: what ships is the SUMMARY projection (lib/types.ts, ProductSummary), not the full
+  record. With ~800 products the full record — long copy, FAQs, reviews, ingredients — was
+  megabytes of RSC payload on every page; the summary is a few hundred bytes per product.
+  Product pages read the full record server-side. The next step up, if the catalogue grows
+  again, is moving search and filtering to a route handler so the browser holds nothing.
 */
 
 export type CatalogueCategory = Category & { listed: number };
 export type CatalogueBrand = Brand & { listed: number };
 
 type Catalogue = {
-  products: Product[];
+  products: ProductSummary[];
   categories: CatalogueCategory[];
   brands: CatalogueBrand[];
 };
@@ -59,7 +60,7 @@ export function useCatalogue(): Catalogue {
 }
 
 /** Convenience readers, so components do not destructure the same three fields everywhere. */
-export function useProducts(): Product[] {
+export function useProducts(): ProductSummary[] {
   return useCatalogue().products;
 }
 

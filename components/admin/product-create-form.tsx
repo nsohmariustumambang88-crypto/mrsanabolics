@@ -7,6 +7,7 @@ import { createProduct } from '@/app/admin/actions';
 import { ImageField } from '@/components/admin/image-field';
 import { uploadAndAttach } from '@/components/admin/attach-image';
 import { cn } from '@/lib/utils';
+import { runAction } from '@/components/admin/run-action';
 
 /*
   Create a product.
@@ -53,7 +54,8 @@ export function ProductCreateForm({
     setError(null);
 
     setStage('Creating the product…');
-    const result = await createProduct(new FormData(event.currentTarget));
+    const form = new FormData(event.currentTarget);
+    const result = await runAction(() => createProduct(form));
 
     if (!result.ok) {
       setError(result.error);
