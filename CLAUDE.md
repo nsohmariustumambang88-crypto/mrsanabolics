@@ -18,7 +18,9 @@ Windows note: several source files use CRLF. A `String.replace` with an LF-only 
 
 ## What this is
 
-MrAnabolics — a Next.js 13.5 App Router storefront, originally scaffolded from the Bolt `nextjs-shadcn` template. It is a **front-end-only prototype**: no database, no API routes, no server actions. Deployed to Netlify.
+MrAnabolics — a Next.js 13.5 App Router storefront, originally scaffolded from the Bolt `nextjs-shadcn` template. **Deployed to Vercel** from `main`.
+
+It is no longer the front-end-only prototype that sentence used to describe. It has a Neon Postgres database read through Prisma, a dozen route handlers under `app/api/`, server actions behind every admin screen, and a full back office at `/admin`. If you are reading this file to find out what exists, read the section headings: the catalogue, the CRM, orders, and "The admin, in full" are each real subsystems.
 
 It is explicitly a **portfolio / demo build**. `PRODUCT.md` is the authority on product truth and records which content is synthetic. All reviews, testimonials, ratings, purity figures, order history, and shipping claims are authored fixtures and are **labelled as such in the UI**. Preserve those labels — do not present fixture data as fact, and do not invent commercial claims.
 
@@ -38,7 +40,7 @@ npm run db:studio   # browse the data
 
 **Two connection strings.** `DATABASE_URL` is the pooled endpoint and carries `pgbouncer=true&connection_limit=1`; `DIRECT_URL` is the same database without `-pooler`, for migrations. Both live in `.env`, which is gitignored — `.env.example` is the tracked template. Never put a database URL behind `NEXT_PUBLIC_`; that ships it to the browser.
 
-**Reads are memoised per process, not per page.** The root layout needs the catalogue on every route and a static build renders 43 of them. Querying per page made the build take minutes and then fail with `ECONNRESET`. `unstable_cache` did **not** dedupe across prerenders in Next 13.5, so `catalogue.ts` uses a small per-closure TTL memo (60s) instead, and every derived read — by slug, by category, by brand, related — filters that one list in memory. `next.config.js` also sets `experimental.cpus: 1`, because parallel prerender workers each opened their own connection and Neon reset them.
+**Reads are memoised per process, not per page.** The storefront layout needs the catalogue on every route it renders. Querying per page made the build take minutes and then fail with `ECONNRESET`. `unstable_cache` did **not** dedupe across prerenders in Next 13.5, so `catalogue.ts` uses a small per-closure TTL memo (60s) instead, and every derived read — by slug, by category, by brand, related — filters that one list in memory. `next.config.js` also sets `experimental.cpus: 1`, because parallel prerender workers each opened their own connection and Neon reset them.
 
 **Client components read a context, not the database.** [components/providers/catalogue-provider.tsx](components/providers/catalogue-provider.tsx) receives products, categories and brands from the root layout and exposes `useProducts()`, `useCategories()`, `useBrands()`. This ships the whole catalogue in the RSC payload — fine at 12 products, wrong at a few hundred; at that point give the provider a summary projection and let product pages fetch full records server-side.
 
@@ -56,7 +58,11 @@ Product records are dense; [lib/data/products.ts](lib/data/products.ts) builds t
 
 `app/page.tsx`, `/categories`, `/brands`, `/brands/[slug]`, `/blog`, `/blog/[slug]`, `/faq`, `/about` are server components. `/contact`, `/auth`, `/checkout` are still client components — they are pure forms with no metadata needs beyond the layout default.
 
-**Adding a route with SEO means starting from a server page.** `export const metadata` in a `'use client'` file is a build error, not a silent no-op. Dynamic routes use `generateStaticParams` + `generateMetadata`; the build pre-renders all 12 products, 8 brands, and 6 posts.
+**Adding a route with SEO means starting from a server page.** `export const metadata` in a `'use client'` file is a build error, not a silent no-op. Dynamic routes use `generateMetadata`, and brands and journal posts still enumerate themselves with `generateStaticParams`.
+
+**Product pages deliberately do NOT.** `generateStaticParams` in `app/(storefront)/product/[slug]/page.tsx` returns an empty array, so the ~790 product pages are rendered on first request and cached by `revalidate`, not built ahead of time. Enumerating them made the build prerender 882 pages, each reading Neon — a deploy with 792 chances to fail on a database that suspends when idle, and it did fail exactly that way. The build is now 89 pages. **Nothing about SEO changed:** the first response is still fully server-rendered with its title, description and JSON-LD, `/sitemap.xml` still lists all 856 URLs, and an unknown slug still 404s. What changed is only when the HTML is produced.
+
+`/sitemap.xml` is `force-dynamic` for the same reason — it enumerates the whole catalogue from four reads, and doing that inside Next's static-generation budget failed a build on its own while every other page passed. `next.config.js` also raises `staticPageGenerationTimeout` to 180s: headroom for a cold Neon start, not a fix for slow data.
 
 **Structured data** is emitted as `<script type="application/ld+json">` from server components so it lands in the first response. Product pages carry Product + Offer + AggregateRating + Review + BreadcrumbList + FAQPage. Verify changes against the built HTML in `.next/server/app/`, not the dev DOM.
 
@@ -70,7 +76,7 @@ Product records are dense; [lib/data/products.ts](lib/data/products.ts) builds t
 
 Delivery goes through Cloudinary. Only `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` is set — the cloud name is public (it is in every image URL) and is all that serving requires. **The API secret is not in this project and must never be**, least of all behind a `NEXT_PUBLIC_` prefix, which inlines a value into the browser bundle. Uploads would need it, and would live in a route handler.
 
-**Custom loader, not Next's optimiser.** [next.config.js](next.config.js) sets `images.loader: 'custom'` pointing at [lib/cloudinary-loader.ts](lib/cloudinary-loader.ts). `next/image` still generates a responsive srcset, but every candidate is a Cloudinary transformation — so the origin never resizes anything and Netlify's image function is never invoked. This replaced `images.unoptimized: true`, which existed only because images were hot-linked and Next could not process them.
+**Custom loader, not Next's optimiser.** [next.config.js](next.config.js) sets `images.loader: 'custom'` pointing at [lib/cloudinary-loader.ts](lib/cloudinary-loader.ts). `next/image` still generates a responsive srcset, but every candidate is a Cloudinary transformation — so the origin never resizes anything and the host's own image optimiser is never invoked. That is the point on any serverless host: Vercel bills image optimisation per source image, and this route bypasses it entirely. This replaced `images.unoptimized: true`, which existed only because images were hot-linked and Next could not process them.
 
 **Two delivery types, one helper.** [lib/cloudinary.ts](lib/cloudinary.ts) decides by shape:
 

@@ -33,11 +33,11 @@ Evidence-forward retail: every product carries a full specification table, ingre
 
 ## Capabilities and Constraints
 
-- **Stack:** Next.js 13.5 App Router, TypeScript (strict), Tailwind + shadcn/ui, deployed to Netlify. No database, no API routes, no server actions.
+- **Stack:** Next.js 13.5 App Router, TypeScript (strict), Tailwind + shadcn/ui, Prisma against Neon Postgres, deployed to Vercel from `main`. Route handlers under `app/api/` and server actions behind every admin screen.
 - **Data:** Neon Postgres via Prisma. The catalogue — 9 categories, 41 manufacturers, ~790 products — is built from the store's own product photographs (`npm run db:seed-catalogue`); blog posts, testimonials and FAQs still come from `lib/data/`.
 - **Images:** product photographs uploaded to Cloudinary under `mranabolics/library/`, mirroring the source folder; journal photography is stock, fetched through Cloudinary.
 - **Auth is not implemented.** `/auth` is a UI mock; `@supabase/supabase-js` is installed with empty env vars on branch `feature/supabase`. Nothing imports it yet.
-- **Current SEO ceiling:** every route is a client component, so no route can export `metadata` or emit server-rendered JSON-LD. This is a known defect the redesign must fix, not a constraint to preserve.
+- **SEO:** fixed. Routes are server components that own their metadata and emit JSON-LD in the first response; interactivity lives in client children. Product pages carry Product, Offer, BreadcrumbList and — only where reviews exist — AggregateRating and Review. The build pre-renders all 792 product pages.
 - **Undecided:** payment processing and the account backend are unbuilt. Orders, delivery rates, discounts, review moderation, analytics, campaigns and site settings are built and administered at /admin.
 
 ## Brand Commitments

@@ -7,8 +7,19 @@ import {
 } from '@/lib/db/catalogue';
 import { SITE } from '@/lib/site';
 
-/* The sitemap is generated from the database, so a new product is indexed without a code change. */
-export const revalidate = 60;
+/*
+  The sitemap is generated from the database, so a new product is indexed without a code change.
+
+  RENDERED ON REQUEST, NOT AT BUILD TIME. It enumerates ~850 URLs from four catalogue reads, and
+  building it meant the deploy waited on those reads inside Next's 60-second static-generation
+  budget. Against a Neon endpoint that had just woken up, that budget is not generous — the
+  sitemap alone failed a build after three attempts while every other page succeeded.
+
+  A sitemap is fetched by crawlers now and then, not by people on every page load, so paying for
+  it per request is the right trade. The catalogue memo in lib/db/catalogue.ts means consecutive
+  fetches inside a minute share one set of queries anyway.
+*/
+export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [products, categories, brands, blogPosts] = await Promise.all([

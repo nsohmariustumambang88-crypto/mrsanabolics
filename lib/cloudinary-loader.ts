@@ -10,9 +10,10 @@ import type { ImageLoaderProps } from 'next/image';
   generated srcset, so the browser receives real responsive candidates — 400w, 800w, 1200w —
   each transformed by Cloudinary rather than by Next's own optimiser.
 
-  That matters on Netlify: the built-in optimiser runs as a serverless function and is billed
-  per invocation. Handing the work to Cloudinary's CDN means the origin never resizes an image
-  at all, and the edge cache serves every subsequent request.
+  That matters on any serverless host: the built-in optimiser runs as a function and is billed
+  for it — Vercel, where this deploys, meters image optimisation per source image. Handing the
+  work to Cloudinary's CDN means the origin never resizes an image at all, and the edge cache
+  serves every subsequent request.
 
   Widths come from Next, so this file only decides the transformation — never the layout.
 */

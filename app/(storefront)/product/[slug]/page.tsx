@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation';
 import {
   getProductBySlug,
   getRelatedProducts,
-  getProductSlugs,
 } from '@/lib/db/catalogue';
 import { ProductDetail } from '@/components/product/product-detail';
 import { getSettingsSafe, asBoolean } from '@/lib/settings';
@@ -21,12 +20,29 @@ import { SITE } from '@/lib/site';
 type Params = { params: { slug: string } };
 
 /*
-  Params come from the database at build time, so adding a product in Neon adds a page on the
-  next build — nothing here enumerates the catalogue by hand any more.
+  PRODUCT PAGES ARE RENDERED ON DEMAND, NOT ENUMERATED AT BUILD TIME.
+
+  This used to return all 792 slugs, which made the build prerender 792 pages, each one reading
+  the catalogue from Neon. That is a deploy that cannot survive its database twitching: Neon
+  suspends when idle and refuses the connection that wakes it, and a single sustained wobble
+  during a build times out a page, kills the static worker, and fails the whole deployment.
+  It did exactly that — 737 connection failures in one run, no output.
+
+  Returning an empty list means the build ships no product pages and needs no product reads.
+  `dynamicParams` (true by default) lets any slug render on first request; `revalidate` then
+  caches it at the edge for a minute, so the second visitor and the crawler after it get a
+  static hit. Nothing about SEO changes — the first response is still fully server-rendered
+  with its metadata and JSON-LD, which is what a crawler reads.
+
+  What it costs: the first visitor to a given product waits for one render. What it buys: a
+  build that takes about a minute instead of eighteen, and a deploy that no longer has 792
+  chances to fail on someone else's infrastructure.
+
+  If you ever want the popular pages warm at deploy time, return a SHORT list here — the best
+  sellers, say — and accept that those reads must succeed for the build to pass.
 */
 export async function generateStaticParams() {
-  const slugs = await getProductSlugs();
-  return slugs.map((slug) => ({ slug }));
+  return [];
 }
 
 /* Re-read at most once a minute; see the note in app/layout.tsx. */
