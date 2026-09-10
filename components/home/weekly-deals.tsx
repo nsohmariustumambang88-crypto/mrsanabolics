@@ -78,7 +78,18 @@ export function WeeklyDeals({ products }: { products: ProductSummary[] }) {
   const { lowStockThreshold } = useSiteSettings();
   if (products.length === 0) return null;
 
-  const [lead, ...rest] = products;
+  /*
+    The lead sheet plus a short register beside it — not the whole offer.
+
+    Every marked-down product used to be listed here: 39 rows running to 5,100px on a phone,
+    against a lead column of about 600. The register is meant to sit alongside the lead, so it
+    is capped near the lead's own height and "Everything on offer" carries the rest. The count
+    in the heading is still the true total, which is the honest pairing: say how many there
+    are, show a few, link to all of them.
+  */
+  const REGISTER_ROWS = 6;
+  const [lead, ...others] = products;
+  const rest = others.slice(0, REGISTER_ROWS);
 
   const saved = products.reduce(
     (sum, p) => sum + ((p.compareAtPrice ?? p.price) - p.price),

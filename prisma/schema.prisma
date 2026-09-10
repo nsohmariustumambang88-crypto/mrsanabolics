@@ -352,6 +352,8 @@ model Contact {
   orders     Order[]
   visitors   Visitor[]
   messages   OutboundMessage[]
+  /// The storefront account, where this person has opened one. See the Customer model.
+  customer   Customer?
 
   /// Denormalised so the list can sort by "who moved most recently" without touching the
   /// activity table for every row.
@@ -473,6 +475,7 @@ enum ContactActivityType {
   DETAILS_UPDATED
   ORDER_PLACED
   ORDER_STATUS_CHANGED
+  ACCOUNT_CREATED
   MESSAGE_RECORDED
   REVIEW_SUBMITTED
 }
@@ -925,4 +928,42 @@ model SiteSetting {
   updatedBy String?
 
   @@map("site_settings")
+}
+
+/// A customer account.
+///
+/// SEPARATE FROM AdminUser, and that separation is a security boundary rather than a modelling
+/// preference. Two tables mean a customer row can never be read by the admin session check, and
+/// the two session cookies carry different JWT audiences so a token minted for one is rejected
+/// outright by the other. A single "users" table with a role column is the shape where a
+/// forgotten `where` clause turns a shopper into an administrator.
+///
+/// The account POINTS AT a Contact rather than duplicating one. Contact is already "the person"
+/// in this system — enquiries, orders and notes hang off it — so registering links to the
+/// existing row when the address is known, and creates one when it is not. What registering
+/// does NOT do is create a Subscriber: opening an account is not consent to be marketed to, and
+/// the only thing that grants that is the box on the form.
+model Customer {
+  id    String  @id @default(cuid())
+  email String  @unique
+  name  String?
+
+  /// bcrypt hash, cost 12. The plaintext is never stored, logged, or returned by any query.
+  passwordHash String
+
+  /// Bumped on password change and on "sign out everywhere". Sessions carry this number and are
+  /// rejected when it no longer matches — which is what makes a stolen cookie revocable.
+  sessionVersion Int @default(1)
+
+  lastLoginAt DateTime?
+
+  /// The CRM record for this person. Optional and SetNull: deleting a contact must not destroy
+  /// the ability to sign in, and deleting an account must not erase the person's history.
+  contactId String?  @unique
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("customers")
 }

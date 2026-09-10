@@ -287,9 +287,98 @@ When writing an assertion like this, watch the URL pattern: `/admin/products/[^/
 the page you are already standing on and every later check runs against a half-finished state.
 That produced three convincing false failures before it was spotted.
 
-## Auth / Supabase status (branch `feature/supabase`)
+## Customer accounts
 
-`@supabase/supabase-js` is installed and `.env.local` declares `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` (both empty), but **no source file imports Supabase**. `/auth`, `/account`, and `/checkout` are UI shells that say plainly in the interface that nothing is connected — keep that honesty if you wire a backend, and remove the notices only when the flow is genuinely real.
+`/auth` and `/account` are **real**. The "nothing is connected" notice is gone from both, because
+the project's rule is that such a notice comes off only when the flow genuinely works — and it is
+still there on **forgot password**, which cannot work: a reset link is an email and this build
+sends none. That form points at `/contact` instead.
+
+**The security boundary is two constants, not a conditional.** `lib/account/session.ts` is a
+near-copy of `lib/auth/session.ts` differing in the cookie name (`mranabolics_account`) and the
+JWT **audience** (`mranabolics:account`). Because `jwtVerify` is given an audience, a customer
+token is *cryptographically refused* by the admin reader rather than merely failing a role check.
+One module with a `role` field in the payload would put that boundary behind an `if`, and an `if`
+is something a later refactor can get wrong. `account-e2e.mjs` asserts a customer session hitting
+`/admin` is bounced.
+
+**A `Customer` points at a `Contact`; it does not duplicate one.** Registering upserts the contact
+by email, so an order recorded by phone before the person ever opened an account still appears in
+their history — `/account` finds orders through `contactId`, not through the customer row.
+
+**Opening an account is not marketing consent.** Registration writes no `Subscriber`, and the
+suite asserts it. The newsletter box is separate and carries its own consent sentence. This is the
+same rule `lib/crm/contacts.ts` keeps by having no "create and subscribe" helper.
+
+**Sign-in never says which half was wrong**, and spends the same time either way — a dummy bcrypt
+compare runs when the address is unknown, so the timing does not leak what the shared message
+hides. Registration is the deliberate exception: it *does* reveal that an address is taken,
+because the alternative is somebody holding a password that will never work with no way to find
+out why. Every service that hides this sends an email instead, and this one cannot. Rate limiting
+is the mitigation.
+
+`window.location.assign` after a successful sign-in, never `router.push`: the session arrives as a
+`Set-Cookie` and every server component has to run again. A client push re-uses the RSC payload
+rendered for an anonymous visitor, and the header keeps saying "Sign in" to somebody who just did.
+
+```bash
+node --env-file=.env .impeccable/account-e2e.mjs   # needs the app running
+```
+
+## The home page is a selection, not the shop
+
+Three sections rendered their **entire** filtered set, which was invisible at twelve fixture
+products and became a thirty-five-screen page once the real catalogue arrived: 42 best sellers,
+39 deals and 41 manufacturers, together 63% of the page. Each is capped now, with a link through
+to the full list — `ProductsSection` takes a `limit` (8, which fills whole rows at every column
+count), `PopularBrands` shows 8, `WeeklyDeals` shows a lead plus 6.
+
+The counts in the copy stay TRUE while the display is capped. "39 compounds marked down" above six
+of them, with "Everything on offer" beside it, is the honest pairing.
+
+| | before | after |
+|---|---|---|
+| mobile (390px) | 29,504px — 35 screens | 15,559px — 18.4 |
+| desktop (1440px) | 21,420px — 22.5 screens | 11,265px — 11.9 |
+
+**Category tiles and the two doors show real stock, not marbling.** Six abstract swirls labelled
+"Injectables" answered no question a shopper has. Each tile is four photographs sampled EVENLY
+across its category — products are ordered by group, so the first four in "Injectables" are four
+vials of one compound and photograph as one product repeated. Photographs sit *above* the copy,
+never behind it: text over a picture is the easiest way to lose a paragraph.
+
+## Measuring a page, and the traps under it
+
+`.impeccable/shoot.mjs` cannot capture the home page — it waits for `networkidle`, which never
+arrives while the marbling canvases compose lazily and the visit tracker posts. `shoot-lazy.mjs`
+scrolls the page to settle every lazy canvas and captures without that wait.
+
+`.impeccable/measure-sections.mjs` reports section heights, shares and horizontal overflow,
+because a 29,000px screenshot is unreadable as evidence — you cannot see a proportion problem by
+scrolling a picture of a scroll.
+
+**It refuses to measure a dev server or a page whose CSS is not applying**, and that guard is
+there because both produced convincing nonsense:
+
+- a dev server emits `/_next/static/css/app/layout.css?v=…` rather than a hashed file, and its
+  chunk output can be stale after an interrupted build — which collapses every flex and grid, so
+  the numbers look like a triumph because sections with no layout are short;
+- the port may belong to an entirely different project.
+
+**Never kill `next build` mid-compile.** A `pkill` on a running build poisons `.next/cache`; the
+next build then reports "compiled successfully" and silently emits **stale chunks**. Several
+rounds of measurement went into a page that did not contain the changes being measured. If a build
+must be stopped, `rm -rf .next` before the next one.
+
+**The build needs Google Fonts reachable.** `next/font` fetches Familjen Grotesk, Archivo and
+JetBrains Mono at build time and a socket hang-up is fatal — `Failed to compile`, not a fallback.
+The dev server degrades to a system font instead, so this only bites in `build`.
+
+## Auth / Supabase status
+
+`@supabase/supabase-js` is installed and `.env.local` declares `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` (both empty), but **no source file imports Supabase and nothing needs it**. Customer accounts are implemented directly against Postgres — see "Customer accounts" above. The dependency is dead weight: remove it rather than wiring it, unless something genuinely calls for Supabase.
+
+`/checkout` is still a UI shell where payment is concerned, and says so at the point of entry. `/auth` and `/account` are no longer shells. Keep that distinction honest: a notice comes off only when the flow behind it actually works.
 
 ## Checkout and marketing consent
 

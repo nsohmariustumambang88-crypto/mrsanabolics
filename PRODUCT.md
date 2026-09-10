@@ -36,9 +36,9 @@ Evidence-forward retail: every product carries a full specification table, ingre
 - **Stack:** Next.js 13.5 App Router, TypeScript (strict), Tailwind + shadcn/ui, Prisma against Neon Postgres, deployed to Vercel from `main`. Route handlers under `app/api/` and server actions behind every admin screen.
 - **Data:** Neon Postgres via Prisma. The catalogue — 9 categories, 41 manufacturers, ~790 products — is built from the store's own product photographs (`npm run db:seed-catalogue`); blog posts, testimonials and FAQs still come from `lib/data/`.
 - **Images:** product photographs uploaded to Cloudinary under `mranabolics/library/`, mirroring the source folder; journal photography is stock, fetched through Cloudinary.
-- **Auth is not implemented.** `/auth` is a UI mock; `@supabase/supabase-js` is installed with empty env vars on branch `feature/supabase`. Nothing imports it yet.
-- **SEO:** fixed. Routes are server components that own their metadata and emit JSON-LD in the first response; interactivity lives in client children. Product pages carry Product, Offer, BreadcrumbList and — only where reviews exist — AggregateRating and Review. The build pre-renders all 792 product pages.
-- **Undecided:** payment processing and the account backend are unbuilt. Orders, delivery rates, discounts, review moderation, analytics, campaigns and site settings are built and administered at /admin.
+- **Auth is implemented** for customers: register and sign in write a Customer row (bcrypt, HttpOnly session cookie) and link the person to their CRM contact. Password reset is not, because it needs email, and the form says so. Supabase is installed but unused.
+- **SEO:** fixed. Routes are server components that own their metadata and emit JSON-LD in the first response; interactivity lives in client children. Product pages carry Product, Offer, BreadcrumbList and — only where reviews exist — AggregateRating and Review. Product pages are deliberately **not** pre-rendered: they render on first request and are cached by `revalidate`, so a deploy does not depend on 792 database reads succeeding. The first response is still fully server-rendered, and `/sitemap.xml` still lists every URL.
+- **Undecided:** payment processing is unbuilt, and deliberately so — see the note on the Order model. Everything else is built: customer accounts, orders, delivery rates, discounts, review moderation, analytics, campaigns and site settings, all administered at /admin.
 
 ## Brand Commitments
 
