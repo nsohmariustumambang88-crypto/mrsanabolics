@@ -42,11 +42,11 @@ npm run db:studio   # browse the data
 
 **Reads are memoised per process, not per page.** The storefront layout needs the catalogue on every route it renders. Querying per page made the build take minutes and then fail with `ECONNRESET`. `unstable_cache` did **not** dedupe across prerenders in Next 13.5, so `catalogue.ts` uses a small per-closure TTL memo (60s) instead, and every derived read — by slug, by category, by brand, related — filters that one list in memory. `next.config.js` also sets `experimental.cpus: 1`, because parallel prerender workers each opened their own connection and Neon reset them.
 
-**Client components read a context, not the database.** [components/providers/catalogue-provider.tsx](components/providers/catalogue-provider.tsx) receives products, categories and brands from the root layout and exposes `useProducts()`, `useCategories()`, `useBrands()`. This ships the whole catalogue in the RSC payload — fine at 12 products, wrong at a few hundred; at that point give the provider a summary projection and let product pages fetch full records server-side.
+**Client components read a context, not the database.** [components/providers/catalogue-provider.tsx](components/providers/catalogue-provider.tsx) receives the catalogue from the **storefront** layout (`app/(storefront)/layout.tsx`, not the root one — the admin must not pay for this query) and exposes `useProducts()`, `useCategories()`, `useBrands()`. What it ships is the `ProductSummary` projection, not the full record: at ~790 products the full shape was megabytes of RSC payload on every page. See "The catalogue is the photo library". A second, smaller provider — [components/providers/settings-provider.tsx](components/providers/settings-provider.tsx) — carries the handful of site settings client components need.
 
 **Referential integrity surfaced a real bug.** Two products carry brand "MrAnabolics" (slug `mranabolics`) that never had a row in the brands array — the hand-written data held that contradiction silently, a foreign key cannot. The seed derives any brand a product actually references rather than editing product copy, which is why there are 9 brands and a `/brands/mranabolics` page.
 
-Product records are dense; [lib/data/products.ts](lib/data/products.ts) builds them from local helpers (`img(pexelsId)`, `sampleReviews`, `baseFaqs`, `sharedSpecs`) — reuse them when adding seed products. Images are remote Pexels URLs, which is why `next.config.js` sets `images.unoptimized: true`.
+`lib/data/{products,categories,brands}.ts` are **gone**, along with the 12 template fixture products they held. The catalogue is generated from the store's own photographs — see "The catalogue is the photo library". `lib/data/` still holds `blog.ts`, `testimonials.ts` and `faqs.ts`, which `prisma/seed.ts` reads and which remain hand-written.
 
 `getRelatedProducts` degrades relatedness deliberately — same category, then same manufacturer, then the rest of the catalogue — so a row of four always fills. Several categories hold only one product.
 
@@ -64,7 +64,7 @@ Product records are dense; [lib/data/products.ts](lib/data/products.ts) builds t
 
 `/sitemap.xml` is `force-dynamic` for the same reason — it enumerates the whole catalogue from four reads, and doing that inside Next's static-generation budget failed a build on its own while every other page passed. `next.config.js` also raises `staticPageGenerationTimeout` to 180s: headroom for a cold Neon start, not a fix for slow data.
 
-**Structured data** is emitted as `<script type="application/ld+json">` from server components so it lands in the first response. Product pages carry Product + Offer + AggregateRating + Review + BreadcrumbList + FAQPage. Verify changes against the built HTML in `.next/server/app/`, not the dev DOM.
+**Structured data** is emitted as `<script type="application/ld+json">` from server components so it lands in the first response. Product pages carry Product + Offer + BreadcrumbList, plus AggregateRating + Review **only where approved reviews exist** and FAQPage only where the product has FAQs — a rating of 0 from 0 reviews is not a rating, and search engines flag it as invalid. The breadcrumb carries the compound group when the category has one. Verify changes against the built HTML in `.next/server/app/`, not the dev DOM.
 
 **Canonical host** lives once in [lib/site.ts](lib/site.ts) as `SITE.url`, consumed by `metadataBase`, `app/robots.ts`, and `app/sitemap.ts`. It used to be hardcoded in three places. `robots.ts` disallows `/account`, `/checkout`, `/auth`, and the sitemap deliberately omits them.
 
@@ -702,6 +702,13 @@ inside `runAction(() => ...)`. Note that a wrapped call must read its FormData *
 
 ## Gotchas
 
+- **The build wakes the database before it starts.** `prebuild` runs `scripts/wake-db.mjs`,
+  which issues one `select 1` and retries with backoff for about a minute. This exists because
+  `withWakeRetry` gives up after four attempts, and a branch asleep for days takes longer than
+  that: the observed failure was 737 `Can't reach database server` errors and an eighteen-minute
+  build that produced 3 of 792 product pages. The script is deliberately NON-FATAL — if the
+  database still will not answer, the build starts anyway and the per-read retry may yet succeed.
+  It loads `.env` itself, because `prebuild` runs before Next has loaded anything.
 - **A sleeping Neon endpoint fails the whole build, and the catalogue now retries for it.**
   Neon suspends when idle and refuses the connection that wakes it. The admin survives that
   because every action goes through `runAction`; a static build has nobody to press the button
