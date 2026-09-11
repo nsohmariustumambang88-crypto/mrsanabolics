@@ -152,7 +152,7 @@ The palette is the historical ebru pigment set on two substrates; semantic roles
 - **Lifted Indigo** — Indigo raised off the substrate. Focus outlines, hover state of the primary button, scrollbar thumb hover, the mark's middle ring. Never used for large fields.
 
 ### Secondary
-- **Madder (Kök Boya)** — The one warm alarm. Discount flags, wishlist active state, destructive actions, the caret, the centre of the drop mark, and out-of-stock. Deliberately rare; it exists so the eye finds one thing per screen.
+- **Madder (Kök Boya)** — The one warm alarm. Discount flags, wishlist active state, destructive actions, the caret, and out-of-stock. Deliberately rare; it exists so the eye finds one thing per screen.
 - **Saffron (Sarı)** — Caution only: low stock, warnings, a form's inline notice on a dark field.
 - **Verdigris (Yeşil)** — Confirmation only: in stock, added to cart, subscription confirmed.
 

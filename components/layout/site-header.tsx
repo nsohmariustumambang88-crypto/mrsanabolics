@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/accordion';
 import { useStore } from '@/components/providers/store-provider';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
-import { DropMark } from '@/components/ebru/drop-mark';
+import { BullEmblem } from '@/components/brand/bull-emblem';
 import { useCategories, useBrands } from '@/components/providers/catalogue-provider';
 import { categoryPigment } from '@/lib/site';
 import { cn } from '@/lib/utils';
@@ -40,11 +40,10 @@ function Wordmark({ compact }: { compact?: boolean }) {
       className="group flex items-center gap-3 rounded-sm"
       aria-label="MrAnabolics — home"
     >
-      <DropMark
-        className={cn(
-          'shrink-0',
-          compact ? 'h-7 w-7' : 'h-9 w-9'
-        )}
+      {/* The gold bull, top left, dripping — the placement and treatment the owner chose. */}
+      <BullEmblem
+        drip
+        className={cn('shrink-0', compact ? 'h-11 w-[2.4rem]' : 'h-14 w-12')}
       />
       <span className="flex flex-col leading-none">
         <span

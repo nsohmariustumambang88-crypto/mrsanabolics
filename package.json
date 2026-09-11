@@ -18,7 +18,8 @@
     "images:upload-library": "node --env-file=.env --import tsx prisma/upload-library.ts",
     "db:seed-catalogue": "node --env-file=.env --import tsx prisma/seed-catalogue.ts",
     "db:seed-operations": "node --env-file=.env --import tsx prisma/seed-operations.ts",
-    "prebuild": "node scripts/wake-db.mjs"
+    "prebuild": "node scripts/wake-db.mjs",
+    "brand:build": "node scripts/make-brand.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

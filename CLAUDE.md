@@ -217,6 +217,12 @@ Four token distinctions exist because collapsing them visibly broke the build du
 - Icons are lucide or authored SVG at consistent stroke weight — never emoji.
 - Browser surfaces (selection, caret, scrollbars, focus rings, tabular numerals) are themed in `globals.css`.
 
+**The logo is the owner's bull, and it sits outside the palette on purpose.** [components/brand/bull-emblem.tsx](components/brand/bull-emblem.tsx) draws a black coin with a gold ring (and, with `drip`, gold running off its foot) as vectors, and places the owner's red bull illustration inside it. It replaced the ebru drop mark everywhere: header, footer, sign-in, account, the checkout "placed" screen and the admin login. The bull keeps its own red, because the owner asked for exactly that; only the metal is gold. That gold is literal hex rather than a token, and its four stops are `ignoreValues` in `.impeccable/config.json`, because a logo must look the same on the sheet and on the bath.
+
+`npm run brand:build` ([scripts/make-brand.mjs](scripts/make-brand.mjs)) turns `brand/bull.png` (the supplied file; it is really a JPEG) into `public/brand/bull.webp`, `app/icon.png` and `app/apple-icon.png`. It changes no colour. It only removes the white the bull was drawn on: a flood fill from the image border, so white inside the drawing survives, and the one-pixel edge is "un-mixed" so a black coin shows no pale halo. The served bull is 256px WebP, about 19 KB. A 512px PNG was 396 KB, which is a lot for a logo on every page. Re-run the script if the source image changes; the outputs are committed.
+
+The illustration looks like a widely sold stock drawing. Most stock licences forbid using an image as a logo or trademark. Before this is anything more than a demo, the owner should confirm the licence or commission an original mark.
+
 **Type.** Familjen Grotesk (`font-display`), Archivo (`font-sans`), JetBrains Mono (`font-mono`, for assay figures, prices, labels). Mono is for data and measurement, not for a "technical" costume. Use `.tabular` on numbers that align.
 
 ## The admin: a second, borrowed design system

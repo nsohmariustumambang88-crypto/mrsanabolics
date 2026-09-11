@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Mail, Lock, User, ArrowRight, Info } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { MarbleBath } from '@/components/ebru/marble-bath';
-import { DropMark } from '@/components/ebru/drop-mark';
+import { BullEmblem } from '@/components/brand/bull-emblem';
 
 type Mode = 'login' | 'register' | 'forgot';
 
@@ -106,7 +106,7 @@ export function AuthForm() {
       <div className="flex flex-col justify-center px-4 py-12 sm:px-6 sm:py-16 lg:px-16">
         <div className="mx-auto w-full max-w-sm">
           <Link href="/" className="inline-flex items-center gap-3">
-            <DropMark className="h-9 w-9" />
+            <BullEmblem drip className="h-14 w-12 shrink-0" />
             <span className="font-display text-lg font-semibold tracking-[-0.03em]">
               MrAnabolics
             </span>

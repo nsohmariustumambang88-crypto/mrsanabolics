@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { ArrowRight, Check } from 'lucide-react';
 import { MarbleBath } from '@/components/ebru/marble-bath';
-import { DropMark } from '@/components/ebru/drop-mark';
+import { BullEmblem } from '@/components/brand/bull-emblem';
 import { useCategories, useBrands } from '@/components/providers/catalogue-provider';
 import { categoryPigment } from '@/lib/site';
 
@@ -142,7 +142,7 @@ export function SiteFooter() {
         <div className="grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-5 lg:gap-8">
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-3">
-              <DropMark className="h-9 w-9" />
+              <BullEmblem drip className="h-14 w-12 shrink-0" />
               <span className="font-display text-lg font-semibold tracking-[-0.03em]">
                 MrAnabolics
               </span>

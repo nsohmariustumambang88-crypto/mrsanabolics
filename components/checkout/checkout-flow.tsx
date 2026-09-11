@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Check, ArrowLeft, ArrowRight, Lock, Info, ShoppingBag } from 'lucide-react';
 import { useStore } from '@/components/providers/store-provider';
-import { DropMark } from '@/components/ebru/drop-mark';
+import { BullEmblem } from '@/components/brand/bull-emblem';
 import { ProductPlate } from '@/components/product/product-plate';
 import { useProducts } from '@/components/providers/catalogue-provider';
 import { formatPrice } from '@/lib/format';
@@ -131,7 +131,7 @@ export function CheckoutFlow({
   if (placed) {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 py-16 text-center">
-        <DropMark className="h-16 w-16" />
+        <BullEmblem drip title="MrAnabolics" className="h-20 w-[4.35rem]" />
         <h1 className="mt-8 font-display text-3xl font-semibold tracking-[-0.035em]">
           Lifted
         </h1>
