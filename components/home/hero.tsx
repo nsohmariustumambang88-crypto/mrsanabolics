@@ -3,24 +3,21 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { MarbleBath } from '@/components/ebru/marble-bath';
-import { StylusMark } from '@/components/ebru/drop-mark';
 import { HeroOffer } from '@/components/home/hero-offer';
 import type { AdvertisedDiscount, ProductSummary } from '@/lib/types';
 
 /*
   The first viewport is the thesis, not a header.
 
-  A compound is a substance suspended at a concentration. Ebru is the craft of exactly that:
-  pigment floated on thickened water, combed, and lifted onto paper in one contact. So the
-  page opens on an actual bath — a live displacement simulation the visitor can draw through —
-  with the claim and the action set on the paper beside it, divided by one plate rule.
+  The claim and the actions sit on the paper on the left. The right-hand column is the site's
+  promotion: a sheet laid over a marbled bath, showing what is on offer at the size a pack shot
+  needs to sell. See hero-offer.tsx. What it carries is chosen on the server from what the admin
+  has marked as on offer, so this component never reaches into the catalogue for a product of
+  its own choosing.
 
-  No hero photograph. No stat row. The card floating on the bath is the promotion slot — see
-  hero-offer.tsx — and what it carries is chosen on the server from what the admin has marked
-  as on offer, so this component no longer reaches into the catalogue for an arbitrary product.
-
-  The deckle is masked onto the canvas alone. Masking the whole column also clipped the float
-  card and its label, which is what broke the mobile first viewport.
+  The bath used to be the column's content — a live marbling the visitor could comb, with the
+  offer as a small card in its corner. It now shows only as a band of pigment round the sheet,
+  which keeps the column recognisably this site rather than a banner slot.
 */
 
 export function Hero({
@@ -72,28 +69,32 @@ export function Hero({
         </div>
 
         {/*
-          The bath.
+          The promotion, laid over the bath.
 
-          Taller on a phone than the next step up. Below 640px the offer card spans the full width,
-          and at 26rem it covered about four fifths of the bath once a promo code added its row —
-          leaving a strip too thin to comb, which is the one thing this panel invites you to do.
-          From sm up the card sits in a corner and the shorter bath is enough.
+          This column used to BE the bath — a live marbling the visitor could comb, with a small
+          offer card floating in its corner. At the owner's direction the offer now fills it, and
+          the bath survives only as the narrow band of pigment round the sheet's edge. It is no
+          longer interactive: there is almost nothing left to comb, and a crosshair cursor over a
+          product photograph promises a gesture that does nothing useful.
+
+          It is composed at lower density for the same reason — nearly all of it is covered, and
+          the full-fidelity sheet was the most expensive thing on the page to draw.
+
+          The column is a flex container from lg so the panel can take the full 42rem height and
+          the photograph can grow into what the text leaves. Below lg the panel sizes to its
+          content, with a floor so an empty catalogue still leaves a visible sheet.
         */}
-        <div className="relative min-h-[31rem] overflow-hidden sm:min-h-[26rem] lg:min-h-[42rem]">
+        <div className="relative flex min-h-[16rem] flex-col overflow-hidden p-3 sm:p-4 lg:min-h-[42rem] lg:p-6">
           <MarbleBath
-            className="deckle-b absolute inset-0 cursor-crosshair lg:mask-none"
+            className="absolute inset-0 h-full w-full"
             seed={1873}
-            density={1}
-            interactive
+            density={0.6}
+            animate={false}
           />
 
-          <p className="pointer-events-none absolute left-5 top-5 z-10 flex items-center gap-2 rounded-full border border-rule-strong bg-paper px-3.5 py-2 font-mono text-2xs uppercase tracking-[0.16em] text-ink shadow-lift">
-            <StylusMark className="h-3.5 w-3.5" />
-            Drag to comb the bath
-          </p>
-
-          {/* The promotion slot, lifted out of the bath it was floated in. */}
-          <HeroOffer offers={offers} fallback={fallback} promoCode={promoCode} />
+          <div className="relative flex flex-col lg:flex-1">
+            <HeroOffer offers={offers} fallback={fallback} promoCode={promoCode} />
+          </div>
         </div>
       </div>
     </section>

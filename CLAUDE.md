@@ -201,7 +201,7 @@ Four token distinctions exist because collapsing them visibly broke the build du
 
 **Marbling engine.** [components/ebru/marbling.ts](components/ebru/marbling.ts) is a real area-preserving displacement model (drop + tine), not a texture — Float32Array points, per-blot bounding boxes, and a displacement cutoff make the density affordable. Drop radius is **solved from a coverage target** (`N·πr² = 3·area`), never keyed to canvas size: keying it to `unit` made small canvases render nearly bare. `composeSheet` lays the ground coat, throws battal contacts, combs both axes, then places one `swirl()` (bülbül yuvası) at a fixed position rather than a rolled one.
 
-[components/ebru/marble-bath.tsx](components/ebru/marble-bath.tsx) renders it. **Index 0 of `pigments` is the coat, not an ink.** `density` (0–1) trades fidelity for time — the hero runs 1, decorative fields run 0.45–0.7. Composition is lazy via IntersectionObserver, so a dozen baths don't block the main thread. Pass a stable `pigments` array reference; inline arrays re-run the effect every render.
+[components/ebru/marble-bath.tsx](components/ebru/marble-bath.tsx) renders it. **Index 0 of `pigments` is the coat, not an ink.** `density` (0–1) trades fidelity for time — decorative fields run 0.45–0.7. The hero bath used to run at 1 and be `interactive` (drag to comb); it is now almost entirely covered by the offer panel, so it runs at 0.6 and takes no input. Composition is lazy via IntersectionObserver, so a dozen baths don't block the main thread. Pass a stable `pigments` array reference; inline arrays re-run the effect every render.
 
 **Catalogue imagery is the store's own photography, with an authored fallback.** Every product in the catalogue carries a photograph from the store's files (see "The catalogue is the photo library"). [components/product/product-plate.tsx](components/product/product-plate.tsx) still draws a product as its shipping vessel on a floated ground in the category pigment, deterministic per slug — but only for a product with no photograph, and the gallery caption says which one the visitor is looking at. The footer disclosure was updated to match. Journal editorial photography is real stock printed through the `.duotone` SVG press filters defined in `app/layout.tsx`.
 
@@ -347,12 +347,31 @@ across its category — products are ordered by group, so the first four in "Inj
 vials of one compound and photograph as one product repeated. Photographs sit *above* the copy,
 never behind it: text over a picture is the easiest way to lose a paragraph.
 
-## The hero's offer card is the promotion slot
+## The hero's right-hand column is the promotion
 
-The card floating on the hero bath used to show `products[0]` — whichever product sorted first,
-for no stated reason — and would have thrown on an empty catalogue, taking the home page down.
-[components/home/hero-offer.tsx](components/home/hero-offer.tsx) now carries promotions, and both
-of its inputs are things an administrator controls rather than things this file decides:
+The hero's right column was a live marbling bath the visitor could comb, with a small card in its
+corner showing `products[0]` — whichever product sorted first, for no stated reason, and a crash on
+an empty catalogue. At the owner's direction the column is now the offer itself:
+[components/home/hero-offer.tsx](components/home/hero-offer.tsx) is a full-height panel with the
+product photograph at a size that sells it, the price and the saving, stock, **Add to cart**, and a
+link through. The bath shows only as a narrow band of pigment round the panel, so the column still
+reads as this site rather than a banner slot; it is no longer interactive and runs at density 0.6.
+The "drag to comb" chip is gone.
+
+The photograph is `mix-blend-multiply` in the light theme. The pack shots are photographed on
+white, and at hero size the white read as a rectangle pasted inside the warmer paper box; multiply
+turns white into the paper so the pack sits on the sheet. It is `dark:mix-blend-normal`, because
+multiplying onto a dark ground sinks the photo into it, and it is applied to photographs only — a
+drawn plate carries its own ground colour. Any new surface showing pack shots large should do the
+same; at thumbnail size the rectangle is not noticeable and product cards leave it alone.
+
+Below `lg` the panel sizes to its content with a fixed 5:4 photograph. From `lg` the column has a
+real height and the photograph grows into whatever the text leaves — `flex-1` and `aspect-auto`
+only arrive at that breakpoint, because `flex: 1 1 0%` in a column of indefinite height can collapse
+the box it is meant to size, and a percentage `h-full` does not resolve against a parent that only
+has a `min-height`.
+
+Both of its inputs are things an administrator controls rather than things this file decides:
 
 - **Deals.** Products flagged `isDeal` whose compare-at price is above the price, ordered by the
   share of the price saved, capped at six, chosen in `app/(storefront)/page.tsx`. A product
@@ -367,9 +386,12 @@ of its inputs are things an administrator controls rather than things this file 
   condition the till will enforce (minimum spend, category) beside the headline.
 
 **Stepped by the visitor, never on a timer.** This build has no motion, and content that advances
-on its own also fails WCAG 2.2.2 — the price is pulled away from someone reading it. The counter is
-a polite live region. The card is not one big link: it holds buttons, and a button inside an `<a>`
-is invalid HTML that also navigates on every press.
+on its own also fails WCAG 2.2.2 — the price is pulled away from someone reading it. It follows the
+WAI-ARIA carousel pattern: a labelled region with `aria-roledescription="carousel"`, each slide
+announced as "2 of 6", previous/next buttons *and* the arrow keys, and a polite live region on the
+counter. The panel is not one big link: it holds buttons, and a button inside an `<a>` is invalid
+HTML that also navigates on every press. The photograph is a second link to the product, taken out
+of the tab order so a keyboard user meets one link per product, not two.
 
 "Third-party assayed" is gone from it — the catalogue holds no assay for these products. The home
 page also passes `ProductSummary`, not `Product`, into its client components now; the full records
@@ -857,8 +879,14 @@ inside `runAction(() => ...)`. Note that a wrapped call must read its FormData *
   because every action goes through `runAction`; a static build has nobody to press the button
   again, so one cold start took down all 882 pages with `PrismaClientInitializationError`.
   `withWakeRetry` in [lib/db/catalogue.ts](lib/db/catalogue.ts) retries a CONNECTION failure
-  four times with backoff, and rethrows anything else immediately — retrying a constraint
-  violation only fails slower. If you add another prerendered read that talks to Postgres
+  with backoff, and rethrows anything else immediately — retrying a constraint violation only
+  fails slower. **How patient it is depends on the phase.** A live request gets about ten seconds
+  of backoff (four attempts), because a visitor is waiting. A build gets about 55 seconds across
+  seven, keyed on `NEXT_PHASE === 'phase-production-build'`, which Next sets before it spawns the
+  page workers. The shorter budget killed three builds running with dozens of "Can't reach
+  database server" errors on pages unrelated to the change being built; the longer one still fits
+  inside `staticPageGenerationTimeout` (180s). Raising the build budget further means raising that
+  timeout with it, or Next restarts the page mid-retry. If you add another prerendered read that talks to Postgres
   directly, give it the same treatment or a `.catch` fallback, as `/checkout` has.
 
 - **Do not run `next build` while `next dev` is running.** They share `.next`, and the dev

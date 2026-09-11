@@ -2,35 +2,45 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Check, ChevronLeft, ChevronRight, Copy } from 'lucide-react';
-import { ProductPlate } from '@/components/product/product-plate';
+import {
+  ArrowRight,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Plus,
+} from 'lucide-react';
+import { ProductPlate, isPhotograph } from '@/components/product/product-plate';
+import { stockState } from '@/components/product/product-card';
+import { useStore } from '@/components/providers/store-provider';
+import { useSiteSettings } from '@/components/providers/settings-provider';
 import { formatPrice } from '@/lib/format';
+import { categoryPigment } from '@/lib/site';
 import { cn } from '@/lib/utils';
 import type { AdvertisedDiscount, ProductSummary } from '@/lib/types';
 
 /*
-  The offer card that floats over the hero bath.
+  The hero's promotion panel.
 
-  It used to show `products[0]` — whichever product happened to sort first, with nothing about
-  why — and it would have thrown on an empty catalogue, taking the home page with it. It is now the
-  site's promotion slot, fed by two things an administrator actually controls:
+  It fills the right-hand column of the hero. It used to be a small card floating in the corner of
+  a live marbling bath, and the bath — "drag to comb" — was the column's content. At the owner's
+  direction the offer is now the content: a sheet laid over the bath, with only a narrow band of
+  pigment left showing round its edge so it still reads as this site rather than a stock banner.
 
-  - the DEALS: products flagged "on offer" in the admin that carry a real markdown, biggest saving
-    first. Which products appear here is therefore decided by the `isDeal` flag and the
-    compare-at price, not by this file.
+  Two inputs, both controlled from the admin rather than decided here:
+
+  - DEALS: products flagged "on offer" whose compare-at price is above the price, biggest share
+    saved first, capped at six — chosen in app/(storefront)/page.tsx.
   - an optional CODE: only the one named in Settings, and only while the checkout would accept it.
-    See `advertisedDiscount` in lib/discounts for why a code is never chosen automatically.
+    `advertisedDiscount` in lib/discounts explains why a code is never picked automatically.
 
   STEPPED BY THE VISITOR, NEVER ON A TIMER. This build has no motion, and content that advances on
-  its own is also a WCAG 2.2.2 failure: somebody reading the price has it pulled away from them. The
-  counter is a polite live region, so a screen reader hears which offer they moved to.
+  its own fails WCAG 2.2.2 — the price is pulled away from somebody reading it. It follows the
+  WAI-ARIA carousel pattern instead: a labelled region, slides announced as "2 of 6", buttons and
+  the arrow keys to move, and a polite live region so a screen reader hears where it landed.
 
-  The card is not one big link any more. It holds buttons, and a button inside an <a> is invalid
-  HTML that also navigates on every press. The product is the link; the controls sit beside it.
-
-  It is opaque paper over the live pigment — the craft floor's rule for anything carrying text on
-  the bath. "Third-party assayed" is gone from it: the catalogue holds no assay for these
-  products, and a promotion is the last place to make a claim nobody can show.
+  Nothing here claims what the catalogue cannot show. Stock comes from the product row, the saving
+  from its two prices, and there is no "lab tested" line: these products carry no assay.
 */
 
 export function HeroOffer({
@@ -44,18 +54,41 @@ export function HeroOffer({
   fallback: ProductSummary | null;
   promoCode: AdvertisedDiscount | null;
 }) {
+  const { addToCart } = useStore();
+  const { lowStockThreshold } = useSiteSettings();
   const [index, setIndex] = React.useState(0);
+  const [added, setAdded] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
 
   const onOffer = offers.length > 0;
   const list = onOffer ? offers : fallback ? [fallback] : [];
   const product = list.length ? list[index % list.length] : null;
 
-  /* Nothing to promote and nothing to show: no card at all, rather than an empty frame. */
+  /* A new slide is a new product: its "added" confirmation must not carry over. */
+  React.useEffect(() => setAdded(false), [index]);
+
   if (!product && !promoCode) return null;
 
   const step = (delta: number) =>
     setIndex((current) => (current + delta + list.length) % list.length);
+
+  const onKeyDown = (event: React.KeyboardEvent) => {
+    if (list.length < 2) return;
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      step(-1);
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      step(1);
+    }
+  };
+
+  const add = () => {
+    if (!product || !product.inStock) return;
+    addToCart(product, 1);
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 1800);
+  };
 
   const copy = async () => {
     if (!promoCode) return;
@@ -64,120 +97,239 @@ export function HeroOffer({
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
-      /* Clipboard refused (an insecure context, or a denied permission). The code is on screen
-         in full, so the visitor can still select it; there is nothing to recover. */
+      /* Clipboard refused (insecure context, denied permission). The code is on screen in full,
+         so it can still be selected by hand; there is nothing to recover. */
     }
   };
 
   const compareAt = product?.compareAtPrice ?? null;
   const saving = product && compareAt && compareAt > product.price ? compareAt - product.price : 0;
   const percent = saving && compareAt ? Math.round((saving / compareAt) * 100) : 0;
-  const strength = product ? (product.specifications[0]?.value ?? product.category) : '';
+  const strength = product ? (product.specifications[0]?.value ?? '') : '';
+  const stock = product ? stockState(product, lowStockThreshold) : null;
 
   return (
-    <div className="absolute bottom-6 left-5 right-5 z-10 border border-rule bg-paper shadow-lift sm:left-auto sm:w-[25rem]">
+    <section
+      aria-roledescription="carousel"
+      aria-label={onOffer ? 'Current offers' : 'Featured product'}
+      onKeyDown={onKeyDown}
+      className="relative flex flex-col border border-rule bg-paper shadow-lift lg:flex-1"
+    >
       {product && (
-        <div className="p-5">
-          {onOffer && (
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <span className="bg-pigment-madder px-2 py-1 font-mono text-2xs uppercase tracking-[0.12em] text-primary-foreground tabular">
+        <>
+          {/* The category's pigment, as the plate rule a product card carries. */}
+          <span
+            className="block h-px w-full"
+            style={{ backgroundColor: categoryPigment(product.categorySlug) }}
+            aria-hidden="true"
+          />
+
+          <div className="flex items-center justify-between gap-3 px-5 pt-5 sm:px-7 sm:pt-6">
+            {onOffer ? (
+              <span className="bg-pigment-madder px-2.5 py-1 font-mono text-2xs uppercase tracking-[0.12em] text-primary-foreground tabular">
                 {percent > 0 ? `−${percent}% · On offer` : 'On offer'}
               </span>
-
-              {list.length > 1 && (
-                <span className="flex items-center gap-1.5">
-                  <span
-                    className="mr-1 font-mono text-2xs text-ink-faint tabular"
-                    aria-live="polite"
-                    aria-atomic="true"
-                  >
-                    <span className="sr-only">Offer </span>
-                    {index + 1} / {list.length}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => step(-1)}
-                    aria-label="Previous offer"
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-rule-strong text-ink-soft transition-colors hover:border-pigment-indigo hover:text-pigment-indigo"
-                  >
-                    <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => step(1)}
-                    aria-label="Next offer"
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-rule-strong text-ink-soft transition-colors hover:border-pigment-indigo hover:text-pigment-indigo"
-                  >
-                    <ChevronRight className="h-4 w-4" strokeWidth={1.75} />
-                  </button>
-                </span>
-              )}
-            </div>
-          )}
-
-          <Link href={`/product/${product.slug}`} className="group flex items-center gap-4">
-            <span className="relative h-16 w-16 shrink-0 overflow-hidden border border-rule bg-paper-sunk">
-              <ProductPlate product={product} showMarking={false} sizes="64px" />
-            </span>
-
-            <span className="min-w-0 flex-1">
-              <span className="block font-display text-lg font-semibold leading-tight tracking-[-0.02em] transition-colors group-hover:text-pigment-indigo">
-                {product.name}
-              </span>
-              <span className="mt-1 block truncate text-xs text-ink-faint">
-                {product.brand}
-                <span className="px-1.5 text-rule-strong" aria-hidden="true">
-                  /
-                </span>
-                <span className="tabular">{strength}</span>
-              </span>
-            </span>
-
-            <ArrowRight
-              className="h-5 w-5 shrink-0 text-ink-faint transition-colors group-hover:text-pigment-indigo"
-              strokeWidth={1.5}
-              aria-hidden="true"
-            />
-          </Link>
-
-          <div className="mt-4 flex items-baseline justify-between gap-3 border-t border-rule pt-3">
-            <span className="flex items-baseline gap-2">
-              <span className="text-base font-semibold tabular">{formatPrice(product.price)}</span>
-              {saving > 0 && compareAt && (
-                <span className="text-xs text-ink-faint line-through tabular">
-                  {formatPrice(compareAt)}
-                </span>
-              )}
-            </span>
-
-            {onOffer ? (
-              <Link
-                href="/shop?filter=deals"
-                className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-soft underline decoration-rule-strong underline-offset-4 transition-colors hover:text-pigment-indigo hover:decoration-pigment-indigo"
-              >
-                All offers
-              </Link>
             ) : (
               <span className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
                 {product.category}
               </span>
             )}
+
+            {list.length > 1 && (
+              <span className="flex items-center gap-1.5">
+                <span
+                  className="mr-1 font-mono text-2xs text-ink-faint tabular"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  <span className="sr-only">Offer </span>
+                  {index + 1} / {list.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => step(-1)}
+                  aria-label="Previous offer"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-rule-strong text-ink-soft transition-colors hover:border-pigment-indigo hover:text-pigment-indigo"
+                >
+                  <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => step(1)}
+                  aria-label="Next offer"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-rule-strong text-ink-soft transition-colors hover:border-pigment-indigo hover:text-pigment-indigo"
+                >
+                  <ChevronRight className="h-4 w-4" strokeWidth={1.75} />
+                </button>
+              </span>
+            )}
           </div>
-        </div>
+
+          <div
+            role="group"
+            aria-roledescription="slide"
+            aria-label={`${index % list.length + 1} of ${list.length}: ${product.name}`}
+            className="flex flex-col lg:flex-1"
+          >
+            {/*
+              The photograph, at a size that sells it. object-contain via ProductPlate, so a pack
+              shot keeps its lid and label; the box sets the proportion, never the crop.
+
+              A fixed 5:4 box on a phone, where the column's height comes from its content. From
+              lg the hero column has a real height and the photograph takes whatever the text
+              leaves, which is why `flex-1` and `aspect-auto` only arrive at that breakpoint —
+              `flex: 1 1 0%` in a column of indefinite height can collapse the box it is meant
+              to size.
+            */}
+            <Link
+              href={`/product/${product.slug}`}
+              /*
+                White in the dark theme. The pack shots are square and photographed on white, and
+                this box is not square, so on the dark card the photo sat as a white rectangle
+                between two dark bars. A white plate is how the product cards already show pack
+                shots in the dark theme; this matches them.
+              */
+              className="relative mx-5 mt-5 block aspect-[5/4] min-h-[12rem] overflow-hidden border border-rule bg-card dark:bg-white sm:mx-7 lg:aspect-auto lg:flex-1"
+              tabIndex={-1}
+              aria-hidden="true"
+            >
+              {/*
+                Multiplied onto the paper, in the light theme only. The store's pack shots are
+                photographed on white, and at this size the white showed as a pasted-in rectangle
+                inside the warmer paper box. Multiply turns white into whatever it sits on, so the
+                pack sits ON the sheet. It is switched off in the dark theme, where multiplying
+                onto a dark ground would sink the photograph into it, and never applied to a drawn
+                plate, which carries its own ground colour.
+              */}
+              <ProductPlate
+                product={product}
+                showMarking={false}
+                priority={index === 0}
+                sizes="(min-width: 1024px) 44vw, 100vw"
+                className={
+                  isPhotograph(product.images[0])
+                    ? 'mix-blend-multiply dark:mix-blend-normal'
+                    : undefined
+                }
+              />
+            </Link>
+
+            <div className="px-5 pb-5 pt-5 sm:px-7 sm:pb-7">
+              <p className="text-xs text-ink-faint">
+                {product.brand}
+                {strength && (
+                  <>
+                    <span className="px-1.5 text-rule-strong" aria-hidden="true">
+                      /
+                    </span>
+                    <span className="tabular">{strength}</span>
+                  </>
+                )}
+                <span className="px-1.5 text-rule-strong" aria-hidden="true">
+                  ·
+                </span>
+                {product.subcategoryName ?? product.category}
+              </p>
+
+              <h2 className="mt-1.5 font-display text-[clamp(1.6rem,2.6vw,2.25rem)] font-semibold leading-[1.05] tracking-[-0.03em]">
+                <Link
+                  href={`/product/${product.slug}`}
+                  className="transition-colors hover:text-pigment-indigo"
+                >
+                  {product.name}
+                </Link>
+              </h2>
+
+              <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span className="font-display text-2xl font-semibold tabular">
+                  {formatPrice(product.price)}
+                </span>
+                {saving > 0 && compareAt && (
+                  <>
+                    <span className="text-sm text-ink-faint line-through tabular">
+                      {formatPrice(compareAt)}
+                    </span>
+                    <span className="text-sm font-medium text-pigment-madder tabular">
+                      Save {formatPrice(saving)}
+                    </span>
+                  </>
+                )}
+                {stock && (
+                  <span className={cn('ml-auto flex items-center gap-1.5 text-xs', stock.tone)}>
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: stock.token }}
+                      aria-hidden="true"
+                    />
+                    {stock.label}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={add}
+                  disabled={!product.inStock}
+                  className={cn(
+                    'inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium transition-colors',
+                    !product.inStock
+                      ? 'cursor-not-allowed bg-paper-sunk text-ink-faint'
+                      : added
+                        ? 'bg-pigment-verdigris text-primary-foreground'
+                        : 'bg-pigment-indigo text-primary-foreground hover:bg-pigment-indigo-lift'
+                  )}
+                >
+                  {!product.inStock ? (
+                    'Unavailable'
+                  ) : added ? (
+                    <>
+                      <Check className="h-4 w-4" strokeWidth={2} />
+                      In the cart
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4" strokeWidth={1.75} />
+                      Add to cart
+                    </>
+                  )}
+                </button>
+
+                <Link
+                  href={`/product/${product.slug}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-rule-strong px-5 py-3 text-sm font-medium transition-colors hover:border-pigment-indigo hover:text-pigment-indigo"
+                >
+                  View product
+                  <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
+                </Link>
+
+                {onOffer && (
+                  <Link
+                    href="/shop?filter=deals"
+                    className="ml-auto font-mono text-2xs uppercase tracking-[0.14em] text-ink-soft underline decoration-rule-strong underline-offset-4 transition-colors hover:text-pigment-indigo hover:decoration-pigment-indigo"
+                  >
+                    All offers
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {/*
-        The code, with every condition the checkout will enforce stated beside it. A headline that
-        says "10% off" over a basket the till then refuses is how a promotion becomes a complaint.
+        The code, with every condition the checkout will enforce stated beside it. A headline
+        that says "10% off" over a basket the till then refuses is how a promotion becomes a
+        complaint.
       */}
       {promoCode && (
         <div
           className={cn(
-            'flex items-center justify-between gap-3 bg-paper-sunk px-5 py-3.5',
+            'flex flex-wrap items-center justify-between gap-3 bg-paper-sunk px-5 py-4 sm:px-7',
             product && 'border-t border-rule'
           )}
         >
-          <span className="min-w-0 text-xs leading-snug text-ink-soft">
+          <span className="min-w-0 text-sm leading-snug text-ink-soft">
             <span className="font-medium text-ink">{promoCode.headline}</span>
             {promoCode.condition ? ` ${promoCode.condition}` : ''} with code
           </span>
@@ -187,7 +339,7 @@ export function HeroOffer({
             onClick={copy}
             aria-label={copied ? `Code ${promoCode.code} copied` : `Copy code ${promoCode.code}`}
             className={cn(
-              'flex shrink-0 items-center gap-2 border px-3 py-1.5 font-mono text-xs uppercase tracking-[0.12em] transition-colors',
+              'flex shrink-0 items-center gap-2 border px-3.5 py-2 font-mono text-sm uppercase tracking-[0.12em] transition-colors',
               copied
                 ? 'border-pigment-verdigris text-pigment-verdigris'
                 : 'border-rule-strong text-ink hover:border-pigment-indigo hover:text-pigment-indigo'
@@ -195,13 +347,13 @@ export function HeroOffer({
           >
             {promoCode.code}
             {copied ? (
-              <Check className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
+              <Check className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
             ) : (
-              <Copy className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
+              <Copy className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
             )}
           </button>
         </div>
       )}
-    </div>
+    </section>
   );
 }

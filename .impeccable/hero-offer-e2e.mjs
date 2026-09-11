@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { chromium } from 'playwright-core';
 
 /*
   The hero's offer card, checked against a running production build.
@@ -90,6 +91,85 @@ try {
     'the unsupported assay claim is gone from the card',
     !first.includes('Third-party assayed')
   );
+  ok(
+    'the offer covers the column: the "drag to comb" invitation is gone',
+    !first.includes('Drag to comb the bath')
+  );
+  ok(
+    'it is announced as a carousel, with slides a screen reader can count',
+    first.includes('aria-roledescription="carousel"') && /aria-label="1 of \d+: /.test(first)
+  );
+
+  /* ------------------------------------------- the controls work in a real browser */
+
+  /*
+    Everything above reads the server's HTML, which would pass just as happily if the component
+    never hydrated and every button were dead. So: drive it. The home page never reaches
+    `networkidle` (the marbling composes lazily), so hydration is detected by behaviour — press
+    Next until the counter moves — rather than by waiting for the network to go quiet.
+  */
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+
+    const carousel = page.locator('[aria-roledescription="carousel"]');
+    const counter = carousel.locator('[aria-live="polite"]');
+    const title = carousel.locator('h2');
+
+    const firstTitle = (await title.innerText()).trim();
+    const total = Number(((await counter.innerText()).match(/\/\s*(\d+)/) ?? [])[1] ?? 0);
+
+    /* A press before hydration does nothing; press until the counter leaves 1, then check it
+       landed on exactly 2 — one step, not a double-fire. */
+    const onFirst = async () => /^\s*(Offer\s*)?1\s*\//.test(await counter.innerText());
+    for (let attempt = 0; attempt < 30 && (await onFirst()); attempt++) {
+      await carousel.getByRole('button', { name: 'Next offer' }).click();
+      await page.waitForTimeout(400);
+    }
+    const landed = await counter.innerText();
+    ok('Next moves exactly one offer forward', /^\s*(Offer\s*)?2\s*\//.test(landed), landed);
+    ok(
+      'the second offer is a different product',
+      (await title.innerText()).trim() !== firstTitle,
+      `${firstTitle} -> ${(await title.innerText()).trim()}`
+    );
+
+    await carousel.getByRole('button', { name: 'Previous offer' }).focus();
+    await page.keyboard.press('ArrowLeft');
+    await page.waitForTimeout(300);
+    ok(
+      'the left arrow key steps back',
+      /^\s*(Offer\s*)?1\s*\//.test(await counter.innerText()),
+      await counter.innerText()
+    );
+
+    await page.keyboard.press('ArrowLeft');
+    await page.waitForTimeout(300);
+    ok(
+      'stepping back from the first offer wraps to the last',
+      new RegExp(`^\\s*(Offer\\s*)?${total}\\s*/`).test(await counter.innerText()),
+      await counter.innerText()
+    );
+
+    const cart = page.locator('[aria-label^="Cart, "]').first();
+    const before = Number(((await cart.getAttribute('aria-label')) ?? '').match(/\d+/)?.[0] ?? 0);
+    await carousel.getByRole('button', { name: 'Add to cart' }).click();
+    await page.waitForTimeout(500);
+    const after = Number(((await cart.getAttribute('aria-label')) ?? '').match(/\d+/)?.[0] ?? 0);
+    ok('Add to cart puts the offer in the cart', after === before + 1, `${before} -> ${after}`);
+    ok(
+      'the button confirms it, in colour and words rather than motion',
+      await carousel.getByText('In the cart').isVisible()
+    );
+  } finally {
+    await browser.close();
+  }
+
+  if (process.env.SKIP_CODE === '1') {
+    console.log('(SKIP_CODE=1 — the promo-code checks were not run)');
+    throw new Error('SKIPPED_CODE');
+  }
 
   /* -------------------------------------------------- a named, redeemable code appears */
 
@@ -183,8 +263,11 @@ try {
     ok('the disappearance checks could run', false, 'skipped — the code never appeared');
   }
 } catch (error) {
-  console.error(error);
-  fails.push('the suite threw');
+  /* SKIP_CODE=1 ends the run early on purpose; that is not a failure. */
+  if (error?.message !== 'SKIPPED_CODE') {
+    console.error(error);
+    fails.push('the suite threw');
+  }
 } finally {
   /*
     Cleanup is retried and its failure is REPORTED, never swallowed.

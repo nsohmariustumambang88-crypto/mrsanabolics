@@ -61,9 +61,28 @@ const resetters: Array<() => void> = [];
   So a read retries a CONNECTION failure a few times, backing off long enough for the endpoint
   to finish waking (Neon typically takes a few seconds). A query that fails for any other reason
   is thrown immediately: retrying a malformed query or a constraint violation just fails slower.
+
+  HOW PATIENT depends on who is waiting.
+
+  - A live request has a person behind it. About ten seconds of backoff, then give up and let the
+    page's own handling take over — a visitor is better served by an error than by a spinner.
+  - A build has nobody behind it, and giving up costs the entire build. The four-attempt budget
+    was not enough in practice: the database has been measured taking 16 and once 49 seconds to
+    answer, and three builds in a row died with dozens of "Can't reach database server" errors
+    on pages that had nothing to do with what had changed. At build time a read now backs off for
+    about 55 seconds across seven attempts. Each attempt's own connect timeout comes on top, and
+    the total stays well inside `staticPageGenerationTimeout` (180s), past which Next restarts
+    the page and eventually fails it anyway.
+
+  Next sets NEXT_PHASE before it spawns the workers that render pages, so they inherit it. It is
+  read at call time rather than captured at module load, so nothing depends on import order.
 */
-const WAKE_ATTEMPTS = 4;
-const WAKE_BACKOFF_MS = [1_000, 3_000, 6_000];
+const LIVE_BACKOFF_MS = [1_000, 3_000, 6_000];
+const BUILD_BACKOFF_MS = [1_000, 3_000, 6_000, 10_000, 15_000, 20_000];
+
+function wakeBackoff(): number[] {
+  return process.env.NEXT_PHASE === 'phase-production-build' ? BUILD_BACKOFF_MS : LIVE_BACKOFF_MS;
+}
 
 function isColdStart(error: unknown): boolean {
   const name = (error as { name?: string })?.name ?? '';
@@ -80,15 +99,17 @@ function isColdStart(error: unknown): boolean {
 }
 
 async function withWakeRetry<T>(read: () => Promise<T>): Promise<T> {
+  const backoff = wakeBackoff();
+  const attempts = backoff.length + 1;
   let lastError: unknown;
 
-  for (let attempt = 0; attempt < WAKE_ATTEMPTS; attempt++) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
     try {
       return await read();
     } catch (error) {
       lastError = error;
-      if (!isColdStart(error) || attempt === WAKE_ATTEMPTS - 1) throw error;
-      await new Promise((resolve) => setTimeout(resolve, WAKE_BACKOFF_MS[attempt]));
+      if (!isColdStart(error) || attempt === attempts - 1) throw error;
+      await new Promise((resolve) => setTimeout(resolve, backoff[attempt]));
     }
   }
 
