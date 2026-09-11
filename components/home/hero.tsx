@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { MarbleBath } from '@/components/ebru/marble-bath';
 import { StylusMark } from '@/components/ebru/drop-mark';
-import { useProducts } from '@/components/providers/catalogue-provider';
-import { formatPrice } from '@/lib/format';
+import { HeroOffer } from '@/components/home/hero-offer';
+import type { AdvertisedDiscount, ProductSummary } from '@/lib/types';
 
 /*
   The first viewport is the thesis, not a header.
@@ -15,18 +15,23 @@ import { formatPrice } from '@/lib/format';
   page opens on an actual bath — a live displacement simulation the visitor can draw through —
   with the claim and the action set on the paper beside it, divided by one plate rule.
 
-  No hero photograph. No stat row: the contract says the assay belongs on the sheet, not spread
-  across the opening as four free-floating figures, so it rides on the float card instead.
+  No hero photograph. No stat row. The card floating on the bath is the promotion slot — see
+  hero-offer.tsx — and what it carries is chosen on the server from what the admin has marked
+  as on offer, so this component no longer reaches into the catalogue for an arbitrary product.
 
   The deckle is masked onto the canvas alone. Masking the whole column also clipped the float
   card and its label, which is what broke the mobile first viewport.
 */
 
-export function Hero() {
-  const products = useProducts();
-  const featured = products[0];
-  const concentration = featured.specifications[0]?.value ?? featured.category;
-
+export function Hero({
+  offers,
+  fallback,
+  promoCode,
+}: {
+  offers: ProductSummary[];
+  fallback: ProductSummary | null;
+  promoCode: AdvertisedDiscount | null;
+}) {
   return (
     <section className="relative border-b border-rule">
       <div className="mx-auto grid max-w-[86rem] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
@@ -66,8 +71,15 @@ export function Hero() {
           </div>
         </div>
 
-        {/* The bath */}
-        <div className="relative min-h-[26rem] overflow-hidden lg:min-h-[42rem]">
+        {/*
+          The bath.
+
+          Taller on a phone than the next step up. Below 640px the offer card spans the full width,
+          and at 26rem it covered about four fifths of the bath once a promo code added its row —
+          leaving a strip too thin to comb, which is the one thing this panel invites you to do.
+          From sm up the card sits in a corner and the shorter bath is enough.
+        */}
+        <div className="relative min-h-[31rem] overflow-hidden sm:min-h-[26rem] lg:min-h-[42rem]">
           <MarbleBath
             className="deckle-b absolute inset-0 cursor-crosshair lg:mask-none"
             seed={1873}
@@ -80,40 +92,8 @@ export function Hero() {
             Drag to comb the bath
           </p>
 
-          {/* The featured compound, lifted out of the size it was made in. */}
-          <Link
-            href={`/product/${featured.slug}`}
-            className="group absolute bottom-6 left-5 right-5 z-10 border border-rule bg-paper p-5 shadow-lift transition-colors duration-300 hover:border-pigment-indigo sm:left-auto sm:w-[23rem]"
-          >
-            <span className="flex items-end justify-between gap-4">
-              <span className="min-w-0">
-                <span className="block font-display text-lg font-semibold leading-tight tracking-[-0.02em] group-hover:text-pigment-indigo">
-                  {featured.name}
-                </span>
-                <span className="mt-1.5 block text-xs text-ink-faint">
-                  {featured.brand}
-                  <span className="px-1.5 text-rule-strong" aria-hidden="true">
-                    /
-                  </span>
-                  <span className="tabular">{concentration}</span>
-                </span>
-              </span>
-              <ArrowRight
-                className="mb-1 h-5 w-5 shrink-0 text-ink-faint transition-colors duration-300 group-hover:text-pigment-indigo"
-                strokeWidth={1.5}
-              />
-            </span>
-
-            {/* The assay, on the sheet where it belongs. */}
-            <span className="mt-4 flex items-center justify-between gap-3 border-t border-rule pt-3">
-              <span className="text-sm font-semibold tabular">
-                {formatPrice(featured.price)}
-              </span>
-              <span className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
-                Third-party assayed
-              </span>
-            </span>
-          </Link>
+          {/* The promotion slot, lifted out of the bath it was floated in. */}
+          <HeroOffer offers={offers} fallback={fallback} promoCode={promoCode} />
         </div>
       </div>
     </section>

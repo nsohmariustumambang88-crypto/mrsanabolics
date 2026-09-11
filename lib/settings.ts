@@ -128,6 +128,14 @@ export const SETTINGS: SettingDef[] = [
     group: 'commerce',
   },
   {
+    key: 'hero_promo_code',
+    label: 'Promote a discount code',
+    type: 'text',
+    default: '',
+    help: 'Named here, a code appears on the offer card at the top of the home page. It is shown only while it is active, inside its dates and not used up, with any minimum spend or category stated — a code that would be refused at checkout is never advertised. Leave blank to promote deals alone.',
+    group: 'commerce',
+  },
+  {
     key: 'reviews_open',
     label: 'Accept new reviews',
     type: 'boolean',

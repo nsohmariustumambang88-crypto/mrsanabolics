@@ -2,6 +2,8 @@ import 'server-only';
 
 import type { Discount } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { formatPrice } from '@/lib/format';
+import type { AdvertisedDiscount } from '@/lib/types';
 
 /*
   Discount codes: the one place a code is turned into money off.
@@ -201,6 +203,77 @@ export async function expireDiscountsPastEnd(): Promise<number> {
     data: { status: 'EXPIRED' },
   });
   return result.count;
+}
+
+/* -------------------------------------------------------------- advertising */
+
+/**
+ * Whether ONE named code may be advertised on the storefront, and what to say about it.
+ *
+ * It takes a code rather than choosing one, and that is the whole safety of it. "Show whichever
+ * codes are active" would publish codes that were handed out privately — a goodwill code for one
+ * customer, a code for a single partner — on the busiest page of the site, where aggregator
+ * scrapers find them within hours. The only code that reaches the storefront is the one an
+ * administrator typed into the `hero_promo_code` setting.
+ *
+ * It then applies the same rules the checkout applies, minus the basket: paused, not yet started,
+ * past its end, or used up, and it is not advertised. The clock is checked directly, as in
+ * `evaluateDiscount`, so an expired code stops being advertised whether or not the sweep has run.
+ * Promoting a code the checkout then refuses is worse than promoting nothing — it spends the
+ * shopper's trust on the one line they will actually try.
+ *
+ * Returns null for any of those, and never throws: a failed read costs the promotion, never the
+ * home page.
+ */
+export async function advertisedDiscount(raw: string): Promise<AdvertisedDiscount | null> {
+  const code = normaliseCode(raw ?? '');
+  if (!code) return null;
+
+  try {
+    const discount = await prisma.discount.findFirst({
+      where: { code: { equals: code, mode: 'insensitive' } },
+    });
+    if (!discount || discount.status !== 'ACTIVE') return null;
+
+    const now = Date.now();
+    if (discount.endsAt && discount.endsAt.getTime() <= now) return null;
+    if (discount.startsAt && discount.startsAt.getTime() > now) return null;
+    if (discount.usageLimit !== null && discount.usageCount >= discount.usageLimit) return null;
+
+    const value = Number(discount.value);
+    const headline =
+      discount.type === 'PERCENTAGE'
+        ? `${value}% off`
+        : discount.type === 'FIXED'
+          ? `${formatPrice(value)} off`
+          : 'Free delivery';
+
+    /*
+      Every condition that would make the checkout refuse the code is SAID, because a shopper who
+      reads "10% off" and is then told their basket is too small has been misled by the headline.
+      A category-scoped code names its category for the same reason.
+    */
+    const conditions: string[] = [];
+    if (discount.categoryId) {
+      const category = await prisma.category.findUnique({
+        where: { id: discount.categoryId },
+        select: { name: true },
+      });
+      if (category) conditions.push(`on ${category.name}`);
+    }
+    if (discount.minSubtotal !== null) {
+      conditions.push(`on orders over ${formatPrice(Number(discount.minSubtotal))}`);
+    }
+
+    return {
+      code: discount.code,
+      headline,
+      condition: conditions.join(' '),
+      endsAt: discount.endsAt ? discount.endsAt.toISOString() : null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 /* ---------------------------------------------------------------- messaging */

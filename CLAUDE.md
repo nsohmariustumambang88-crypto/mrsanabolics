@@ -203,7 +203,7 @@ Four token distinctions exist because collapsing them visibly broke the build du
 
 [components/ebru/marble-bath.tsx](components/ebru/marble-bath.tsx) renders it. **Index 0 of `pigments` is the coat, not an ink.** `density` (0–1) trades fidelity for time — the hero runs 1, decorative fields run 0.45–0.7. Composition is lazy via IntersectionObserver, so a dozen baths don't block the main thread. Pass a stable `pigments` array reference; inline arrays re-run the effect every render.
 
-**Catalogue imagery is authored, not photographed.** [components/product/product-plate.tsx](components/product/product-plate.tsx) draws each product as its shipping vessel on a floated ground in the category pigment, deterministic per slug. There is no product photography in this build, and the footer disclosure says so — if you reintroduce photos, update that text. Journal editorial photography is real stock printed through the `.duotone` SVG press filters defined in `app/layout.tsx`.
+**Catalogue imagery is the store's own photography, with an authored fallback.** Every product in the catalogue carries a photograph from the store's files (see "The catalogue is the photo library"). [components/product/product-plate.tsx](components/product/product-plate.tsx) still draws a product as its shipping vessel on a floated ground in the category pigment, deterministic per slug — but only for a product with no photograph, and the gallery caption says which one the visitor is looking at. The footer disclosure was updated to match. Journal editorial photography is real stock printed through the `.duotone` SVG press filters defined in `app/layout.tsx`.
 
 **Hairline grids.** Sections use `grid gap-px bg-rule`, where the rules are the container colour showing through the gap. A short final row therefore leaves a bare rule-coloured box — always close it with `<GridFillers>` ([components/layout/grid-fillers.tsx](components/layout/grid-fillers.tsx)) or use `<ProductGrid>`, which does it for you.
 
@@ -346,6 +346,60 @@ of them, with "Everything on offer" beside it, is the honest pairing.
 across its category — products are ordered by group, so the first four in "Injectables" are four
 vials of one compound and photograph as one product repeated. Photographs sit *above* the copy,
 never behind it: text over a picture is the easiest way to lose a paragraph.
+
+## The hero's offer card is the promotion slot
+
+The card floating on the hero bath used to show `products[0]` — whichever product sorted first,
+for no stated reason — and would have thrown on an empty catalogue, taking the home page down.
+[components/home/hero-offer.tsx](components/home/hero-offer.tsx) now carries promotions, and both
+of its inputs are things an administrator controls rather than things this file decides:
+
+- **Deals.** Products flagged `isDeal` whose compare-at price is above the price, ordered by the
+  share of the price saved, capped at six, chosen in `app/(storefront)/page.tsx`. A product
+  flagged "on offer" with no real markdown is left out: an "On offer" badge over a price that
+  never changed is a claim with nothing under it. With no deals at all, the card shows a real
+  product with no offer framing.
+- **A code**, from the `hero_promo_code` setting (Settings → Commerce). `advertisedDiscount()` in
+  [lib/discounts/index.ts](lib/discounts/index.ts) takes a *named* code and never chooses one:
+  "show whichever codes are active" would publish codes handed out privately to one customer on
+  the busiest page of the site. It applies the checkout's own rules minus the basket, so a
+  paused, not-yet-started, expired or used-up code is not advertised — and it states every
+  condition the till will enforce (minimum spend, category) beside the headline.
+
+**Stepped by the visitor, never on a timer.** This build has no motion, and content that advances
+on its own also fails WCAG 2.2.2 — the price is pulled away from someone reading it. The counter is
+a polite live region. The card is not one big link: it holds buttons, and a button inside an `<a>`
+is invalid HTML that also navigates on every press.
+
+"Third-party assayed" is gone from it — the catalogue holds no assay for these products. The home
+page also passes `ProductSummary`, not `Product`, into its client components now; the full records
+put long copy, FAQs and reviews for 81 products into the payload, and the HTML fell from 1.28 MB
+to 928 KB when they came out.
+
+**The reference prices are placeholders.** The seed set each group's third listing to a
+compare-at price 15% above its price, so the "was" figures this card promotes were never charged.
+Before any real sale, a strikethrough has to be a price that was actually charged — under EU
+Omnibus rules the lowest in the preceding 30 days — or the offer is a misleading one.
+
+```bash
+BASE=http://localhost:3210 node --env-file=.env .impeccable/hero-offer-e2e.mjs
+```
+
+It names a probe code, confirms it is advertised with its minimum spend, then pauses it and uses it
+up and confirms it disappears each time — polling, because the page and the settings are both
+cached for 60 seconds. Two things it learned the hard way:
+
+- **A disappearance check that runs after the appearance failed passes for free.** An early run
+  reported "a paused code stops being advertised" as a PASS when the code had never appeared. The
+  dependent checks are now skipped and counted as failures if the first one fails.
+- **Cleanup that swallows its errors plants test data in production.** The database dropped out
+  mid-run, the probe's delete failed inside `.catch(() => {})`, and every later run read the leftover
+  as "the setting somebody had before" and restored it. Cleanup now retries, reports failure loudly,
+  refuses to restore a value it wrote itself, and sweeps earlier probes by their own marker.
+
+It also distinguishes a broken rule from a server that cannot regenerate the page: a page that
+answers `x-nextjs-cache: STALE` throughout is a server that cannot reach the database, and the suite
+says INCONCLUSIVE rather than blaming the card.
 
 ## Measuring a page, and the traps under it
 

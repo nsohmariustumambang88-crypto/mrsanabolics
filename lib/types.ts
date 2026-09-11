@@ -128,3 +128,21 @@ export type CartItem = {
   quantity: number;
   brand: string;
 };
+
+/**
+ * The public face of a discount code an administrator has chosen to advertise.
+ *
+ * Declared here rather than in lib/discounts so the storefront's client components can take it
+ * as a prop without reaching into a `server-only` module. It carries only what a shopper may
+ * see: never the usage count, the limit, or anything that says how close a code is to running
+ * out — that would be a figure to game.
+ */
+export type AdvertisedDiscount = {
+  code: string;
+  /** "10% off", "$15 off", "Free delivery". */
+  headline: string;
+  /** "on orders over $100", "on Injectables", or empty when the code has no condition. */
+  condition: string;
+  /** ISO timestamp, or null when the code has no end date. */
+  endsAt: string | null;
+};

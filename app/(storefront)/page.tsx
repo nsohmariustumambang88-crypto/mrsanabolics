@@ -11,7 +11,9 @@ import { WhyChoose } from '@/components/home/why-choose';
 import { BlogTeaser } from '@/components/home/blog-teaser';
 import { Newsletter } from '@/components/home/newsletter';
 import { InstagramGallery } from '@/components/home/instagram-gallery';
-import { getProducts, getBlogPosts, getTestimonials } from '@/lib/db/catalogue';
+import { getProducts, getBlogPosts, getTestimonials, toSummary } from '@/lib/db/catalogue';
+import { advertisedDiscount } from '@/lib/discounts';
+import { getSettingsSafe } from '@/lib/settings';
 import { SITE } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -47,6 +49,32 @@ export default async function Home() {
   const bestSellers = products.filter((p) => p.isBestSeller);
   const deals = products.filter((p) => p.isDeal);
 
+  /*
+    The hero's offer card.
+
+    Only deals with a REAL markdown — a compare-at price above the price — because an "On offer"
+    badge over a product that costs what it always did is a claim with nothing under it. Ordered
+    by the share of the price saved, so the strongest offer leads; `sort` is stable, so ties keep
+    catalogue order and the server and the browser agree on which one is first.
+  */
+  const savingShare = (p: (typeof products)[number]) =>
+    p.compareAtPrice ? (p.compareAtPrice - p.price) / p.compareAtPrice : 0;
+  const offers = deals
+    .filter((p) => p.compareAtPrice !== undefined && p.compareAtPrice > p.price)
+    .sort((a, b) => savingShare(b) - savingShare(a))
+    .slice(0, 6)
+    .map(toSummary);
+
+  /* Nothing on offer: the card still shows a real product, framed as nothing more than that. */
+  const fallbackSource = bestSellers[0] ?? products[0];
+  const fallback = fallbackSource ? toSummary(fallbackSource) : null;
+
+  /* A code, only if an administrator named one and the checkout would accept it right now. */
+  const settings = await getSettingsSafe();
+  const promoCode = settings.hero_promo_code
+    ? await advertisedDiscount(settings.hero_promo_code)
+    : null;
+
   /* Server-rendered so a crawler sees the catalogue on first request, not after hydration. */
   const itemList = {
     '@context': 'https://schema.org',
@@ -67,19 +95,25 @@ export default async function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }}
       />
 
-      <Hero />
+      <Hero offers={offers} fallback={fallback} promoCode={promoCode} />
       <FeaturedCollections />
       <AssuranceRegister />
 
+      {/*
+        Summaries, not records, into client components. Passing the full Product put long copy,
+        FAQs and reviews for every best seller and every deal into this page's RSC payload — dozens
+        of records nobody on the home page reads. Best sellers are also cut to what is shown; the
+        deals list stays whole because its heading states the true total.
+      */}
       <ProductsSection
         title="Best sellers"
         description="The compounds that move fastest, with the specification and batch record attached to each one."
         href="/shop?filter=best-sellers"
-        products={bestSellers}
+        products={bestSellers.slice(0, 8).map(toSummary)}
       />
 
       <FeaturedCategories />
-      <WeeklyDeals products={deals} />
+      <WeeklyDeals products={deals.map(toSummary)} />
       <WhyChoose />
       <PopularBrands />
       <InstagramGallery />
