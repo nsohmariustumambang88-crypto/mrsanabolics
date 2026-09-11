@@ -69,19 +69,33 @@ const resetters: Array<() => void> = [];
   - A build has nobody behind it, and giving up costs the entire build. The four-attempt budget
     was not enough in practice: the database has been measured taking 16 and once 49 seconds to
     answer, and three builds in a row died with dozens of "Can't reach database server" errors
-    on pages that had nothing to do with what had changed. At build time a read now backs off for
-    about 55 seconds across seven attempts. Each attempt's own connect timeout comes on top, and
-    the total stays well inside `staticPageGenerationTimeout` (180s), past which Next restarts
-    the page and eventually fails it anyway.
+    on pages that had nothing to do with what had changed.
+
+  THE BUILD BUDGET IS A DEADLINE, NOT A COUNT, and that is learned rather than chosen.
+
+  The first fix was seven attempts with about 55 seconds of backoff. It made things worse. On
+  this connection a failed connect takes around fifteen seconds before Prisma gives up, so seven
+  attempts could run to 160 seconds on a single read. Pages render in one worker, and Next kills
+  that worker when nothing completes for `staticPageGenerationTimeout` (180s) — so every page in
+  its queue was restarted, twice, until one failed for good after three attempts. How long an
+  attempt takes depends on the network, so counting attempts bounds nothing.
+
+  So a build keeps retrying only while there is time left before BUILD_DEADLINE_MS. The last
+  attempt can still take its own connect time on top, which keeps the worst case near two minutes,
+  inside the 180-second limit with room for the page to render.
+
+  A live request keeps exactly the behaviour it had: four attempts, about ten seconds of backoff.
 
   Next sets NEXT_PHASE before it spawns the workers that render pages, so they inherit it. It is
   read at call time rather than captured at module load, so nothing depends on import order.
 */
 const LIVE_BACKOFF_MS = [1_000, 3_000, 6_000];
-const BUILD_BACKOFF_MS = [1_000, 3_000, 6_000, 10_000, 15_000, 20_000];
+const BUILD_BACKOFF_MS = [1_000, 3_000, 6_000, 10_000, 15_000];
+/* Stop starting new attempts once this much time has passed. See the note above. */
+const BUILD_DEADLINE_MS = 100_000;
 
-function wakeBackoff(): number[] {
-  return process.env.NEXT_PHASE === 'phase-production-build' ? BUILD_BACKOFF_MS : LIVE_BACKOFF_MS;
+function isBuilding(): boolean {
+  return process.env.NEXT_PHASE === 'phase-production-build';
 }
 
 function isColdStart(error: unknown): boolean {
@@ -99,21 +113,28 @@ function isColdStart(error: unknown): boolean {
 }
 
 async function withWakeRetry<T>(read: () => Promise<T>): Promise<T> {
-  const backoff = wakeBackoff();
-  const attempts = backoff.length + 1;
-  let lastError: unknown;
+  const building = isBuilding();
+  const started = Date.now();
 
-  for (let attempt = 0; attempt < attempts; attempt++) {
+  for (let attempt = 0; ; attempt++) {
     try {
       return await read();
     } catch (error) {
-      lastError = error;
-      if (!isColdStart(error) || attempt === attempts - 1) throw error;
-      await new Promise((resolve) => setTimeout(resolve, backoff[attempt]));
+      if (!isColdStart(error)) throw error;
+
+      let pause: number;
+      if (building) {
+        pause = BUILD_BACKOFF_MS[Math.min(attempt, BUILD_BACKOFF_MS.length - 1)];
+        /* No time for another attempt before the deadline: give up now, not later. */
+        if (Date.now() - started + pause >= BUILD_DEADLINE_MS) throw error;
+      } else {
+        if (attempt >= LIVE_BACKOFF_MS.length) throw error;
+        pause = LIVE_BACKOFF_MS[attempt];
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, pause));
     }
   }
-
-  throw lastError;
 }
 
 function cached<T>(read: () => Promise<T>): () => Promise<T> {

@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { MarbleBath } from '@/components/ebru/marble-bath';
 import { HeroOffer } from '@/components/home/hero-offer';
 import type { AdvertisedDiscount, ProductSummary } from '@/lib/types';
 
@@ -10,14 +9,14 @@ import type { AdvertisedDiscount, ProductSummary } from '@/lib/types';
   The first viewport is the thesis, not a header.
 
   The claim and the actions sit on the paper on the left. The right-hand column is the site's
-  promotion: a sheet laid over a marbled bath, showing what is on offer at the size a pack shot
-  needs to sell. See hero-offer.tsx. What it carries is chosen on the server from what the admin
-  has marked as on offer, so this component never reaches into the catalogue for a product of
-  its own choosing.
+  promotion, showing what is on offer at the size a pack shot needs to sell. See hero-offer.tsx.
+  What it carries is chosen on the server from what the admin has marked as on offer, so this
+  component never reaches into the catalogue for a product of its own choosing.
 
-  The bath used to be the column's content — a live marbling the visitor could comb, with the
-  offer as a small card in its corner. It now shows only as a band of pigment round the sheet,
-  which keeps the column recognisably this site rather than a banner slot.
+  The column used to be a live marbling bath the visitor could comb, with the offer as a small
+  card in its corner. At the owner's direction the marbling is gone from the hero entirely; the
+  category pigment survives as the hairline rule along the top of the offer, as it does on every
+  product card.
 */
 
 export function Hero({
@@ -69,29 +68,19 @@ export function Hero({
         </div>
 
         {/*
-          The promotion, laid over the bath.
+          The promotion, on the plain paper.
 
-          This column used to BE the bath — a live marbling the visitor could comb, with a small
-          offer card floating in its corner. At the owner's direction the offer now fills it, and
-          the bath survives only as the narrow band of pigment round the sheet's edge. It is no
-          longer interactive: there is almost nothing left to comb, and a crosshair cursor over a
-          product photograph promises a gesture that does nothing useful.
+          This column used to BE the marbling bath — combable, with a small offer card in its
+          corner — and then a band of that pigment framing the offer. At the owner's direction
+          both are gone: the offer is the whole column. Dropping the bath also drops the most
+          expensive thing the home page had to draw.
 
-          It is composed at lower density for the same reason — nearly all of it is covered, and
-          the full-fidelity sheet was the most expensive thing on the page to draw.
-
-          The column is a flex container from lg so the panel can take the full 42rem height and
-          the photograph can grow into what the text leaves. Below lg the panel sizes to its
-          content, with a floor so an empty catalogue still leaves a visible sheet.
+          A top rule below lg, where the column stacks under the headline and needs something to
+          divide it; from lg the headline column's own right-hand rule does that job. The column
+          is a flex container from lg so the panel can take the full 42rem height and the
+          photograph can grow into whatever the text leaves.
         */}
-        <div className="relative flex min-h-[16rem] flex-col overflow-hidden p-3 sm:p-4 lg:min-h-[42rem] lg:p-6">
-          <MarbleBath
-            className="absolute inset-0 h-full w-full"
-            seed={1873}
-            density={0.6}
-            animate={false}
-          />
-
+        <div className="relative flex flex-col border-t border-rule lg:min-h-[42rem] lg:border-t-0">
           <div className="relative flex flex-col lg:flex-1">
             <HeroOffer offers={offers} fallback={fallback} promoCode={promoCode} />
           </div>

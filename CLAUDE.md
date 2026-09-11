@@ -201,7 +201,7 @@ Four token distinctions exist because collapsing them visibly broke the build du
 
 **Marbling engine.** [components/ebru/marbling.ts](components/ebru/marbling.ts) is a real area-preserving displacement model (drop + tine), not a texture — Float32Array points, per-blot bounding boxes, and a displacement cutoff make the density affordable. Drop radius is **solved from a coverage target** (`N·πr² = 3·area`), never keyed to canvas size: keying it to `unit` made small canvases render nearly bare. `composeSheet` lays the ground coat, throws battal contacts, combs both axes, then places one `swirl()` (bülbül yuvası) at a fixed position rather than a rolled one.
 
-[components/ebru/marble-bath.tsx](components/ebru/marble-bath.tsx) renders it. **Index 0 of `pigments` is the coat, not an ink.** `density` (0–1) trades fidelity for time — decorative fields run 0.45–0.7. The hero bath used to run at 1 and be `interactive` (drag to comb); it is now almost entirely covered by the offer panel, so it runs at 0.6 and takes no input. Composition is lazy via IntersectionObserver, so a dozen baths don't block the main thread. Pass a stable `pigments` array reference; inline arrays re-run the effect every render.
+[components/ebru/marble-bath.tsx](components/ebru/marble-bath.tsx) renders it. **Index 0 of `pigments` is the coat, not an ink.** `density` (0–1) trades fidelity for time — decorative fields run 0.45–0.7. The hero used to open on a bath at density 1 that the visitor could comb (`interactive`); at the owner's direction the hero no longer has a bath at all — see "The hero's right-hand column is the promotion". `interactive` is now used by nothing, and the home page's first marbling is further down. Composition is lazy via IntersectionObserver, so a dozen baths don't block the main thread. Pass a stable `pigments` array reference; inline arrays re-run the effect every render.
 
 **Catalogue imagery is the store's own photography, with an authored fallback.** Every product in the catalogue carries a photograph from the store's files (see "The catalogue is the photo library"). [components/product/product-plate.tsx](components/product/product-plate.tsx) still draws a product as its shipping vessel on a floated ground in the category pigment, deterministic per slug — but only for a product with no photograph, and the gallery caption says which one the visitor is looking at. The footer disclosure was updated to match. Journal editorial photography is real stock printed through the `.duotone` SVG press filters defined in `app/layout.tsx`.
 
@@ -354,9 +354,12 @@ corner showing `products[0]` — whichever product sorted first, for no stated r
 an empty catalogue. At the owner's direction the column is now the offer itself:
 [components/home/hero-offer.tsx](components/home/hero-offer.tsx) is a full-height panel with the
 product photograph at a size that sells it, the price and the saving, stock, **Add to cart**, and a
-link through. The bath shows only as a narrow band of pigment round the panel, so the column still
-reads as this site rather than a banner slot; it is no longer interactive and runs at density 0.6.
-The "drag to comb" chip is gone.
+link through. It sits flush on the plain paper: the owner had the marbling removed from the hero
+entirely, first the combable bath and then the band of it left framing the panel. With nothing
+behind it the panel carries no border or shadow — the hero's own rules divide it from the headline
+(a top rule below `lg`, the headline column's right rule from `lg`) — and its side padding matches
+the headline column's gutters (`px-4 sm:px-6 lg:px-10`) so both halves sit on one grid. The
+category pigment survives as the hairline along the top of the offer, as on every product card.
 
 The photograph is `mix-blend-multiply` in the light theme. The pack shots are photographed on
 white, and at hero size the white read as a rectangle pasted inside the warmer paper box; multiply
@@ -880,13 +883,17 @@ inside `runAction(() => ...)`. Note that a wrapped call must read its FormData *
   again, so one cold start took down all 882 pages with `PrismaClientInitializationError`.
   `withWakeRetry` in [lib/db/catalogue.ts](lib/db/catalogue.ts) retries a CONNECTION failure
   with backoff, and rethrows anything else immediately — retrying a constraint violation only
-  fails slower. **How patient it is depends on the phase.** A live request gets about ten seconds
-  of backoff (four attempts), because a visitor is waiting. A build gets about 55 seconds across
-  seven, keyed on `NEXT_PHASE === 'phase-production-build'`, which Next sets before it spawns the
-  page workers. The shorter budget killed three builds running with dozens of "Can't reach
-  database server" errors on pages unrelated to the change being built; the longer one still fits
-  inside `staticPageGenerationTimeout` (180s). Raising the build budget further means raising that
-  timeout with it, or Next restarts the page mid-retry. If you add another prerendered read that talks to Postgres
+  fails slower. **How patient it is depends on the phase.** A live request gets four attempts and
+  about ten seconds of backoff, because a visitor is waiting. A build keeps retrying until a
+  100-second **deadline**, keyed on `NEXT_PHASE === 'phase-production-build'`, which Next sets
+  before it spawns the page workers.
+
+  It is a deadline because a count was tried first and made builds worse. On this connection a
+  failed connect takes about fifteen seconds, so "seven attempts" could run to 160 seconds on one
+  read. Pages render in a single worker (`cpus: 1`), and Next kills that worker when nothing
+  completes for `staticPageGenerationTimeout` (180s) — so every page in its queue restarted twice
+  and the build died on the third. How long one attempt takes depends on the network; only elapsed
+  time bounds anything. Keep the deadline well under the page timeout, or raise both together. If you add another prerendered read that talks to Postgres
   directly, give it the same treatment or a `.catch` fallback, as `/checkout` has.
 
 - **Do not run `next build` while `next dev` is running.** They share `.next`, and the dev

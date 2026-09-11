@@ -22,10 +22,12 @@ import type { AdvertisedDiscount, ProductSummary } from '@/lib/types';
 /*
   The hero's promotion panel.
 
-  It fills the right-hand column of the hero. It used to be a small card floating in the corner of
-  a live marbling bath, and the bath — "drag to comb" — was the column's content. At the owner's
-  direction the offer is now the content: a sheet laid over the bath, with only a narrow band of
-  pigment left showing round its edge so it still reads as this site rather than a stock banner.
+  It fills the right-hand column of the hero, flush, on the plain paper. It used to be a small card
+  floating in the corner of a live marbling bath; then, briefly, a sheet laid over that bath with a
+  band of pigment showing round its edge. At the owner's direction the pigment is gone too — the
+  offer is the whole column. With no bath behind it there is nothing for a border or a shadow to
+  lift it off, so it carries neither: the hero's own rules divide it from the headline, and its
+  side padding matches the headline column's gutters so the two halves share one grid.
 
   Two inputs, both controlled from the admin rather than decided here:
 
@@ -113,7 +115,13 @@ export function HeroOffer({
       aria-roledescription="carousel"
       aria-label={onOffer ? 'Current offers' : 'Featured product'}
       onKeyDown={onKeyDown}
-      className="relative flex flex-col border border-rule bg-paper shadow-lift lg:flex-1"
+      /*
+        No background of its own. It sits on the same paper as the headline beside it; an opaque
+        `bg-paper` here covered the page's paper texture and measured a few steps off the headline
+        column in both themes (244,241,235 against 241,238,232 in light), which read as a
+        separate, faintly tinted block rather than one sheet.
+      */
+      className="relative flex flex-col lg:flex-1"
     >
       {product && (
         <>
@@ -124,7 +132,7 @@ export function HeroOffer({
             aria-hidden="true"
           />
 
-          <div className="flex items-center justify-between gap-3 px-5 pt-5 sm:px-7 sm:pt-6">
+          <div className="flex items-center justify-between gap-3 px-4 pt-6 sm:px-6 lg:px-10 lg:pt-10">
             {onOffer ? (
               <span className="bg-pigment-madder px-2.5 py-1 font-mono text-2xs uppercase tracking-[0.12em] text-primary-foreground tabular">
                 {percent > 0 ? `−${percent}% · On offer` : 'On offer'}
@@ -189,7 +197,7 @@ export function HeroOffer({
                 between two dark bars. A white plate is how the product cards already show pack
                 shots in the dark theme; this matches them.
               */
-              className="relative mx-5 mt-5 block aspect-[5/4] min-h-[12rem] overflow-hidden border border-rule bg-card dark:bg-white sm:mx-7 lg:aspect-auto lg:flex-1"
+              className="relative mx-4 mt-5 block aspect-[5/4] min-h-[12rem] overflow-hidden border border-rule bg-card dark:bg-white sm:mx-6 lg:mx-10 lg:aspect-auto lg:flex-1"
               tabIndex={-1}
               aria-hidden="true"
             >
@@ -214,7 +222,7 @@ export function HeroOffer({
               />
             </Link>
 
-            <div className="px-5 pb-5 pt-5 sm:px-7 sm:pb-7">
+            <div className="px-4 pb-8 pt-5 sm:px-6 lg:px-10 lg:pb-10">
               <p className="text-xs text-ink-faint">
                 {product.brand}
                 {strength && (
@@ -325,7 +333,7 @@ export function HeroOffer({
       {promoCode && (
         <div
           className={cn(
-            'flex flex-wrap items-center justify-between gap-3 bg-paper-sunk px-5 py-4 sm:px-7',
+            'flex flex-wrap items-center justify-between gap-3 bg-paper-sunk px-4 py-4 sm:px-6 lg:px-10',
             product && 'border-t border-rule'
           )}
         >
