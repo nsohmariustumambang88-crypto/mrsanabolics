@@ -6,13 +6,13 @@
   Input: brand/bull.(png|jpg|jpeg|webp) — the illustration as supplied, red on white. (The file
          the owner supplied is a JPEG named .png; sharp reads it by its content, not its name.)
   Output:
-    public/brand/bull.webp  the bull on transparency, 256px, used by <BullEmblem>
-    app/icon.png            the favicon: the full coin, which Next links automatically
-    app/apple-icon.png      the iOS home-screen icon, same coin at 180px
+    public/brand/bull.webp  the bull on transparency, 320px wide, used by <BullMark>
+    app/icon.png            the favicon: the bull alone on transparency, which Next links itself
+    app/apple-icon.png      the iOS home-screen icon: the bull on white, 180px
 
-  THE BULL KEEPS ITS OWN COLOURS. The owner asked for the red to stay; only the coin and its ring
-  are gold. This script therefore changes no colour in the drawing — it only removes the white it
-  was drawn on, so the bull sits on the black coin instead of inside a white square.
+  THE LOGO IS THE BULL AND NOTHING ELSE. The owner asked for the bull alone, in its own colours,
+  with no coin, ring or frame around it. This script therefore changes no colour in the drawing:
+  it only removes the white it was drawn on, so the bull stands on whatever is behind it.
 
   WHY FLOOD-FILL THE BACKGROUND. Knocking out every near-white pixel would also punch holes in the
   bull wherever the drawing itself is white — the eyes, highlights on the horns. Only near-white
@@ -20,7 +20,7 @@
 
   WHY UN-MIX THE EDGE RATHER THAN FADE IT. A pixel on the boundary is a blend of the drawing and
   the white behind it: a black outline against white is grey, red against white is pink. Keeping
-  those colours and just lowering their opacity leaves a pale halo, which on a black coin is the
+  those colours and just lowering their opacity leaves a pale halo, which on the dark theme is the
   first thing you see. So each edge pixel's opacity is estimated from how much white it holds, and
   that white is then subtracted back out — grey resolves to translucent black, pink to translucent
   red — which is the colour the drawing actually had at that point.
@@ -34,9 +34,6 @@ import sharp from 'sharp';
 
 const SOURCE_DIR = 'brand';
 const OUT_BULL = 'public/brand/bull.webp';
-
-/* The same metal the vector ring uses in components/brand/bull-emblem.tsx. */
-const COIN_GOLD = ['#fbe7a1', '#e2bd62', '#a8762a', '#d9ad52', '#8c5f1c'];
 
 /*
   The darkest a channel gets in the drawing's own inks (black line work, deep red). Used to turn
@@ -155,25 +152,16 @@ async function cutOutBull(source) {
     .toBuffer();
 }
 
-/** The coin as a raster, for the favicon and the home-screen icon. No drip: icons must be simple. */
-async function coin(bull, size) {
-  const stops = COIN_GOLD.map(
-    (c, i) => `<stop offset="${Math.round((i / (COIN_GOLD.length - 1)) * 100)}%" stop-color="${c}"/>`
-  ).join('');
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 120 120">
-    <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="120" gradientUnits="userSpaceOnUse">${stops}</linearGradient></defs>
-    <circle cx="60" cy="60" r="59" fill="url(#g)"/>
-    <circle cx="60" cy="60" r="54.5" fill="#0c0a07"/>
-    <circle cx="60" cy="60" r="51.5" fill="none" stroke="url(#g)" stroke-width="1"/>
-  </svg>`;
-
-  const bullSize = Math.round(size * 0.66);
-  const bullPng = await sharp(bull)
-    .resize(bullSize, bullSize, { fit: 'inside' })
-    .toBuffer();
-
-  return sharp(Buffer.from(svg))
-    .composite([{ input: bullPng, gravity: 'centre' }])
+/**
+ * The bull centred on a square canvas, for the icons. `background` is transparent for the
+ * favicon, which a browser draws on its own tab colour. The home-screen icon gets white, because
+ * iOS paints a transparent apple-touch-icon onto black, and the bull's black outline vanishes.
+ */
+async function squareIcon(bull, size, background, fill) {
+  const inner = Math.round(size * fill);
+  const scaled = await sharp(bull).resize(inner, inner, { fit: 'inside' }).toBuffer();
+  return sharp({ create: { width: size, height: size, channels: 4, background } })
+    .composite([{ input: scaled, gravity: 'centre' }])
     .png({ compressionLevel: 9 })
     .toBuffer();
 }
@@ -191,24 +179,25 @@ async function main() {
   const bull = await cutOutBull(source);
 
   /*
-    The served file is small on purpose. The emblem is in the header of every page and never
-    shows the bull wider than about 64px; a 512px PNG of it was 396 KB, which is a large price for
-    every visitor to pay for a logo. 256px covers a 3x screen at that size, and WebP keeps the
-    transparency at a fraction of the weight. The 512px cut-out stays in memory for the icons,
-    which are rendered from it at their own sizes.
+    The served file is small on purpose: it is in the header of every page. The header never
+    shows the bull wider than about 132px, so 320px covers a 2x screen there and a 3x phone at its
+    smaller mobile size. A 512px PNG of the cut-out was 396 KB; WebP keeps the transparency at a
+    fraction of that. The 512px cut-out stays in memory for the icons.
   */
   mkdirSync('public/brand', { recursive: true });
   const served = await sharp(bull)
-    .resize(256, 256, { fit: 'inside' })
+    .resize(320, 320, { fit: 'inside' })
     .webp({ quality: 90, alphaQuality: 100, effort: 6 })
     .toBuffer();
   await sharp(served).toFile(OUT_BULL);
-  console.log(`  ${OUT_BULL}  ${(served.length / 1024).toFixed(0)} KB`);
+  const { width, height } = await sharp(served).metadata();
+  console.log(`  ${OUT_BULL}  ${width}x${height}  ${(served.length / 1024).toFixed(0)} KB`);
+  console.log(`  (BULL_WIDTH / BULL_HEIGHT in components/brand/bull-mark.tsx must be ${width} / ${height})`);
 
-  await sharp(await coin(bull, 512)).toFile('app/icon.png');
+  await sharp(await squareIcon(bull, 512, { r: 0, g: 0, b: 0, alpha: 0 }, 1)).toFile('app/icon.png');
   console.log('  app/icon.png  512px');
 
-  await sharp(await coin(bull, 180)).toFile('app/apple-icon.png');
+  await sharp(await squareIcon(bull, 180, '#ffffff', 0.84)).toFile('app/apple-icon.png');
   console.log('  app/apple-icon.png  180px');
 
   console.log('Done.');

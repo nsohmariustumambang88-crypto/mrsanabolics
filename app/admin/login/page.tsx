@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { AlertCircle } from 'lucide-react';
-import { BullEmblem } from '@/components/brand/bull-emblem';
+import { BullMark } from '@/components/brand/bull-mark';
 import '../wp-admin.css';
 
 /*
@@ -48,7 +48,7 @@ export default function AdminLoginPage({
   return (
     <div className="wp-admin flex min-h-screen flex-col items-center px-3 py-12">
       <Link href="/" className="mb-6 inline-flex items-center gap-2.5 no-underline">
-        <BullEmblem className="h-10 w-10" />
+        <BullMark className="w-14" />
         <span className="text-[20px] font-semibold" style={{ color: 'var(--wp-text)' }}>
           MrAnabolics
         </span>

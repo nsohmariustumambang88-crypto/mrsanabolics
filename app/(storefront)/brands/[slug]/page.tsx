@@ -8,7 +8,7 @@ import {
   getProductsByBrand,
 } from '@/lib/db/catalogue';
 import { ProductGrid } from '@/components/product/product-grid';
-import { SITE } from '@/lib/site';
+import { SITE, UNDER_HEADER_INSET } from '@/lib/site';
 
 type Params = { params: { slug: string } };
 
@@ -78,7 +78,7 @@ export default async function BrandPage({ params }: Params) {
       />
 
       <nav aria-label="Breadcrumb" className="border-b border-rule bg-paper-sunk">
-        <ol className="mx-auto flex max-w-[86rem] items-center gap-1.5 px-4 py-3 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint sm:px-6 lg:px-10">
+        <ol className={`mx-auto flex max-w-[86rem] items-center gap-1.5 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint ${UNDER_HEADER_INSET}`}>
           <li>
             <Link href="/brands" className="transition-colors hover:text-ink">
               Manufacturers

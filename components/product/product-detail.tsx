@@ -27,7 +27,7 @@ import { ProductPlate, isPhotograph } from '@/components/product/product-plate';
 import { ReviewForm } from '@/components/product/review-form';
 import { SectionHeading } from '@/components/product/section-heading';
 import { formatPrice } from '@/lib/format';
-import { categoryPigment } from '@/lib/site';
+import { categoryPigment, UNDER_HEADER_INSET } from '@/lib/site';
 import type { Product } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -149,7 +149,7 @@ export function ProductDetail({
         aria-label="Breadcrumb"
         className="border-b border-rule bg-paper-sunk"
       >
-        <ol className="mx-auto flex max-w-[86rem] flex-wrap items-center gap-1.5 px-4 py-3 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint sm:px-6 lg:px-10">
+        <ol className={`mx-auto flex max-w-[86rem] flex-wrap items-center gap-1.5 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint ${UNDER_HEADER_INSET}`}>
           <li>
             <Link href="/shop" className="transition-colors hover:text-ink">
               Shop

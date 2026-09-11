@@ -6,31 +6,6 @@
       "components/admin/**",
       "app/admin/**"
     ],
-    "ignoreValues": [
-      {
-        "rule": "design-system-color",
-        "value": "#fbe7a1",
-        "createdAt": "2026-09-11T15:40:59.635Z",
-        "reason": "user asked for the logo in gold ('use it at the topleft ... in gold'); literal metal stops for the brand emblem asset in components/brand/bull-emblem.tsx, must not follow theme tokens"
-      },
-      {
-        "rule": "design-system-color",
-        "value": "#e2bd62",
-        "createdAt": "2026-09-11T15:40:59.870Z",
-        "reason": "user asked for the logo in gold ('use it at the topleft ... in gold'); literal metal stops for the brand emblem asset in components/brand/bull-emblem.tsx, must not follow theme tokens"
-      },
-      {
-        "rule": "design-system-color",
-        "value": "#a8762a",
-        "createdAt": "2026-09-11T15:41:00.144Z",
-        "reason": "user asked for the logo in gold ('use it at the topleft ... in gold'); literal metal stops for the brand emblem asset in components/brand/bull-emblem.tsx, must not follow theme tokens"
-      },
-      {
-        "rule": "design-system-color",
-        "value": "#d9ad52",
-        "createdAt": "2026-09-11T15:41:00.406Z",
-        "reason": "user asked for the logo in gold ('use it at the topleft ... in gold'); literal metal stops for the brand emblem asset in components/brand/bull-emblem.tsx, must not follow theme tokens"
-      }
-    ]
+    "ignoreValues": []
   }
 }

@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/accordion';
 import { useStore } from '@/components/providers/store-provider';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
-import { BullEmblem } from '@/components/brand/bull-emblem';
+import { BullMark } from '@/components/brand/bull-mark';
 import { useCategories, useBrands } from '@/components/providers/catalogue-provider';
 import { categoryPigment } from '@/lib/site';
 import { cn } from '@/lib/utils';
@@ -37,19 +37,43 @@ function Wordmark({ compact }: { compact?: boolean }) {
   return (
     <Link
       href="/"
-      className="group flex items-center gap-3 rounded-sm"
+      className="group flex items-center gap-2 rounded-sm sm:gap-3"
       aria-label="MrAnabolics — home"
     >
-      {/* The gold bull, top left, dripping — the placement and treatment the owner chose. */}
-      <BullEmblem
-        drip
-        className={cn('shrink-0', compact ? 'h-11 w-[2.4rem]' : 'h-14 w-12')}
-      />
+      {/*
+        The bull hangs out of the header. The owner's reference had the mark running past the
+        header's bottom edge, so the head and shoulders sit in the bar and the folded arms hang
+        over the page below it. The span holds the bull's place in the row at the row's height.
+        The bull is positioned inside it and is taller than it, so it runs past the header's
+        bottom edge without making the header taller.
+
+        The bull ignores the pointer. The part hanging over the page would otherwise swallow
+        clicks meant for whatever is underneath it. The span inside the link still catches
+        clicks in the bar, so the logo still goes home.
+
+        Phones get one size whether or not the page has scrolled. At 360px the row has exactly
+        room for an 80px bull, the name and the three buttons, and the bar is kept low enough
+        (py-2 in SiteHeader) that the arms still hang below it.
+      */}
+      <span
+        className={cn(
+          'relative h-11 w-20 shrink-0',
+          compact ? 'sm:w-[5.75rem]' : 'sm:h-14 sm:w-[8.25rem]'
+        )}
+      >
+        <BullMark
+          priority
+          className={cn(
+            'pointer-events-none absolute -top-1 left-0 w-full max-w-none',
+            compact ? 'sm:-top-2' : 'sm:-top-3'
+          )}
+        />
+      </span>
       <span className="flex flex-col leading-none">
         <span
           className={cn(
             'font-display font-semibold tracking-[-0.03em] transition-colors duration-300',
-            compact ? 'text-base' : 'text-lg'
+            compact ? 'text-base' : 'text-base sm:text-lg'
           )}
         >
           MrAnabolics
@@ -169,11 +193,11 @@ export function SiteHeader() {
       )}
       onMouseLeave={leave}
     >
-      <div className="mx-auto flex max-w-[86rem] items-center gap-6 px-4 sm:px-6 lg:px-10">
+      <div className="mx-auto flex max-w-[86rem] items-center gap-3 px-4 sm:gap-6 sm:px-6 lg:px-10">
         <div
           className={cn(
-            'flex items-center transition-colors duration-300',
-            condensed ? 'py-3' : 'py-5'
+            'flex items-center py-2 transition-colors duration-300',
+            condensed ? 'sm:py-3' : 'sm:py-5'
           )}
         >
           <Wordmark compact={condensed} />

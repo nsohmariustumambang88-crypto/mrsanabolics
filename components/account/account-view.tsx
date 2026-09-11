@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Package, Heart, MapPin, Settings, LayoutGrid, X } from 'lucide-react';
 import { useStore } from '@/components/providers/store-provider';
 import { ProductGrid } from '@/components/product/product-grid';
-import { BullEmblem } from '@/components/brand/bull-emblem';
+import { BullMark } from '@/components/brand/bull-mark';
 import { useProducts } from '@/components/providers/catalogue-provider';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -102,7 +102,7 @@ export function AccountView({
     <>
       <section className="border-b border-rule">
         <div className="mx-auto flex max-w-[86rem] flex-wrap items-center gap-5 px-4 py-10 sm:px-6 lg:px-10">
-          <BullEmblem className="h-14 w-14 shrink-0" />
+          <BullMark className="w-20 shrink-0" />
           <div className="min-w-0">
             <h1 className="font-display text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
               {customer.name ?? 'Your account'}
