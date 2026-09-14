@@ -369,6 +369,7 @@ model Contact {
   orders     Order[]
   visitors   Visitor[]
   messages   OutboundMessage[]
+  chats      ChatConversation[]
   /// The storefront account, where this person has opened one. See the Customer model.
   customer   Customer?
 
@@ -495,6 +496,7 @@ enum ContactActivityType {
   ACCOUNT_CREATED
   MESSAGE_RECORDED
   REVIEW_SUBMITTED
+  CHAT_STARTED
 }
 
 /// An order, as a fulfilment record.
@@ -983,4 +985,89 @@ model Customer {
   updatedAt DateTime @updatedAt
 
   @@map("customers")
+}
+
+/// A live chat with a storefront visitor.
+///
+/// A visitor is a random token in an httpOnly cookie scoped to /api/chat, and only its SHA-256
+/// is stored here. The raw token never touches the database, so a read of this table cannot be
+/// replayed as somebody's browser. One conversation per token: a visitor who comes back finds
+/// their history, and staff see one thread per person rather than a scatter of fragments.
+///
+/// Like an enquiry, a chat is correspondence and never consent. Leaving an address in the chat
+/// links a Contact so staff can answer if the visitor has gone; it cannot create a Subscriber.
+model ChatConversation {
+  id        String @id @default(cuid())
+  tokenHash String @unique
+
+  status ChatStatus @default(AGENT)
+  /// The mode the visitor last wrote in.
+  mode   ChatMode   @default(AGENT)
+
+  /// Offered by the visitor, never inferred.
+  name  String?
+  email String?
+
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  /// The page the conversation started on, without its query string.
+  path   String?
+  ipHash String?
+
+  messages ChatMessage[]
+
+  /// Visitor messages newer than this are unread. Null until a person opens the thread.
+  staffReadAt   DateTime?
+  /// When the visitor last wrote. Unread in the inbox means this is later than staffReadAt.
+  lastVisitorAt DateTime?
+  lastMessageAt DateTime  @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, lastMessageAt])
+  @@index([contactId])
+  @@map("chat_conversations")
+}
+
+/// One message in a chat. Append-only: staff cannot edit or delete what was said.
+model ChatMessage {
+  id String @id @default(cuid())
+
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  role ChatRole
+  /// For a visitor message, the mode it was sent in; for a reply, the mode it answers.
+  mode ChatMode
+  body String   @db.Text
+
+  /// The administrator who replied. Shown in the admin only; the visitor sees "Support".
+  staffEmail String?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("chat_messages")
+}
+
+enum ChatRole {
+  VISITOR
+  BOT
+  STAFF
+}
+
+enum ChatMode {
+  AGENT
+  SUPPORT
+}
+
+/// AGENT: only the automated agent has been involved. OPEN: waiting on a person.
+/// ANSWERED: a person replied and the visitor has not written since. CLOSED: finished.
+enum ChatStatus {
+  AGENT
+  OPEN
+  ANSWERED
+  CLOSED
 }

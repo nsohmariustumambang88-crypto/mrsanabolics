@@ -8,6 +8,7 @@ import {
   Home,
   Search,
   MessageSquare,
+  MessagesSquare,
   Plus,
   Gauge,
   Package,
@@ -75,6 +76,7 @@ const MENU: MenuItem[] = [
       { href: '/admin/orders/new', label: 'Record Order' },
     ],
   },
+  { href: '/admin/chat', label: 'Live Chat', icon: MessagesSquare },
   { href: '/admin/delivery', label: 'Delivery', icon: Truck },
   { href: '/admin/discounts', label: 'Discounts', icon: Tag },
   {
@@ -139,6 +141,7 @@ export function WpChrome({
   pendingReviews,
   openEnquiries,
   openOrders,
+  waitingChats,
   categories,
 }: {
   email: string;
@@ -146,6 +149,8 @@ export function WpChrome({
   pendingReviews: number;
   openEnquiries: number;
   openOrders: number;
+  /** Live chats sent to Support that nobody has answered. */
+  waitingChats: number;
   categories: { slug: string; name: string; listed: number }[];
 }) {
   const pathname = usePathname();
@@ -287,6 +292,9 @@ export function WpChrome({
                   {/* WordPress puts the count of things awaiting a person right on the menu. */}
                   {item.href === '/admin/contacts' && openEnquiries > 0 && (
                     <span className="wp-bubble ml-auto">{openEnquiries}</span>
+                  )}
+                  {item.href === '/admin/chat' && waitingChats > 0 && (
+                    <span className="wp-bubble ml-auto">{waitingChats}</span>
                   )}
                   {item.href === '/admin/orders' && openOrders > 0 && (
                     <span className="wp-bubble ml-auto">{openOrders}</span>

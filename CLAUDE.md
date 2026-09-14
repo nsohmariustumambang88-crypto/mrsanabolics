@@ -350,6 +350,28 @@ The journal (`/blog`, and the section near the foot of the home page) is six sou
 
 The announcement bar setting still reads "Certificates of analysis now published with every batch", which the build does not do and which the certificate article now teaches readers to check. It is an admin setting (Email screen), not code.
 
+## Live chat
+
+A chat button sits on every storefront page ([components/chat/chat-widget.tsx](components/chat/chat-widget.tsx), mounted in the storefront layout behind the `chat_enabled` setting). It opens **empty**: no greeting, no suggested questions. Two modes, always visible and switchable: **Agent** (indigo) answers at once; **Support** (verdigris) goes to `/admin/chat`, where a person replies. Visitor bubbles are `bg-ink`, agent `bg-paper-sunk`, staff tinted verdigris with a border; all carry a time.
+
+**A visitor is a token.** `/api/chat/visitor/message` sets `mra_chat`, a random 256-bit value, httpOnly and scoped to `/api/chat`; only its SHA-256 is stored (`ChatConversation.tokenHash`). The conversation is reachable only through that cookie — there is no id in any visitor URL. A browser that never wrote has no cookie, and its polls never touch the database.
+
+**Polling, not sockets**, because Vercel functions cannot hold one open. The open widget asks `GET /api/chat/visitor/messages?after=<last createdAt>` every 2s while the tab is visible (`gte`, deduped by id); closed, every 20s and only for a browser that has chatted. The admin inbox polls the open thread every 3s and the list every 8s, both paused when the tab is hidden. `lastVisitorAt` vs `staffReadAt` is what "unread" means.
+
+**Status is who acts next:** AGENT (only the bot so far), OPEN (waiting on a person — the menu bubble counts these), ANSWERED, CLOSED. Writing to Support always sets OPEN; writing to the agent never pulls a thread a person is handling back to AGENT. Messages are append-only. Staff replies store `staffEmail`, but the visitor's DTO never carries it — they see "Support".
+
+**The agent answers from the store, not from memory** ([lib/chat/agent.ts](lib/chat/agent.ts)): delivery zones via `zoneForCountry`/`listDeliveryZones`, the payment methods table (and says plainly none is connected), the catalogue projection, and the advertised code only. With `ANTHROPIC_API_KEY` set, Claude (`CHAT_AGENT_MODEL`, default `claude-opus-5`, effort low, server-side refusal fallbacks) writes the reply from those facts and nothing else, and any link it writes off-site is reduced to its label. Without a key, or on any API failure or refusal, a rule-based answerer replies from the same facts. **Dosing/cycle/"is it safe for me" questions never reach the model** — a fixed reply points to a doctor and the health article. "Is this legit" gets the honest demo-build answer.
+
+**Leaving an address is not consent.** `/api/chat/visitor/details` upserts a Contact (`firstSource: live chat`), records `CHAT_STARTED` once, joins the analytics visitor — and has no path to `Subscriber`. It answers the same for known and unknown addresses. All three visitor routes rate-limit per IP (in memory, per instance; Agent replies more tightly, since they can call a paid API) and carry a `website` honeypot that answers like a success.
+
+**Chat actions do not `revalidatePath`.** The inbox refreshes itself and the page is force-dynamic; revalidating made every Send re-render the whole admin layout — eight pooled reads — before answering, and the button sat on "Sending…" long after the reply was saved. `replyToChatAction` returns the saved message so the inbox shows it without another fetch.
+
+```bash
+BASE=http://localhost:3210 node --env-file=.env .impeccable/chat-e2e.mjs
+```
+
+It asserts the cookie flags, that another browser sees nothing, the fixed refusals, the honeypot, that leaving an address writes no Subscriber, and that a reply sent through the real admin reaches the visitor's poll without the admin's address. Two traps it fell into: a page-wide `getByText` for the reply matched the **draft still in the textarea** (React writes a controlled textarea's value into its text content), so look inside the thread's live region; and from a development machine a Neon round trip is ~1.9s, so a reply can take ten seconds locally that takes a fraction of one on Vercel.
+
 ## The home page is a selection, not the shop
 
 Three sections rendered their **entire** filtered set, which was invisible at twelve fixture
@@ -677,7 +699,7 @@ node --env-file=.env .impeccable/orders-e2e.mjs
 
 ## The admin, in full
 
-The menu is Dashboard, Products, Orders, Delivery, Discounts, CRM, Audience (Analytics,
+The menu is Dashboard, Products, Orders, Live Chat, Delivery, Discounts, CRM, Audience (Analytics,
 Subscribers, Messages, Campaigns), Reviews, Search, Media, Journal, Payments, Email, Settings.
 `components/admin/wp-chrome.tsx` owns it; a section whose highlight covers more routes than its
 own href needs an entry in `FAMILIES` (Products, CRM and Audience each have one). The bar bubble

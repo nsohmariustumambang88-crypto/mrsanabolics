@@ -178,6 +178,15 @@ export const SETTINGS: SettingDef[] = [
   },
 
   {
+    key: 'chat_enabled',
+    label: 'Show live chat',
+    type: 'boolean',
+    default: 'true',
+    help: 'The chat button on every storefront page. Agent mode answers from the store’s delivery, payment and stock settings; Support mode puts the visitor in the Live Chat inbox.',
+    group: 'general',
+  },
+
+  {
     key: 'analytics_enabled',
     label: 'Record visits',
     type: 'boolean',

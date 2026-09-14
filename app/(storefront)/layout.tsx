@@ -8,6 +8,7 @@ import { CartDrawer } from '@/components/cart/cart-drawer';
 import { SearchDialog } from '@/components/search/search-dialog';
 import { ExitCapture } from '@/components/marketing/exit-capture';
 import { VisitTracker } from '@/components/analytics/visit-tracker';
+import { ChatWidget } from '@/components/chat/chat-widget';
 import { getProductSummaries, getCategories, getBrands } from '@/lib/db/catalogue';
 import { getSettingsSafe, asBoolean, asNumber } from '@/lib/settings';
 
@@ -79,6 +80,12 @@ export default async function StorefrontLayout({
         <CartDrawer />
         <SearchDialog />
         <ExitCapture />
+        {/*
+          The live chat button. Storefront only, so the admin never shows a visitor's widget, and
+          switchable off under Settings (chat_enabled) without a deploy. It sends nothing until
+          somebody writes in it.
+        */}
+        {asBoolean(settings.chat_enabled) && <ChatWidget />}
         {/*
           Storefront only, and only when the analytics_enabled setting is on. It sends a path
           and a referrer host to /api/track, which sets a random first-party token: no IP is

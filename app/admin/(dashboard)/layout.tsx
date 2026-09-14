@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getCurrentAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { waitingChatCount } from '@/lib/chat';
 import { WpChrome } from '@/components/admin/wp-chrome';
 import './../wp-admin.css';
 
@@ -39,7 +40,7 @@ export default async function AdminLayout({
 
   /* The menu carries live counts, so a category with nothing in it is visibly empty rather
      than looking like a route that failed. */
-  const [categories, pendingReviews, openEnquiries, openOrders] = await Promise.all([
+  const [categories, pendingReviews, openEnquiries, openOrders, waitingChats] = await Promise.all([
     prisma.category.findMany({
       orderBy: { position: 'asc' },
       select: { slug: true, name: true, _count: { select: { products: true } } },
@@ -51,6 +52,8 @@ export default async function AdminLayout({
     prisma.enquiry.count({ where: { status: { in: ['NEW', 'OPEN'] } } }),
     /* Orders still needing somebody to act, counted the same way. */
     prisma.order.count({ where: { status: { in: ['NEW', 'CONFIRMED', 'PACKED'] } } }),
+    /* Live chats a visitor sent to Support that no person has answered yet. */
+    waitingChatCount(),
   ]);
 
   return (
@@ -60,6 +63,7 @@ export default async function AdminLayout({
         pendingReviews={pendingReviews}
         openEnquiries={openEnquiries}
         openOrders={openOrders}
+        waitingChats={waitingChats}
         categories={categories.map((c) => ({
           slug: c.slug,
           name: c.name,
