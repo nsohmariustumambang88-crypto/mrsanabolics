@@ -17,6 +17,7 @@
     "admin:create": "node --env-file=.env --import tsx prisma/create-admin.ts",
     "images:upload-library": "node --env-file=.env --import tsx prisma/upload-library.ts",
     "db:seed-catalogue": "node --env-file=.env --import tsx prisma/seed-catalogue.ts",
+    "db:seed-journal": "node --env-file=.env --import tsx prisma/seed-journal.ts",
     "db:seed-operations": "node --env-file=.env --import tsx prisma/seed-operations.ts",
     "prebuild": "node scripts/wake-db.mjs",
     "brand:build": "node scripts/make-brand.mjs"

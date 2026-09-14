@@ -1,5 +1,5 @@
 /*
-  Seed Neon with the editorial content that lives in lib/data/ — blog, testimonials, FAQs.
+  Seed Neon with the editorial content that lives in lib/data/ — testimonials and FAQs.
 
   The product copy is a fixed constraint on this project — descriptions, specifications,
   benefits, directions, ingredients and blog content must survive verbatim — so the seed reads
@@ -11,20 +11,10 @@
 */
 
 import { PrismaClient } from '@prisma/client';
-import { blogPosts } from '../lib/data/blog';
 import { testimonials } from '../lib/data/testimonials';
 import { faqs } from '../lib/data/faqs';
 
 const prisma = new PrismaClient();
-
-/** The catalogue stores dates as 'YYYY-MM-DD'; Postgres wants a real date. */
-function toDate(value: string): Date {
-  const parsed = new Date(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(parsed.getTime())) {
-    throw new Error(`Unparseable date in catalogue data: ${value}`);
-  }
-  return parsed;
-}
 
 async function main() {
   console.log('Seeding Neon from lib/data …');
@@ -40,24 +30,13 @@ async function main() {
   */
 
   // --- Blog -----------------------------------------------------------------------------
-  for (const post of blogPosts) {
-    const scalars = {
-      title: post.title,
-      excerpt: post.excerpt,
-      content: post.content,
-      category: post.category,
-      author: post.author,
-      date: toDate(post.date),
-      readTime: post.readTime,
-      image: post.image,
-    };
-    await prisma.blogPost.upsert({
-      where: { slug: post.slug },
-      create: { slug: post.slug, ...scalars },
-      update: scalars,
-    });
-  }
-  console.log(`  blog posts   ${blogPosts.length}`);
+  /*
+    The journal is no longer seeded from here. Its articles are Markdown under content/journal/
+    with metadata in lib/data/journal.ts, written by prisma/seed-journal.ts, which checks every
+    citation and figure before it writes. The original posts in lib/data/blog.ts are retired and
+    must not be re-published: this loop used to upsert them, which would have put a withdrawn
+    article back on the site behind its own redirect. Run: npm run db:seed-journal
+  */
 
   // --- Testimonials and site FAQs -------------------------------------------------------
   // These carry no natural key, so they are rewritten as a set.

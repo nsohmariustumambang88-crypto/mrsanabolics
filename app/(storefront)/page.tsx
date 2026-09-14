@@ -9,6 +9,7 @@ import { FeaturedCollections } from '@/components/home/featured-collections';
 import { Testimonials } from '@/components/home/testimonials';
 import { WhyChoose } from '@/components/home/why-choose';
 import { BlogTeaser } from '@/components/home/blog-teaser';
+import { toJournalCard } from '@/lib/journal/fields';
 import { Newsletter } from '@/components/home/newsletter';
 import { InstagramGallery } from '@/components/home/instagram-gallery';
 import { getProducts, getBlogPosts, getTestimonials, toSummary } from '@/lib/db/catalogue';
@@ -118,7 +119,7 @@ export default async function Home() {
       <PopularBrands />
       <InstagramGallery />
       <Testimonials testimonials={testimonials} />
-      <BlogTeaser posts={posts} />
+      <BlogTeaser posts={posts.slice(0, 4).map(toJournalCard)} />
       <Newsletter />
     </>
   );

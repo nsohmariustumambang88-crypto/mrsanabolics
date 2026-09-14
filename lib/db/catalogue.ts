@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { prisma } from '@/lib/prisma';
+import { readingTime, journalFaqs, journalSources } from '@/lib/journal/fields';
 import type {
   Product,
   ProductSummary,
@@ -325,7 +326,9 @@ export const getBrands = cached(
 
 export const getBlogPosts = cached(
   async (): Promise<BlogPost[]> => {
-    const rows = await prisma.blogPost.findMany({ orderBy: { date: 'desc' } });
+    const rows = await prisma.blogPost.findMany({
+      orderBy: [{ featured: 'desc' }, { date: 'desc' }, { title: 'asc' }],
+    });
     return rows.map((p) => ({
       id: p.id,
       slug: p.slug,
@@ -335,8 +338,20 @@ export const getBlogPosts = cached(
       category: p.category,
       author: p.author,
       date: isoDate(p.date),
-      readTime: p.readTime,
+      /*
+        Worked out from the body rather than read from the column. A typed "8 min" goes stale
+        the first time somebody edits the article.
+      */
+      readTime: readingTime(p.content),
       image: p.image,
+      metaTitle: p.metaTitle,
+      metaDescription: p.metaDescription,
+      imageAlt: p.imageAlt,
+      imageCredit: p.imageCredit,
+      updated: p.updated ? isoDate(p.updated) : null,
+      featured: p.featured,
+      faqs: journalFaqs(p.faqs),
+      sources: journalSources(p.sources),
     }));
   },
 );

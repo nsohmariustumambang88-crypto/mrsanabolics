@@ -1,7 +1,24 @@
+const { retired: retiredJournal } = require('./content/journal/retired.json');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
+  },
+
+  /*
+    Journal articles that were withdrawn keep their addresses alive as permanent redirects to the
+    nearest article that replaced them. A deleted page that answers 404 throws away whatever links
+    and search history it had; a permanent redirect hands them on. The list lives in
+    content/journal/retired.json, which the journal seed reads too, so the row and the redirect
+    cannot disagree.
+  */
+  async redirects() {
+    return retiredJournal.map(({ slug, to }) => ({
+      source: `/blog/${slug}`,
+      destination: to,
+      permanent: true,
+    }));
   },
   images: {
     /*

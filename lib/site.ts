@@ -3,9 +3,26 @@
   the root layout's metadataBase, robots.ts, and sitemap.ts, which is three chances to drift.
 */
 
+/*
+  The canonical host. Every canonical link, the sitemap, robots.txt and all structured data are
+  built from it, so a wrong value tells search engines that every page belongs to another
+  site. It was a placeholder (mranabolics.example.com) until the journal was written for search.
+
+  In order: NEXT_PUBLIC_SITE_URL when the owner sets it (do this once a custom domain exists);
+  otherwise the production domain Vercel exposes to every build; otherwise local development.
+  NEXT_PUBLIC_ so the value is identical in server and client code.
+*/
+function siteUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (explicit) return explicit.replace(/\/+$/, '');
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (vercel) return `https://${vercel.replace(/\/+$/, '')}`;
+  return 'http://localhost:3000';
+}
+
 export const SITE = {
   name: 'MrAnabolics',
-  url: 'https://mranabolics.example.com',
+  url: siteUrl(),
   slogan: 'Every batch, floated and documented.',
   description:
     'Lab-tested performance compounds with full specifications, batch testing, and dosing on every product. Injectables, orals, SARMs, PCT, peptides, and support compounds.',

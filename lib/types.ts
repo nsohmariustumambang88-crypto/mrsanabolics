@@ -112,6 +112,42 @@ export type BlogPost = {
   date: string;
   readTime: string;
   image: string;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  imageAlt: string;
+  imageCredit: string | null;
+  /** 'YYYY-MM-DD', or null when the article has not been revised since it was published. */
+  updated: string | null;
+  featured: boolean;
+  faqs: { question: string; answer: string }[];
+  sources: JournalSource[];
+};
+
+/**
+ * A post as a card: everything a listing shows, and not the body. Client components get this,
+ * because a long article's body in a listing's payload is shipped to every visitor for nothing.
+ */
+export type JournalCard = Pick<
+  BlogPost,
+  | 'id'
+  | 'slug'
+  | 'title'
+  | 'excerpt'
+  | 'category'
+  | 'date'
+  | 'updated'
+  | 'readTime'
+  | 'image'
+  | 'imageAlt'
+  | 'featured'
+> & { sourceCount: number };
+
+/** A reference an article relies on. Cited in the body as [^n], numbered from 1. */
+export type JournalSource = {
+  title: string;
+  publisher?: string;
+  year?: string;
+  url: string;
 };
 
 export type FaqItem = {

@@ -138,6 +138,62 @@ export default function AboutPage() {
           </p>
         </div>
       </section>
+
+      {/*
+        The editorial policy. Every article in the journal is bylined "MrAnabolics Editorial"
+        and that byline links here, because a byline that leads nowhere answers none of the
+        questions a reader of this subject should be asking. It states the conflict of interest
+        in the first line: this site sells what the journal writes about.
+      */}
+      <section id="editorial-policy" className="border-b border-rule">
+        <div className="mx-auto max-w-[86rem] px-4 py-12 scroll-mt-32 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
+          <SectionHeading
+            title="Editorial policy"
+            description="Who writes the journal, how it is sourced, and what it will not tell you."
+          />
+          <div className="measure mt-8 space-y-5 text-sm leading-relaxed text-ink-soft sm:mt-10">
+            <p>
+              <span className="font-medium text-ink">We sell what we write about.</span> That is
+              a conflict of interest, and the honest thing is to say so at the top rather than
+              bury it. Read the journal knowing it, and check the sources.
+            </p>
+            <p>
+              <span className="font-medium text-ink">The byline is the shop, not a person.</span>{' '}
+              Articles are written and checked by the people who run this site. No article
+              carries an invented author, and none claims a medical, scientific or legal
+              qualification that nobody here holds.
+            </p>
+            <p>
+              <span className="font-medium text-ink">Every factual claim is sourced.</span> The
+              sources are listed at the foot of each article and cited in the text where they are
+              used. We prefer the primary document — the legislation, the regulator, the
+              standard, the published study — over anybody&apos;s summary of it, including ours.
+              Where the evidence is thin or disputed, the article says so instead of picking a
+              side.
+            </p>
+            <p>
+              <span className="font-medium text-ink">
+                No dosing, no protocols, no medical advice.
+              </span>{' '}
+              The journal covers testing, verification, the law, and the health risks as health
+              authorities and published studies describe them. It does not tell
+              anybody what to take, how much, or in what combination. Those are questions for a
+              doctor who knows your history, and the answer cannot come from a shop.
+            </p>
+            <p>
+              <span className="font-medium text-ink">Corrections.</span> Articles carry the date
+              they were published and the date they were last revised. If something here is
+              wrong, <Link href="/contact" className="text-pigment-indigo underline decoration-rule-strong underline-offset-[3px] transition-colors hover:decoration-pigment-indigo">tell us</Link>{' '}
+              and we will correct it and say that we did.
+            </p>
+            <p className="text-xs text-ink-faint">
+              This is a portfolio build, so the journal is a demonstration of that standard
+              rather than the output of a working newsroom. The sources it cites are real and
+              the claims are checked against them.
+            </p>
+          </div>
+        </div>
+      </section>
     </>
   );
 }

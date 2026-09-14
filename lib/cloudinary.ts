@@ -29,6 +29,8 @@ export const cloudinaryEnabled = CLOUD_NAME.length > 0;
 export type CloudinaryOptions = {
   /** Target width in device pixels. Omitted for an untransformed original. */
   width?: number;
+  /** Target height. With `crop: 'fill'`, gives a fixed shape (link previews, structured data). */
+  height?: number;
   /** 1–100, or 'auto' (default) to let Cloudinary choose per image. */
   quality?: number | 'auto';
   /** How the image fills the requested box. */
@@ -54,14 +56,15 @@ export function cloudinaryUrl(src: string, options: CloudinaryOptions = {}): str
   /* Already a Cloudinary URL — do not wrap it a second time. */
   if (src.includes('res.cloudinary.com')) return src;
 
-  const { width, quality = 'auto', crop = 'limit', gravity } = options;
+  const { width, height, quality = 'auto', crop = 'limit', gravity } = options;
 
   const transforms = [
     /* f_auto negotiates AVIF/WebP from the browser's Accept header. */
     'f_auto',
     `q_${quality}`,
     width ? `w_${Math.round(width)}` : null,
-    width ? `c_${crop}` : null,
+    height ? `h_${Math.round(height)}` : null,
+    width || height ? `c_${crop}` : null,
     gravity ? `g_${gravity}` : null,
     /* Do not upscale past the source. */
     'dpr_auto',

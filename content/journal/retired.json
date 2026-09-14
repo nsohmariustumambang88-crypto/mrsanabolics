@@ -1,0 +1,35 @@
+{
+  "_comment": "Journal addresses that no longer carry an article, and where each now points. next.config.js answers each with a permanent (308) redirect, and prisma/seed-journal.ts deletes the matching row. A retired address must never be reused for a different article. The original text of every retired post is kept, unchanged, in lib/data/blog.ts.",
+  "retired": [
+    {
+      "slug": "third-party-testing-matters",
+      "to": "/blog/how-to-read-a-certificate-of-analysis",
+      "why": "Claimed every batch is tested, which is not true of this build. Replaced by the sourced certificate article."
+    },
+    {
+      "slug": "sarms-vs-steroids-research",
+      "to": "/blog/are-sarms-legal-fda-wada-tga",
+      "why": "Unsourced comparison of effects. Replaced by the sourced article on what regulators have said about SARMs."
+    },
+    {
+      "slug": "pct-protocols-explained",
+      "to": "/blog/anabolic-steroid-health-risks",
+      "why": "Gave a protocol and a duration, which the editorial policy rules out."
+    },
+    {
+      "slug": "designing-your-first-stack",
+      "to": "/blog",
+      "why": "Advised what to combine and take, which the editorial policy rules out."
+    },
+    {
+      "slug": "understanding-testosterone-esters",
+      "to": "/blog/hplc-mass-spectrometry-lab-testing-explained",
+      "why": "Five unsourced sentences framed around protocol design."
+    },
+    {
+      "slug": "peptide-storage-best-practices",
+      "to": "/blog",
+      "why": "Unsourced handling and preparation instructions."
+    }
+  ]
+}

@@ -36,6 +36,17 @@ function optionalText(form: FormData, key: string): string | undefined {
   return trimmed.length ? trimmed : undefined;
 }
 
+/**
+ * Like `optionalText`, but an emptied field CLEARS the column instead of leaving it alone.
+ *
+ * `optionalText` returns undefined for an empty box, and undefined tells Prisma "do not touch
+ * this column" — so an optional value could be set and never removed. A field absent from the
+ * form altogether still returns undefined, which is what keeps the two cases apart.
+ */
+function clearableText(form: FormData, key: string): string | null | undefined {
+  return form.has(key) ? (optionalText(form, key) ?? null) : undefined;
+}
+
 function requiredText(form: FormData, key: string): string | null {
   return optionalText(form, key) ?? null;
 }
@@ -213,8 +224,18 @@ export async function updateBlogPost(id: string, form: FormData): Promise<Action
       content,
       category: optionalText(form, 'category') ?? undefined,
       author: optionalText(form, 'author') ?? undefined,
-      readTime: optionalText(form, 'readTime') ?? undefined,
       image: optionalText(form, 'image') ?? undefined,
+      imageAlt: optionalText(form, 'imageAlt') ?? undefined,
+      /* Emptying one of these clears it — each has a sensible fallback when it is null. */
+      metaTitle: clearableText(form, 'metaTitle'),
+      metaDescription: clearableText(form, 'metaDescription'),
+      imageCredit: clearableText(form, 'imageCredit'),
+      /*
+        Editing an article is what "updated" means, and search engines read dateModified. The
+        date is stamped here rather than typed, because a revision date somebody enters by hand
+        is a claim about work, not a record of it.
+      */
+      updated: new Date(),
     },
     select: { slug: true },
   });

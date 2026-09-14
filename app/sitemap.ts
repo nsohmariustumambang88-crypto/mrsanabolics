@@ -70,11 +70,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly' as const,
       priority: 0.6,
     })),
+    /*
+      Articles carry their real revision date, not today's. A sitemap that claims everything
+      changed this morning tells a crawler nothing, and Google says it ignores lastmod when a
+      site reports one it cannot believe. Editorial pages outrank the placeholder-priced
+      products here because they are the pages worth arriving on from a search.
+    */
     ...blogPosts.map((p) => ({
       url: `${base}/blog/${p.slug}`,
-      lastModified: new Date(p.date),
+      lastModified: new Date(`${p.updated ?? p.date}T00:00:00Z`),
       changeFrequency: 'monthly' as const,
-      priority: 0.5,
+      priority: 0.8,
     })),
   ];
 }

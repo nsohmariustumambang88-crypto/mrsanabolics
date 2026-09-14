@@ -34,7 +34,7 @@ Evidence-forward retail: every product carries a full specification table, ingre
 ## Capabilities and Constraints
 
 - **Stack:** Next.js 13.5 App Router, TypeScript (strict), Tailwind + shadcn/ui, Prisma against Neon Postgres, deployed to Vercel from `main`. Route handlers under `app/api/` and server actions behind every admin screen.
-- **Data:** Neon Postgres via Prisma. The catalogue — 9 categories, 41 manufacturers, ~790 products — is built from the store's own product photographs (`npm run db:seed-catalogue`); blog posts, testimonials and FAQs still come from `lib/data/`.
+- **Data:** Neon Postgres via Prisma. The catalogue — 9 categories, 41 manufacturers, ~790 products — is built from the store's own product photographs (`npm run db:seed-catalogue`); testimonials and FAQs still come from `lib/data/`; journal articles are Markdown in `content/journal/` with metadata in `lib/data/journal.ts` (`npm run db:seed-journal`).
 - **Images:** product photographs uploaded to Cloudinary under `mranabolics/library/`, mirroring the source folder; journal photography is stock, fetched through Cloudinary.
 - **Auth is implemented** for customers: register and sign in write a Customer row (bcrypt, HttpOnly session cookie) and link the person to their CRM contact. Password reset is not, because it needs email, and the form says so. Supabase is installed but unused.
 - **SEO:** fixed. Routes are server components that own their metadata and emit JSON-LD in the first response; interactivity lives in client children. Product pages carry Product, Offer, BreadcrumbList and — only where reviews exist — AggregateRating and Review. Product pages are deliberately **not** pre-rendered: they render on first request and are cached by `revalidate`, so a deploy does not depend on 792 database reads succeeding. The first response is still fully server-rendered, and `/sitemap.xml` still lists every URL.
@@ -43,7 +43,7 @@ Evidence-forward retail: every product carries a full specification table, ingre
 ## Brand Commitments
 
 - **Name:** MrAnabolics. Fixed.
-- **Product catalog:** the photographed catalogue and its folder taxonomy are the product truth. Product names and manufacturers are transcribed from the file names; copy is generated from the folder, the name and the manufacturer and adds no claims. The blog content is fixed and must survive verbatim.
+- **Product catalog:** the photographed catalogue and its folder taxonomy are the product truth. Product names and manufacturers are transcribed from the file names; copy is generated from the folder, the name and the manufacturer and adds no claims. The original blog posts are kept verbatim in `lib/data/blog.ts` but retired from the site, because two gave dosing and protocol advice the editorial policy rules out; their addresses redirect (`content/journal/retired.json`). Journal articles are sourced, carry no dosing, and are bylined to the organisation.
 - **Open:** color, typography, layout, component language, and the existing dark-only treatment carry no commitment and may be replaced.
 
 ## Evidence on Hand

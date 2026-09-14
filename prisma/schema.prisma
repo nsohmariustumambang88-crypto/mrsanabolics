@@ -205,6 +205,23 @@ model BlogPost {
   readTime String
   image    String
 
+  /// The <title> in search results, when it should differ from the headline. Under ~60 characters.
+  metaTitle       String?
+  /// The meta description. Falls back to the excerpt. Under ~155 characters.
+  metaDescription String?
+  /// Describes the lead image for screen readers and image search.
+  imageAlt        String    @default("")
+  /// Photographer and licence, printed under the lead image.
+  imageCredit     String?
+  /// The last substantive revision. Drives dateModified and the "Updated" line.
+  updated         DateTime? @db.Date
+  /// The article the journal and the home page lead with.
+  featured        Boolean   @default(false)
+  /// [{ question, answer }], shown at the foot of the article and emitted as FAQPage.
+  faqs            Json?
+  /// [{ title, publisher, year, url }], the references the article relies on, cited as [^n].
+  sources         Json?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

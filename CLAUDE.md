@@ -124,7 +124,7 @@ is one) is the compound group, and each named file is a product. `npm run db:see
 against [lib/catalogue/taxonomy.ts](lib/catalogue/taxonomy.ts) and writes Category, Brand and
 Product rows — 9 categories, 41 manufacturers, ~790 products, each with its photograph as
 `images[0]`. The 12 template fixture products and `lib/data/{products,categories,brands}.ts` are
-gone; `prisma/seed.ts` now seeds only blog, testimonials and FAQs.
+gone; `prisma/seed.ts` now seeds only testimonials and FAQs (the journal has its own seed — see "The journal").
 
 **What the seed refuses to invent.** No ratings, review counts or reviews (zero and empty — the
 product page hides the review block and says "No reviews yet"; the JSON-LD omits
@@ -335,6 +335,20 @@ rendered for an anonymous visitor, and the header keeps saying "Sign in" to some
 ```bash
 node --env-file=.env .impeccable/account-e2e.mjs   # needs the app running
 ```
+
+## The journal
+
+The journal (`/blog`, and the section near the foot of the home page) is six sourced articles written for search: reading a certificate of analysis (featured), spotting counterfeit steroids, what HPLC and mass spectrometry can prove, whether SARMs are legal, steroid law in the US/UK/Canada/Australia, and the health risks. The editorial policy they follow is on the About page (`/about#editorial-policy`) and is binding on any new article: **every factual claim cited to a primary source, no dosing or protocols, the byline is the organisation, dates are real.**
+
+**Where it lives.** Each body is Markdown at `content/journal/<slug>.md`; its title, search title and description, photograph, FAQs and numbered sources are in [lib/data/journal.ts](lib/data/journal.ts). `npm run db:seed-journal` writes them to Neon and **refuses the whole run** if a `[^n]` has no source, a source is never cited, a `[[figure:key]]` does not exist, more than one article is featured, or an excerpt exceeds 165 characters. Existing rows are skipped unless `--refresh`, because the admin can edit them; `--dry-run` writes nothing. The Markdown dialect and renderer are [components/journal/article-body.tsx](components/journal/article-body.tsx) — no HTML injection. Figures are drawn in [components/journal/figures.tsx](components/journal/figures.tsx) as live text, not images.
+
+**Retired addresses.** The six template posts (a PCT "protocol", a stack-design guide, and four unsourced five-sentence pieces) contradicted the policy and are off the site. Their text is kept verbatim in `lib/data/blog.ts`. [content/journal/retired.json](content/journal/retired.json) is read by BOTH `next.config.js` (permanent redirect to the closest replacement) and the journal seed (deletes the row, and refuses to publish an article at a retired slug or redirect to one that does not exist). `prisma/seed.ts` no longer touches blog posts — it used to upsert them, which would have republished a withdrawn article behind its own redirect.
+
+**Research that failed, and why the topics are what they are.** Sources for law were read from the legislation itself (govinfo, legislation.gov.uk, laws-lois.justice.gc.ca, legislation.gov.au, Queensland legislation); secondary legal summaries were vendor blogs. Research on dosing, PCT, esters and peptides was deliberately not pursued. Things checked and found to be commonly misstated: the UK personal-import exemption has covered **in-person carriage only** since 23 April 2012 (SI 2012/973); Australian steroid imports are Schedule **7A** (reg 5G) of the Customs (Prohibited Imports) Regulations, not Schedule 8; Queensland lists steroids in Schedule **1** Part 2 of the Drugs Misuse Regulation. FAQ rich results no longer show in Google, so the FAQPage markup is harmless but buys nothing.
+
+**Before publishing more.** WADA publishes a new Prohibited List each autumn and the Poisons Standard is reissued; the SARMs and law articles name the 2026 instruments and should be re-checked and their `updated` date set when those change. Photographs are Pexels (free licence), credited under each lead image. `SITE.url` comes from `NEXT_PUBLIC_SITE_URL`, else Vercel's production domain — set it when a custom domain exists, before submitting the sitemap to Search Console, or every canonical link points at `*.vercel.app`.
+
+The announcement bar setting still reads "Certificates of analysis now published with every batch", which the build does not do and which the certificate article now teaches readers to check. It is an admin setting (Email screen), not code.
 
 ## The home page is a selection, not the shop
 
