@@ -130,7 +130,7 @@ gone; `prisma/seed.ts` now seeds only testimonials and FAQs (the journal has its
 product page hides the review block and says "No reviews yet"; the JSON-LD omits
 `aggregateRating`). No dosing. No copy beyond what the file name and folder state. It DOES set
 placeholder prices from `baselinePrice()` in the taxonomy, because a shop with no prices cannot
-be browsed; the footer disclosure says so, and the admin's inline price editor is where real
+be browsed; the chat agent says so when it quotes one (the footer notice that also said so was removed at the owner's request), and the admin's inline price editor is where real
 prices go. Merchandising flags (best seller / new / deal / trending) are the first four listings
 of each group, deterministically — a starting position for staff to change, not a judgement.
 
@@ -203,7 +203,7 @@ Four token distinctions exist because collapsing them visibly broke the build du
 
 [components/ebru/marble-bath.tsx](components/ebru/marble-bath.tsx) renders it. **Index 0 of `pigments` is the coat, not an ink.** `density` (0–1) trades fidelity for time — decorative fields run 0.45–0.7. The hero used to open on a bath at density 1 that the visitor could comb (`interactive`); at the owner's direction the hero no longer has a bath at all — see "The hero's right-hand column is the promotion". `interactive` is now used by nothing, and the home page's first marbling is further down. Composition is lazy via IntersectionObserver, so a dozen baths don't block the main thread. Pass a stable `pigments` array reference; inline arrays re-run the effect every render.
 
-**Catalogue imagery is the store's own photography, with an authored fallback.** Every product in the catalogue carries a photograph from the store's files (see "The catalogue is the photo library"). [components/product/product-plate.tsx](components/product/product-plate.tsx) still draws a product as its shipping vessel on a floated ground in the category pigment, deterministic per slug — but only for a product with no photograph, and the gallery caption says which one the visitor is looking at. The footer disclosure was updated to match. Journal editorial photography is real stock printed through the `.duotone` SVG press filters defined in `app/layout.tsx`.
+**Catalogue imagery is the store's own photography, with an authored fallback.** Every product in the catalogue carries a photograph from the store's files (see "The catalogue is the photo library"). [components/product/product-plate.tsx](components/product/product-plate.tsx) still draws a product as its shipping vessel on a floated ground in the category pigment, deterministic per slug — but only for a product with no photograph, and the gallery caption says which one the visitor is looking at. Journal editorial photography is real stock printed through the `.duotone` SVG press filters defined in `app/layout.tsx`.
 
 **Hairline grids.** Sections use `grid gap-px bg-rule`, where the rules are the container colour showing through the gap. A short final row therefore leaves a bare rule-coloured box — always close it with `<GridFillers>` ([components/layout/grid-fillers.tsx](components/layout/grid-fillers.tsx)) or use `<ProductGrid>`, which does it for you.
 
