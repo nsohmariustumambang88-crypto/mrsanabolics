@@ -9,7 +9,7 @@ import { SearchDialog } from '@/components/search/search-dialog';
 import { ExitCapture } from '@/components/marketing/exit-capture';
 import { VisitTracker } from '@/components/analytics/visit-tracker';
 import { ChatWidget } from '@/components/chat/chat-widget';
-import { getProductSummaries, getCategories, getBrands } from '@/lib/db/catalogue';
+import { getCategories, getBrands } from '@/lib/db/catalogue';
 import { getSettingsSafe, asBoolean, asNumber } from '@/lib/settings';
 
 /*
@@ -40,15 +40,14 @@ export default async function StorefrontLayout({
     than throwing: the announcement line is a refinement, and a sleeping database should cost
     the site its custom wording, never its home page.
   */
-  const [products, categories, brands, settings] = await Promise.all([
-    getProductSummaries(),
+  const [categories, brands, settings] = await Promise.all([
     getCategories(),
     getBrands(),
     getSettingsSafe(),
   ]);
 
   return (
-    <CatalogueProvider value={{ products, categories, brands }}>
+    <CatalogueProvider value={{ categories, brands }}>
       <SettingsProvider
         value={{
           lowStockThreshold: asNumber(settings.low_stock_threshold, 5),

@@ -7,7 +7,7 @@ import { Package, Heart, MapPin, Settings, LayoutGrid, X } from 'lucide-react';
 import { useStore } from '@/components/providers/store-provider';
 import { ProductGrid } from '@/components/product/product-grid';
 import { BullMark } from '@/components/brand/bull-mark';
-import { useProducts } from '@/components/providers/catalogue-provider';
+import { useCatalogueSearch } from '@/components/shop/use-catalogue-search';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -76,10 +76,14 @@ export function AccountView({
   const params = useSearchParams();
   const tab = params.get('tab') ?? 'dashboard';
   const { wishlist, toggleWishlist, cartCount } = useStore();
-  const products = useProducts();
   const [signingOut, setSigningOut] = React.useState(false);
 
-  const saved = products.filter((p) => wishlist.includes(p.id));
+  /*
+    The saved products, fetched by id. This used to filter the whole catalogue, which is why the
+    layout shipped it to every page; a wishlist is a handful of products and asking for those is
+    cheaper than carrying 800 to find them.
+  */
+  const { items: saved } = useCatalogueSearch({ ids: wishlist }, 24, wishlist.length > 0);
   const lifetime = orders.reduce((sum, o) => sum + Number(o.total), 0);
 
   /* A real navigation, so every server component re-reads the cleared cookie. */

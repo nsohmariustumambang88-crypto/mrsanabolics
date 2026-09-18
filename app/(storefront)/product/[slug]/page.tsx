@@ -7,7 +7,11 @@ import {
 import { ProductDetail } from '@/components/product/product-detail';
 import { getSettingsSafe, asBoolean } from '@/lib/settings';
 import { SITE } from '@/lib/site';
-import { categoryPath, groupPath } from '@/lib/catalogue/paths';
+import { categoryPath, groupPath, groupSlug } from '@/lib/catalogue/paths';
+import { GROUP_COPY } from '@/lib/catalogue/collection-copy';
+import { getGroupCollection } from '@/lib/db/collections';
+import { cloudinaryUrl } from '@/lib/cloudinary';
+import type { Product } from '@/lib/types';
 
 /*
   Server component.
@@ -49,27 +53,86 @@ export async function generateStaticParams() {
 /* Re-read at most once a minute; see the note in app/layout.tsx. */
 export const revalidate = 60;
 
+function spec(product: Product, label: string): string | undefined {
+  return product.specifications.find((s) => s.label === label)?.value?.trim() || undefined;
+}
+
+/** The product's photograph at a fixed size, as an absolute URL for search engines and previews. */
+function productImage(product: Product, width = 1200): string | undefined {
+  const source = product.images[0];
+  if (!source) return undefined;
+  const url = cloudinaryUrl(source, { width, crop: 'limit' });
+  return url.startsWith('http') ? url : `${SITE.url}${url}`;
+}
+
+/**
+ * The compound page a product belongs to, with its one-line description. Computed here, on the
+ * server, and passed down — so the product page links into its compound page and says what the
+ * compound is, instead of the template sentence every product used to share.
+ */
+async function compoundFor(product: Product) {
+  if (!product.subcategoryName) return null;
+  const found = await getGroupCollection(product.categorySlug, groupSlug(product.subcategoryName));
+  if (!found) return null;
+  return {
+    name: found.group.name,
+    path: found.group.path,
+    listings: found.group.facts.listings,
+    identity: GROUP_COPY[`${product.categorySlug}/${found.group.slug}`] ?? null,
+  };
+}
+
+/*
+  Title and description are built from the facts on the label, because the stored description
+  is a template ("X by Y. Injectable, vial, listed under Blends, in Injectables.") shared in
+  shape by all 792 products, and search engines treat near-identical descriptions as noise.
+*/
+function describe(product: Product, compound: Awaited<ReturnType<typeof compoundFor>>) {
+  const strength = spec(product, 'Strength');
+  const form = spec(product, 'Form');
+  const title = `${product.name} by ${product.brand}${strength ? `, ${strength}` : ''}`;
+  /* The compound's first sentence: what it is, without the regulatory detail that follows. */
+  const identity = compound?.identity ? `${compound.identity.split('. ')[0].replace(/\.$/, '')}.` : null;
+  const facts = [strength, form?.toLowerCase()].filter(Boolean).join(', ');
+  const parts = [
+    `${product.name} by ${product.brand}${facts ? `: ${facts}` : ''}.`,
+    identity,
+    compound && compound.listings > 1
+      ? `Compare it with ${compound.listings - 1} other ${compound.name} listings.`
+      : null,
+  ].filter((p): p is string => !!p);
+  let description = '';
+  for (const part of parts) {
+    if ((description + ' ' + part).trim().length > 160) break;
+    description = (description + ' ' + part).trim();
+  }
+  return { title, description: description || product.description };
+}
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const product = await getProductBySlug(params.slug);
   if (!product) return { title: 'Product not found' };
 
-  const title = `${product.name} — ${product.brand}`;
+  const { title, description } = describe(product, await compoundFor(product));
   const url = `${SITE.url}/product/${product.slug}`;
+  const image = productImage(product);
 
   return {
     title,
-    description: product.description,
+    description,
     alternates: { canonical: `/product/${product.slug}` },
     openGraph: {
       type: 'website',
       url,
       title,
-      description: product.description,
+      description,
+      ...(image && { images: [{ url: image, alt: `${product.name} by ${product.brand}` }] }),
     },
     twitter: {
       card: 'summary_large_image',
       title,
-      description: product.description,
+      description,
+      ...(image && { images: [image] }),
     },
   };
 }
@@ -84,6 +147,9 @@ export default async function ProductPage({ params }: Params) {
   const settings = await getSettingsSafe();
   const reviewsOpen = asBoolean(settings.reviews_open);
   const url = `${SITE.url}/product/${product.slug}`;
+  const compound = await compoundFor(product);
+  const { description } = describe(product, compound);
+  const image = productImage(product);
 
   const schema = [
     {
@@ -91,8 +157,15 @@ export default async function ProductPage({ params }: Params) {
       '@type': 'Product',
       '@id': `${url}#product`,
       name: product.name,
-      description: product.description,
-      sku: product.id,
+      description,
+      url,
+      /*
+        The photograph. Google asks for an image on every product, and without one a product is
+        not eligible for product results in search at all — this markup shipped without it.
+      */
+      ...(image && { image: [image] }),
+      /* The slug, not the database id: a readable, stable code rather than a random string. */
+      sku: product.slug,
       category: product.category,
       brand: { '@type': 'Brand', name: product.brand },
       additionalProperty: product.specifications.map((s) => ({
@@ -185,7 +258,12 @@ export default async function ProductPage({ params }: Params) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
       />
-      <ProductDetail product={product} related={related} reviewsOpen={reviewsOpen} />
+      <ProductDetail
+        product={product}
+        related={related}
+        reviewsOpen={reviewsOpen}
+        compound={compound}
+      />
     </>
   );
 }

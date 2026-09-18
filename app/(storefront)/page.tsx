@@ -6,20 +6,21 @@ import { ProductsSection } from '@/components/home/products-section';
 import { WeeklyDeals } from '@/components/home/weekly-deals';
 import { PopularBrands } from '@/components/home/brands';
 import { FeaturedCollections } from '@/components/home/featured-collections';
+import { doors, spread, PER_DOOR, TILES, PER_TILE } from '@/components/home/home-samples';
 import { Testimonials } from '@/components/home/testimonials';
 import { WhyChoose } from '@/components/home/why-choose';
 import { BlogTeaser } from '@/components/home/blog-teaser';
 import { toJournalCard } from '@/lib/journal/fields';
 import { Newsletter } from '@/components/home/newsletter';
 import { InstagramGallery } from '@/components/home/instagram-gallery';
-import { getProducts, getBlogPosts, getTestimonials, toSummary } from '@/lib/db/catalogue';
+import { getProducts, getCategories, getBlogPosts, getTestimonials, toSummary } from '@/lib/db/catalogue';
 import { advertisedDiscount } from '@/lib/discounts';
 import { getSettingsSafe } from '@/lib/settings';
 import { SITE } from '@/lib/site';
 
 export const metadata: Metadata = {
   /* Absolute, so the brand leads on the one page a searcher is most likely to see. */
-  title: { absolute: `${SITE.name} — Lab-Tested Performance Compounds` },
+  title: { absolute: `${SITE.name} — ${SITE.tagline}` },
   description: SITE.description,
   alternates: { canonical: '/' },
 };
@@ -41,11 +42,29 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function Home() {
-  const [products, posts, testimonials] = await Promise.all([
+  const [products, categories, posts, testimonials] = await Promise.all([
     getProducts(),
+    getCategories(),
     getBlogPosts(),
     getTestimonials(),
   ]);
+
+  /*
+    The samples for the two home sections, chosen HERE rather than in the browser. Both used to
+    read the whole catalogue from the client context; that context is why every page carried it.
+  */
+  const photographed = products.filter((p) => Boolean(p.images[0]));
+  const doorSamples = Object.fromEntries(
+    doors.map((door) => [
+      door.slug,
+      spread(photographed.filter((p) => door.categories.includes(p.categorySlug)), PER_DOOR).map(toSummary),
+    ])
+  );
+  const tileSamples = Object.fromEntries(
+    categories
+      .slice(0, TILES)
+      .map((c) => [c.slug, spread(photographed.filter((p) => p.categorySlug === c.slug), PER_TILE).map(toSummary)])
+  );
 
   const bestSellers = products.filter((p) => p.isBestSeller);
   const deals = products.filter((p) => p.isDeal);
@@ -97,7 +116,7 @@ export default async function Home() {
       />
 
       <Hero offers={offers} fallback={fallback} promoCode={promoCode} />
-      <FeaturedCollections />
+      <FeaturedCollections samples={doorSamples} />
       <AssuranceRegister />
 
       {/*
@@ -117,7 +136,7 @@ export default async function Home() {
       <WeeklyDeals products={deals.map(toSummary)} />
       <WhyChoose />
       <PopularBrands />
-      <InstagramGallery />
+      <InstagramGallery samples={tileSamples} />
       <Testimonials testimonials={testimonials} />
       <BlogTeaser posts={posts.slice(0, 4).map(toJournalCard)} />
       <Newsletter />

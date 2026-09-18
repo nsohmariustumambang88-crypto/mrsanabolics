@@ -4,9 +4,10 @@ import * as React from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { ProductPlate } from '@/components/product/product-plate';
-import { useProducts } from '@/components/providers/catalogue-provider';
+
 import { categoryPigment } from '@/lib/site';
 import type { ProductSummary } from '@/lib/types';
+import { doors, PER_DOOR } from '@/components/home/home-samples';
 
 /*
   Two doors into one catalogue — the audience split PRODUCT.md records, answered directly under
@@ -23,57 +24,13 @@ import type { ProductSummary } from '@/lib/types';
   way to lose a paragraph, and this build's craft floor puts legibility over atmosphere.
 */
 
-const doors = [
-  {
-    title: 'By compound',
-    slug: 'by-compound',
-    body: 'You know the molecule and the ester. Go straight to the specification, the concentration, and the certificate.',
-    href: '/categories',
-    action: 'Open the index',
-    /* The shelves somebody arrives at already knowing what they want. */
-    categories: ['injectables', 'orals'],
-  },
-  {
-    title: 'By goal',
-    slug: 'by-goal',
-    body: 'You know what you are training toward. Start from the outcome and read down to what supports it.',
-    href: '/shop',
-    action: 'Browse by outcome',
-    /* The shelves somebody arrives at with an outcome rather than a molecule. */
-    categories: ['fat-burners', 'peptides', 'post-cycle'],
-  },
-];
-
 const collections = [
   { label: 'Newly floated', href: '/shop?filter=new' },
   { label: 'Moving this week', href: '/shop?filter=trending' },
   { label: 'On offer', href: '/shop?filter=deals' },
 ];
 
-const PER_DOOR = 3;
-
-/** Evenly spaced picks, so a sample reads as the range rather than as one shelf's front row. */
-function spread<T>(list: T[], count: number): T[] {
-  if (list.length <= count) return list;
-  const out: T[] = [];
-  const step = list.length / count;
-  for (let i = 0; i < count; i++) out.push(list[Math.floor(i * step)]);
-  return out;
-}
-
-export function FeaturedCollections() {
-  const products = useProducts();
-
-  const samples = React.useMemo(() => {
-    const map: Record<string, ProductSummary[]> = {};
-    for (const door of doors) {
-      const pool = products.filter(
-        (p) => door.categories.includes(p.categorySlug) && Boolean(p.images[0])
-      );
-      map[door.slug] = spread(pool, PER_DOOR);
-    }
-    return map;
-  }, [products]);
+export function FeaturedCollections({ samples }: { samples: Record<string, ProductSummary[]> }) {
 
   return (
     <section className="border-b border-rule">

@@ -13,7 +13,7 @@ import { X } from 'lucide-react';
   been updated, or a database that is asleep, still renders the sentence the site shipped with.
 */
 export function AnnouncementBar({
-  text = 'Certificates of analysis now published with every batch.',
+  text = 'Ask for the certificate of analysis for your batch before you buy.',
   href = '/faq',
   linkLabel = 'How testing works',
 }: {

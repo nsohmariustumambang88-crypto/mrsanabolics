@@ -67,14 +67,15 @@ export const SETTINGS: SettingDef[] = [
     label: 'Announcement text',
     type: 'text',
     /*
-      The sentence the site already shipped with, kept verbatim.
+      The shipped sentence was "Certificates of analysis now published with every batch." That
+      was not true — no certificate is published for any batch — and after the move to a fresh
+      database, with no settings rows written, this default is what every visitor saw. The
+      journal's certificate article teaches readers to check exactly that claim.
 
-      Moving hard-coded copy into a setting must not change what the page says: an unwritten
-      setting has to render exactly what was there before, or the extraction is a silent
-      content edit that nobody approved. It also has to pair with the link beside it, which
-      goes to /faq under the label "How testing works".
+      The replacement is advice rather than a claim, and it still pairs with the link beside
+      it, which goes to /faq under the label "How testing works".
     */
-    default: 'Certificates of analysis now published with every batch.',
+    default: 'Ask for the certificate of analysis for your batch before you buy.',
     help: 'Keep it to one short sentence; it sits above the header on small screens too. It is followed by a link to the FAQ.',
     group: 'general',
   },
@@ -82,7 +83,8 @@ export const SETTINGS: SettingDef[] = [
     key: 'support_email',
     label: 'Support address',
     type: 'email',
-    default: 'support@mranabolics.example.com',
+    /* The real mailbox, set up at Hostinger in September 2026. */
+    default: 'support@mrsanabolics.com',
     help: 'Shown on the contact page. Enquiries are answered from here by a person.',
     group: 'general',
   },

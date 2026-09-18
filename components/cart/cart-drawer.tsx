@@ -10,24 +10,37 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { useStore } from '@/components/providers/store-provider';
-import { ProductPlate } from '@/components/product/product-plate';
-import { useProducts } from '@/components/providers/catalogue-provider';
+import Image from 'next/image';
+
 import { formatPrice } from '@/lib/format';
 
 const FREE_SHIPPING_AT = 250;
 
-/* The cart stores a flat snapshot, so the full record is looked up to draw its plate. */
-function CartPlate({ slug, name }: { slug: string; name: string }) {
-  const products = useProducts();
-  const product = products.find((p) => p.slug === slug);
-  if (!product) {
+/*
+  The cart's own snapshot draws the thumbnail.
+
+  This used to look the product up in the catalogue the layout shipped to every page. Nothing
+  else here needed that catalogue, and the snapshot already carries the picture, so the lookup
+  was the only reason half a megabyte travelled with every page load. A line added before the
+  snapshot carried an image falls back to its name.
+*/
+function CartPlate({ image, name }: { image?: string; name: string }) {
+  if (!image) {
     return (
       <span className="flex h-full w-full items-center justify-center bg-paper-sunk p-1 text-center font-mono text-2xs leading-tight text-ink-faint">
         {name}
       </span>
     );
   }
-  return <ProductPlate product={product} showMarking={false} sizes="80px" />;
+  return (
+    <Image
+      src={image}
+      alt=""
+      fill
+      sizes="80px"
+      className="object-contain mix-blend-multiply dark:mix-blend-normal"
+    />
+  );
 }
 
 export function CartDrawer() {
@@ -119,7 +132,7 @@ export function CartDrawer() {
                     onClick={() => setCartOpen(false)}
                     className="relative h-20 w-20 shrink-0 overflow-hidden border border-rule bg-paper-sunk"
                   >
-                    <CartPlate slug={item.slug} name={item.name} />
+                    <CartPlate image={item.image} name={item.name} />
                   </Link>
 
                   <div className="min-w-0 flex-1">

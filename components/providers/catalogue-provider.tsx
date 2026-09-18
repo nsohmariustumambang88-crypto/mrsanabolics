@@ -1,28 +1,30 @@
 'use client';
 
 import * as React from 'react';
-import type { ProductSummary, Category, Brand } from '@/lib/types';
+import type { Category, Brand } from '@/lib/types';
 
 /*
-  The catalogue, handed from the server to the client once.
+  The catalogue's structure, handed from the server to the client once: categories and brands.
 
-  Navigation, search, the cart drawer and several home sections all need the catalogue, and
-  none of them can query Postgres — they run in the browser. The storefront layout (a server
-  component) reads Neon once per render and passes the result down through this context, so
-  the data is genuinely database-backed everywhere while the connection stays on the server.
+  NOT THE PRODUCTS. This context used to carry every product as well, so the header, search, cart
+  and a few home sections could filter them in the browser. At ~790 products that was 502 KB of
+  JSON — about 660 KB of payload — on every page of the site, most of it on pages that never
+  looked at a product. It was the heaviest thing the site sent.
 
-  SCALE NOTE: what ships is the SUMMARY projection (lib/types.ts, ProductSummary), not the full
-  record. With ~800 products the full record — long copy, FAQs, reviews, ingredients — was
-  megabytes of RSC payload on every page; the summary is a few hundred bytes per product.
-  Product pages read the full record server-side. The next step up, if the catalogue grows
-  again, is moving search and filtering to a route handler so the browser holds nothing.
+  Products now come from where they are needed:
+    - server pages read them directly (lib/db/catalogue.ts) and pass down what they render;
+    - the shop browser, the search dialog and the wishlist ask /api/catalogue for one page at a
+      time (components/shop/use-catalogue-search.ts);
+    - the cart draws from its own stored snapshot.
+
+  Do not add products back here. A component that needs products should receive them as props
+  from its server page, or ask the route for exactly what it shows.
 */
 
 export type CatalogueCategory = Category & { listed: number };
 export type CatalogueBrand = Brand & { listed: number };
 
 type Catalogue = {
-  products: ProductSummary[];
   categories: CatalogueCategory[];
   brands: CatalogueBrand[];
 };
@@ -43,12 +45,10 @@ export function CatalogueProvider({
   const memo = React.useMemo(
     () => value,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [value.products, value.categories, value.brands]
+    [value.categories, value.brands]
   );
 
-  return (
-    <CatalogueContext.Provider value={memo}>{children}</CatalogueContext.Provider>
-  );
+  return <CatalogueContext.Provider value={memo}>{children}</CatalogueContext.Provider>;
 }
 
 export function useCatalogue(): Catalogue {
@@ -57,11 +57,6 @@ export function useCatalogue(): Catalogue {
     throw new Error('useCatalogue must be used inside <CatalogueProvider>');
   }
   return ctx;
-}
-
-/** Convenience readers, so components do not destructure the same three fields everywhere. */
-export function useProducts(): ProductSummary[] {
-  return useCatalogue().products;
 }
 
 export function useCategories(): CatalogueCategory[] {

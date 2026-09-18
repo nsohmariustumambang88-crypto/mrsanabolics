@@ -4,7 +4,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import { SectionHeading } from '@/components/product/section-heading';
 import { ProductPlate } from '@/components/product/product-plate';
-import { useCategories, useProducts } from '@/components/providers/catalogue-provider';
+import { useCategories } from '@/components/providers/catalogue-provider';
+import { TILES, PER_TILE } from '@/components/home/home-samples';
 import { categoryPigment } from '@/lib/site';
 import { categoryPath } from '@/lib/catalogue/paths';
 import type { ProductSummary } from '@/lib/types';
@@ -27,31 +28,13 @@ import type { ProductSummary } from '@/lib/types';
   four manufacturers, which photographs as one product repeated. Even spacing shows the range.
 */
 
-const TILES = 6;
-const PER_TILE = 4;
-
-/** Evenly spaced picks across a list, so a sample looks like the whole rather than its head. */
-function spread<T>(list: T[], count: number): T[] {
-  if (list.length <= count) return list;
-
-  const out: T[] = [];
-  const step = list.length / count;
-  for (let i = 0; i < count; i++) out.push(list[Math.floor(i * step)]);
-  return out;
-}
-
-export function InstagramGallery() {
+export function InstagramGallery({ samples }: { samples: Record<string, ProductSummary[]> }) {
   const categories = useCategories();
-  const products = useProducts();
-
-  const tiles = React.useMemo(() => {
-    return categories.slice(0, TILES).map((category) => {
-      const inCategory = products.filter(
-        (p) => p.categorySlug === category.slug && Boolean(p.images[0])
-      );
-      return { category, sample: spread(inCategory, PER_TILE) };
-    });
-  }, [categories, products]);
+  /* The samples are chosen on the server; see app/(storefront)/page.tsx. */
+  const tiles = React.useMemo(
+    () => categories.slice(0, TILES).map((category) => ({ category, sample: samples[category.slug] ?? [] })),
+    [categories, samples]
+  );
 
   return (
     <section className="border-b border-rule bg-paper-sunk">

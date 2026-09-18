@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { Search, CornerDownLeft } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useStore } from '@/components/providers/store-provider';
-import { useProducts, useCategories } from '@/components/providers/catalogue-provider';
+import { useCategories } from '@/components/providers/catalogue-provider';
+import { useCatalogueSearch } from '@/components/shop/use-catalogue-search';
 import { formatPrice } from '@/lib/format';
 import { ProductPlate } from '@/components/product/product-plate';
 import { categoryPigment } from '@/lib/site';
@@ -17,7 +18,6 @@ import { cn } from '@/lib/utils';
 export function SearchDialog() {
   const router = useRouter();
   const { searchOpen, setSearchOpen } = useStore();
-  const products = useProducts();
   const categories = useCategories();
   const [query, setQuery] = React.useState('');
   const [cursor, setCursor] = React.useState(0);
@@ -41,23 +41,30 @@ export function SearchDialog() {
     }
   }, [searchOpen]);
 
-  const results = React.useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    return products
-      .filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.brand.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q)
-      )
-      .slice(0, 7);
-  }, [query, products]);
+  /*
+    Results come from /api/catalogue, not from a copy of the catalogue in the browser.
+
+    Typing is debounced, because every keystroke would otherwise be a request: the dialog asks
+    once the typing pauses. The hook drops a reply that arrives after a newer one, so a slow
+    answer for "tes" cannot overwrite the answer for "test".
+  */
+  const [debounced, setDebounced] = React.useState('');
+  React.useEffect(() => {
+    const trimmed = query.trim();
+    const timer = setTimeout(() => setDebounced(trimmed), 180);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const { items: results, loading } = useCatalogueSearch({ q: debounced }, 7, debounced.length > 0);
 
   React.useEffect(() => setCursor(0), [query]);
 
   /* What people ask for, and whether the catalogue answered. See components/analytics. */
-  useSearchLog(query, results.length);
+  const [settled, setSettled] = React.useState(0);
+  React.useEffect(() => {
+    if (!loading) setSettled(results.length);
+  }, [loading, results.length]);
+  useSearchLog(debounced, settled);
 
   const go = React.useCallback(
     (href: string) => {

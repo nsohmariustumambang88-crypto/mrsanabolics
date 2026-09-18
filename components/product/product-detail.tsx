@@ -11,7 +11,6 @@ import {
   Star,
   Truck,
   RotateCcw,
-  ShieldCheck,
 } from 'lucide-react';
 import {
   Accordion,
@@ -86,7 +85,12 @@ function ProtocolChain({ product }: { product: Product }) {
       value: product.specifications.find((s) => /half.?life/i.test(s.label))?.value ?? '—',
     },
     { label: 'Protocol', value: product.directions.split('.')[0] + '.' },
-  ];
+    /*
+      A row with nothing in it is dropped rather than shown as a dash. No product in the
+      catalogue records a half-life, so every page showed "Half-life —" — an empty field that
+      reads as missing information on all 792 of them.
+    */
+  ].filter((link) => link.value && link.value !== '—');
 
   return (
     <div className="mt-8 border-y border-rule py-6">
@@ -116,15 +120,26 @@ function ProtocolChain({ product }: { product: Product }) {
   );
 }
 
+export type ProductCompound = {
+  name: string;
+  path: string;
+  listings: number;
+  /** What the compound is, from lib/catalogue/collection-copy.ts. */
+  identity: string | null;
+};
+
 export function ProductDetail({
   product,
   related,
   reviewsOpen = false,
+  compound = null,
 }: {
   product: Product;
   related: Product[];
   /** Whether the site is accepting new reviews. Read from settings on the server. */
   reviewsOpen?: boolean;
+  /** The compound page this product belongs to, where it has one. Computed on the server. */
+  compound?: ProductCompound | null;
 }) {
   const { addToCart, toggleWishlist, isWishlisted } = useStore();
   const [active, setActive] = React.useState(0);
@@ -328,9 +343,13 @@ export function ProductDetail({
               </button>
             </div>
 
-            <ul className="mt-8 grid gap-3 border-t border-rule pt-6 sm:grid-cols-3">
+            {/*
+              "Third-party assayed" is gone from this list: the catalogue holds no assay for
+              any product, so it was a claim with nothing behind it on every page — the same
+              reason it came off the hero's offer card.
+            */}
+            <ul className="mt-8 grid gap-3 border-t border-rule pt-6 sm:grid-cols-2">
               {[
-                { icon: ShieldCheck, label: 'Third-party assayed' },
                 { icon: Truck, label: 'Tracked, unmarked' },
                 { icon: RotateCcw, label: '30-day returns' },
               ].map(({ icon: Icon, label }) => (
@@ -354,9 +373,22 @@ export function ProductDetail({
             <h2 className="font-display text-2xl font-semibold tracking-[-0.03em]">
               About this compound
             </h2>
+            {compound?.identity && (
+              <p className="measure mt-5 text-sm leading-relaxed text-ink">{compound.identity}</p>
+            )}
             <p className="measure mt-5 text-sm leading-relaxed text-ink-soft">
               {product.longDescription}
             </p>
+            {compound && compound.listings > 1 && (
+              <p className="mt-5 text-sm">
+                <Link
+                  href={compound.path}
+                  className="text-pigment-indigo underline decoration-rule-strong underline-offset-[3px] transition-colors hover:decoration-pigment-indigo"
+                >
+                  Compare all {compound.listings} {compound.name} listings by strength and price
+                </Link>
+              </p>
+            )}
 
             <h3 className="mt-10 font-display text-lg font-semibold tracking-[-0.025em]">
               What it is used for

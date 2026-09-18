@@ -5,13 +5,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { ProductGrid } from '@/components/product/product-grid';
 import {
-  useProducts,
   useCategories,
   useBrands,
 } from '@/components/providers/catalogue-provider';
 import { formatPrice } from '@/lib/format';
 import { categoryPigment } from '@/lib/site';
 import { useSearchLog } from '@/components/analytics/use-search-log';
+import { useCatalogueSearch } from '@/components/shop/use-catalogue-search';
 import { cn } from '@/lib/utils';
 
 /*
@@ -37,18 +37,22 @@ const NAMED_FILTERS: { value: string; label: string }[] = [
   { value: 'deals', label: 'On offer' },
 ];
 
-/* The ceiling follows the catalogue, so a price change in the database moves the slider. */
-function priceCeiling(list: { price: number }[]): number {
-  return Math.ceil(list.reduce((max, p) => Math.max(max, p.price), 0) / 10) * 10;
-}
+/** How many products arrive per request. The rest come on "Show more". */
+const PAGE_SIZE = 24;
+
+/**
+ * The slider's top before the first reply lands. The real ceiling comes from the catalogue with
+ * the results; this only has to be sane for the frame or two before it arrives.
+ */
+const FALLBACK_CEILING = 500;
 
 export function ShopBrowser() {
   const router = useRouter();
   const params = useSearchParams();
-  const products = useProducts();
+  /* The catalogue is no longer shipped to the browser: the server filters and pages it. */
   const categories = useCategories();
   const brands = useBrands();
-  const PRICE_CEILING = React.useMemo(() => priceCeiling(products), [products]);
+
 
   const category = params.get('category') ?? '';
   /* The compound group — the folder's second level. Only meaningful inside a category. */
@@ -57,7 +61,7 @@ export function ShopBrowser() {
   const filter = params.get('filter') ?? '';
   const query = params.get('q') ?? '';
   const sort = (params.get('sort') as Sort) ?? 'featured';
-  const maxPrice = Number(params.get('max') ?? PRICE_CEILING);
+  const maxParam = params.get('max');
 
   const [draftQuery, setDraftQuery] = React.useState(query);
   const [panelOpen, setPanelOpen] = React.useState(false);
@@ -79,59 +83,41 @@ export function ShopBrowser() {
 
   const clearAll = () => router.replace('/shop', { scroll: false });
 
-  const visible = React.useMemo(() => {
-    let list = products.slice();
+  /*
+    The results, from the server. The filtering that used to run here over every product in the
+    browser now runs in /api/catalogue, which also hands back the price ceiling and the
+    category's compound groups — the two things the filters need but a page of results does not
+    carry.
+  */
+  const {
+    items: visible,
+    total,
+    ceiling,
+    groups,
+    loading,
+    loadingMore,
+    error,
+    hasMore,
+    loadMore,
+  } = useCatalogueSearch(
+    { q: query, category, group, brand, filter, sort, max: maxParam ? Number(maxParam) : undefined },
+    PAGE_SIZE
+  );
 
-    if (category) list = list.filter((p) => p.categorySlug === category);
-    if (group) list = list.filter((p) => p.subcategory === group);
-    if (brand) list = list.filter((p) => p.brandSlug === brand);
-    if (filter === 'best-sellers') list = list.filter((p) => p.isBestSeller);
-    if (filter === 'new') list = list.filter((p) => p.isNew);
-    if (filter === 'trending') list = list.filter((p) => p.isTrending);
-    if (filter === 'deals') list = list.filter((p) => p.isDeal);
-    if (maxPrice < PRICE_CEILING) list = list.filter((p) => p.price <= maxPrice);
+  /* Until the first reply lands, the slider has no ceiling to draw; fall back to a sane top. */
+  const PRICE_CEILING = ceiling || FALLBACK_CEILING;
+  const maxPrice = Number(maxParam ?? PRICE_CEILING);
 
-    if (query) {
-      const q = query.toLowerCase();
-      list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.brand.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q) ||
-          (p.subcategoryName ?? '').toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q)
-      );
-    }
-
-    switch (sort) {
-      case 'price-asc':
-        return list.sort((a, b) => a.price - b.price);
-      case 'price-desc':
-        return list.sort((a, b) => b.price - a.price);
-      case 'rating':
-        return list.sort((a, b) => b.rating - a.rating);
-      case 'newest':
-        return list.sort((a, b) => Number(b.isNew ?? 0) - Number(a.isNew ?? 0));
-      default:
-        return list;
-    }
-  }, [products, category, group, brand, filter, query, sort, maxPrice, PRICE_CEILING]);
-
-  /* The groups the selected category actually holds, from the products themselves. */
-  const groups = React.useMemo(() => {
-    if (!category) return [];
-    const seen = new Map<string, { slug: string; name: string; count: number }>();
-    for (const p of products) {
-      if (p.categorySlug !== category || !p.subcategory || !p.subcategoryName) continue;
-      const entry = seen.get(p.subcategory) ?? { slug: p.subcategory, name: p.subcategoryName, count: 0 };
-      entry.count += 1;
-      seen.set(p.subcategory, entry);
-    }
-    return Array.from(seen.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [products, category]);
-
-  /* The committed ?q= search, reported once the results are known. */
-  useSearchLog(query, visible.length);
+  /*
+    The committed ?q= search, reported once the results are known. The count is held at the last
+    settled value while a request is in flight, so a search is never logged as "0 results"
+    because its answer had not arrived yet.
+  */
+  const [settledTotal, setSettledTotal] = React.useState(0);
+  React.useEffect(() => {
+    if (!loading) setSettledTotal(total);
+  }, [loading, total]);
+  useSearchLog(query, settledTotal);
 
   const activeCount =
     (category ? 1 : 0) +
@@ -301,8 +287,9 @@ export function ShopBrowser() {
             {heading}
           </h1>
           <p className="measure mt-3 text-sm leading-relaxed text-ink-soft sm:text-base">
-            {visible.length} of {products.length} compounds. Every entry carries its
-            specification, its batch record, and its directions.
+            {loading ? 'Loading the catalogue…' : `${total} ${total === 1 ? 'product' : 'products'}`}
+            {!loading && activeCount > 0 ? ' match these filters.' : '.'} Each listing carries its
+            manufacturer, strength and pack as printed on the product.
           </p>
         </div>
       </section>
@@ -424,7 +411,21 @@ export function ShopBrowser() {
               </div>
             )}
 
-            {visible.length === 0 ? (
+            {loading ? (
+              /* Not an empty state: "nothing matches" while the answer is in flight is a lie. */
+              <p className="mt-6 border border-rule bg-card px-6 py-20 text-center text-sm text-ink-soft">
+                Loading…
+              </p>
+            ) : error ? (
+              <div className="mt-6 border border-rule bg-card px-6 py-20 text-center">
+                <h2 className="font-display text-xl font-semibold tracking-[-0.025em]">
+                  The catalogue did not answer
+                </h2>
+                <p className="measure-tight mx-auto mt-3 text-sm leading-relaxed text-ink-soft">
+                  Something went wrong fetching these products. Try again in a moment.
+                </p>
+              </div>
+            ) : visible.length === 0 ? (
               <div className="border border-rule bg-card px-6 py-20 text-center">
                 <h2 className="font-display text-xl font-semibold tracking-[-0.025em]">
                   Nothing in the bath matches that
@@ -442,7 +443,24 @@ export function ShopBrowser() {
                 </button>
               </div>
             ) : (
-              <ProductGrid products={visible} columns={3} className="mt-6" />
+              <>
+                <ProductGrid products={visible} columns={3} className="mt-6" />
+                {hasMore && (
+                  <div className="mt-8 flex flex-col items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={loadMore}
+                      disabled={loadingMore}
+                      className="rounded-full border border-rule-strong px-6 py-3 text-sm font-medium transition-colors hover:border-pigment-indigo hover:bg-paper-sunk disabled:opacity-60"
+                    >
+                      {loadingMore ? 'Loading…' : 'Show more'}
+                    </button>
+                    <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint tabular">
+                      {visible.length} of {total} shown
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

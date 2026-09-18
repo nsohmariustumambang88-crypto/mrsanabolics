@@ -24,8 +24,10 @@ export const SITE = {
   name: 'MrAnabolics',
   url: siteUrl(),
   slogan: 'Every batch, floated and documented.',
+  /** The default page title. It used to say "Lab-Tested", which nothing on the site backs. */
+  tagline: 'Steroids, Peptides and SARMs by Compound',
   description:
-    'Lab-tested performance compounds with full specifications, batch testing, and dosing on every product. Injectables, orals, SARMs, PCT, peptides, and support compounds.',
+    'Injectable and oral steroids, post-cycle, peptides and SARMs from 41 manufacturers, grouped by compound so every version can be compared by strength and price.',
 } as const;
 
 /**

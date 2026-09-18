@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { Check, ArrowLeft, ArrowRight, Lock, Info, ShoppingBag } from 'lucide-react';
 import { useStore } from '@/components/providers/store-provider';
 import { BullMark } from '@/components/brand/bull-mark';
-import { ProductPlate } from '@/components/product/product-plate';
-import { useProducts } from '@/components/providers/catalogue-provider';
+import Image from 'next/image';
+
 import { formatPrice } from '@/lib/format';
 import {
   PaymentMethods,
@@ -46,7 +46,7 @@ export function CheckoutFlow({
   paymentMethods: CheckoutPaymentMethod[];
 }) {
   const { cart, cartSubtotal, clearCart, cartCount } = useStore();
-  const products = useProducts();
+
   const [step, setStep] = React.useState(0);
   const [placed, setPlaced] = React.useState(false);
   const [method, setMethod] = React.useState<PaymentMethod>('card');
@@ -401,12 +401,10 @@ export function CheckoutFlow({
                       className="flex items-center gap-4 border-b border-rule py-4"
                     >
                       <span className="relative h-14 w-14 shrink-0 overflow-hidden border border-rule bg-paper-sunk">
-                        {(() => {
-                          const record = products.find((p) => p.slug === item.slug);
-                          return record ? (
-                            <ProductPlate product={record} showMarking={false} sizes="56px" />
-                          ) : null;
-                        })()}
+                        {item.image ? (
+                          /* The cart's own snapshot: no catalogue lookup, so none is shipped. */
+                          <Image src={item.image} alt="" fill sizes="56px" className="object-contain mix-blend-multiply dark:mix-blend-normal" />
+                        ) : null}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
