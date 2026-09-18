@@ -26,19 +26,21 @@ It is explicitly a **portfolio / demo build**. `PRODUCT.md` is the authority on 
 
 ## Architecture
 
-**Data layer — Neon Postgres via Prisma.** The catalogue lives in the database. [prisma/schema.prisma](prisma/schema.prisma) models Product (owning Specification, ProductFaq and Review rows), Category, Brand, BlogPost, Testimonial and Faq.
+**Data layer — Postgres via Prisma, on Supabase since September 2026** (it was Neon; see "The database moved from Neon to Supabase"). The catalogue lives in the database. [prisma/schema.prisma](prisma/schema.prisma) models Product (owning Specification, ProductFaq and Review rows), Category, Brand, BlogPost, Testimonial and Faq.
 
 All reads go through [lib/db/catalogue.ts](lib/db/catalogue.ts), which returns the **same flat shapes** declared in [lib/types.ts](lib/types.ts) that the old arrays returned — so the storage change stops at that one file and no UI component knows about Prisma. It starts with `import 'server-only'`: importing it from a client component is a build error, not a runtime attempt to open a database connection in the browser.
 
 [lib/data/](lib/data/) is now **seed source only**. It is the input to `prisma/seed.ts` and must not be imported by app code; the seed treats those arrays as the authority, so product copy stays verbatim.
 
 ```bash
-npm run db:push     # sync schema to Neon (uses DIRECT_URL — PgBouncer cannot run DDL)
+npm run db:push     # sync the schema (uses DIRECT_URL — a transaction pooler cannot run DDL)
 npm run db:seed     # idempotent upsert from lib/data
 npm run db:studio   # browse the data
 ```
 
-**Two connection strings.** `DATABASE_URL` is the pooled endpoint and carries `pgbouncer=true&connection_limit=1`; `DIRECT_URL` is the same database without `-pooler`, for migrations. Both live in `.env`, which is gitignored — `.env.example` is the tracked template. Never put a database URL behind `NEXT_PUBLIC_`; that ships it to the browser.
+**Two connection strings.** `DATABASE_URL` is Supabase's **transaction pooler** (port 6543) and carries `pgbouncer=true&connection_limit=5&pool_timeout=30&connect_timeout=15`; `DIRECT_URL` is the **session pooler** (port 5432), for `db push`. Both use the `aws-0-us-east-1.pooler.supabase.com` host — never Supabase's "direct connection" host, which is IPv6-only and unreachable from Vercel and most home connections. A password containing `@ # / ? %` must be URL-encoded. Both values live in `.env` (gitignored; `.env.example` is the template) and in Vercel as **sensitive** variables, which cannot be read back — `vercel env pull` shows `[SENSITIVE]`. Never put a database URL behind `NEXT_PUBLIC_`; that ships it to the browser.
+
+`connection_limit=1` is wrong here, whatever older notes said: the storefront layout and the home page run reads side by side, and with one connection and a ~0.5s round trip they queue past Prisma's 10-second pool timeout (`P2024`).
 
 **Reads are memoised per process, not per page.** The storefront layout needs the catalogue on every route it renders. Querying per page made the build take minutes and then fail with `ECONNRESET`. `unstable_cache` did **not** dedupe across prerenders in Next 13.5, so `catalogue.ts` uses a small per-closure TTL memo (60s) instead, and every derived read — by slug, by category, by brand, related — filters that one list in memory. `next.config.js` also sets `experimental.cpus: 1`, because parallel prerender workers each opened their own connection and Neon reset them.
 
@@ -550,10 +552,51 @@ by brute force and so only looks like protection.
 refusals, and gives each check its own `x-forwarded-for` so the suite does not trip its own rate
 limiter — a test that depends on how recently it last ran is worse than no test.
 
-**Neon's unpooled host is unreachable on this project**, so `npm run db:push` fails with P1001.
-`db push` is not migration-based and takes no advisory locks, so it runs fine through the pooler:
-point `DIRECT_URL` at the pooled URL for that one command. Real migrations would still need a
-reachable direct endpoint.
+## The database moved from Neon to Supabase
+
+**On 18 September 2026 the Neon project hit its free-plan quota and refused every connection**,
+with `53000: Your account or project has exceeded the quota`. Prisma reports that only as P1001
+"Can't reach database server", which reads like a network fault — the real message appears only
+through a plain Postgres client (`pg`). The site went down in a way that was easy to misread:
+cached pages kept serving (`x-vercel-cache: STALE`) while every live read — admin login, the
+sitemap, regeneration — returned 500.
+
+Neon's free plan meters the hours the compute is awake, and this site keeps it awake: 60-second
+revalidation, the visit tracker, chat polling, and crawlers across ~800 product pages. Supabase's
+free plan has no compute-hour cap, which is why it was chosen. It was rebuilt entirely from the
+seed scripts — `db push`, `db:seed-catalogue`, `db:seed`, `db:seed-operations`, `db:seed-journal`,
+then `admin:create` with `ADMIN_EMAIL`/`ADMIN_PASSWORD` — and Vercel's production `DATABASE_URL`
+/ `DIRECT_URL` were replaced and the site redeployed.
+
+**What the live site had written stayed in Neon**: orders, contacts, customers, subscribers,
+reviews, chats, analytics, discounts, settings, admin price and stock edits. Neon's free quota
+resets at the start of the month. Then:
+
+```bash
+npm run db:import-neon              # dry run: a table-by-table report, writes nothing
+npm run db:import-neon -- --apply   # copy
+```
+
+[prisma/import-from-neon.ts](prisma/import-from-neon.ts) reads `NEON_DATABASE_URL` (kept in `.env`)
+and writes to `DATABASE_URL`. The two databases were seeded separately, so **seeded rows have
+different ids on each side** and are matched by natural key (slug, key, email, code, token),
+never by id; every foreign key is re-pointed through those maps. The target is always the newer
+database, so it wins every conflict: a seeded row is overwritten only if Neon edited it and the
+target has not, a returning email keeps the target's contact (and inherits the Neon one's orders
+and notes), and the target's subscription row stands as the more recent consent decision. Journal
+articles are **reported, not copied** — drafts re-seeded with `--refresh` look exactly like admin
+edits — unless `--include-journal`. A re-run adds nothing. Two things still need a person:
+delivery zones edited on both sides are left alone and flagged, and an order whose reference is
+already taken is skipped and listed.
+
+```bash
+node --env-file=.env .impeccable/import-neon-e2e.mjs   # 35 checks, on scratch schemas
+```
+
+It builds `import_test_src`/`import_test_dst` schemas on the Supabase server, re-issues the
+target's seeded ids to mimic two separate seeds, and always drops both schemas. It keeps
+`connection_limit=2`: the session pooler allows ~15 connections on the free plan, and exhausting
+it also surfaces as "can't reach database".
 
 ## The CRM
 
