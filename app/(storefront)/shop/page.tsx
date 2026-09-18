@@ -1,25 +1,37 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { ShopBrowser } from '@/components/shop/shop-browser';
+import { CatalogueDirectory, SectionTitle } from '@/components/shop/collection-sections';
 import { getProducts } from '@/lib/db/catalogue';
+import { getCategoryCollections } from '@/lib/db/collections';
 import { SITE } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Shop all compounds',
+  title: 'Shop all products',
   description:
-    'Browse the full catalogue by category, manufacturer, and price. Every product carries its specification, batch testing, and directions.',
+    'Browse the whole catalogue by category, compound, manufacturer and price, or go straight to a compound to compare every manufacturer’s version.',
   alternates: { canonical: '/shop' },
 };
 
 export const revalidate = 60;
 
+/*
+  The shop has two layers, and only one of them is visible to a crawler.
+
+  ShopBrowser is interactive — filters, sorting, search — and reads the query string, so it is
+  rendered in the browser inside a Suspense boundary. The HTML a crawler receives holds only
+  that boundary's fallback: it used to be an empty box, which left /shop with no heading and not
+  one product link. The fallback now carries the page's heading, and the directory below the
+  browser is server-rendered, linking every category and compound page — which in turn link every
+  product.
+*/
 export default async function ShopPage() {
-  const products = await getProducts();
+  const [products, categories] = await Promise.all([getProducts(), getCategoryCollections()]);
 
   const itemList = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'MrAnabolics catalogue',
+    name: `${SITE.name} catalogue`,
     numberOfItems: products.length,
     itemListElement: products.map((p, i) => ({
       '@type': 'ListItem',
@@ -31,13 +43,36 @@ export default async function ShopPage() {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }}
-      />
-      <Suspense fallback={<div className="min-h-screen" />}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }} />
+      <Suspense
+        fallback={
+          <section className="min-h-screen border-b border-rule">
+            <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
+              <h1 className="font-display text-[clamp(2rem,4vw,3.25rem)] font-semibold leading-[1.02] tracking-[-0.04em]">
+                Shop all products
+              </h1>
+              <p className="measure mt-4 text-sm leading-relaxed text-ink-soft sm:text-base">
+                {products.length} products across {categories.length} categories.
+              </p>
+            </div>
+          </section>
+        }
+      >
         <ShopBrowser />
       </Suspense>
+
+      <section aria-labelledby="directory" className="border-t border-rule">
+        <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
+          <SectionTitle id="directory">Browse by category and compound</SectionTitle>
+          <p className="measure mt-2 text-sm leading-relaxed text-ink-soft">
+            Every compound has its own page comparing each manufacturer’s version by strength,
+            form and price.
+          </p>
+          <div className="mt-6">
+            <CatalogueDirectory categories={categories} />
+          </div>
+        </div>
+      </section>
     </>
   );
 }

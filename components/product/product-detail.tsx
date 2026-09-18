@@ -28,6 +28,7 @@ import { ReviewForm } from '@/components/product/review-form';
 import { SectionHeading } from '@/components/product/section-heading';
 import { formatPrice } from '@/lib/format';
 import { categoryPigment, UNDER_HEADER_INSET } from '@/lib/site';
+import { categoryPath, groupPath } from '@/lib/catalogue/paths';
 import type { Product } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -158,7 +159,7 @@ export function ProductDetail({
           <ChevronRight className="h-3 w-3" strokeWidth={1.75} aria-hidden="true" />
           <li>
             <Link
-              href={`/shop?category=${product.categorySlug}`}
+              href={categoryPath(product.categorySlug)}
               className="transition-colors hover:text-ink"
             >
               {product.category}
@@ -169,7 +170,7 @@ export function ProductDetail({
               <ChevronRight className="h-3 w-3" strokeWidth={1.75} aria-hidden="true" />
               <li>
                 <Link
-                  href={`/shop?category=${product.categorySlug}&group=${product.subcategory}`}
+                  href={groupPath(product.categorySlug, product.subcategoryName ?? product.subcategory ?? '')}
                   className="transition-colors hover:text-ink"
                 >
                   {product.subcategoryName}
@@ -517,7 +518,7 @@ export function ProductDetail({
             <SectionHeading
               title="From the same bath"
               description={`Other ${product.category.toLowerCase()} in the catalogue.`}
-              href={`/shop?category=${product.categorySlug}`}
+              href={categoryPath(product.categorySlug)}
               hrefLabel={`All ${product.category.toLowerCase()}`}
             />
             <ProductGrid products={related} columns={4} className="mt-8" />

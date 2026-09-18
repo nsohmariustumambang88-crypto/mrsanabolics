@@ -117,6 +117,40 @@ source file's size and mtime, so a re-run uploads only what changed (`--force` r
 `--dry-run` prints the plan). Each asset is tagged `library`, its category and subcategory, so the
 Media Library can be filtered the same way the folder is.
 
+## Collection pages: the shop's pages for search
+
+**`/shop/<category>` and `/shop/<category>/<compound>` are the pages built to be found.** Nine
+categories and 38 compound groups, each a real route with its own title, `<h1>`, copy, questions
+and structured data. They replaced `/shop?category=x&group=y`, which could never rank: those
+addresses served the shop's own title, declared **`/shop` as their canonical**, rendered no
+heading, and — because `ShopBrowser` reads `useSearchParams` and is therefore client-rendered —
+put **not one product link** in the HTML a crawler received. The sitemap listed nine of them
+anyway, so the site was asking to be indexed at URLs whose pages disowned themselves.
+
+- [lib/catalogue/paths.ts](lib/catalogue/paths.ts) owns every collection address. A group's segment
+  comes from its **display name**, not the folder key it is stored under: the keys are what the
+  photographs were filed as (`enantat`, `armidex`, `litrozole`, `steroids` for the blends) and
+  nobody searches for those. Renaming a group changes its URL; add a redirect if that happens.
+- [lib/db/collections.ts](lib/db/collections.ts) builds the collections from the memoised
+  `getProducts()`, so the pages, the `/shop` directory and the sitemap share one read. Everything a
+  page states about stock — listings, manufacturers, strengths, forms, price range — is computed
+  there, never written down.
+- [lib/catalogue/collection-copy.ts](lib/catalogue/collection-copy.ts) holds the only thing that
+  cannot be computed: one or two factual sentences on what each compound **is**, and a category
+  intro. The journal's editorial policy applies — no dosing, no protocols, no effect claims.
+- [lib/catalogue/collection-faq.ts](lib/catalogue/collection-faq.ts) answers from the data, or
+  points at the article that answers properly. **Check the law article before writing a legal
+  sentence here**: "prescription-only medicine" is false for trenbolone, boldenone and MENT, which
+  are not licensed human medicines anywhere, so the steroid answer states each country's control
+  status instead.
+- The group page says listings are **"filed under"** the compound, not that each one is it. Some
+  folders hold neighbours — the Enanthate folder carries blends and a trestolone ester — and until
+  they are refiled in the admin the page must not claim more than the catalogue knows.
+
+`/shop` keeps its client browser, with the heading moved into the Suspense fallback (which is what
+a crawler gets) and `CatalogueDirectory` beneath it linking every category and compound. Every
+product is now reachable by links alone: `/shop` → category → compound → product.
+
 ## The catalogue is the photo library
 
 **Products come from the store's own photographs, not from hand-written arrays.** The folder

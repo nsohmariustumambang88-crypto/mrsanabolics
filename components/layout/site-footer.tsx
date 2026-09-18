@@ -7,6 +7,7 @@ import { MarbleBath } from '@/components/ebru/marble-bath';
 import { BullMark } from '@/components/brand/bull-mark';
 import { useCategories, useBrands } from '@/components/providers/catalogue-provider';
 import { categoryPigment } from '@/lib/site';
+import { categoryPath } from '@/lib/catalogue/paths';
 
 const shopLinks = [
   { label: 'All compounds', href: '/shop' },
@@ -156,7 +157,7 @@ export function SiteFooter() {
               {categories.slice(0, 8).map((c) => (
                 <Link
                   key={c.slug}
-                  href={`/shop?category=${c.slug}`}
+                  href={categoryPath(c.slug)}
                   className="group inline-flex items-center gap-1.5 rounded-full border border-rule px-2.5 py-1 text-xs text-ink-soft transition-colors hover:border-pigment-indigo-lift hover:text-ink"
                 >
                   <span

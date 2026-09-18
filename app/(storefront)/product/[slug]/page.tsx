@@ -7,6 +7,7 @@ import {
 import { ProductDetail } from '@/components/product/product-detail';
 import { getSettingsSafe, asBoolean } from '@/lib/settings';
 import { SITE } from '@/lib/site';
+import { categoryPath, groupPath } from '@/lib/catalogue/paths';
 
 /*
   Server component.
@@ -142,7 +143,7 @@ export default async function ProductPage({ params }: Params) {
           '@type': 'ListItem',
           position: 2,
           name: product.category,
-          item: `${SITE.url}/shop?category=${product.categorySlug}`,
+          item: `${SITE.url}${categoryPath(product.categorySlug)}`,
         },
         /* The compound group, where the category has one — the folder's second level. */
         ...(product.subcategory && product.subcategoryName
@@ -151,7 +152,7 @@ export default async function ProductPage({ params }: Params) {
                 '@type': 'ListItem',
                 position: 3,
                 name: product.subcategoryName,
-                item: `${SITE.url}/shop?category=${product.categorySlug}&group=${product.subcategory}`,
+                item: `${SITE.url}${groupPath(product.categorySlug, product.subcategoryName ?? product.subcategory ?? '')}`,
               },
             ]
           : []),

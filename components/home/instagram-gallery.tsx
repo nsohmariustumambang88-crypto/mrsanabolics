@@ -6,6 +6,7 @@ import { SectionHeading } from '@/components/product/section-heading';
 import { ProductPlate } from '@/components/product/product-plate';
 import { useCategories, useProducts } from '@/components/providers/catalogue-provider';
 import { categoryPigment } from '@/lib/site';
+import { categoryPath } from '@/lib/catalogue/paths';
 import type { ProductSummary } from '@/lib/types';
 
 /*
@@ -74,7 +75,7 @@ export function InstagramGallery() {
           {tiles.map(({ category, sample }) => (
             <Link
               key={category.slug}
-              href={`/shop?category=${category.slug}`}
+              href={categoryPath(category.slug)}
               className="group flex flex-col bg-card transition-colors hover:bg-paper-sunk"
             >
               {/* The pigment reads as a plate rule above the goods, as it does on a product card. */}

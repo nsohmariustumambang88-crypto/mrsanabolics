@@ -22,6 +22,7 @@ import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { BullMark } from '@/components/brand/bull-mark';
 import { useCategories, useBrands } from '@/components/providers/catalogue-provider';
 import { categoryPigment } from '@/lib/site';
+import { categoryPath } from '@/lib/catalogue/paths';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
@@ -95,7 +96,7 @@ function CategoryMenu({ onNavigate }: { onNavigate?: () => void }) {
       {categories.map((c) => (
         <Link
           key={c.slug}
-          href={`/shop?category=${c.slug}`}
+          href={categoryPath(c.slug)}
           onClick={onNavigate}
           className="group flex items-baseline gap-3 border-b border-rule/60 py-2.5 last:border-0 hover:border-pigment-indigo-lift"
         >

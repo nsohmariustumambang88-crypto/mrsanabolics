@@ -1,10 +1,6 @@
 import type { MetadataRoute } from 'next';
-import {
-  getProducts,
-  getCategories,
-  getBrands,
-  getBlogPosts,
-} from '@/lib/db/catalogue';
+import { getProducts, getBrands, getBlogPosts } from '@/lib/db/catalogue';
+import { getCategoryCollections } from '@/lib/db/collections';
 import { SITE } from '@/lib/site';
 
 /*
@@ -22,9 +18,9 @@ import { SITE } from '@/lib/site';
 export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [products, categories, brands, blogPosts] = await Promise.all([
+  const [products, collections, brands, blogPosts] = await Promise.all([
     getProducts(),
-    getCategories(),
+    getCategoryCollections(),
     getBrands(),
     getBlogPosts(),
   ]);
@@ -58,12 +54,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     })),
-    ...categories.map((c) => ({
-      url: `${base}/shop?category=${c.slug}`,
-      lastModified: now,
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
-    })),
+    /*
+      Category and compound pages. These used to be `/shop?category=x` addresses whose pages
+      named `/shop` as their canonical, so the sitemap listed nine URLs the pages themselves
+      disowned. Compound pages rank above single products: they are the pages built to answer a
+      search for the compound's name.
+    */
+    ...collections.flatMap((c) => [
+      { url: `${base}${c.path}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
+      ...c.groups.map((g) => ({
+        url: `${base}${g.path}`,
+        lastModified: now,
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+      })),
+    ]),
     ...brands.map((b) => ({
       url: `${base}/brands/${b.slug}`,
       lastModified: now,

@@ -5,6 +5,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { SectionHeading } from '@/components/product/section-heading';
 import { useCategories } from '@/components/providers/catalogue-provider';
 import { categoryPigment } from '@/lib/site';
+import { categoryPath } from '@/lib/catalogue/paths';
 
 /*
   The pigment index.
@@ -32,7 +33,7 @@ export function FeaturedCategories() {
           {categories.map((category) => (
             <li key={category.slug}>
               <Link
-                href={`/shop?category=${category.slug}`}
+                href={categoryPath(category.slug)}
                 className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-baseline gap-3.5 border-b border-rule py-3.5 transition-colors hover:bg-paper-sunk sm:gap-5 sm:py-4"
               >
                 <span

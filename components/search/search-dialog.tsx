@@ -10,6 +10,7 @@ import { useProducts, useCategories } from '@/components/providers/catalogue-pro
 import { formatPrice } from '@/lib/format';
 import { ProductPlate } from '@/components/product/product-plate';
 import { categoryPigment } from '@/lib/site';
+import { categoryPath } from '@/lib/catalogue/paths';
 import { useSearchLog } from '@/components/analytics/use-search-log';
 import { cn } from '@/lib/utils';
 
@@ -119,7 +120,7 @@ export function SearchDialog() {
                 <li key={c.slug}>
                   <button
                     type="button"
-                    onClick={() => go(`/shop?category=${c.slug}`)}
+                    onClick={() => go(categoryPath(c.slug))}
                     className="inline-flex items-center gap-1.5 rounded-full border border-rule px-2.5 py-1 text-xs text-ink-soft transition-colors hover:border-pigment-indigo-lift hover:text-ink"
                   >
                     <span
