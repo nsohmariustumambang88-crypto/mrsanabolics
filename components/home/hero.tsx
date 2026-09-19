@@ -34,17 +34,17 @@ export function Hero({
         {/* The sheet */}
         <div className="flex flex-col justify-center px-4 py-12 sm:px-6 sm:py-16 lg:border-r lg:border-rule lg:px-10 lg:py-24">
           <h1 className="font-display text-[clamp(2.75rem,6vw,5rem)] font-semibold leading-[0.95] tracking-[-0.04em]">
-            Suspended,
+            Steroids, peptides
             <br />
-            documented,
+            and SARMs,
             <br />
-            <span className="text-pigment-indigo">lifted once.</span>
+            <span className="text-pigment-indigo">compared by compound.</span>
           </h1>
 
           <p className="measure-tight mt-8 text-base leading-relaxed text-ink-soft sm:text-lg">
-            Every compound we sell is a substance held at a concentration. We publish the
-            specification, the batch, and the protocol for each one — then let you read it
-            before you decide.
+            Injectable and oral steroids, post-cycle, peptides and SARMs from 41 manufacturers.
+            Every compound has its own page comparing each maker’s version by strength, form and
+            price.
           </p>
 
           <div className="mt-8 sm:mt-10 flex flex-wrap items-center gap-3">
@@ -59,10 +59,10 @@ export function Hero({
               />
             </Link>
             <Link
-              href="/faq"
+              href="/blog/how-to-read-a-certificate-of-analysis"
               className="inline-flex items-center gap-2.5 rounded-full border border-rule-strong px-6 py-3.5 text-sm font-medium transition-colors duration-300 hover:border-pigment-indigo hover:bg-paper-sunk"
             >
-              How testing works
+              How to check a certificate
             </Link>
           </div>
         </div>

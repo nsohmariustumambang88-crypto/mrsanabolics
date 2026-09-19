@@ -25,7 +25,7 @@ export function PopularBrands() {
       <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
         <SectionHeading
           title="Who makes it"
-          description="Each manufacturer holds its own specification and its own testing chain. The name on the vial is the name accountable for the assay."
+          description="The manufacturers in this catalogue. Each one’s page lists everything it makes here."
           href="/brands"
           hrefLabel="All manufacturers"
         />

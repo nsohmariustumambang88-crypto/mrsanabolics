@@ -133,7 +133,7 @@ export function CheckoutFlow({
       <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 py-16 text-center">
         <BullMark title="MrAnabolics" className="w-32" />
         <h1 className="mt-8 font-display text-3xl font-semibold tracking-[-0.035em]">
-          Lifted
+          Order placed
         </h1>
         <p className="measure-tight mt-4 text-sm leading-relaxed text-ink-soft">
           In a connected build your order would be confirmed here with a reference number, and

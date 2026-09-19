@@ -11,30 +11,37 @@ import { SectionHeading } from '@/components/product/section-heading';
   The numbers are earned here — the sequence itself is the information.
 */
 
+/*
+  Four checks a buyer can make, here or anywhere. This section used to describe four stages this
+  shop does not perform — a GMP-certified facility, an independent assay of every batch, a
+  certificate published on each product page — none of which the catalogue can show. Those were
+  claims with nothing behind them, on the busiest page of the site, and they came off at the same
+  time as the decorative taglines.
+*/
 const stages = [
   {
     n: '01',
-    title: 'Synthesised',
-    body: 'Produced in a GMP-certified facility against a written specification, with the concentration fixed before anything is filled.',
-    record: 'Specification set',
+    title: 'Check the maker',
+    body: 'Every listing names its manufacturer, and each manufacturer has a page listing everything it makes here.',
+    record: 'Manufacturer named',
   },
   {
     n: '02',
-    title: 'Assayed',
-    body: 'A sample from every batch goes to an independent laboratory. We do not run the test that clears our own product.',
-    record: 'Independent lab',
+    title: 'Ask for the certificate',
+    body: 'Ask for the certificate of analysis for the exact batch, and check that the laboratory that issued it is accredited for that test.',
+    record: 'Certificate for the batch',
   },
   {
     n: '03',
-    title: 'Documented',
-    body: 'The certificate of analysis is filed against the batch number and published on the product page. You read it before you buy, not after.',
-    record: 'COA published',
+    title: 'Match the batch',
+    body: 'The batch number on the certificate should match the one printed on the pack in your hand. If it does not, the certificate describes a different product.',
+    record: 'Batch numbers match',
   },
   {
     n: '04',
-    title: 'Lifted',
-    body: 'Packed unmarked, insulated where the compound requires it, and tracked from our door to yours.',
-    record: 'Tracked, unmarked',
+    title: 'Compare the versions',
+    body: 'Every compound has a page comparing each manufacturer’s version side by side, by strength, form and price.',
+    record: 'Compared by compound',
   },
 ];
 
@@ -43,8 +50,8 @@ export function WhyChoose() {
     <section className="border-b border-rule bg-paper-sunk">
       <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-24">
         <SectionHeading
-          title="What happens before it ships"
-          description="Four stages, in order. Each one produces a document, and every document is attached to the batch number printed on your vial."
+          title="Four checks before you buy"
+          description="What is worth checking before any order, here or anywhere else. Our guide to reading a certificate of analysis goes through each one."
         />
 
         <ol className="mt-8 border-t border-rule sm:mt-12">

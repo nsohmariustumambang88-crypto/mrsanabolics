@@ -110,7 +110,7 @@ export default async function BrandPage({ params }: Params) {
           {list.length === 0 ? (
             <div className="border border-rule bg-card px-6 py-20 text-center">
               <h2 className="font-display text-xl font-semibold tracking-[-0.025em]">
-                Nothing from {brand.name} in the bath right now
+                Nothing from {brand.name} is listed right now
               </h2>
               <p className="measure-tight mx-auto mt-3 text-sm leading-relaxed text-ink-soft">
                 This manufacturer has no products listed in the current catalogue.

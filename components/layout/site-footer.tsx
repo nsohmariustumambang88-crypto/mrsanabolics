@@ -149,8 +149,8 @@ export function SiteFooter() {
               </span>
             </Link>
             <p className="measure-tight mt-5 text-sm leading-relaxed text-ink-soft">
-              Every compound is a suspension held at a concentration. We publish the
-              specification, the batch, and the protocol for each one, then let you read it
+              Injectable and oral steroids, post-cycle, peptides and SARMs, grouped by compound
+              so every manufacturer’s version can be compared by strength, form and price
               before you decide.
             </p>
             <div className="mt-6 flex flex-wrap gap-1.5">

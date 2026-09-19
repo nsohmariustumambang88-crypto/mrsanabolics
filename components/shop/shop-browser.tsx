@@ -32,8 +32,8 @@ const SORTS: { value: Sort; label: string }[] = [
 
 const NAMED_FILTERS: { value: string; label: string }[] = [
   { value: 'best-sellers', label: 'Best sellers' },
-  { value: 'new', label: 'Newly floated' },
-  { value: 'trending', label: 'Moving this week' },
+  { value: 'new', label: 'New arrivals' },
+  { value: 'trending', label: 'Trending' },
   { value: 'deals', label: 'On offer' },
 ];
 
@@ -428,7 +428,7 @@ export function ShopBrowser() {
             ) : visible.length === 0 ? (
               <div className="border border-rule bg-card px-6 py-20 text-center">
                 <h2 className="font-display text-xl font-semibold tracking-[-0.025em]">
-                  Nothing in the bath matches that
+                  Nothing matches those filters
                 </h2>
                 <p className="measure-tight mx-auto mt-3 text-sm leading-relaxed text-ink-soft">
                   Try a broader price range, or clear a filter. Every compound in the

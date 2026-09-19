@@ -70,20 +70,14 @@ function Wordmark({ compact }: { compact?: boolean }) {
           )}
         />
       </span>
-      <span className="flex flex-col leading-none">
-        <span
-          className={cn(
-            'font-display font-semibold tracking-[-0.03em] transition-colors duration-300',
-            compact ? 'text-base' : 'text-base sm:text-lg'
-          )}
-        >
-          MrAnabolics
-        </span>
-        {!compact && (
-          <span className="mt-1 hidden font-mono text-2xs uppercase tracking-[0.18em] text-ink-faint sm:block">
-            Floated &amp; documented
-          </span>
+      {/* The name alone. The "Floated & documented" tagline under it was removed at the owner's request. */}
+      <span
+        className={cn(
+          'font-display font-semibold leading-none tracking-[-0.03em] transition-colors duration-300',
+          compact ? 'text-base' : 'text-base sm:text-lg'
         )}
+      >
+        MrAnabolics
       </span>
     </Link>
   );

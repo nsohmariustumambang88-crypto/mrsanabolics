@@ -24,8 +24,8 @@ export function ThemeToggle({ className }: { className?: string }) {
         'group relative inline-flex h-8 w-[3.25rem] items-center rounded-full border border-rule-strong bg-paper-sunk px-0.5 transition-colors duration-300 hover:border-pigment-indigo-lift',
         className
       )}
-      aria-label={isBath ? 'Lift onto paper' : 'Return to the bath'}
-      title={isBath ? 'Lift onto paper' : 'Return to the bath'}
+      aria-label={isBath ? 'Switch to light theme' : 'Switch to dark theme'}
+      title={isBath ? 'Switch to light theme' : 'Switch to dark theme'}
     >
       <span
         className={cn(

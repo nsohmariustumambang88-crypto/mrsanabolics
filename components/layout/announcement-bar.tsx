@@ -14,8 +14,8 @@ import { X } from 'lucide-react';
 */
 export function AnnouncementBar({
   text = 'Ask for the certificate of analysis for your batch before you buy.',
-  href = '/faq',
-  linkLabel = 'How testing works',
+  href = '/blog/how-to-read-a-certificate-of-analysis',
+  linkLabel = 'How to check a certificate',
 }: {
   text?: string;
   href?: string;

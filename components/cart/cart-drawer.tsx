@@ -80,7 +80,7 @@ export function CartDrawer() {
               aria-hidden="true"
             />
             <p className="mt-5 font-display text-lg font-semibold tracking-[-0.025em]">
-              Nothing lifted yet
+              Your cart is empty
             </p>
             <p className="measure-tight mt-2 text-sm leading-relaxed text-ink-soft">
               Compounds you add will collect here, with the specification attached to each one.

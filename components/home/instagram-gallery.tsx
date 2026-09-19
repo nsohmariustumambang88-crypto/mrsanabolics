@@ -40,8 +40,8 @@ export function InstagramGallery({ samples }: { samples: Record<string, ProductS
     <section className="border-b border-rule bg-paper-sunk">
       <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
         <SectionHeading
-          title="What each pigment holds"
-          description="Every category carries its own colour through the whole site. What is under each one is the stock itself — four taken from across the shelf, not the first four on it."
+          title="What is in each category"
+          description="Four products from each category, taken from across its range rather than from the top of the shelf."
           href="/categories"
           hrefLabel="Open the index"
         />

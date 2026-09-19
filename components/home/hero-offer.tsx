@@ -8,6 +8,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Copy,
+  Pause,
+  Play,
   Plus,
 } from 'lucide-react';
 import { ProductPlate, isPhotograph } from '@/components/product/product-plate';
@@ -36,14 +38,27 @@ import type { AdvertisedDiscount, ProductSummary } from '@/lib/types';
   - an optional CODE: only the one named in Settings, and only while the checkout would accept it.
     `advertisedDiscount` in lib/discounts explains why a code is never picked automatically.
 
-  STEPPED BY THE VISITOR, NEVER ON A TIMER. This build has no motion, and content that advances on
-  its own fails WCAG 2.2.2 — the price is pulled away from somebody reading it. It follows the
-  WAI-ARIA carousel pattern instead: a labelled region, slides announced as "2 of 6", buttons and
-  the arrow keys to move, and a polite live region so a screen reader hears where it landed.
+  IT ADVANCES ON ITS OWN, AT THE OWNER'S REQUEST — every six seconds, sliding.
+  It used to move only when the visitor stepped it, because content that changes on its own can
+  pull a price away from somebody reading it. What keeps that from happening now, and what WCAG
+  2.2.2 requires of anything that moves for more than five seconds:
+
+  - it stops while the pointer is over it or focus is inside it, and while the tab is hidden;
+  - a pause/play button beside the counter stops it for good;
+  - a visitor whose system asks for reduced motion gets it paused, with no slide, until they
+    press play;
+  - stepping it by hand restarts the count, so a slide never changes right after a click.
+
+  It follows the WAI-ARIA carousel pattern: a labelled region, slides announced as "2 of 6",
+  buttons and the arrow keys to move. The counter is a polite live region only while it is NOT
+  rotating by itself — announcing every automatic change would talk over the rest of the page.
 
   Nothing here claims what the catalogue cannot show. Stock comes from the product row, the saving
   from its two prices, and there is no "lab tested" line: these products carry no assay.
 */
+
+/** How long each offer stays before the next slides in. */
+const AUTO_ADVANCE_MS = 6000;
 
 export function HeroOffer({
   offers,
@@ -59,6 +74,13 @@ export function HeroOffer({
   const { addToCart } = useStore();
   const { lowStockThreshold } = useSiteSettings();
   const [index, setIndex] = React.useState(0);
+  /* Which way the last change went, so the slide comes in from the side it was asked for. */
+  const [direction, setDirection] = React.useState<1 | -1>(1);
+  /* The visitor's own choice, from the pause/play button. Starts paused for reduced motion. */
+  const [playing, setPlaying] = React.useState(true);
+  /* Pointer over it, or keyboard focus inside it: somebody is reading, so it holds still. */
+  const [held, setHeld] = React.useState(false);
+  const [tabHidden, setTabHidden] = React.useState(false);
   const [added, setAdded] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
 
@@ -69,10 +91,39 @@ export function HeroOffer({
   /* A new slide is a new product: its "added" confirmation must not carry over. */
   React.useEffect(() => setAdded(false), [index]);
 
+  /* Reduced motion: no automatic rotation until the visitor asks for it. */
+  React.useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) setPlaying(false);
+  }, []);
+
+  React.useEffect(() => {
+    const update = () => setTabHidden(document.visibilityState === 'hidden');
+    update();
+    document.addEventListener('visibilitychange', update);
+    return () => document.removeEventListener('visibilitychange', update);
+  }, []);
+
+  const rotating = playing && !held && !tabHidden && list.length > 1;
+
+  /*
+    One timeout per slide rather than an interval: it restarts whenever the index changes, so a
+    manual step resets the count and the next automatic change is a full period away.
+  */
+  React.useEffect(() => {
+    if (!rotating) return;
+    const timer = window.setTimeout(() => {
+      setDirection(1);
+      setIndex((current) => (current + 1) % list.length);
+    }, AUTO_ADVANCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [rotating, index, list.length]);
+
   if (!product && !promoCode) return null;
 
-  const step = (delta: number) =>
+  const step = (delta: number) => {
+    setDirection(delta > 0 ? 1 : -1);
     setIndex((current) => (current + delta + list.length) % list.length);
+  };
 
   const onKeyDown = (event: React.KeyboardEvent) => {
     if (list.length < 2) return;
@@ -115,6 +166,20 @@ export function HeroOffer({
       aria-roledescription="carousel"
       aria-label={onOffer ? 'Current offers' : 'Featured product'}
       onKeyDown={onKeyDown}
+      onMouseEnter={() => setHeld(true)}
+      onMouseLeave={() => setHeld(false)}
+      /*
+        Keyboard focus only. A mouse click also focuses the button it lands on, and holding for
+        that would leave the carousel stopped after every click on an arrow until the visitor
+        clicked somewhere else — which reads as broken. The pointer is covered by hover.
+      */
+      onFocus={(event) => {
+        if ((event.target as HTMLElement).matches?.(':focus-visible')) setHeld(true);
+      }}
+      onBlur={(event) => {
+        /* Only when focus leaves the carousel altogether, not when it moves between its buttons. */
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHeld(false);
+      }}
       /*
         No background of its own. It sits on the same paper as the headline beside it; an opaque
         `bg-paper` here covered the page's paper texture and measured a few steps off the headline
@@ -147,12 +212,25 @@ export function HeroOffer({
               <span className="flex items-center gap-1.5">
                 <span
                   className="mr-1 font-mono text-2xs text-ink-faint tabular"
-                  aria-live="polite"
+                  aria-live={rotating ? 'off' : 'polite'}
                   aria-atomic="true"
                 >
                   <span className="sr-only">Offer </span>
                   {index + 1} / {list.length}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => setPlaying((p) => !p)}
+                  aria-label={playing ? 'Pause the offers' : 'Play the offers'}
+                  aria-pressed={!playing}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-rule-strong text-ink-soft transition-colors hover:border-pigment-indigo hover:text-pigment-indigo"
+                >
+                  {playing ? (
+                    <Pause className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  ) : (
+                    <Play className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  )}
+                </button>
                 <button
                   type="button"
                   onClick={() => step(-1)}
@@ -174,10 +252,17 @@ export function HeroOffer({
           </div>
 
           <div
+            /* Keyed on the slide, so each change mounts afresh and plays the slide-in once. */
+            key={index}
             role="group"
             aria-roledescription="slide"
             aria-label={`${index % list.length + 1} of ${list.length}: ${product.name}`}
-            className="flex flex-col lg:flex-1"
+            className={cn(
+              'flex flex-col lg:flex-1',
+              list.length > 1 &&
+                'duration-500 ease-out animate-in fade-in motion-reduce:animate-none',
+              list.length > 1 && (direction === 1 ? 'slide-in-from-right-8' : 'slide-in-from-left-8')
+            )}
           >
             {/*
               The photograph, at a size that sells it. object-contain via ProductPlate, so a pack

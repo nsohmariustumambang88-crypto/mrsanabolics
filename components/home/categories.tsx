@@ -23,8 +23,8 @@ export function FeaturedCategories() {
     <section className="border-b border-rule">
       <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
         <SectionHeading
-          title="Eleven pigments, one bath"
-          description="The catalogue is divided the way a marbler divides a palette. Each category carries one colour through the whole site."
+          title="Browse by category"
+          description="Each category is broken down by compound, so every manufacturer’s version can be compared on one page."
           href="/categories"
           hrefLabel="Open the index"
         />

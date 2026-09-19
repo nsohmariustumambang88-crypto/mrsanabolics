@@ -25,8 +25,8 @@ import { doors, PER_DOOR } from '@/components/home/home-samples';
 */
 
 const collections = [
-  { label: 'Newly floated', href: '/shop?filter=new' },
-  { label: 'Moving this week', href: '/shop?filter=trending' },
+  { label: 'New arrivals', href: '/shop?filter=new' },
+  { label: 'Trending', href: '/shop?filter=trending' },
   { label: 'On offer', href: '/shop?filter=deals' },
 ];
 
