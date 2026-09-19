@@ -1,0 +1,7 @@
+# Files a Vercel build never reads. Deploys from the CLI upload the working tree, and without
+# this they carried ~34 MB of local screenshots from .impeccable, which failed over a slow link.
+# Git-based deploys are unaffected: they clone the repository instead.
+.impeccable
+.claude
+project-tree.txt
+brand
