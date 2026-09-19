@@ -44,7 +44,13 @@ npm run db:studio   # browse the data
 
 **Reads are memoised per process, not per page.** The storefront layout needs the catalogue on every route it renders. Querying per page made the build take minutes and then fail with `ECONNRESET`. `unstable_cache` did **not** dedupe across prerenders in Next 13.5, so `catalogue.ts` uses a small per-closure TTL memo (60s) instead, and every derived read — by slug, by category, by brand, related — filters that one list in memory. `next.config.js` also sets `experimental.cpus: 1`, because parallel prerender workers each opened their own connection and Neon reset them.
 
-**Client components read a context, not the database.** [components/providers/catalogue-provider.tsx](components/providers/catalogue-provider.tsx) receives the catalogue from the **storefront** layout (`app/(storefront)/layout.tsx`, not the root one — the admin must not pay for this query) and exposes `useProducts()`, `useCategories()`, `useBrands()`. What it ships is the `ProductSummary` projection, not the full record: at ~790 products the full shape was megabytes of RSC payload on every page. See "The catalogue is the photo library". A second, smaller provider — [components/providers/settings-provider.tsx](components/providers/settings-provider.tsx) — carries the handful of site settings client components need.
+**The browser does not hold the catalogue.** [components/providers/catalogue-provider.tsx](components/providers/catalogue-provider.tsx) receives **categories and brands only** from the storefront layout and exposes `useCategories()` / `useBrands()`. It used to carry every product too (`useProducts()`), which put 502 KB of JSON — about 660 KB of payload — on every page so a few components could filter in the browser. Removing it took the home page from 907 KB to 345 KB and product pages from 693 KB to 111 KB. Products now reach the client three ways, and a new component should use one of them rather than re-add products to the context:
+
+- **As props from a server page** — the home sections get their photo samples picked in `app/(storefront)/page.tsx`. Shared constants for that live in [components/home/home-samples.ts](components/home/home-samples.ts), a plain module: a value exported from a `'use client'` file and imported into a server component arrives as a client reference, not the value.
+- **From [app/api/catalogue/route.ts](app/api/catalogue/route.ts)** via [components/shop/use-catalogue-search.ts](components/shop/use-catalogue-search.ts) — the shop browser (24 per page, "Show more"), the search dialog (debounced) and the wishlist (`?ids=`). The route filters the same memoised read the pages use. The hook drops a reply that arrives after a newer one, and keeps "loading" separate from "nothing found".
+- **From the cart's own snapshot** — cart and checkout thumbnails use `CartItem.image`.
+
+A second, smaller provider — [components/providers/settings-provider.tsx](components/providers/settings-provider.tsx) — carries the handful of site settings client components need.
 
 **Referential integrity surfaced a real bug.** Two products carry brand "MrAnabolics" (slug `mranabolics`) that never had a row in the brands array — the hand-written data held that contradiction silently, a foreign key cannot. The seed derives any brand a product actually references rather than editing product copy, which is why there are 9 brands and a `/brands/mranabolics` page.
 
@@ -186,12 +192,11 @@ filters within a category. `/shop?category=x&group=y` is the address; the shop b
 the group list from the products themselves and drops `group` whenever `category` changes.
 Product breadcrumbs (visible and JSON-LD) carry the group. `ContactStage` still has no CUSTOMER.
 
-**The browser gets a projection.** With ~800 products the full record in the RSC payload was
-megabytes on every page, so the storefront layout now ships `ProductSummary` (lib/types.ts) through
-the catalogue provider — id, names, slugs, price, flags, short description, first image, first
-specification. Cards, search, filters and the cart are typed against it; the product page reads
-the full `Product` server-side. If the catalogue grows again, the next step is a route handler
-for search so the browser holds nothing.
+**The browser gets a projection, and only a page of it.** `ProductSummary` (lib/types.ts) — id,
+names, slugs, price, flags, short description, first image, first specification — is what cards,
+search, filters and the cart are typed against; the product page reads the full `Product`
+server-side. Since the catalogue left the layout context (see "The browser does not hold the
+catalogue"), the browser receives summaries only for what it is showing.
 
 **Photographs and plates coexist.** `isPhotograph()` in product-plate.tsx tells them apart by
 public-ID prefix (`mranabolics/library/` vs `mranabolics/products/`). Photographs render
@@ -1019,6 +1024,19 @@ inside `runAction(() => ...)`. Note that a wrapped call must read its FormData *
   and the build died on the third. How long one attempt takes depends on the network; only elapsed
   time bounds anything. Keep the deadline well under the page timeout, or raise both together. If you add another prerendered read that talks to Postgres
   directly, give it the same treatment or a `.catch` fallback, as `/checkout` has.
+
+- **Local builds can fail from this machine when the site is fine.** The owner's connection to
+  the Supabase pooler is slow and drops connections (8–12 s per connect), so `next build`
+  regularly ends in `Can't reach database` during static generation while Vercel, next to the
+  database in us-east, builds the same commit in a minute. To verify a change without a local
+  build: push it to a branch, wait for the **preview** deployment (`vercel ls`), and fetch it with
+  `MSYS_NO_PATHCONV=1 vercel curl <path> --deployment <url>` — previews sit behind Vercel's login,
+  and Git Bash otherwise turns the `/` path into a Windows path. `next dev` renders nothing at
+  build time, so it works over the slow link for testing browser-side behaviour. Preview builds
+  have their own `DATABASE_URL`/`DIRECT_URL` in Vercel, now also pointed at Supabase.
+- **`.vercelignore` rules must start with `/`.** An unanchored `brand` also matched
+  `components/brand/`, left the logo component out, and failed a production build. Vercel applies
+  the file to Git deployments as well as CLI uploads.
 
 - **Do not run `next build` while `next dev` is running.** They share `.next`, and the dev
   server then serves corrupted chunks — the same failure documented below for clearing `.next`
