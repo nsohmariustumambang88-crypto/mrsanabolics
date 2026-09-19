@@ -1,7 +1,9 @@
-# Files a Vercel build never reads. Deploys from the CLI upload the working tree, and without
-# this they carried ~34 MB of local screenshots from .impeccable, which failed over a slow link.
-# Git-based deploys are unaffected: they clone the repository instead.
-.impeccable
-.claude
-project-tree.txt
-brand
+# Files a Vercel build never reads, kept out of every deployment's upload.
+#
+# EVERY RULE IS ANCHORED WITH A LEADING SLASH. An unanchored `brand` matched components/brand/
+# and public/brand/ too, which removed the logo component and failed a production build. Vercel
+# applies this file to Git deployments as well as CLI ones, so a loose pattern breaks both.
+/.impeccable
+/.claude
+/project-tree.txt
+/brand
