@@ -21,7 +21,8 @@
     "db:seed-journal": "node --env-file=.env --import tsx prisma/seed-journal.ts",
     "db:seed-operations": "node --env-file=.env --import tsx prisma/seed-operations.ts",
     "prebuild": "node scripts/wake-db.mjs",
-    "brand:build": "node scripts/make-brand.mjs"
+    "brand:build": "node scripts/make-brand.mjs",
+    "setup:vercel": "node scripts/setup-vercel-env.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",
