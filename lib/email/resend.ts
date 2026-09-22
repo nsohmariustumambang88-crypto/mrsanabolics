@@ -1,11 +1,17 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export const FROM_EMAIL = 'orders@mrsanabolics.com';
 export const ADMIN_EMAIL = 'support@mrsanabolics.com';
 
+function getResend() {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY environment variable not set');
+  }
+  return new Resend(process.env.RESEND_API_KEY);
+}
+
 export async function sendOrderConfirmation(to: string, orderRef: string, items: Array<{ name: string; quantity: number; price: number }>) {
+  const resend = getResend();
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return resend.emails.send({
@@ -27,6 +33,7 @@ export async function sendOrderConfirmation(to: string, orderRef: string, items:
 }
 
 export async function sendAdminOrderNotification(orderRef: string, customerEmail: string, items: Array<{ name: string; quantity: number }>) {
+  const resend = getResend();
   return resend.emails.send({
     from: FROM_EMAIL,
     to: ADMIN_EMAIL,
@@ -45,6 +52,7 @@ export async function sendAdminOrderNotification(orderRef: string, customerEmail
 }
 
 export async function sendContactFormReply(to: string, subject: string, message: string) {
+  const resend = getResend();
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
@@ -58,6 +66,7 @@ export async function sendContactFormReply(to: string, subject: string, message:
 }
 
 export async function sendCustomerNotification(to: string, subject: string, message: string) {
+  const resend = getResend();
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
