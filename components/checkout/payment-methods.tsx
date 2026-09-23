@@ -240,7 +240,7 @@ function CryptoSimplePanel({
         </div>
       </div>
 
-      <NotConnected>{notice}</NotConnected>
+      {!walletAddress && <NotConnected>{notice}</NotConnected>}
     </div>
   );
 }
