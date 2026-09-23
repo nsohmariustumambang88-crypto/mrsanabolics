@@ -222,17 +222,6 @@ export function CheckoutFlow({
       <div className="mx-auto max-w-[86rem] px-4 py-10 sm:px-6 lg:px-10">
         <div className="grid gap-px bg-rule lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-px">
           <div className="bg-card p-6 sm:p-8">
-            <p className="mb-8 flex gap-2.5 border border-rule bg-paper-sunk p-3.5 text-xs leading-relaxed text-ink-soft">
-              <Info
-                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-pigment-saffron"
-                strokeWidth={1.75}
-              />
-              <span>
-                Demonstration checkout — no payment processor is connected and no card details
-                are transmitted or stored. Do not enter real card numbers.
-              </span>
-            </p>
-
             {step === 0 && (
               <Fieldset legend="Where it ships">
                 <div>
