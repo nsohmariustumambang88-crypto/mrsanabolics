@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Check, ArrowLeft, ArrowRight, Lock, Info, ShoppingBag } from 'lucide-react';
+import { Check, ArrowLeft, ArrowRight, Lock, Info, ShoppingBag, Loader2 } from 'lucide-react';
 import { useStore } from '@/components/providers/store-provider';
 import { BullMark } from '@/components/brand/bull-mark';
 import Image from 'next/image';
@@ -19,6 +19,7 @@ import {
 } from '@/components/checkout/use-checkout-quotes';
 import { CONSENT } from '@/lib/marketing/consent';
 import { cn } from '@/lib/utils';
+import { submitCheckout } from '@/app/checkout/checkout-actions';
 
 /*
   The lift: one contact, and the sheet is committed. The wizard mirrors that — each step is a
@@ -49,7 +50,18 @@ export function CheckoutFlow({
 
   const [step, setStep] = React.useState(0);
   const [placed, setPlaced] = React.useState(false);
+  const [orderReference, setOrderReference] = React.useState('');
   const [method, setMethod] = React.useState<PaymentMethod>('card');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState('');
+
+  /* Form state */
+  const [firstName, setFirstName] = React.useState('');
+  const [lastName, setLastName] = React.useState('');
+  const [billName, setBillName] = React.useState('');
+  const [billAddr, setBillAddr] = React.useState('');
+  const [billCity, setBillCity] = React.useState('');
+  const [billPost, setBillPost] = React.useState('');
 
   /*
     Abandoned-cart capture.
@@ -101,10 +113,45 @@ export function CheckoutFlow({
   };
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
-  const place = () => {
-    setPlaced(true);
-    clearCart();
-    setStep(STEPS.length - 1);
+  const place = async () => {
+    setSubmitError('');
+    setIsSubmitting(true);
+
+    try {
+      const result = await submitCheckout({
+        email: marketing.email,
+        firstName,
+        lastName,
+        country,
+        cart: cart.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+        shipping: {
+          line1: billAddr,
+          city: billCity,
+          postcode: billPost,
+        },
+        shippingMethod: chosenRate?.name,
+        shippingCost: shipping,
+        discountCode: discount.code,
+        total,
+      });
+
+      if (result.ok) {
+        setOrderReference(result.reference);
+        setPlaced(true);
+        clearCart();
+        setStep(STEPS.length - 1);
+      } else {
+        setSubmitError(result.error);
+      }
+    } catch (error) {
+      setSubmitError('Failed to place order. Please try again.');
+      console.error('Checkout error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (cart.length === 0 && !placed) {
@@ -135,19 +182,12 @@ export function CheckoutFlow({
         <h1 className="mt-8 font-display text-3xl font-semibold tracking-[-0.035em]">
           Order placed
         </h1>
-        <p className="measure-tight mt-4 text-sm leading-relaxed text-ink-soft">
-          In a connected build your order would be confirmed here with a reference number, and
-          the certificate for each batch would be attached to the confirmation email.
-        </p>
-        <p className="mt-6 flex gap-2.5 border border-rule bg-paper-sunk p-3.5 text-left text-xs leading-relaxed text-ink-soft">
-          <Info
-            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-pigment-saffron"
-            strokeWidth={1.75}
-          />
-          <span>
-            No payment was taken and no order was created. This is a demonstration build with
-            no payment processor or order backend connected.
-          </span>
+        <div className="mt-6 rounded-lg border border-pigment-indigo bg-paper-sunk p-4">
+          <p className="text-xs font-medium uppercase tracking-wider text-ink-faint">Order reference</p>
+          <p className="font-mono text-xl font-semibold text-ink">{orderReference}</p>
+        </div>
+        <p className="measure-tight mt-6 text-sm leading-relaxed text-ink-soft">
+          A confirmation email has been sent with your order details and tracking information.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link
@@ -263,10 +303,28 @@ export function CheckoutFlow({
                 </div>
 
                 <Row>
-                  <Input id="first" label="First name" autoComplete="given-name" />
-                  <Input id="last" label="Last name" autoComplete="family-name" />
+                  <Input
+                    id="first"
+                    label="First name"
+                    autoComplete="given-name"
+                    value={firstName}
+                    onChange={setFirstName}
+                  />
+                  <Input
+                    id="last"
+                    label="Last name"
+                    autoComplete="family-name"
+                    value={lastName}
+                    onChange={setLastName}
+                  />
                 </Row>
-                <Input id="addr1" label="Address" autoComplete="address-line1" />
+                <Input
+                  id="addr1"
+                  label="Address"
+                  autoComplete="address-line1"
+                  value={billAddr}
+                  onChange={setBillAddr}
+                />
                 <Input
                   id="addr2"
                   label="Apartment, suite (optional)"
@@ -274,8 +332,20 @@ export function CheckoutFlow({
                   required={false}
                 />
                 <Row>
-                  <Input id="city" label="City" autoComplete="address-level2" />
-                  <Input id="post" label="Postal code" autoComplete="postal-code" />
+                  <Input
+                    id="city"
+                    label="City"
+                    autoComplete="address-level2"
+                    value={billCity}
+                    onChange={setBillCity}
+                  />
+                  <Input
+                    id="post"
+                    label="Postal code"
+                    autoComplete="postal-code"
+                    value={billPost}
+                    onChange={setBillPost}
+                  />
                 </Row>
                 <div>
                   <label htmlFor="country" className="block text-sm font-medium">
@@ -365,11 +435,33 @@ export function CheckoutFlow({
 
             {step === 1 && (
               <Fieldset legend="Who is paying">
-                <Input id="bill-name" label="Name on the account" autoComplete="name" />
-                <Input id="bill-addr" label="Billing address" autoComplete="billing street-address" />
+                <Input
+                  id="bill-name"
+                  label="Name on the account"
+                  autoComplete="name"
+                  value={billName}
+                  onChange={setBillName}
+                />
+                <Input
+                  id="bill-addr"
+                  label="Billing address"
+                  autoComplete="billing street-address"
+                  value={billAddr}
+                  onChange={setBillAddr}
+                />
                 <Row>
-                  <Input id="bill-city" label="City" />
-                  <Input id="bill-post" label="Postal code" />
+                  <Input
+                    id="bill-city"
+                    label="City"
+                    value={billCity}
+                    onChange={setBillCity}
+                  />
+                  <Input
+                    id="bill-post"
+                    label="Postal code"
+                    value={billPost}
+                    onChange={setBillPost}
+                  />
                 </Row>
                 <label className="flex items-center gap-2.5 pt-2 text-sm text-ink-soft">
                   <input type="checkbox" defaultChecked className="accent-pigment-indigo" />
@@ -422,11 +514,18 @@ export function CheckoutFlow({
               />
             )}
 
+            {submitError && (
+              <div className="mb-6 flex gap-2.5 rounded-lg border border-destructive bg-paper-sunk p-3.5 text-left text-sm text-destructive">
+                <Info className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.75} />
+                {submitError}
+              </div>
+            )}
+
             <div className="mt-8 flex items-center justify-between gap-4 border-t border-rule pt-6">
               <button
                 type="button"
                 onClick={back}
-                disabled={step === 0}
+                disabled={step === 0 || isSubmitting}
                 className="inline-flex items-center gap-2 text-sm text-ink-soft transition-colors hover:text-ink disabled:opacity-40"
               >
                 <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
@@ -437,7 +536,8 @@ export function CheckoutFlow({
                 <button
                   type="button"
                   onClick={next}
-                  className="group inline-flex items-center gap-2.5 rounded-full bg-pigment-indigo px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift"
+                  disabled={isSubmitting}
+                  className="group inline-flex items-center gap-2.5 rounded-full bg-pigment-indigo px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift disabled:opacity-60"
                 >
                   Continue
                   <ArrowRight
@@ -449,10 +549,20 @@ export function CheckoutFlow({
                 <button
                   type="button"
                   onClick={place}
-                  className="inline-flex items-center gap-2.5 rounded-full bg-pigment-indigo px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center gap-2.5 rounded-full bg-pigment-indigo px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift disabled:opacity-60"
                 >
-                  <Lock className="h-4 w-4" strokeWidth={1.75} />
-                  Place order · {formatPrice(total)}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.75} />
+                      Placing…
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="h-4 w-4" strokeWidth={1.75} />
+                      Place order · {formatPrice(total)}
+                    </>
+                  )}
                 </button>
               )}
             </div>
@@ -601,12 +711,16 @@ function Input({
   placeholder,
   autoComplete,
   required = true,
+  value = '',
+  onChange,
 }: {
   id: string;
   label: string;
   placeholder?: string;
   autoComplete?: string;
   required?: boolean;
+  value?: string;
+  onChange?: (value: string) => void;
 }) {
   return (
     <div>
@@ -619,6 +733,8 @@ function Input({
         placeholder={placeholder}
         autoComplete={autoComplete}
         required={required}
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
         className="mt-2 w-full border-b border-rule-strong bg-transparent py-2.5 text-sm outline-none placeholder:text-ink-faint focus:border-pigment-indigo"
       />
     </div>
