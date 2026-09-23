@@ -40,13 +40,14 @@ export default async function CheckoutPage() {
     .catch(() => []);
 
   const paymentMethods = methods.length
-    ? methods.map((m) => ({ key: m.key, label: m.label, notice: m.notice }))
+    ? methods.map((m) => ({ key: m.key, label: m.label, notice: m.notice, walletAddress: m.walletAddress }))
     : [
         {
           key: 'card',
           label: 'Card',
           notice:
             'Card payment is not connected on this build. Nothing is charged and no card details are transmitted or stored.',
+          walletAddress: null,
         },
       ];
 
