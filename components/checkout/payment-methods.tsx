@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
   quotes a rate window and the others do not.
 */
 
-export type PaymentMethod = 'card' | 'cashapp' | 'crypto';
+export type PaymentMethod = 'card' | 'cashapp' | 'crypto' | 'bitcoin' | 'ethereum' | 'tron';
 export type CryptoAsset = 'BTC' | 'ETH' | 'USDT';
 
 /**
@@ -33,6 +33,7 @@ export type PaymentMethodOption = {
   key: string;
   label: string;
   notice: string;
+  walletAddress?: string | null;
 };
 
 /*
@@ -45,6 +46,9 @@ export type PaymentMethodOption = {
 const PRESENTATION: Record<string, { hint: string; icon: typeof CreditCard }> = {
   card: { hint: 'Visa, Mastercard, American Express', icon: CreditCard },
   cashapp: { hint: 'Pay from your Cash App balance', icon: Smartphone },
+  bitcoin: { hint: 'Direct Bitcoin transfer', icon: Bitcoin },
+  ethereum: { hint: 'Ethereum ERC20 transfer', icon: Bitcoin },
+  tron: { hint: 'Tron TRC20 USDT transfer', icon: Bitcoin },
   crypto: { hint: 'Bitcoin, Ethereum or USDT', icon: Bitcoin },
 };
 
@@ -122,6 +126,30 @@ export function PaymentMethods({
       <div className="mt-6">
         {method === 'card' && <CardPanel notice={notice} />}
         {method === 'cashapp' && <CashAppPanel total={total} notice={notice} />}
+        {method === 'bitcoin' && (
+          <CryptoSimplePanel
+            total={total}
+            label="Bitcoin"
+            walletAddress={methods.find((m) => m.key === 'bitcoin')?.walletAddress}
+            notice={notice}
+          />
+        )}
+        {method === 'ethereum' && (
+          <CryptoSimplePanel
+            total={total}
+            label="Ethereum (ERC20)"
+            walletAddress={methods.find((m) => m.key === 'ethereum')?.walletAddress}
+            notice={notice}
+          />
+        )}
+        {method === 'tron' && (
+          <CryptoSimplePanel
+            total={total}
+            label="Tron (TRC20)"
+            walletAddress={methods.find((m) => m.key === 'tron')?.walletAddress}
+            notice={notice}
+          />
+        )}
         {method === 'crypto' && (
           <CryptoPanel total={total} asset={asset} onAssetChange={setAsset} notice={notice} />
         )}
@@ -168,6 +196,48 @@ function CashAppPanel({ total, notice }: { total: number; notice: string }) {
         <p className="mt-3 text-xs leading-relaxed text-ink-faint">
           The destination $Cashtag would be shown here once an account is connected.
         </p>
+      </div>
+
+      <NotConnected>{notice}</NotConnected>
+    </div>
+  );
+}
+
+/* --------------------------------------------------------- crypto (single method) */
+
+function CryptoSimplePanel({
+  total,
+  label,
+  walletAddress,
+  notice,
+}: {
+  total: number;
+  label: string;
+  walletAddress?: string | null;
+  notice: string;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="border border-rule bg-paper-sunk p-4">
+        <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
+          Amount due
+        </p>
+        <p className="mt-1 font-display text-2xl font-semibold tabular">{formatPrice(total)}</p>
+
+        <div className="mt-4 border-t border-rule pt-4">
+          <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
+            Send {label} to
+          </p>
+          {walletAddress ? (
+            <p className="mt-1.5 break-all border border-dashed border-rule-strong bg-card p-3 font-mono text-xs font-medium text-ink">
+              {walletAddress}
+            </p>
+          ) : (
+            <p className="mt-1.5 break-all border border-dashed border-rule-strong bg-card p-3 font-mono text-xs text-ink-faint">
+              No wallet is connected — no address to display.
+            </p>
+          )}
+        </div>
       </div>
 
       <NotConnected>{notice}</NotConnected>

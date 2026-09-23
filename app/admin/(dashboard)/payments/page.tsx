@@ -16,11 +16,11 @@ import {
   administrator could believe about this screen that would cost real money is that turning a
   method on turned payment on.
 
-  There is deliberately no field here for a wallet address, a $Cashtag, a merchant id or an API
-  key, and the PaymentMethod model has no column for one. That is a standing decision recorded
-  in CLAUDE.md, not an unfinished form: an address stored here that is nobody's — or somebody
-  else's — is the most expensive mistake this page could make, because a customer would send
-  real money to it and no part of this system could get it back.
+  Crypto payment methods now carry wallet addresses in the database. Triple-check these before
+  saving — an address that is wrong or belongs to someone else will result in customer funds
+  being sent to an unrecoverable destination. Fiat payment methods (card, Cash App) still have
+  no storage for addresses, merchant ids or API keys, which is deliberate: those belong in the
+  environment, not in the database.
 */
 
 export const dynamic = 'force-dynamic';
@@ -37,6 +37,7 @@ export default async function AdminPaymentsPage() {
     key: m.key,
     label: m.label,
     notice: m.notice,
+    walletAddress: m.walletAddress,
     enabled: m.enabled,
     connected: m.connected,
   }));

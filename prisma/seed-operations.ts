@@ -1,7 +1,7 @@
 /*
   Seed the operational tables: payment methods, delivery zones and rates.
 
-  These are configuration a shop cannot open without — the checkout has to offer *something* —
+  These are configuration a shop cannot open without - the checkout has to offer *something* -
   so they ship as sensible defaults that staff then edit in the admin. Idempotent: keyed on the
   natural key, and existing rows are left exactly as the admin has them.
 
@@ -17,9 +17,9 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 /*
-  The three methods the storefront already offers. `connected: false` on every one, and there is
-  no field here for a wallet address or an API key — see the note on the model. Turning one on
-  controls whether it is listed, never whether it can take money.
+  Payment methods offered at checkout. `connected: false` on every one - the checkout shows
+  whether each method is wired before the visitor tries to use it. Crypto methods carry
+  wallet addresses; any address here must be verified to be correct before saving.
 */
 const PAYMENT_METHODS = [
   {
@@ -27,6 +27,7 @@ const PAYMENT_METHODS = [
     label: 'Card',
     notice:
       'Card payment is not connected on this build. Nothing is charged and no card details are transmitted or stored.',
+    walletAddress: null,
     position: 0,
   },
   {
@@ -34,14 +35,29 @@ const PAYMENT_METHODS = [
     label: 'Cash App',
     notice:
       'Cash App is not connected on this build. No $Cashtag is shown, because a plausible one here would send real money to the wrong place.',
+    walletAddress: null,
     position: 1,
   },
   {
-    key: 'crypto',
-    label: 'Cryptocurrency',
-    notice:
-      'No wallet address is shown, and that is deliberate. An address here that is nobody’s — or somebody else’s — is the most expensive mistake this page could make.',
+    key: 'bitcoin',
+    label: 'Bitcoin',
+    notice: 'Bitcoin payments are accepted. Send to the address below.',
+    walletAddress: '38gqXGxYdThRBofESL8ooRganamxTXzYN3',
     position: 2,
+  },
+  {
+    key: 'ethereum',
+    label: 'Ethereum (ERC20)',
+    notice: 'Ethereum payments are accepted via ERC20. Send to the address below.',
+    walletAddress: '0x9a7109f4fdcaf3b5bca830b8601d0dea3d99d659',
+    position: 3,
+  },
+  {
+    key: 'tron',
+    label: 'Tron (TRC20)',
+    notice: 'Tron/USDT payments are accepted via TRC20. Send to the address below.',
+    walletAddress: 'TYYJUNNyPEBCapeSnrfAMtEJXGB8EBhcTm',
+    position: 4,
   },
 ];
 

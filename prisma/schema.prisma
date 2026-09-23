@@ -909,11 +909,11 @@ enum MessageChannel {
 
 /// A payment method offered at checkout.
 ///
-/// connected exists and is false for every row, and there is deliberately NO field for a wallet
-/// address, a merchant id, or an API key. This build collects no money; a plausible destination
-/// stored here is the single most dangerous thing this table could hold, because somebody would
-/// send real funds to it. Turning a method on controls whether it is LISTED, never whether it
-/// can take payment.
+/// connected exists and is false for every row. For crypto methods, walletAddress may be set.
+/// This build collects no money; a wallet address stored here that is nobody's — or
+/// somebody else's — is the most expensive mistake this table could hold, so triple-check
+/// any address before saving. Turning a method on controls whether it is LISTED, never
+/// whether it can take payment.
 model PaymentMethod {
   id  String @id @default(cuid())
   key String @unique
@@ -921,6 +921,9 @@ model PaymentMethod {
   label  String
   /// The sentence shown in that method's panel at the point of entry.
   notice String @db.Text
+
+  /// Wallet address for crypto payments. Display only, no processing.
+  walletAddress String?
 
   /// Whether the method appears at checkout at all.
   enabled   Boolean @default(true)

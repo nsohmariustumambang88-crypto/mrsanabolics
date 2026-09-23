@@ -29,6 +29,7 @@ export type PaymentMethodRow = {
   key: string;
   label: string;
   notice: string;
+  walletAddress?: string | null;
   enabled: boolean;
   connected: boolean;
 };
@@ -133,6 +134,12 @@ export function PaymentMethodsTable({ rows }: { rows: PaymentMethodRow[] }) {
                       <span className="wp-num">{row.key}</span>
                       <br />
                       {row.connected ? 'Rail connected' : 'No rail connected'}
+                      {row.walletAddress && (
+                        <>
+                          <br />
+                          <span className="break-all font-mono text-[11px]">{row.walletAddress}</span>
+                        </>
+                      )}
                     </div>
                   </td>
 

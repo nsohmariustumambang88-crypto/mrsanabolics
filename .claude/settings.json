@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.searchenginejournal.com)",
+      "WebFetch(domain:www.wedinos.org)"
+    ]
+  }
+}
