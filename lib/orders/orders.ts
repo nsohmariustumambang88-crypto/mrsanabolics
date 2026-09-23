@@ -3,6 +3,7 @@ import 'server-only';
 import type { OrderStatus, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { evaluateDiscount, redeemDiscount } from '@/lib/discounts';
+import { sendOrderConfirmation, sendAdminOrderNotification, sendOrderStatusUpdate } from '@/lib/email/resend';
 
 /*
   The order write path.
@@ -119,7 +120,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
   const contact = await prisma.contact.findUnique({
     where: { id: input.contactId },
-    select: { id: true },
+    select: { id: true, email: true, name: true },
   });
   if (!contact) return { ok: false, error: 'That contact no longer exists.' };
 
@@ -250,6 +251,30 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     },
   });
 
+  /* Send emails asynchronously - don't block order creation on email delivery */
+  sendOrderConfirmation(
+    contact.email,
+    reference,
+    items.map((i) => ({
+      name: i.name,
+      quantity: i.quantity,
+      price: Number(i.unitPrice),
+    }))
+  ).catch(() => {
+    /* Order is already created; email failure must not undo it */
+  });
+
+  sendAdminOrderNotification(
+    reference,
+    contact.email,
+    items.map((i) => ({
+      name: i.name,
+      quantity: i.quantity,
+    }))
+  ).catch(() => {
+    /* Admin notification failure doesn't affect the customer */
+  });
+
   return { ok: true, id: created.id, reference: created.reference };
 }
 
@@ -290,6 +315,7 @@ export async function setOrderStatus(
       confirmedAt: true,
       shippedAt: true,
       cancelledAt: true,
+      contact: { select: { email: true } },
     },
   });
 
@@ -325,6 +351,22 @@ export async function setOrderStatus(
         },
       },
     },
+  });
+
+  /* Send status update email to customer */
+  sendOrderStatusUpdate(
+    order.contact.email,
+    order.reference,
+    STATUS_LABEL[status],
+    status === 'SHIPPED'
+      ? 'Your order is on its way! You can expect delivery within the estimated timeframe.'
+      : status === 'DELIVERED'
+        ? 'Your order has arrived! Please verify the contents match your order.'
+        : status === 'CANCELLED'
+          ? 'Your order has been cancelled. If you have questions, please contact support.'
+          : undefined
+  ).catch(() => {
+    /* Status change is already recorded; email failure doesn't affect it */
   });
 
   return { ok: true };

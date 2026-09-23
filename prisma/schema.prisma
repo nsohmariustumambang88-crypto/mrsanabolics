@@ -360,6 +360,13 @@ model Contact {
   /// The surface this person first appeared on — an enquiry subject, or a sign-up source.
   firstSource String
 
+  /// Password hash for customer accounts (optional - only for customers with accounts)
+  password String?
+
+  /// Password reset token (hashed) and expiry for forgot-password flow
+  passwordResetToken    String?
+  passwordResetExpiresAt DateTime?
+
   /// Set when this contact is linked from a Subscriber row. See Subscriber.contactId.
   subscriber Subscriber?
 
