@@ -7,7 +7,7 @@ import {
 } from './templates';
 
 export const FROM_EMAIL = 'orders@mrsanabolics.com';
-export const ADMIN_EMAIL = 'support@mrsanabolics.com';
+export const ADMIN_EMAIL = 'shoponlinesteriod@gmail.com';
 
 function getResend() {
   if (!process.env.RESEND_API_KEY) {
