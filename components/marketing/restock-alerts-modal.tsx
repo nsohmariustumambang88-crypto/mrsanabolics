@@ -11,23 +11,40 @@ export function RestockAlertsModal() {
   const { email, setEmail, consent, setConsent, submit, done, error } = useSubscribe('newsletter');
 
   React.useEffect(() => {
-    const hasShown = sessionStorage.getItem('restock-alerts-shown');
-    if (!hasShown) {
-      const timer = setTimeout(() => {
-        setIsOpen(true);
-        sessionStorage.setItem('restock-alerts-shown', 'true');
-      }, 1000);
-      return () => clearTimeout(timer);
+    /* If already subscribed, never show again */
+    if (done) {
+      sessionStorage.setItem('restock-alerts-subscribed', 'true');
+      setIsOpen(false);
+      return;
     }
-  }, []);
+
+    /* Check if user already subscribed this session */
+    if (sessionStorage.getItem('restock-alerts-subscribed')) {
+      return;
+    }
+
+    /* Show modal initially after 1 second */
+    const initialTimer = setTimeout(() => {
+      setIsOpen(true);
+    }, 1000);
+
+    return () => clearTimeout(initialTimer);
+  }, [done]);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    /* Show again in 10 seconds if not subscribed */
+    setTimeout(() => {
+      if (!done && !sessionStorage.getItem('restock-alerts-subscribed')) {
+        setIsOpen(true);
+      }
+    }, 10000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (consent && email) {
       await submit();
-      if (done) {
-        setIsOpen(false);
-      }
     }
   };
 
@@ -37,7 +54,7 @@ export function RestockAlertsModal() {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="relative w-full max-w-md rounded-lg bg-white p-8">
         <button
-          onClick={() => setIsOpen(false)}
+          onClick={handleClose}
           className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
         >
           <X className="h-6 w-6" />
