@@ -7,6 +7,7 @@ import { SiteFooter } from '@/components/layout/site-footer';
 import { CartDrawer } from '@/components/cart/cart-drawer';
 import { SearchDialog } from '@/components/search/search-dialog';
 import { ExitCapture } from '@/components/marketing/exit-capture';
+import { RestockAlertsModal } from '@/components/marketing/restock-alerts-modal';
 import { VisitTracker } from '@/components/analytics/visit-tracker';
 import { ChatWidget } from '@/components/chat/chat-widget';
 import { getCategories, getBrands } from '@/lib/db/catalogue';
@@ -79,6 +80,7 @@ export default async function StorefrontLayout({
         <CartDrawer />
         <SearchDialog />
         <ExitCapture />
+        <RestockAlertsModal />
         {/*
           The live chat button. Storefront only, so the admin never shows a visitor's widget, and
           switchable off under Settings (chat_enabled) without a deploy. It sends nothing until
