@@ -4,6 +4,7 @@ import * as React from 'react';
 import { X } from 'lucide-react';
 import { useSubscribe } from './use-subscribe';
 import { CONSENT } from '@/lib/marketing/consent';
+import { BullMark } from '@/components/brand/bull-mark';
 
 export function RestockAlertsModal() {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -43,9 +44,7 @@ export function RestockAlertsModal() {
         </button>
 
         <div className="mb-6 flex justify-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black">
-            <div className="text-2xl text-white">📍</div>
-          </div>
+          <BullMark title="MrAnabolics" className="w-16" />
         </div>
 
         <h2 className="mb-2 text-center text-2xl font-bold">Restock Alerts</h2>
