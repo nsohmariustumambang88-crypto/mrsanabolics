@@ -29,7 +29,7 @@ import { submitCheckout } from '@/app/checkout/checkout-actions';
   fake transaction.
 */
 
-const STEPS = ['Shipping', 'Billing', 'Review', 'Payment', 'Done'] as const;
+const STEPS = ['Shipping', 'Review', 'Payment', 'Done'] as const;
 const FREE_SHIPPING_AT = 250;
 const SHIPPING_FLAT = 14;
 const TAX_RATE = 0.08;
@@ -58,10 +58,9 @@ export function CheckoutFlow({
   /* Form state */
   const [firstName, setFirstName] = React.useState('');
   const [lastName, setLastName] = React.useState('');
-  const [billName, setBillName] = React.useState('');
-  const [billAddr, setBillAddr] = React.useState('');
-  const [billCity, setBillCity] = React.useState('');
-  const [billPost, setBillPost] = React.useState('');
+  const [shippingAddr, setShippingAddr] = React.useState('');
+  const [shippingCity, setShippingCity] = React.useState('');
+  const [shippingPost, setShippingPost] = React.useState('');
 
   /*
     Abandoned-cart capture.
@@ -128,9 +127,9 @@ export function CheckoutFlow({
           quantity: item.quantity,
         })),
         shipping: {
-          line1: billAddr,
-          city: billCity,
-          postcode: billPost,
+          line1: shippingAddr,
+          city: shippingCity,
+          postcode: shippingPost,
         },
         shippingMethod: chosenRate?.name,
         shippingCost: shipping,
@@ -216,7 +215,7 @@ export function CheckoutFlow({
           </h1>
 
           <ol className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-2">
-            {STEPS.slice(0, 4).map((label, i) => (
+            {STEPS.slice(0, 3).map((label, i) => (
               <li key={label} className="flex items-center gap-2">
                 <span
                   className={cn(
@@ -322,8 +321,8 @@ export function CheckoutFlow({
                   id="addr1"
                   label="Address"
                   autoComplete="address-line1"
-                  value={billAddr}
-                  onChange={setBillAddr}
+                  value={shippingAddr}
+                  onChange={setShippingAddr}
                 />
                 <Input
                   id="addr2"
@@ -336,15 +335,15 @@ export function CheckoutFlow({
                     id="city"
                     label="City"
                     autoComplete="address-level2"
-                    value={billCity}
-                    onChange={setBillCity}
+                    value={shippingCity}
+                    onChange={setShippingCity}
                   />
                   <Input
                     id="post"
                     label="Postal code"
                     autoComplete="postal-code"
-                    value={billPost}
-                    onChange={setBillPost}
+                    value={shippingPost}
+                    onChange={setShippingPost}
                   />
                 </Row>
                 <div>
@@ -434,43 +433,6 @@ export function CheckoutFlow({
             )}
 
             {step === 1 && (
-              <Fieldset legend="Who is paying">
-                <Input
-                  id="bill-name"
-                  label="Name on the account"
-                  autoComplete="name"
-                  value={billName}
-                  onChange={setBillName}
-                />
-                <Input
-                  id="bill-addr"
-                  label="Billing address"
-                  autoComplete="billing street-address"
-                  value={billAddr}
-                  onChange={setBillAddr}
-                />
-                <Row>
-                  <Input
-                    id="bill-city"
-                    label="City"
-                    value={billCity}
-                    onChange={setBillCity}
-                  />
-                  <Input
-                    id="bill-post"
-                    label="Postal code"
-                    value={billPost}
-                    onChange={setBillPost}
-                  />
-                </Row>
-                <label className="flex items-center gap-2.5 pt-2 text-sm text-ink-soft">
-                  <input type="checkbox" defaultChecked className="accent-pigment-indigo" />
-                  Billing address is the same as shipping
-                </label>
-              </Fieldset>
-            )}
-
-            {step === 2 && (
               <div>
                 <h2 className="font-display text-lg font-semibold tracking-[-0.025em]">
                   Check the order
@@ -505,7 +467,7 @@ export function CheckoutFlow({
               </div>
             )}
 
-            {step === 3 && (
+            {step === 2 && (
               <PaymentMethods
                 total={total}
                 method={method}
@@ -532,7 +494,7 @@ export function CheckoutFlow({
                 Back
               </button>
 
-              {step < 3 ? (
+              {step < 2 ? (
                 <button
                   type="button"
                   onClick={next}
