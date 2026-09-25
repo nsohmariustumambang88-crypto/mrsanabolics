@@ -6,6 +6,7 @@ import { ProductsSection } from '@/components/home/products-section';
 import { WeeklyDeals } from '@/components/home/weekly-deals';
 import { PopularBrands } from '@/components/home/brands';
 import { FeaturedCollections } from '@/components/home/featured-collections';
+import { RecentlyViewed } from '@/components/home/recently-viewed';
 import { doors, spread, PER_DOOR, TILES, PER_TILE } from '@/components/home/home-samples';
 import { Testimonials } from '@/components/home/testimonials';
 import { WhyChoose } from '@/components/home/why-choose';
@@ -69,6 +70,11 @@ export default async function Home() {
   const bestSellers = products.filter((p) => p.isBestSeller);
   const deals = products.filter((p) => p.isDeal);
 
+  /* Top-rated products with most reviews for SEO boost */
+  const topRated = [...products]
+    .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
+    .slice(0, 8);
+
   /*
     The hero's offer card.
 
@@ -116,6 +122,7 @@ export default async function Home() {
       />
 
       <Hero offers={offers} fallback={fallback} promoCode={promoCode} />
+      <RecentlyViewed allProducts={products.map(toSummary)} />
       <FeaturedCollections samples={doorSamples} />
       <AssuranceRegister />
 
@@ -136,6 +143,15 @@ export default async function Home() {
       <WeeklyDeals products={deals.map(toSummary)} />
       <WhyChoose />
       <PopularBrands />
+
+      {/* Top-rated products section for SEO and conversion */}
+      <ProductsSection
+        title="Highest Rated"
+        description="Most reviewed and trusted by our community."
+        href="/shop?sort=rating"
+        products={topRated.map(toSummary)}
+      />
+
       <InstagramGallery samples={tileSamples} />
       <Testimonials testimonials={testimonials} />
       <BlogTeaser posts={posts.slice(0, 4).map(toJournalCard)} />

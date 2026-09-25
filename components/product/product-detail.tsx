@@ -153,6 +153,19 @@ export function ProductDetail({
     ? Math.round((1 - product.price / product.compareAtPrice) * 100)
     : 0;
 
+  /* Track recently viewed for homepage carousel */
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem('mra-recently-viewed');
+      const ids = stored ? JSON.parse(stored) : [];
+      const filtered = ids.filter((id: string) => id !== product.id);
+      const updated = [product.id, ...filtered].slice(0, 20);
+      localStorage.setItem('mra-recently-viewed', JSON.stringify(updated));
+    } catch {
+      // localStorage error - silently fail
+    }
+  }, [product.id]);
+
   const handleAdd = () => {
     addToCart(product, qty);
     setAdded(true);
