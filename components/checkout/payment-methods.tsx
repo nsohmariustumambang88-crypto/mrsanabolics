@@ -1,28 +1,23 @@
 'use client';
 
 import * as React from 'react';
-import { CreditCard, Smartphone, Bitcoin, Lock, Info } from 'lucide-react';
+import { Smartphone, Bitcoin, Lock, Info, Landmark, CreditCard } from 'lucide-react';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 /*
   Choosing how to pay.
 
-  THREE METHODS, NONE OF THEM CONNECTED. This build has no payment processor, no merchant
-  account, no wallet and no Cash App handle, and the panels below say so at the point of entry
-  rather than only on the confirmation screen — a demo that looks like it took your money is
-  worse than one that admits it did not. Wiring any of these to a real destination is a
-  deliberate act, not a matter of filling in a constant.
+  MULTIPLE METHODS, NONE OF THEM CONNECTED. This build has no payment processor and the panels
+  say so at the point of entry rather than only on the confirmation screen — a demo that looks
+  like it took your money is worse than one that admits it did not. Wiring any of these to a
+  real destination is a deliberate act, not a matter of filling in a constant.
 
-  The methods themselves are a real decision, not decoration: card, a peer-to-peer wallet, and
-  on-chain settlement behave differently enough that the interface has to. A card authorises
-  instantly and can be charged back. A wallet transfer is a push from the buyer that nobody can
-  reverse. An on-chain payment is push-only as well, but also takes minutes to confirm and
-  arrives in a currency whose value moved while it was in flight — which is why that panel
-  quotes a rate window and the others do not.
+  The methods themselves are a real decision: bank transfers, peer-to-peer wallets, and
+  on-chain settlement behave differently enough that the interface has to reflect it.
 */
 
-export type PaymentMethod = 'card' | 'cashapp' | 'crypto' | 'bitcoin' | 'ethereum' | 'tron';
+export type PaymentMethod = 'banktransfer' | 'zelle' | 'revolut' | 'venmo' | 'crypto';
 export type CryptoAsset = 'BTC' | 'ETH' | 'USDT';
 
 /**
@@ -43,16 +38,15 @@ export type PaymentMethodOption = {
   and the hint is a description of how a rail behaves rather than something a shop configures.
   What the admin owns is the label, the notice, and whether the method appears at all.
 */
-const PRESENTATION: Record<string, { hint: string; icon: typeof CreditCard }> = {
-  card: { hint: 'Visa, Mastercard, American Express', icon: CreditCard },
-  cashapp: { hint: 'Pay from your Cash App balance', icon: Smartphone },
-  bitcoin: { hint: 'Direct Bitcoin transfer', icon: Bitcoin },
-  ethereum: { hint: 'Ethereum ERC20 transfer', icon: Bitcoin },
-  tron: { hint: 'Tron TRC20 USDT transfer', icon: Bitcoin },
+const PRESENTATION: Record<string, { hint: string; icon: typeof Landmark }> = {
+  banktransfer: { hint: 'Direct bank transfer', icon: Landmark },
+  zelle: { hint: 'Send money via Zelle', icon: Landmark },
+  revolut: { hint: 'Pay with Revolut', icon: Smartphone },
+  venmo: { hint: 'Pay with Venmo', icon: Smartphone },
   crypto: { hint: 'Bitcoin, Ethereum or USDT', icon: Bitcoin },
 };
 
-const FALLBACK_PRESENTATION = { hint: 'Alternative payment method', icon: CreditCard };
+const FALLBACK_PRESENTATION = { hint: 'Alternative payment method', icon: Landmark };
 
 const ASSETS: { id: CryptoAsset; label: string; network: string }[] = [
   { id: 'BTC', label: 'Bitcoin', network: 'Bitcoin network' },
@@ -124,32 +118,10 @@ export function PaymentMethods({
       </fieldset>
 
       <div className="mt-6">
-        {method === 'card' && <CardPanel notice={notice} />}
-        {method === 'cashapp' && <CashAppPanel total={total} notice={notice} />}
-        {method === 'bitcoin' && (
-          <CryptoSimplePanel
-            total={total}
-            label="Bitcoin"
-            walletAddress={methods.find((m) => m.key === 'bitcoin')?.walletAddress}
-            notice={notice}
-          />
-        )}
-        {method === 'ethereum' && (
-          <CryptoSimplePanel
-            total={total}
-            label="Ethereum (ERC20)"
-            walletAddress={methods.find((m) => m.key === 'ethereum')?.walletAddress}
-            notice={notice}
-          />
-        )}
-        {method === 'tron' && (
-          <CryptoSimplePanel
-            total={total}
-            label="Tron (TRC20)"
-            walletAddress={methods.find((m) => m.key === 'tron')?.walletAddress}
-            notice={notice}
-          />
-        )}
+        {method === 'banktransfer' && <BankTransferPanel notice={notice} />}
+        {method === 'zelle' && <ZellePanel notice={notice} />}
+        {method === 'revolut' && <RevolutPanel notice={notice} />}
+        {method === 'venmo' && <VenmoPanel notice={notice} />}
         {method === 'crypto' && (
           <CryptoPanel total={total} asset={asset} onAssetChange={setAsset} notice={notice} />
         )}
@@ -158,89 +130,66 @@ export function PaymentMethods({
   );
 }
 
-/* ------------------------------------------------------------------ card */
+/* ---------------------------------------------------------- bank transfer */
 
-function CardPanel({ notice }: { notice: string }) {
-  return (
-    <div className="space-y-4">
-      <Field id="card" label="Card number" placeholder="0000 0000 0000 0000" />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field id="exp" label="Expiry" placeholder="MM / YY" />
-        <Field id="cvc" label="Security code" placeholder="123" />
-      </div>
-      <Field id="card-name" label="Name on card" autoComplete="cc-name" />
-
-      {/* The sentence itself is administered at /admin/payments; only its placement is here. */}
-      <NotConnected>{notice}</NotConnected>
-    </div>
-  );
-}
-
-/* --------------------------------------------------------------- cash app */
-
-function CashAppPanel({ total, notice }: { total: number; notice: string }) {
+function BankTransferPanel({ notice }: { notice: string }) {
   return (
     <div className="space-y-4">
       <p className="text-sm leading-relaxed text-ink-soft">
-        Cash App transfers are a push from your account, so the order is confirmed once the
-        payment lands rather than at the moment you place it.
+        Bank transfers are a secure way to pay. Your bank details will be provided to complete the transfer.
       </p>
 
-      <Field id="cashtag" label="Your $Cashtag" placeholder="$yourname" />
-
-      <div className="border border-rule bg-paper-sunk p-4">
-        <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
-          Send exactly
-        </p>
-        <p className="mt-1 font-display text-2xl font-semibold tabular">{formatPrice(total)}</p>
-        <p className="mt-3 text-xs leading-relaxed text-ink-faint">
-          The destination $Cashtag would be shown here once an account is connected.
-        </p>
-      </div>
+      <Field id="account" label="Account number" placeholder="•••••••••••" />
 
       <NotConnected>{notice}</NotConnected>
     </div>
   );
 }
 
-/* --------------------------------------------------------- crypto (single method) */
+/* ------------------------------------------------------------------ zelle */
 
-function CryptoSimplePanel({
-  total,
-  label,
-  walletAddress,
-  notice,
-}: {
-  total: number;
-  label: string;
-  walletAddress?: string | null;
-  notice: string;
-}) {
+function ZellePanel({ notice }: { notice: string }) {
   return (
     <div className="space-y-4">
-      <div className="border border-rule bg-paper-sunk p-4">
-        <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
-          Amount due
-        </p>
-        <p className="mt-1 font-display text-2xl font-semibold tabular">{formatPrice(total)}</p>
+      <p className="text-sm leading-relaxed text-ink-soft">
+        Send money directly from your bank account using Zelle.
+      </p>
 
-        <div className="mt-4 border-t border-rule pt-4">
-          <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
-            Send {label} to
-          </p>
-          {walletAddress ? (
-            <p className="mt-1.5 break-all border border-dashed border-rule-strong bg-card p-3 font-mono text-xs font-medium text-ink">
-              {walletAddress}
-            </p>
-          ) : (
-            <p className="mt-1.5 break-all border border-dashed border-rule-strong bg-card p-3 font-mono text-xs text-ink-faint">
-              No wallet is connected — no address to display.
-            </p>
-          )}
-        </div>
-      </div>
+      <Field id="email" label="Email or phone number" placeholder="you@email.com" />
 
-      {!walletAddress && <NotConnected>{notice}</NotConnected>}
+      <NotConnected>{notice}</NotConnected>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------ revolut */
+
+function RevolutPanel({ notice }: { notice: string }) {
+  return (
+    <div className="space-y-4">
+      <p className="text-sm leading-relaxed text-ink-soft">
+        Pay securely with your Revolut account.
+      </p>
+
+      <Field id="revolut-username" label="Revolut username" placeholder="@username" />
+
+      <NotConnected>{notice}</NotConnected>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ venmo */
+
+function VenmoPanel({ notice }: { notice: string }) {
+  return (
+    <div className="space-y-4">
+      <p className="text-sm leading-relaxed text-ink-soft">
+        Send payment directly through Venmo.
+      </p>
+
+      <Field id="venmo-username" label="Venmo username" placeholder="@username" />
+
+      <NotConnected>{notice}</NotConnected>
     </div>
   );
 }
