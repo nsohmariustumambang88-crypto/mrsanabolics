@@ -52,6 +52,7 @@ export function CheckoutFlow({
   const [placed, setPlaced] = React.useState(false);
   const [orderReference, setOrderReference] = React.useState('');
   const [method, setMethod] = React.useState<PaymentMethod>('banktransfer');
+  const [cryptoAsset, setCryptoAsset] = React.useState<'BTC' | 'ETH' | 'USDT'>('BTC');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState('');
 
@@ -134,6 +135,8 @@ export function CheckoutFlow({
         shippingMethod: chosenRate?.name,
         shippingCost: shipping,
         discountCode: discount.code,
+        paymentMethod: method,
+        cryptoAsset: method === 'crypto' ? cryptoAsset : undefined,
         total,
       });
 
@@ -472,6 +475,8 @@ export function CheckoutFlow({
                 total={total}
                 method={method}
                 onMethodChange={setMethod}
+                cryptoAsset={cryptoAsset}
+                onCryptoAssetChange={setCryptoAsset}
                 methods={paymentMethods}
               />
             )}

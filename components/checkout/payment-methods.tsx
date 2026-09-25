@@ -58,15 +58,18 @@ export function PaymentMethods({
   total,
   method,
   onMethodChange,
+  cryptoAsset,
+  onCryptoAssetChange,
   methods,
 }: {
   total: number;
   method: PaymentMethod;
   onMethodChange: (m: PaymentMethod) => void;
+  cryptoAsset: CryptoAsset;
+  onCryptoAssetChange: (a: CryptoAsset) => void;
   /** Enabled methods from the database, in administered order. */
   methods: PaymentMethodOption[];
 }) {
-  const [asset, setAsset] = React.useState<CryptoAsset>('BTC');
 
   /* The notice for whichever method is showing, so each panel states its own position. */
   const notice = methods.find((m) => m.key === method)?.notice ?? '';
@@ -123,7 +126,7 @@ export function PaymentMethods({
         {method === 'revolut' && <RevolutPanel notice={notice} />}
         {method === 'venmo' && <VenmoPanel notice={notice} />}
         {method === 'crypto' && (
-          <CryptoPanel total={total} asset={asset} onAssetChange={setAsset} notice={notice} />
+          <CryptoPanel total={total} asset={cryptoAsset} onAssetChange={onCryptoAssetChange} notice={notice} />
         )}
       </div>
     </div>

@@ -18,6 +18,8 @@ export type CheckoutSubmitInput = {
   shippingMethod?: string;
   shippingCost: number;
   discountCode?: string;
+  paymentMethod?: string;
+  cryptoAsset?: string;
   total: number;
 };
 
@@ -55,6 +57,15 @@ export async function submitCheckout(
       select: { id: true },
     });
 
+    /* Build notes with payment method info */
+    let notes = '';
+    if (input.paymentMethod) {
+      notes = `Payment: ${input.paymentMethod}`;
+      if (input.cryptoAsset) {
+        notes += ` (${input.cryptoAsset})`;
+      }
+    }
+
     /* Create the order */
     const result = await createOrder({
       contactId: contact.id,
@@ -70,6 +81,7 @@ export async function submitCheckout(
       shippingCost: input.shippingCost,
       shippingMethod: input.shippingMethod,
       discountCode: input.discountCode,
+      notes: notes || null,
     });
 
     if (!result.ok) {
