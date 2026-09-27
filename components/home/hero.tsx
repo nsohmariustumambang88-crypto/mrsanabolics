@@ -29,8 +29,12 @@ export function Hero({
   promoCode: AdvertisedDiscount | null;
 }) {
   return (
-    <section className="relative border-b border-rule">
-      <div className="mx-auto grid max-w-[86rem] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+    <section className="relative border-b border-rule overflow-hidden">
+      <div
+        className="absolute inset-0 opacity-20 bg-cover bg-center pointer-events-none"
+        style={{ backgroundImage: 'url(/hero-bg.jfif)' }}
+      />
+      <div className="mx-auto grid max-w-[86rem] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] relative z-10">
         {/* The sheet */}
         <div className="flex flex-col justify-center px-4 py-12 sm:px-6 sm:py-16 lg:border-r lg:border-rule lg:px-10 lg:py-24">
           <h1 className="font-display text-[clamp(2.75rem,6vw,5rem)] font-semibold leading-[0.95] tracking-[-0.04em]">
@@ -80,7 +84,7 @@ export function Hero({
           is a flex container from lg so the panel can take the full 42rem height and the
           photograph can grow into whatever the text leaves.
         */}
-        <div className="relative flex flex-col border-t border-rule lg:min-h-[42rem] lg:border-t-0">
+        <div className="relative flex flex-col border-t border-rule lg:min-h-[42rem] lg:border-t-0 z-10">
           <div className="relative flex flex-col lg:flex-1">
             <HeroOffer offers={offers} fallback={fallback} promoCode={promoCode} />
           </div>
