@@ -65,9 +65,14 @@ export function RestockAlertsModal() {
         </div>
 
         <h2 className="mb-2 text-center text-2xl font-bold">Restock Alerts</h2>
-        <p className="mb-6 text-center text-sm text-gray-600">
+        <p className="mb-4 text-center text-sm text-gray-600">
           Be first to hear when something is back in stock, and when new flavours and drops land. One email, only when there's something worth saying.
         </p>
+        <div className="mb-6 rounded-lg bg-blue-50 p-3">
+          <p className="text-center text-sm font-medium text-blue-900">
+            ✨ Get <span className="font-bold">15% off</span> your first order when you subscribe
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
