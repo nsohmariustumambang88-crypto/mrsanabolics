@@ -37,15 +37,15 @@ export function Hero({
       <div className="mx-auto grid max-w-[86rem] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] relative z-10">
         {/* The sheet with text shadow for contrast */}
         <div className="flex flex-col justify-center px-4 py-12 sm:px-6 sm:py-16 lg:border-r lg:border-rule lg:px-10 lg:py-24">
-          <h1 className="font-display text-[clamp(2.75rem,6vw,5rem)] font-semibold leading-[0.95] tracking-[-0.04em] drop-shadow-lg">
+          <h1 className="font-display text-[clamp(2.75rem,6vw,5rem)] font-semibold leading-[0.95] tracking-[-0.04em] drop-shadow-lg text-white">
             Steroids, peptides
             <br />
             and SARMs,
             <br />
-            <span className="text-pigment-indigo drop-shadow-md">compared by compound.</span>
+            <span className="text-blue-600 font-bold drop-shadow-md">compared by compound.</span>
           </h1>
 
-          <p className="measure-tight mt-8 text-base leading-relaxed text-ink-soft sm:text-lg drop-shadow-md">
+          <p className="measure-tight mt-8 text-base leading-relaxed text-white sm:text-lg drop-shadow-md">
             Injectable and oral steroids, post-cycle, peptides and SARMs from 41 manufacturers.
             Every compound has its own page comparing each maker’s version by strength, form and
             price.
