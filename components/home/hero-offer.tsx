@@ -83,6 +83,8 @@ export function HeroOffer({
   const [tabHidden, setTabHidden] = React.useState(false);
   const [added, setAdded] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+  const [hoverZone, setHoverZone] = React.useState<'left' | 'right' | null>(null);
+  const hoverTimeoutRef = React.useRef<NodeJS.Timeout>();
 
   const onOffer = offers.length > 0;
   const list = onOffer ? offers : fallback ? [fallback] : [];
@@ -90,6 +92,13 @@ export function HeroOffer({
 
   /* A new slide is a new product: its "added" confirmation must not carry over. */
   React.useEffect(() => setAdded(false), [index]);
+
+  /* Cleanup hover timeout on unmount */
+  React.useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    };
+  }, []);
 
   /* Reduced motion: no automatic rotation until the visitor asks for it. */
   React.useEffect(() => {
@@ -123,6 +132,21 @@ export function HeroOffer({
   const step = (delta: number) => {
     setDirection(delta > 0 ? 1 : -1);
     setIndex((current) => (current + delta + list.length) % list.length);
+  };
+
+  const handleHoverZone = (zone: 'left' | 'right' | null) => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setHoverZone(zone);
+
+    if (zone === 'left' && list.length > 1) {
+      hoverTimeoutRef.current = window.setTimeout(() => {
+        step(-1);
+      }, 400);
+    } else if (zone === 'right' && list.length > 1) {
+      hoverTimeoutRef.current = window.setTimeout(() => {
+        step(1);
+      }, 400);
+    }
   };
 
   const onKeyDown = (event: React.KeyboardEvent) => {
@@ -274,38 +298,69 @@ export function HeroOffer({
               `flex: 1 1 0%` in a column of indefinite height can collapse the box it is meant
               to size.
             */}
-            <Link
-              href={`/product/${product.slug}`}
-              /*
-                White in the dark theme. The pack shots are square and photographed on white, and
-                this box is not square, so on the dark card the photo sat as a white rectangle
-                between two dark bars. A white plate is how the product cards already show pack
-                shots in the dark theme; this matches them.
-              */
+            <div
               className="relative mx-4 mt-5 block aspect-[5/4] min-h-[12rem] overflow-hidden border border-rule bg-card dark:bg-white sm:mx-6 lg:mx-10 lg:aspect-auto lg:flex-1"
-              tabIndex={-1}
-              aria-hidden="true"
+              onMouseLeave={() => handleHoverZone(null)}
             >
-              {/*
-                Multiplied onto the paper, in the light theme only. The store's pack shots are
-                photographed on white, and at this size the white showed as a pasted-in rectangle
-                inside the warmer paper box. Multiply turns white into whatever it sits on, so the
-                pack sits ON the sheet. It is switched off in the dark theme, where multiplying
-                onto a dark ground would sink the photograph into it, and never applied to a drawn
-                plate, which carries its own ground colour.
-              */}
-              <ProductPlate
-                product={product}
-                showMarking={false}
-                priority={index === 0}
-                sizes="(min-width: 1024px) 44vw, 100vw"
-                className={
-                  isPhotograph(product.images[0])
-                    ? 'mix-blend-multiply dark:mix-blend-normal'
-                    : undefined
-                }
-              />
-            </Link>
+              <Link
+                href={`/product/${product.slug}`}
+                /*
+                  White in the dark theme. The pack shots are square and photographed on white, and
+                  this box is not square, so on the dark card the photo sat as a white rectangle
+                  between two dark bars. A white plate is how the product cards already show pack
+                  shots in the dark theme; this matches them.
+                */
+                className="relative block h-full w-full"
+                tabIndex={-1}
+                aria-hidden="true"
+              >
+                {/*
+                  Multiplied onto the paper, in the light theme only. The store's pack shots are
+                  photographed on white, and at this size the white showed as a pasted-in rectangle
+                  inside the warmer paper box. Multiply turns white into whatever it sits on, so the
+                  pack sits ON the sheet. It is switched off in the dark theme, where multiplying
+                  onto a dark ground would sink the photograph into it, and never applied to a drawn
+                  plate, which carries its own ground colour.
+                */}
+                <ProductPlate
+                  product={product}
+                  showMarking={false}
+                  priority={index === 0}
+                  sizes="(min-width: 1024px) 44vw, 100vw"
+                  className={
+                    isPhotograph(product.images[0])
+                      ? 'mix-blend-multiply dark:mix-blend-normal'
+                      : undefined
+                  }
+                />
+              </Link>
+
+              {/* Left hover zone */}
+              {list.length > 1 && (
+                <div
+                  onMouseEnter={() => handleHoverZone('left')}
+                  onMouseLeave={() => handleHoverZone(null)}
+                  className={cn(
+                    'absolute inset-y-0 left-0 w-1/3 cursor-pointer transition-colors',
+                    hoverZone === 'left' ? 'bg-black/20' : 'bg-black/0 hover:bg-black/10'
+                  )}
+                  aria-label="Previous product"
+                />
+              )}
+
+              {/* Right hover zone */}
+              {list.length > 1 && (
+                <div
+                  onMouseEnter={() => handleHoverZone('right')}
+                  onMouseLeave={() => handleHoverZone(null)}
+                  className={cn(
+                    'absolute inset-y-0 right-0 w-1/3 cursor-pointer transition-colors',
+                    hoverZone === 'right' ? 'bg-black/20' : 'bg-black/0 hover:bg-black/10'
+                  )}
+                  aria-label="Next product"
+                />
+              )}
+            </div>
 
             <div className="px-4 pb-8 pt-5 sm:px-6 lg:px-10 lg:pb-10">
               <p className="text-xs text-ink-faint">
