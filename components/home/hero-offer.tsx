@@ -324,7 +324,7 @@ export function HeroOffer({
                 {product.subcategoryName ?? product.category}
               </p>
 
-              <h2 className="mt-1.5 font-display text-[clamp(1.6rem,2.6vw,2.25rem)] font-semibold leading-[1.05] tracking-[-0.03em]">
+              <h2 className="mt-1.5 font-display text-[clamp(1.6rem,2.6vw,2.25rem)] font-bold leading-[1.05] tracking-[-0.03em] text-white">
                 <Link
                   href={`/product/${product.slug}`}
                   className="transition-colors hover:text-pigment-indigo"
@@ -334,7 +334,7 @@ export function HeroOffer({
               </h2>
 
               <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="font-display text-2xl font-semibold tabular">
+                <span className="font-display text-2xl font-semibold tabular text-white">
                   {formatPrice(product.price)}
                 </span>
                 {saving > 0 && compareAt && (
@@ -342,7 +342,7 @@ export function HeroOffer({
                     <span className="text-sm text-ink-faint line-through tabular">
                       {formatPrice(compareAt)}
                     </span>
-                    <span className="text-sm font-medium text-pigment-madder tabular">
+                    <span className="text-sm font-medium text-white tabular">
                       Save {formatPrice(saving)}
                     </span>
                   </>
@@ -390,7 +390,7 @@ export function HeroOffer({
 
                 <Link
                   href={`/product/${product.slug}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-rule-strong px-5 py-3 text-sm font-medium transition-colors hover:border-pigment-indigo hover:text-pigment-indigo"
+                  className="inline-flex items-center gap-2 rounded-full border border-rule-strong px-5 py-3 text-sm font-medium text-white transition-colors hover:border-pigment-indigo hover:text-pigment-indigo"
                 >
                   View product
                   <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
