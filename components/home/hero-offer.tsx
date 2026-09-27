@@ -437,6 +437,7 @@ export function HeroOffer({
                   )}
                 </button>
               </div>
+            </div>
           </div>
         </>
       )}
