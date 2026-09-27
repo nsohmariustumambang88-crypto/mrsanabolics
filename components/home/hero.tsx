@@ -62,12 +62,6 @@ export function Hero({
                 strokeWidth={1.75}
               />
             </Link>
-            <Link
-              href="/blog/how-to-read-a-certificate-of-analysis"
-              className="inline-flex items-center gap-2.5 rounded-full border border-rule-strong px-6 py-3.5 text-sm font-medium transition-colors duration-300 hover:border-pigment-indigo hover:bg-paper-sunk drop-shadow-md"
-            >
-              How to check a certificate
-            </Link>
           </div>
         </div>
 
