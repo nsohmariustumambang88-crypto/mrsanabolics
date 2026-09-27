@@ -1,7 +1,6 @@
 import { CatalogueProvider } from '@/components/providers/catalogue-provider';
 import { SettingsProvider } from '@/components/providers/settings-provider';
 import { StoreProvider } from '@/components/providers/store-provider';
-import { AnnouncementBar } from '@/components/layout/announcement-bar';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { CartDrawer } from '@/components/cart/cart-drawer';
@@ -67,9 +66,6 @@ export default async function StorefrontLayout({
         </a>
 
         <div className="relative z-10 flex min-h-screen flex-col">
-          {asBoolean(settings.announcement_enabled) && (
-            <AnnouncementBar text={settings.announcement_text} />
-          )}
           <SiteHeader />
           <main id="main" className="flex-1">
             {children}
