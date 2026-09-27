@@ -84,7 +84,7 @@ export function HeroOffer({
   const [added, setAdded] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
   const [hoverZone, setHoverZone] = React.useState<'left' | 'right' | null>(null);
-  const hoverTimeoutRef = React.useRef<NodeJS.Timeout>();
+  const hoverTimeoutRef = React.useRef<ReturnType<typeof setTimeout>>();
 
   const onOffer = offers.length > 0;
   const list = onOffer ? offers : fallback ? [fallback] : [];
