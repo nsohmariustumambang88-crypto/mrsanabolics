@@ -186,7 +186,7 @@ export function HeroOffer({
   const stock = product ? stockState(product, lowStockThreshold) : null;
 
   return (
-    <section
+    <div
       aria-roledescription="carousel"
       aria-label={onOffer ? 'Current offers' : 'Featured product'}
       onKeyDown={onKeyDown}
@@ -204,13 +204,7 @@ export function HeroOffer({
         /* Only when focus leaves the carousel altogether, not when it moves between its buttons. */
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHeld(false);
       }}
-      /*
-        No background of its own. It sits on the same paper as the headline beside it; an opaque
-        `bg-paper` here covered the page's paper texture and measured a few steps off the headline
-        column in both themes (244,241,235 against 241,238,232 in light), which read as a
-        separate, faintly tinted block rather than one sheet.
-      */
-      className="relative flex flex-col lg:flex-1"
+      className="relative flex flex-col"
     >
       {product && (
         <>
@@ -299,7 +293,7 @@ export function HeroOffer({
               to size.
             */}
             <div
-              className="relative mx-4 mt-5 block aspect-[5/4] min-h-[12rem] overflow-hidden border border-rule bg-card dark:bg-white sm:mx-6 lg:mx-10 lg:aspect-auto lg:flex-1"
+              className="relative block aspect-square overflow-hidden border border-rule bg-card dark:bg-white"
               onMouseLeave={() => handleHoverZone(null)}
             >
               <Link
@@ -362,7 +356,7 @@ export function HeroOffer({
               )}
             </div>
 
-            <div className="px-4 pb-8 pt-5 sm:px-6 lg:px-10 lg:pb-10">
+            <div className="flex flex-1 flex-col p-3 sm:p-4">
               <p className="text-xs text-ink-faint">
                 {product.brand}
                 {strength && (
@@ -379,7 +373,7 @@ export function HeroOffer({
                 {product.subcategoryName ?? product.category}
               </p>
 
-              <h2 className="mt-1.5 font-display text-[clamp(1.6rem,2.6vw,2.25rem)] font-bold leading-[1.05] tracking-[-0.03em] text-white">
+              <h2 className="mt-1.5 font-display text-lg font-semibold leading-snug text-ink tracking-[-0.02em]">
                 <Link
                   href={`/product/${product.slug}`}
                   className="transition-colors hover:text-pigment-indigo"
@@ -389,15 +383,15 @@ export function HeroOffer({
               </h2>
 
               <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="font-display text-2xl font-semibold tabular text-white">
+                <span className="font-semibold tabular text-base text-ink">
                   {formatPrice(product.price)}
                 </span>
                 {saving > 0 && compareAt && (
                   <>
-                    <span className="text-sm text-ink-faint line-through tabular">
+                    <span className="text-xs text-ink-faint line-through tabular">
                       {formatPrice(compareAt)}
                     </span>
-                    <span className="text-sm font-medium text-white tabular">
+                    <span className="text-xs font-medium text-ink-soft tabular">
                       Save {formatPrice(saving)}
                     </span>
                   </>
@@ -414,18 +408,18 @@ export function HeroOffer({
                 )}
               </div>
 
-              <div className="mt-5 flex flex-wrap items-center gap-3">
+              <div className="mt-auto flex flex-wrap items-center gap-3 pt-3 sm:pt-4">
                 <button
                   type="button"
                   onClick={add}
                   disabled={!product.inStock}
                   className={cn(
-                    'inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium transition-colors',
+                    'flex items-center justify-center gap-2 border-t border-rule px-3 py-2.5 text-sm font-medium transition-colors sm:px-4 sm:py-3',
                     !product.inStock
-                      ? 'cursor-not-allowed bg-paper-sunk text-ink-faint'
+                      ? 'cursor-not-allowed text-ink-faint'
                       : added
                         ? 'bg-pigment-verdigris text-primary-foreground'
-                        : 'bg-pigment-indigo text-primary-foreground hover:bg-pigment-indigo-lift'
+                        : 'text-ink-soft hover:bg-pigment-indigo hover:text-primary-foreground'
                   )}
                 >
                   {!product.inStock ? (
@@ -442,25 +436,7 @@ export function HeroOffer({
                     </>
                   )}
                 </button>
-
-                <Link
-                  href={`/product/${product.slug}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-rule-strong px-5 py-3 text-sm font-medium text-white transition-colors hover:border-pigment-indigo hover:text-pigment-indigo"
-                >
-                  View product
-                  <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
-                </Link>
-
-                {onOffer && (
-                  <Link
-                    href="/shop?filter=deals"
-                    className="ml-auto font-mono text-2xs uppercase tracking-[0.14em] text-ink-soft underline decoration-rule-strong underline-offset-4 transition-colors hover:text-pigment-indigo hover:decoration-pigment-indigo"
-                  >
-                    All offers
-                  </Link>
-                )}
               </div>
-            </div>
           </div>
         </>
       )}
@@ -502,6 +478,6 @@ export function HeroOffer({
           </button>
         </div>
       )}
-    </section>
+    </div>
   );
 }

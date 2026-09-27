@@ -121,7 +121,23 @@ export default async function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }}
       />
 
-      <Hero offers={offers} fallback={fallback} promoCode={promoCode} />
+      <Hero />
+
+      {/* Promotional card in separate section with white background */}
+      <section className="border-b border-rule bg-paper">
+        <div className="mx-auto max-w-[86rem] px-4 py-8 sm:px-6 sm:py-12 lg:px-10 lg:py-16">
+          {offers.length > 0 || fallback ? (
+            <div className="rounded-lg border border-rule bg-card">
+              <div className="p-4 sm:p-6 lg:p-8">
+                <h2 className="mb-6 font-display text-2xl font-semibold text-ink">Featured Offer</h2>
+                <div className="max-w-sm">
+                  <HeroOffer offers={offers} fallback={fallback} promoCode={promoCode} />
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </section>
       <RecentlyViewed allProducts={products.map(toSummary)} />
       <FeaturedCollections samples={doorSamples} />
       <AssuranceRegister />

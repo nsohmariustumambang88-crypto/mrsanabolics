@@ -2,8 +2,6 @@
 
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { HeroOffer } from '@/components/home/hero-offer';
-import type { AdvertisedDiscount, ProductSummary } from '@/lib/types';
 
 /*
   The first viewport is the thesis, not a header.
@@ -19,24 +17,16 @@ import type { AdvertisedDiscount, ProductSummary } from '@/lib/types';
   product card.
 */
 
-export function Hero({
-  offers,
-  fallback,
-  promoCode,
-}: {
-  offers: ProductSummary[];
-  fallback: ProductSummary | null;
-  promoCode: AdvertisedDiscount | null;
-}) {
+export function Hero() {
   return (
     <section className="relative border-b border-rule overflow-hidden">
       <div
         className="absolute inset-0 opacity-55 bg-cover bg-center pointer-events-none"
         style={{ backgroundImage: 'url(/hero-bg-no-bg.png)' }}
       />
-      <div className="mx-auto grid max-w-[86rem] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] relative z-10">
+      <div className="mx-auto max-w-[86rem] relative z-10">
         {/* The sheet with text shadow for contrast */}
-        <div className="flex flex-col justify-center px-4 py-12 sm:px-6 sm:py-16 lg:border-r lg:border-rule lg:px-10 lg:py-24">
+        <div className="flex flex-col justify-center px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-24">
           <h1 className="font-display text-[clamp(2.75rem,6vw,5rem)] font-semibold leading-[0.95] tracking-[-0.04em] text-black">
             Steroids, peptides
             <br />
@@ -62,25 +52,6 @@ export function Hero({
                 strokeWidth={1.75}
               />
             </Link>
-          </div>
-        </div>
-
-        {/*
-          The promotion, on the plain paper.
-
-          This column used to BE the marbling bath — combable, with a small offer card in its
-          corner — and then a band of that pigment framing the offer. At the owner's direction
-          both are gone: the offer is the whole column. Dropping the bath also drops the most
-          expensive thing the home page had to draw.
-
-          A top rule below lg, where the column stacks under the headline and needs something to
-          divide it; from lg the headline column's own right-hand rule does that job. The column
-          is a flex container from lg so the panel can take the full 42rem height and the
-          photograph can grow into whatever the text leaves.
-        */}
-        <div className="relative flex flex-col border-t border-rule lg:min-h-[42rem] lg:border-t-0 z-10">
-          <div className="relative flex flex-col lg:flex-1">
-            <HeroOffer offers={offers} fallback={fallback} promoCode={promoCode} />
           </div>
         </div>
       </div>
