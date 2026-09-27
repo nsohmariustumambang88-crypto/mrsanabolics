@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Hero } from '@/components/home/hero';
+import { HeroOffer } from '@/components/home/hero-offer';
 import { AssuranceRegister } from '@/components/home/assurance-register';
 import { FeaturedCategories } from '@/components/home/categories';
 import { ProductsSection } from '@/components/home/products-section';
