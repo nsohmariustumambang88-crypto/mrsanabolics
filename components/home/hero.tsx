@@ -32,7 +32,7 @@ export function Hero({
     <section className="relative border-b border-rule overflow-hidden">
       <div
         className="absolute inset-0 opacity-55 bg-cover bg-center pointer-events-none"
-        style={{ backgroundImage: 'url(/hero-bg.jfif)' }}
+        style={{ backgroundImage: 'url(/hero-bg-no-bg.png)' }}
       />
       <div className="mx-auto grid max-w-[86rem] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] relative z-10">
         {/* The sheet with text shadow for contrast */}
