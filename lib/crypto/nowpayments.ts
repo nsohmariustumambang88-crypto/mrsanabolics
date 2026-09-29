@@ -1,10 +1,13 @@
 import 'server-only';
 
 const API_URL = 'https://api.nowpayments.io/v1';
-const API_KEY = process.env.NOWPAYMENTS_API_KEY;
 
-if (!API_KEY) {
-  throw new Error('NOWPAYMENTS_API_KEY is not set');
+function getApiKey(): string {
+  const key = process.env.NOWPAYMENTS_API_KEY;
+  if (!key) {
+    throw new Error('NOWPAYMENTS_API_KEY is not set');
+  }
+  return key;
 }
 
 export interface CreatePaymentInput {
@@ -51,7 +54,7 @@ export interface WebhookPayload {
 
 export async function createPayment(input: CreatePaymentInput): Promise<PaymentResponse> {
   const headers: HeadersInit = {
-    'x-api-key': API_KEY!,
+    'x-api-key': getApiKey(),
     'Content-Type': 'application/json',
   };
 
@@ -80,7 +83,7 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
 
 export async function getPaymentStatus(paymentId: string): Promise<PaymentResponse> {
   const headers: HeadersInit = {
-    'x-api-key': API_KEY!,
+    'x-api-key': getApiKey(),
   };
 
   const response = await fetch(`${API_URL}/payment/${paymentId}`, {
