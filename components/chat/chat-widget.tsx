@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MessageSquare, X, Send, Bot, Headset, Check } from 'lucide-react';
+import { MessageSquare, X, Send, Check } from 'lucide-react';
 import {
   MAX_MESSAGE_LENGTH,
   VISITOR_POLL_MS,
@@ -67,7 +67,7 @@ const time = (iso: string) =>
 export function ChatWidget() {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
-  const [mode, setMode] = React.useState<ChatModeName>('agent');
+  const [mode] = React.useState<ChatModeName>('support'); // Always support mode
   const [messages, setMessages] = React.useState<ChatMessageDto[]>([]);
   const [draft, setDraft] = React.useState('');
   const [sending, setSending] = React.useState(false);
@@ -198,12 +198,10 @@ export function ChatWidget() {
           <header className="flex items-start justify-between gap-3 border-b border-rule px-4 py-3">
             <div className="min-w-0">
               <h2 className="font-display text-base font-semibold tracking-[-0.02em] text-ink">
-                {mode === 'agent' ? 'Ask the agent' : 'Support'}
+                Support
               </h2>
               <p className="mt-0.5 text-xs leading-snug text-ink-faint">
-                {mode === 'agent'
-                  ? 'Answers from the store’s delivery, payment and stock information.'
-                  : 'A person reads this and replies here.'}
+                A person reads this and replies here.
               </p>
             </div>
             <button
@@ -228,9 +226,6 @@ export function ChatWidget() {
             {messages.map((m) => (
               <Bubble key={m.id} message={m} />
             ))}
-            {sending && mode === 'agent' && (
-              <p className="font-mono text-2xs uppercase tracking-[0.12em] text-ink-faint">Agent is answering…</p>
-            )}
           </div>
 
           {mode === 'support' && wroteToSupport && !detailsGiven && (
@@ -243,25 +238,6 @@ export function ChatWidget() {
           )}
 
           <div className="border-t border-rule px-3 pb-3 pt-3">
-            <div className="grid grid-cols-2 gap-2" role="group" aria-label="Who to ask">
-              <ModeButton
-                active={mode === 'agent'}
-                onClick={() => setMode('agent')}
-                tone="agent"
-                icon={<Bot className="h-4 w-4" strokeWidth={1.75} />}
-                title="Ask Agent"
-                detail="Instant answers: delivery, payment, stock"
-              />
-              <ModeButton
-                active={mode === 'support'}
-                onClick={() => setMode('support')}
-                tone="support"
-                icon={<Headset className="h-4 w-4" strokeWidth={1.75} />}
-                title="Contact Support"
-                detail="Talk to a person directly"
-              />
-            </div>
-
             {error && (
               <p className="mt-2 text-xs text-destructive" role="alert">
                 {error}
@@ -286,7 +262,7 @@ export function ChatWidget() {
                 className="absolute -left-[9999px] h-px w-px opacity-0"
               />
               <label htmlFor="site-chat-input" className="sr-only">
-                {mode === 'agent' ? 'Message to the agent' : 'Message to support'}
+                Message to support
               </label>
               <textarea
                 id="site-chat-input"
@@ -301,16 +277,13 @@ export function ChatWidget() {
                     void send();
                   }
                 }}
-                placeholder={mode === 'agent' ? 'Ask about delivery, payment or stock' : 'Write to a person'}
+                placeholder="Write to support"
                 className="min-h-[2.75rem] flex-1 resize-none border border-rule-strong bg-paper px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-pigment-indigo"
               />
               <button
                 type="submit"
                 disabled={sending || !draft.trim()}
-                className={cn(
-                  'flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-paper transition-colors disabled:opacity-40',
-                  mode === 'agent' ? 'bg-pigment-indigo' : 'bg-pigment-verdigris'
-                )}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-pigment-verdigris text-paper transition-colors disabled:opacity-40"
                 aria-label="Send"
               >
                 <Send className="h-4 w-4" strokeWidth={1.75} />
@@ -338,47 +311,6 @@ export function ChatWidget() {
   );
 }
 
-function ModeButton({
-  active,
-  onClick,
-  tone,
-  icon,
-  title,
-  detail,
-}: {
-  active: boolean;
-  onClick: () => void;
-  tone: 'agent' | 'support';
-  icon: React.ReactNode;
-  title: string;
-  detail: string;
-}) {
-  const colour = tone === 'agent' ? 'var(--pig-indigo)' : 'var(--pig-verdigris)';
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        'relative flex flex-col items-start gap-1 border px-2.5 py-2 text-left transition-colors',
-        active ? 'border-2' : 'border-rule hover:border-rule-strong'
-      )}
-      style={
-        active
-          ? { borderColor: `hsl(${colour})`, backgroundColor: `hsl(${colour} / 0.07)` }
-          : undefined
-      }
-    >
-      <span className="flex w-full items-center gap-1.5 text-sm font-medium text-ink" style={active ? { color: `hsl(${colour})` } : undefined}>
-        {icon}
-        {title}
-        {active && <Check className="ml-auto h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />}
-      </span>
-      <span className="text-2xs leading-snug text-ink-faint">{detail}</span>
-    </button>
-  );
-}
-
 function Bubble({ message }: { message: ChatMessageDto }) {
   const visitor = message.role === 'visitor';
   const staff = message.role === 'staff';
@@ -386,25 +318,19 @@ function Bubble({ message }: { message: ChatMessageDto }) {
   return (
     <div className={cn('flex flex-col', visitor ? 'items-end' : 'items-start')}>
       {!visitor && (
-        <p
-          className={cn(
-            'mb-1 font-mono text-2xs uppercase tracking-[0.12em]',
-            staff ? 'text-pigment-verdigris' : 'text-ink-faint'
-          )}
-        >
-          {staff ? 'Support' : 'Agent'}
+        <p className="mb-1 font-mono text-2xs uppercase tracking-[0.12em] text-pigment-verdigris">
+          Support
         </p>
       )}
       <div
         className={cn(
           'max-w-[85%] whitespace-pre-wrap break-words px-3 py-2 text-sm leading-relaxed',
           visitor && 'bg-ink text-paper',
-          message.role === 'bot' && 'bg-paper-sunk text-ink',
           staff && 'border border-pigment-verdigris text-ink'
         )}
         style={staff ? { backgroundColor: 'hsl(var(--pig-verdigris) / 0.08)' } : undefined}
       >
-        {message.role === 'visitor' ? message.body : <RichText text={message.body} />}
+        {message.body && <RichText text={message.body} />}
       </div>
       <time dateTime={message.createdAt} className="mt-1 font-mono text-2xs tabular text-ink-faint">
         {time(message.createdAt)}
