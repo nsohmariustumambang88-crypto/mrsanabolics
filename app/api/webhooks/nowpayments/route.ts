@@ -44,35 +44,36 @@ export async function POST(request: NextRequest) {
     switch (payment_status) {
       case 'finished': // Payment confirmed
       case 'confirmed':
-        // Idempotency check: only process if not already paid
-        if (order.status === 'PAID' || order.status === 'CONFIRMED') {
-          console.log(`[Webhook] Order ${order_id} already marked as paid, skipping`);
+        // Idempotency check: only process if not already confirmed
+        if (order.status === 'CONFIRMED') {
+          console.log(`[Webhook] Order ${order_id} already marked as confirmed, skipping`);
           return NextResponse.json({ success: true });
         }
 
-        // Update order status
-        await prisma.order.update({
+        // Update order status to CONFIRMED
+        const updatedOrder = await prisma.order.update({
           where: { id: order.id },
-          data: { status: 'PAID' },
+          data: { status: 'CONFIRMED' },
+          include: { contact: true },
         });
 
         // Send confirmation email
         try {
-          await sendOrderConfirmation(order);
+          await sendOrderConfirmation(updatedOrder);
           console.log(`[Webhook] Sent confirmation email for order ${order_id}`);
         } catch (emailError) {
           console.error(`[Webhook] Failed to send email for order ${order_id}:`, emailError);
-          // Don't fail the webhook if email fails - order is still paid
+          // Don't fail the webhook if email fails - order is still confirmed
         }
 
-        console.log(`[Webhook] Order ${order_id} marked as PAID`);
+        console.log(`[Webhook] Order ${order_id} marked as CONFIRMED`);
         break;
 
       case 'failed':
       case 'expired':
       case 'cancelled':
-        // Update order status to failed
-        if (order.status !== 'CANCELLED' && order.status !== 'FAILED') {
+        // Update order status to CANCELLED
+        if (order.status !== 'CANCELLED') {
           await prisma.order.update({
             where: { id: order.id },
             data: { status: 'CANCELLED' },

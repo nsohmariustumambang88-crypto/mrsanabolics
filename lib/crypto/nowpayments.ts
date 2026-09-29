@@ -50,12 +50,14 @@ export interface WebhookPayload {
 }
 
 export async function createPayment(input: CreatePaymentInput): Promise<PaymentResponse> {
+  const headers: HeadersInit = {
+    'x-api-key': API_KEY!,
+    'Content-Type': 'application/json',
+  };
+
   const response = await fetch(`${API_URL}/payment`, {
     method: 'POST',
-    headers: {
-      'x-api-key': API_KEY,
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify({
       price_amount: input.price_amount,
       price_currency: input.price_currency,
@@ -77,10 +79,12 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
 }
 
 export async function getPaymentStatus(paymentId: string): Promise<PaymentResponse> {
+  const headers: HeadersInit = {
+    'x-api-key': API_KEY!,
+  };
+
   const response = await fetch(`${API_URL}/payment/${paymentId}`, {
-    headers: {
-      'x-api-key': API_KEY,
-    },
+    headers,
   });
 
   if (!response.ok) {

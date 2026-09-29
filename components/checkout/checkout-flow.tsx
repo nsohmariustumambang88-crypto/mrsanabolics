@@ -51,8 +51,8 @@ export function CheckoutFlow({
   const [step, setStep] = React.useState(0);
   const [placed, setPlaced] = React.useState(false);
   const [orderReference, setOrderReference] = React.useState('');
-  const [method, setMethod] = React.useState<PaymentMethod>('banktransfer');
-  const [cryptoAsset, setCryptoAsset] = React.useState<'BTC' | 'ETH' | 'USDT'>('BTC');
+  const [method, setMethod] = React.useState<PaymentMethod>('zelle');
+  const [cryptoAsset, setCryptoAsset] = React.useState<'BTC' | 'USDT'>('BTC');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState('');
 

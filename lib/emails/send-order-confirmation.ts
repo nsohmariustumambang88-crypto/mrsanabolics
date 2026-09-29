@@ -1,11 +1,14 @@
 import 'server-only';
 import { Resend } from 'resend';
 import type { Order } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function sendOrderConfirmation(order: Order) {
-  if (!order.customerEmail) {
+export async function sendOrderConfirmation(order: Order & { contact?: { email: string } }) {
+  const email = order.contact?.email;
+
+  if (!email) {
     throw new Error('No customer email on order');
   }
 
@@ -85,12 +88,12 @@ export async function sendOrderConfirmation(order: Order) {
 
     const result = await resend.emails.send({
       from: 'noreply@mrsanabolics.com',
-      to: order.customerEmail,
+      to: email,
       subject: `Order Confirmation - ${order.reference}`,
       html,
     });
 
-    console.log(`[Email] Order confirmation sent to ${order.customerEmail}`, result);
+    console.log(`[Email] Order confirmation sent to ${email}`, result);
     return result;
   } catch (error) {
     console.error('[Email] Failed to send order confirmation:', error);

@@ -11,6 +11,11 @@ export async function verifyNowpaymentsWebhook(
   body: string,
   signature: string
 ): Promise<boolean> {
+  if (!WEBHOOK_SECRET) {
+    console.error('NOWPAYMENTS_IPN_SECRET is not set');
+    return false;
+  }
+
   try {
     // NOWPayments uses HMAC-SHA512 for webhook signatures
     const hash = crypto

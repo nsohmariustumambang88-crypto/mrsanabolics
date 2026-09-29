@@ -27,14 +27,30 @@ export async function POST(request: NextRequest) {
     // Generate order number
     const orderNumber = `MRA-${Date.now().toString().slice(-8)}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
 
-    // Create order in database with "pending" status
+    // Create or get contact by email
+    const contact = await prisma.contact.upsert({
+      where: { email },
+      update: {},
+      create: {
+        email,
+        firstSource: 'crypto-checkout',
+      },
+    });
+
+    // Create order in database with NEW status
     const order = await prisma.order.create({
       data: {
         reference: orderNumber,
-        status: 'PENDING',
-        customerEmail: email,
-        // Add other fields as needed based on your Order schema
-        // items, subtotal, shipping, total, etc.
+        status: 'NEW',
+        contactId: contact.id,
+        shipName: '',
+        shipLine1: '',
+        shipCity: '',
+        shipPostcode: '',
+        shipCountry: '',
+        subtotal: total,
+        shipping: 0,
+        total: total,
         notes: `Crypto payment - ${pay_currency.toUpperCase()}`,
       },
     });
