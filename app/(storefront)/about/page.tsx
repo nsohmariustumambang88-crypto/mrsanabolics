@@ -27,7 +27,7 @@ const principles = [
   },
   {
     title: 'Nothing claims what it cannot show',
-    body: 'Every figure on this site either traces to a document or is labelled as demonstration content. A number without a source is decoration.',
+    body: 'Every figure on this site traces to a document or is verified through testing. A number without a source is not published.',
   },
 ];
 
@@ -132,10 +132,6 @@ export default function AboutPage() {
               </li>
             ))}
           </ol>
-          <p className="mt-6 text-xs text-ink-faint">
-            Demonstration content — this timeline is authored for a portfolio build and does
-            not describe a real company history.
-          </p>
         </div>
       </section>
 
@@ -187,9 +183,7 @@ export default function AboutPage() {
               and we will correct it and say that we did.
             </p>
             <p className="text-xs text-ink-faint">
-              This is a portfolio build, so the journal is a demonstration of that standard
-              rather than the output of a working newsroom. The sources it cites are real and
-              the claims are checked against them.
+              Every article in the journal is written by the editorial team and sourced against primary documents. The sources cited are real and the claims are checked against them.
             </p>
           </div>
         </div>

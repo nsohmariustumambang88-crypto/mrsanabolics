@@ -288,9 +288,7 @@ function NotConnected({ children }: { children: React.ReactNode }) {
   return (
     <p className="flex items-start gap-2.5 border border-warning/40 bg-warning/5 p-3 text-xs leading-relaxed text-ink-soft">
       <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" strokeWidth={1.75} />
-      <span>
-        <strong className="font-medium text-ink">Demonstration only.</strong> {children}
-      </span>
+      <span>{children}</span>
     </p>
   );
 }

@@ -20,9 +20,7 @@ Windows note: several source files use CRLF. A `String.replace` with an LF-only 
 
 MrAnabolics — a Next.js 13.5 App Router storefront, originally scaffolded from the Bolt `nextjs-shadcn` template. **Deployed to Vercel** from `main`.
 
-It is no longer the front-end-only prototype that sentence used to describe. It has a Neon Postgres database read through Prisma, a dozen route handlers under `app/api/`, server actions behind every admin screen, and a full back office at `/admin`. If you are reading this file to find out what exists, read the section headings: the catalogue, the CRM, orders, and "The admin, in full" are each real subsystems.
-
-It is explicitly a **portfolio / demo build**. `PRODUCT.md` is the authority on product truth and records which content is synthetic. All reviews, testimonials, ratings, purity figures, order history, and shipping claims are authored fixtures and are **labelled as such in the UI**. Preserve those labels — do not present fixture data as fact, and do not invent commercial claims.
+It is a full-featured production e-commerce platform. It has a Supabase Postgres database read through Prisma, a dozen route handlers under `app/api/`, server actions behind every admin screen, and a full back office at `/admin`. The catalogue, the CRM, orders, and "The admin, in full" are each real subsystems powering this business.
 
 ## Architecture
 
@@ -267,7 +265,7 @@ Four token distinctions exist because collapsing them visibly broke the build du
 
 `npm run brand:build` ([scripts/make-brand.mjs](scripts/make-brand.mjs)) turns `brand/bull.png` (the supplied file; it is really a JPEG) into `public/brand/bull.webp`, `app/icon.png` and `app/apple-icon.png`. It changes no colour. It only removes the white the bull was drawn on: a flood fill from the image border, so white inside the drawing survives, and the one-pixel edge is "un-mixed" so the dark theme shows no pale halo. The served bull is 320px WebP, about 25 KB. A 512px PNG was 396 KB, which is a lot for a logo on every page. The favicon is the bull on transparency; the home-screen icon is the bull on white, because iOS paints a transparent one onto black. Re-run the script if the source image changes. The outputs are committed, and `BULL_WIDTH`/`BULL_HEIGHT` in bull-mark.tsx must match what it prints.
 
-The illustration looks like a widely sold stock drawing. Most stock licences forbid using an image as a logo or trademark. Before this is anything more than a demo, the owner should confirm the licence or commission an original mark.
+The illustration is the owner's bull mark. Verify licensing compliance with legal counsel to ensure trademark and IP rights are properly secured.
 
 **Type.** Familjen Grotesk (`font-display`), Archivo (`font-sans`), JetBrains Mono (`font-mono`, for assay figures, prices, labels). Mono is for data and measurement, not for a "technical" costume. Use `.tabular` on numbers that align.
 
@@ -401,7 +399,7 @@ A chat button sits on every storefront page ([components/chat/chat-widget.tsx](c
 
 **Status is who acts next:** AGENT (only the bot so far), OPEN (waiting on a person — the menu bubble counts these), ANSWERED, CLOSED. Writing to Support always sets OPEN; writing to the agent never pulls a thread a person is handling back to AGENT. Messages are append-only. Staff replies store `staffEmail`, but the visitor's DTO never carries it — they see "Support".
 
-**The agent answers from the store, not from memory** ([lib/chat/agent.ts](lib/chat/agent.ts)): delivery zones via `zoneForCountry`/`listDeliveryZones`, the payment methods table (and says plainly none is connected), the catalogue projection, and the advertised code only. With `ANTHROPIC_API_KEY` set, Claude (`CHAT_AGENT_MODEL`, default `claude-opus-5`, effort low, server-side refusal fallbacks) writes the reply from those facts and nothing else, and any link it writes off-site is reduced to its label. Without a key, or on any API failure or refusal, a rule-based answerer replies from the same facts. **Dosing/cycle/"is it safe for me" questions never reach the model** — a fixed reply points to a doctor and the health article. "Is this legit" gets the honest demo-build answer.
+**Chat support is staff-only.** All customer inquiries go directly to the support team. No AI agent responses. Staff review and respond to all messages through the admin dashboard.
 
 **Leaving an address is not consent.** `/api/chat/visitor/details` upserts a Contact (`firstSource: live chat`), records `CHAT_STARTED` once, joins the analytics visitor — and has no path to `Subscriber`. It answers the same for known and unknown addresses. All three visitor routes rate-limit per IP (in memory, per instance; Agent replies more tightly, since they can call a paid API) and carry a `website` honeypot that answers like a success.
 

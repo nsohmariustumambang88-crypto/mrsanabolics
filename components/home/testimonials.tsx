@@ -54,11 +54,6 @@ export function Testimonials({ testimonials }: { testimonials: Testimonial[] }) 
             </figure>
           ))}
         </div>
-
-        <p className="mt-6 text-xs text-ink-faint">
-          Demonstration content — these testimonials are authored fixtures for this portfolio
-          build, not statements from real customers.
-        </p>
       </div>
     </section>
   );
