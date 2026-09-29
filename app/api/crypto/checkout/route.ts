@@ -107,15 +107,16 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // NOWPayments doesn't always return payment_url, so construct it
-    const paymentUrl = `https://nowpayments.io/payment/${paymentId}`;
-    console.log(`[Crypto Checkout] Payment URL: ${paymentUrl}`);
+    // Redirect to our payment confirmation page instead of external NOWPayments URL
+    // This page will show the payment details and poll for confirmation
+    const confirmationUrl = `${SITE.url}/checkout/payment-confirmation?order=${order.reference}`;
+    console.log(`[Crypto Checkout] Redirecting to confirmation page: ${confirmationUrl}`);
 
     return NextResponse.json({
       success: true,
       order_id: order.id,
       order_reference: order.reference,
-      payment_url: paymentUrl,
+      payment_url: confirmationUrl,
       pay_amount: paymentResponse.pay_amount,
       pay_currency: paymentResponse.pay_currency,
     });
