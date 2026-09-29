@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 */
 
 export type PaymentMethod = 'zelle' | 'cashapp' | 'crypto';
-export type CryptoAsset = 'BTC' | 'USDT';
+export type CryptoAsset = 'BTC' | 'ETH' | 'USDT';
 
 /**
  * A method as administered at /admin/payments: which ones are listed, and the sentence each
@@ -34,6 +34,7 @@ const FALLBACK_PRESENTATION = { hint: 'Payment method', icon: Landmark };
 
 const ASSETS: { id: CryptoAsset; label: string; network: string }[] = [
   { id: 'BTC', label: 'Bitcoin', network: 'Bitcoin network' },
+  { id: 'ETH', label: 'Ethereum', network: 'ERC-20' },
   { id: 'USDT', label: 'USDT', network: 'Tron (TRC-20)' },
 ];
 
@@ -104,7 +105,7 @@ export function PaymentMethods({
         {method === 'zelle' && <ZellePanel notice={notice} />}
         {method === 'cashapp' && <CashAppPanel notice={notice} />}
         {method === 'crypto' && (
-          <CryptoPanel total={total} asset={cryptoAsset} onAssetChange={onCryptoAssetChange} notice={notice} />
+          <CryptoPanel total={total} notice={notice} />
         )}
       </div>
     </div>
@@ -147,43 +148,43 @@ function CashAppPanel({ notice }: { notice: string }) {
 
 function CryptoPanel({
   total,
-  asset,
-  onAssetChange,
   notice,
 }: {
   total: number;
-  asset: CryptoAsset;
-  onAssetChange: (a: CryptoAsset) => void;
+  asset?: CryptoAsset;
+  onAssetChange?: (a: CryptoAsset) => void;
   notice: string;
 }) {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  const handleCryptoCheckout = async () => {
+  const handleCryptoPayment = async (cryptoAsset: CryptoAsset) => {
     setIsProcessing(true);
     setError(null);
 
     try {
-      const customerEmail = (document.getElementById('customer-email') as HTMLInputElement)?.value;
-      if (!customerEmail) {
-        throw new Error('Customer email is required');
+      // Get email from shipping section (passed through checkout form)
+      const emailInput = document.querySelector('input[name="email"]') as HTMLInputElement;
+      const email = emailInput?.value;
+
+      if (!email) {
+        throw new Error('Email required - please fill shipping information');
       }
 
       const response = await fetch('/api/crypto/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: [], // To be populated from cart
+          items: [],
           total,
-          email: customerEmail,
-          pay_currency: asset.toLowerCase(),
+          email,
+          pay_currency: cryptoAsset.toLowerCase(),
         }),
       });
 
       const data = await response.json();
 
       if (data.success && data.payment_url) {
-        // Redirect to NOWPayments checkout
         window.location.href = data.payment_url;
       } else {
         throw new Error(data.error || 'Failed to initiate payment');
@@ -192,65 +193,41 @@ function CryptoPanel({
       const errorMsg = err instanceof Error ? err.message : 'Payment processing failed';
       setError(errorMsg);
       console.error('Crypto checkout error:', err);
-    } finally {
       setIsProcessing(false);
     }
   };
 
   return (
     <div className="space-y-4">
-      <fieldset>
-        <legend className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
-          Asset
-        </legend>
-        <div className="mt-2.5 flex flex-wrap gap-2">
-          {ASSETS.map((a) => (
-            <label
-              key={a.id}
-              className={cn(
-                'cursor-pointer border px-3.5 py-2 text-sm transition-colors',
-                asset === a.id
-                  ? 'border-pigment-indigo bg-paper-sunk font-medium'
-                  : 'border-rule-strong hover:border-pigment-indigo'
-              )}
-            >
-              <input
-                type="radio"
-                name="crypto-asset"
-                value={a.id}
-                checked={asset === a.id}
-                onChange={() => onAssetChange(a.id)}
-                className="sr-only"
-                disabled={isProcessing}
-              />
-              {a.label}{' '}
-              <span className="font-mono text-2xs text-ink-faint">{a.id}</span>
-            </label>
-          ))}
-        </div>
-        <p className="mt-2 text-xs text-ink-faint">
-          {ASSETS.find((a) => a.id === asset)?.network}
-        </p>
-      </fieldset>
-
       <div className="border border-rule bg-paper-sunk p-4">
         <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
-          Amount due
+          Total Amount
         </p>
         <p className="mt-1 font-display text-2xl font-semibold tabular">{formatPrice(total)}</p>
 
-        <button
-          onClick={handleCryptoCheckout}
-          disabled={isProcessing}
-          className={cn(
-            'mt-4 w-full py-2.5 font-medium transition-colors',
-            isProcessing
-              ? 'bg-ink-faint text-paper-sunk cursor-not-allowed'
-              : 'bg-pigment-indigo text-paper hover:bg-pigment-indigo/80'
-          )}
-        >
-          {isProcessing ? 'Processing...' : `Pay with ${asset}`}
-        </button>
+        <div className="mt-6 space-y-2">
+          <p className="text-sm font-medium text-ink">Select payment currency:</p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {ASSETS.map((asset) => (
+              <button
+                key={asset.id}
+                onClick={() => handleCryptoPayment(asset.id)}
+                disabled={isProcessing}
+                className={cn(
+                  'py-2.5 px-3 text-sm font-medium rounded border transition-colors',
+                  isProcessing
+                    ? 'bg-ink-faint text-paper-sunk cursor-not-allowed'
+                    : 'bg-pigment-indigo text-paper border-pigment-indigo hover:bg-pigment-indigo/80'
+                )}
+              >
+                {isProcessing ? 'Processing...' : `Pay with ${asset.label}`}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-ink-faint mt-2">
+            Currency will be converted automatically by NOWPayments
+          </p>
+        </div>
       </div>
 
       {error && (
