@@ -30,7 +30,7 @@ export default function TermsPage() {
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold text-ink">3. Disclaimer</h2>
         <p className="text-sm leading-relaxed text-ink-soft">
-          The materials on MrAnabolics are provided on an 'as is' basis. MrAnabolics makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose.
+          The materials on MrAnabolics are provided on an &apos;as is&apos; basis. MrAnabolics makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose.
         </p>
       </section>
 
@@ -51,7 +51,7 @@ export default function TermsPage() {
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold text-ink">6. Links</h2>
         <p className="text-sm leading-relaxed text-ink-soft">
-          MrAnabolics has not reviewed all of the sites linked to its website and is not responsible for the contents of any such linked site. The inclusion of any link does not imply endorsement by MrAnabolics of the site. Use of any such linked website is at the user's own risk.
+          MrAnabolics has not reviewed all of the sites linked to its website and is not responsible for the contents of any such linked site. The inclusion of any link does not imply endorsement by MrAnabolics of the site. Use of any such linked website is at the user&apos;s own risk.
         </p>
       </section>
 

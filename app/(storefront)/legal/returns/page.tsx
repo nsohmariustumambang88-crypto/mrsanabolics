@@ -37,7 +37,7 @@ export default function ReturnsPage() {
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold text-ink">Shipping Costs</h2>
         <p className="text-sm leading-relaxed text-ink-soft">
-          Return shipping is the customer's responsibility unless the return is due to a defect or damage caused by us.
+          Return shipping is the customer&apos;s responsibility unless the return is due to a defect or damage caused by us.
         </p>
       </section>
 
