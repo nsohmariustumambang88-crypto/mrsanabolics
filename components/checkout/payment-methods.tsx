@@ -1,24 +1,17 @@
 'use client';
 
 import * as React from 'react';
-import { Smartphone, Bitcoin, Lock, Info, Landmark, CreditCard } from 'lucide-react';
+import { Bitcoin, Lock, Info, Landmark } from 'lucide-react';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 /*
-  Choosing how to pay.
-
-  MULTIPLE METHODS, NONE OF THEM CONNECTED. This build has no payment processor and the panels
-  say so at the point of entry rather than only on the confirmation screen — a demo that looks
-  like it took your money is worse than one that admits it did not. Wiring any of these to a
-  real destination is a deliberate act, not a matter of filling in a constant.
-
-  The methods themselves are a real decision: bank transfers, peer-to-peer wallets, and
-  on-chain settlement behave differently enough that the interface has to reflect it.
+  Three payment methods: Zelle, CashApp, and Crypto (BTC/USDT).
+  Crypto payments are processed through NOWPayments API.
 */
 
-export type PaymentMethod = 'banktransfer' | 'zelle' | 'revolut' | 'venmo' | 'crypto';
-export type CryptoAsset = 'BTC' | 'ETH' | 'USDT';
+export type PaymentMethod = 'zelle' | 'cashapp' | 'crypto';
+export type CryptoAsset = 'BTC' | 'USDT';
 
 /**
  * A method as administered at /admin/payments: which ones are listed, and the sentence each
@@ -31,27 +24,17 @@ export type PaymentMethodOption = {
   walletAddress?: string | null;
 };
 
-/*
-  The icon and hint belong to the code, not the database.
-
-  A row could carry them, but then a typo in an admin field would render a broken icon name,
-  and the hint is a description of how a rail behaves rather than something a shop configures.
-  What the admin owns is the label, the notice, and whether the method appears at all.
-*/
 const PRESENTATION: Record<string, { hint: string; icon: typeof Landmark }> = {
-  banktransfer: { hint: 'Direct bank transfer', icon: Landmark },
   zelle: { hint: 'Send money via Zelle', icon: Landmark },
-  revolut: { hint: 'Pay with Revolut', icon: Smartphone },
-  venmo: { hint: 'Pay with Venmo', icon: Smartphone },
-  crypto: { hint: 'Bitcoin, Ethereum or USDT', icon: Bitcoin },
+  cashapp: { hint: 'Pay with CashApp', icon: Landmark },
+  crypto: { hint: 'Bitcoin or USDT', icon: Bitcoin },
 };
 
-const FALLBACK_PRESENTATION = { hint: 'Alternative payment method', icon: Landmark };
+const FALLBACK_PRESENTATION = { hint: 'Payment method', icon: Landmark };
 
 const ASSETS: { id: CryptoAsset; label: string; network: string }[] = [
   { id: 'BTC', label: 'Bitcoin', network: 'Bitcoin network' },
-  { id: 'ETH', label: 'Ethereum', network: 'ERC-20' },
-  { id: 'USDT', label: 'Tether', network: 'ERC-20 or TRC-20' },
+  { id: 'USDT', label: 'USDT', network: 'Tron (TRC-20)' },
 ];
 
 export function PaymentMethods({
@@ -82,10 +65,7 @@ export function PaymentMethods({
         </legend>
 
         <div
-          className={cn(
-            'mt-5 grid gap-px border border-rule bg-rule',
-            methods.length > 2 ? 'sm:grid-cols-3' : methods.length === 2 && 'sm:grid-cols-2'
-          )}
+          className="mt-5 grid grid-cols-1 gap-px border border-rule bg-rule sm:grid-cols-3"
         >
           {methods.map((m) => {
             const { hint, icon: Icon } = PRESENTATION[m.key] ?? FALLBACK_PRESENTATION;
@@ -121,30 +101,12 @@ export function PaymentMethods({
       </fieldset>
 
       <div className="mt-6">
-        {method === 'banktransfer' && <BankTransferPanel notice={notice} />}
         {method === 'zelle' && <ZellePanel notice={notice} />}
-        {method === 'revolut' && <RevolutPanel notice={notice} />}
-        {method === 'venmo' && <VenmoPanel notice={notice} />}
+        {method === 'cashapp' && <CashAppPanel notice={notice} />}
         {method === 'crypto' && (
           <CryptoPanel total={total} asset={cryptoAsset} onAssetChange={onCryptoAssetChange} notice={notice} />
         )}
       </div>
-    </div>
-  );
-}
-
-/* ---------------------------------------------------------- bank transfer */
-
-function BankTransferPanel({ notice }: { notice: string }) {
-  return (
-    <div className="space-y-4">
-      <p className="text-sm leading-relaxed text-ink-soft">
-        Bank transfers are a secure way to pay. Your bank details will be provided to complete the transfer.
-      </p>
-
-      <Field id="account" label="Account number" placeholder="•••••••••••" />
-
-      <NotConnected>{notice}</NotConnected>
     </div>
   );
 }
@@ -165,32 +127,16 @@ function ZellePanel({ notice }: { notice: string }) {
   );
 }
 
-/* ------------------------------------------------------------ revolut */
+/* ---------------------------------------------------------------- cashapp */
 
-function RevolutPanel({ notice }: { notice: string }) {
+function CashAppPanel({ notice }: { notice: string }) {
   return (
     <div className="space-y-4">
       <p className="text-sm leading-relaxed text-ink-soft">
-        Pay securely with your Revolut account.
+        Send payment directly through CashApp.
       </p>
 
-      <Field id="revolut-username" label="Revolut username" placeholder="@username" />
-
-      <NotConnected>{notice}</NotConnected>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ venmo */
-
-function VenmoPanel({ notice }: { notice: string }) {
-  return (
-    <div className="space-y-4">
-      <p className="text-sm leading-relaxed text-ink-soft">
-        Send payment directly through Venmo.
-      </p>
-
-      <Field id="venmo-username" label="Venmo username" placeholder="@username" />
+      <Field id="cashapp-tag" label="CashApp tag" placeholder="$yourname" />
 
       <NotConnected>{notice}</NotConnected>
     </div>
@@ -210,6 +156,47 @@ function CryptoPanel({
   onAssetChange: (a: CryptoAsset) => void;
   notice: string;
 }) {
+  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const handleCryptoCheckout = async () => {
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      const customerEmail = (document.getElementById('customer-email') as HTMLInputElement)?.value;
+      if (!customerEmail) {
+        throw new Error('Customer email is required');
+      }
+
+      const response = await fetch('/api/crypto/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: [], // To be populated from cart
+          total,
+          email: customerEmail,
+          pay_currency: asset.toLowerCase(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.payment_url) {
+        // Redirect to NOWPayments checkout
+        window.location.href = data.payment_url;
+      } else {
+        throw new Error(data.error || 'Failed to initiate payment');
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Payment processing failed';
+      setError(errorMsg);
+      console.error('Crypto checkout error:', err);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <fieldset>
@@ -234,6 +221,7 @@ function CryptoPanel({
                 checked={asset === a.id}
                 onChange={() => onAssetChange(a.id)}
                 className="sr-only"
+                disabled={isProcessing}
               />
               {a.label}{' '}
               <span className="font-mono text-2xs text-ink-faint">{a.id}</span>
@@ -251,32 +239,27 @@ function CryptoPanel({
         </p>
         <p className="mt-1 font-display text-2xl font-semibold tabular">{formatPrice(total)}</p>
 
-        <div className="mt-4 border-t border-rule pt-4">
-          <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
-            Send {asset} to
-          </p>
-          {/*
-            Deliberately empty. A plausible-looking address here would be the single most
-            dangerous thing on the page: someone would send real money to a string that is
-            either nobody's or, worse, somebody's.
-          */}
-          <p className="mt-1.5 break-all border border-dashed border-rule-strong bg-card p-3 font-mono text-xs text-ink-faint">
-            No wallet is connected — no address to display.
-          </p>
-        </div>
-
-        <p className="mt-3 text-xs leading-relaxed text-ink-faint">
-          A live integration would quote the {asset} amount against a rate held for a short
-          window, and wait for network confirmations before releasing the order.
-        </p>
+        <button
+          onClick={handleCryptoCheckout}
+          disabled={isProcessing}
+          className={cn(
+            'mt-4 w-full py-2.5 font-medium transition-colors',
+            isProcessing
+              ? 'bg-ink-faint text-paper-sunk cursor-not-allowed'
+              : 'bg-pigment-indigo text-paper hover:bg-pigment-indigo/80'
+          )}
+        >
+          {isProcessing ? 'Processing...' : `Pay with ${asset}`}
+        </button>
       </div>
 
-      {/*
-        The one panel where the standing rule matters most: there is no wallet address here,
-        and no field anywhere in the admin that could put one here. On-chain payments are
-        irreversible, so a plausible address that is nobody's — or somebody else's — is the
-        most expensive thing this page could contain.
-      */}
+      {error && (
+        <p className="flex items-start gap-2.5 border border-warning/40 bg-warning/5 p-3 text-xs leading-relaxed text-warning">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+          <span>{error}</span>
+        </p>
+      )}
+
       <NotConnected>{notice}</NotConnected>
     </div>
   );
