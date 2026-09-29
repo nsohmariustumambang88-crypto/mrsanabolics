@@ -90,17 +90,20 @@ export async function POST(request: NextRequest) {
     });
 
     console.log(`[Crypto Checkout] Created order ${order.reference} with payment ID ${paymentResponse.id}`);
+    console.log('[Crypto Checkout] Payment response:', JSON.stringify(paymentResponse));
+
+    // Validate payment response has required fields
+    if (!paymentResponse.id) {
+      console.error('[Crypto Checkout] Payment response missing id field:', JSON.stringify(paymentResponse));
+      throw new Error(`NOWPayments response missing id field. Response: ${JSON.stringify(paymentResponse)}`);
+    }
 
     // NOWPayments should return payment_url, but if not, construct it from payment ID
     let paymentUrl = (paymentResponse as any).payment_url;
-    if (!paymentUrl && paymentResponse.id) {
+    if (!paymentUrl) {
       // Fallback: construct payment URL from payment ID
       paymentUrl = `https://nowpayments.io/payment/${paymentResponse.id}`;
       console.log(`[Crypto Checkout] Constructed payment URL from ID: ${paymentUrl}`);
-    }
-
-    if (!paymentUrl) {
-      throw new Error('Could not get or construct payment URL');
     }
 
     return NextResponse.json({
