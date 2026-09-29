@@ -56,16 +56,30 @@ export async function POST(request: NextRequest) {
     });
 
     // Create payment with NOWPayments
-    const paymentResponse = await createPayment({
-      price_amount: total,
-      price_currency: 'usd',
-      pay_currency: pay_currency.toLowerCase(),
-      order_id: order.reference,
-      order_description: `Order ${order.reference}`,
-      ipn_callback_url: `${SITE.url}/api/webhooks/nowpayments`,
-      success_url: `${SITE.url}/checkout/success?order=${order.reference}`,
-      cancel_url: `${SITE.url}/checkout/cancelled?order=${order.reference}`,
-    });
+    let paymentResponse;
+    try {
+      paymentResponse = await createPayment({
+        price_amount: total,
+        price_currency: 'usd',
+        pay_currency: pay_currency.toLowerCase(),
+        order_id: order.reference,
+        order_description: `Order ${order.reference}`,
+        ipn_callback_url: `${SITE.url}/api/webhooks/nowpayments`,
+        success_url: `${SITE.url}/checkout/success?order=${order.reference}`,
+        cancel_url: `${SITE.url}/checkout/cancelled?order=${order.reference}`,
+      });
+    } catch (paymentError) {
+      // Log the error but still return the order details so customer can try again
+      console.error(`[Crypto Checkout] Payment creation failed for order ${order.reference}:`, paymentError);
+      return NextResponse.json(
+        {
+          error: paymentError instanceof Error ? paymentError.message : 'Payment creation failed',
+          order_reference: order.reference,
+          order_id: order.id,
+        },
+        { status: 400 }
+      );
+    }
 
     // Store the payment ID in the order for reference
     await prisma.order.update({

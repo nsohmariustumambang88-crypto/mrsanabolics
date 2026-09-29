@@ -184,10 +184,15 @@ function CryptoPanel({
 
       const data = await response.json();
 
+      if (!response.ok) {
+        throw new Error(data.error || `Payment failed: ${response.statusText}`);
+      }
+
       if (data.success && data.payment_url) {
+        // Redirect to NOWPayments to complete payment
         window.location.href = data.payment_url;
       } else {
-        throw new Error(data.error || 'Failed to initiate payment');
+        throw new Error(data.error || 'Failed to get payment details');
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Payment processing failed';
