@@ -45,6 +45,7 @@ export function PaymentMethods({
   cryptoAsset,
   onCryptoAssetChange,
   methods,
+  email,
 }: {
   total: number;
   method: PaymentMethod;
@@ -53,6 +54,7 @@ export function PaymentMethods({
   onCryptoAssetChange: (a: CryptoAsset) => void;
   /** Enabled methods from the database, in administered order. */
   methods: PaymentMethodOption[];
+  email?: string;
 }) {
 
   /* The notice for whichever method is showing, so each panel states its own position. */
@@ -105,7 +107,7 @@ export function PaymentMethods({
         {method === 'zelle' && <ZellePanel notice={notice} />}
         {method === 'cashapp' && <CashAppPanel notice={notice} />}
         {method === 'crypto' && (
-          <CryptoPanel total={total} notice={notice} />
+          <CryptoPanel total={total} notice={notice} email={email} />
         )}
       </div>
     </div>
@@ -149,11 +151,13 @@ function CashAppPanel({ notice }: { notice: string }) {
 function CryptoPanel({
   total,
   notice,
+  email,
 }: {
   total: number;
   asset?: CryptoAsset;
   onAssetChange?: (a: CryptoAsset) => void;
   notice: string;
+  email?: string;
 }) {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -163,12 +167,8 @@ function CryptoPanel({
     setError(null);
 
     try {
-      // Get email from shipping section (passed through checkout form)
-      const emailInput = document.querySelector('input[name="email"]') as HTMLInputElement;
-      const email = emailInput?.value;
-
       if (!email) {
-        throw new Error('Email required - please fill shipping information');
+        throw new Error('Email required - please fill in your email address');
       }
 
       const response = await fetch('/api/crypto/checkout', {

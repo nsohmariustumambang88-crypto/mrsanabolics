@@ -476,6 +476,7 @@ export function CheckoutFlow({
                 cryptoAsset="BTC"
                 onCryptoAssetChange={() => {}}
                 methods={paymentMethods}
+                email={marketing.email}
               />
             )}
 
