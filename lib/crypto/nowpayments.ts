@@ -78,7 +78,9 @@ export async function createPayment(input: CreatePaymentInput): Promise<PaymentR
     throw new Error(`NOWPayments API error: ${response.status} - ${JSON.stringify(error)}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log('[NOWPayments] Payment response:', JSON.stringify(data, null, 2));
+  return data;
 }
 
 export async function getPaymentStatus(paymentId: string): Promise<PaymentResponse> {
