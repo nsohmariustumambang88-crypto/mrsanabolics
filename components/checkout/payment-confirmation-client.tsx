@@ -226,7 +226,7 @@ export function PaymentConfirmationClient({
             </div>
             <div className="flex justify-between">
               <span className="text-ink-soft">Amount:</span>
-              <span className="text-ink">${order.total.toFixed(2)}</span>
+              <span className="text-ink">${Number(order.total).toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-ink-soft">Status:</span>
