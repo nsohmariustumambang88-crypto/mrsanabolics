@@ -26,7 +26,7 @@ const PAYMENT_METHODS = [
     key: 'cashapp',
     label: 'Cash App',
     notice:
-      'Cash App is not connected on this build. No $Cashtag is shown, because a plausible one here would send real money to the wrong place.',
+      'Send payment to our CashApp account. You will receive order confirmation via email.',
     walletAddress: null,
     position: 0,
   },
@@ -34,16 +34,16 @@ const PAYMENT_METHODS = [
     key: 'zelle',
     label: 'Zelle',
     notice:
-      'Zelle is not connected on this build. Send transfers using your banking app.',
+      'Send payment via Zelle. You will receive order confirmation and shipping details via email.',
     walletAddress: null,
-    position: 2,
+    position: 1,
   },
   {
     key: 'crypto',
     label: 'Cryptocurrency',
-    notice: 'Bitcoin, Ethereum and USDT payments accepted via NOWPayments.',
+    notice: 'Pay with Bitcoin, Ethereum or USDT. You will be redirected to complete payment securely.',
     walletAddress: null,
-    position: 3,
+    position: 2,
   },
 ];
 

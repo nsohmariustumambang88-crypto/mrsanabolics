@@ -26,7 +26,9 @@ export type CheckoutSubmitInput = {
 export async function submitCheckout(
   input: CheckoutSubmitInput
 ): Promise<{ ok: true; reference: string } | { ok: false; error: string }> {
-  if (!input.email || !input.email.includes('@')) {
+  // Strict email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!input.email || !emailRegex.test(input.email)) {
     return { ok: false, error: 'Valid email required' };
   }
 
