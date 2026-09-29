@@ -90,13 +90,17 @@ export async function POST(request: NextRequest) {
     });
 
     console.log(`[Crypto Checkout] Created order ${order.reference} with payment ID ${paymentResponse.id}`);
-    console.log('[Crypto Checkout] NOWPayments response fields:', Object.keys(paymentResponse));
 
-    // NOWPayments returns the payment_url - use it for the redirect
-    const paymentUrl = (paymentResponse as any).payment_url;
+    // NOWPayments should return payment_url, but if not, construct it from payment ID
+    let paymentUrl = (paymentResponse as any).payment_url;
+    if (!paymentUrl && paymentResponse.id) {
+      // Fallback: construct payment URL from payment ID
+      paymentUrl = `https://nowpayments.io/payment/${paymentResponse.id}`;
+      console.log(`[Crypto Checkout] Constructed payment URL from ID: ${paymentUrl}`);
+    }
+
     if (!paymentUrl) {
-      console.error('[Crypto Checkout] No payment_url in NOWPayments response:', JSON.stringify(paymentResponse));
-      throw new Error('NOWPayments did not return a payment URL');
+      throw new Error('Could not get or construct payment URL');
     }
 
     return NextResponse.json({
