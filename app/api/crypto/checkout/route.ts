@@ -89,22 +89,27 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log(`[Crypto Checkout] Created order ${order.reference} with payment ID ${paymentResponse.id}`);
-    console.log('[Crypto Checkout] Payment response:', JSON.stringify(paymentResponse));
+    // Get the payment ID (NOWPayments uses 'payment_id', not 'id')
+    const paymentId = (paymentResponse as any).payment_id || (paymentResponse as any).id;
 
-    // Validate payment response has required fields
-    if (!paymentResponse.id) {
-      console.error('[Crypto Checkout] Payment response missing id field:', JSON.stringify(paymentResponse));
-      throw new Error(`NOWPayments response missing id field. Response: ${JSON.stringify(paymentResponse)}`);
+    if (!paymentId) {
+      console.error('[Crypto Checkout] Payment response missing payment_id:', JSON.stringify(paymentResponse));
+      throw new Error(`NOWPayments response missing payment_id. Response: ${JSON.stringify(paymentResponse)}`);
     }
 
-    // NOWPayments should return payment_url, but if not, construct it from payment ID
-    let paymentUrl = (paymentResponse as any).payment_url;
-    if (!paymentUrl) {
-      // Fallback: construct payment URL from payment ID
-      paymentUrl = `https://nowpayments.io/payment/${paymentResponse.id}`;
-      console.log(`[Crypto Checkout] Constructed payment URL from ID: ${paymentUrl}`);
-    }
+    console.log(`[Crypto Checkout] Created order ${order.reference} with payment ID ${paymentId}`);
+
+    // Store the payment ID in the order for reference
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        notes: `${order.notes} | Payment ID: ${paymentId}`,
+      },
+    });
+
+    // NOWPayments doesn't always return payment_url, so construct it
+    const paymentUrl = `https://nowpayments.io/payment/${paymentId}`;
+    console.log(`[Crypto Checkout] Payment URL: ${paymentUrl}`);
 
     return NextResponse.json({
       success: true,

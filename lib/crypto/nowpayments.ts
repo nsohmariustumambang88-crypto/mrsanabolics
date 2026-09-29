@@ -22,7 +22,8 @@ export interface CreatePaymentInput {
 }
 
 export interface PaymentResponse {
-  id: string;
+  id?: string;
+  payment_id?: string;
   order_id: string;
   order_description: string;
   price_amount: number;
@@ -33,7 +34,7 @@ export interface PaymentResponse {
   updated_at: string;
   purchase_id: string;
   payment_status: string;
-  payment_url: string;
+  payment_url?: string;
 }
 
 export interface WebhookPayload {
