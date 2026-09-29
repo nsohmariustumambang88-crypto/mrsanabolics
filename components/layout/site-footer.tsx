@@ -204,13 +204,18 @@ export function SiteFooter() {
             © {new Date().getFullYear()} MrAnabolics
           </p>
           <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-2">
-            {['Terms', 'Privacy', 'Shipping', 'Returns'].map((l) => (
+            {[
+              { label: 'Terms', href: '/legal/terms' },
+              { label: 'Privacy', href: '/legal/privacy' },
+              { label: 'Shipping', href: '/legal/shipping' },
+              { label: 'Returns', href: '/legal/returns' },
+            ].map((l) => (
               <Link
-                key={l}
-                href="/faq"
+                key={l.label}
+                href={l.href}
                 className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint transition-colors hover:text-ink-soft"
               >
-                {l}
+                {l.label}
               </Link>
             ))}
           </nav>
