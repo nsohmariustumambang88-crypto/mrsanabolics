@@ -205,28 +205,29 @@ function CryptoPanel({
         </p>
         <p className="mt-1 font-display text-2xl font-semibold tabular">{formatPrice(total)}</p>
 
-        <div className="mt-6 space-y-2">
+        <div className="mt-6 space-y-3">
           <p className="text-sm font-medium text-ink">Select payment currency:</p>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {ASSETS.map((asset) => (
-              <button
-                key={asset.id}
-                onClick={() => handleCryptoPayment(asset.id)}
-                disabled={isProcessing}
-                className={cn(
-                  'py-2.5 px-3 text-sm font-medium rounded border transition-colors',
-                  isProcessing
-                    ? 'bg-ink-faint text-paper-sunk cursor-not-allowed'
-                    : 'bg-pigment-indigo text-paper border-pigment-indigo hover:bg-pigment-indigo/80'
-                )}
-              >
-                {isProcessing ? 'Processing...' : `Pay with ${asset.label}`}
-              </button>
+              <div key={asset.id} className="flex flex-col gap-2">
+                <button
+                  onClick={() => handleCryptoPayment(asset.id)}
+                  disabled={isProcessing}
+                  className={cn(
+                    'py-2.5 px-3 text-sm font-medium rounded border transition-colors',
+                    isProcessing
+                      ? 'bg-ink-faint text-paper-sunk cursor-not-allowed'
+                      : 'bg-pigment-indigo text-paper border-pigment-indigo hover:bg-pigment-indigo/80'
+                  )}
+                >
+                  {isProcessing ? 'Processing...' : `Pay with ${asset.id}`}
+                </button>
+                <p className="text-xs text-ink-faint">
+                  {asset.network}
+                </p>
+              </div>
             ))}
           </div>
-          <p className="text-xs text-ink-faint mt-2">
-            Currency will be converted automatically by NOWPayments
-          </p>
         </div>
       </div>
 

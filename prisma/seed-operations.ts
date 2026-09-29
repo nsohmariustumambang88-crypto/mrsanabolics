@@ -23,41 +23,27 @@ const prisma = new PrismaClient();
 */
 const PAYMENT_METHODS = [
   {
-    key: 'card',
-    label: 'Card',
-    notice:
-      'Card payment is not connected on this build. Nothing is charged and no card details are transmitted or stored.',
-    walletAddress: null,
-    position: 0,
-  },
-  {
     key: 'cashapp',
     label: 'Cash App',
     notice:
       'Cash App is not connected on this build. No $Cashtag is shown, because a plausible one here would send real money to the wrong place.',
     walletAddress: null,
-    position: 1,
+    position: 0,
   },
   {
-    key: 'bitcoin',
-    label: 'Bitcoin',
-    notice: 'Bitcoin payments are accepted. Send to the address below.',
-    walletAddress: '38gqXGxYdThRBofESL8ooRganamxTXzYN3',
+    key: 'zelle',
+    label: 'Zelle',
+    notice:
+      'Zelle is not connected on this build. Send transfers using your banking app.',
+    walletAddress: null,
     position: 2,
   },
   {
-    key: 'ethereum',
-    label: 'Ethereum (ERC20)',
-    notice: 'Ethereum payments are accepted via ERC20. Send to the address below.',
-    walletAddress: '0x9a7109f4fdcaf3b5bca830b8601d0dea3d99d659',
+    key: 'crypto',
+    label: 'Cryptocurrency',
+    notice: 'Bitcoin, Ethereum and USDT payments accepted via NOWPayments.',
+    walletAddress: null,
     position: 3,
-  },
-  {
-    key: 'tron',
-    label: 'Tron (TRC20)',
-    notice: 'Tron/USDT payments are accepted via TRC20. Send to the address below.',
-    walletAddress: 'TYYJUNNyPEBCapeSnrfAMtEJXGB8EBhcTm',
-    position: 4,
   },
 ];
 
