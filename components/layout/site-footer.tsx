@@ -199,12 +199,6 @@ export function SiteFooter() {
           </div>
         </div>
 
-        {/*
-          The site-wide "Demonstration build" paragraph that stood here was removed at the owner's
-          request. Demo content is still labelled where it appears: the testimonials section, the
-          About timeline, and the checkout and payment panels each carry their own notice.
-        */}
-
         <div className="flex flex-col gap-4 border-t border-rule py-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
             © {new Date().getFullYear()} MrAnabolics

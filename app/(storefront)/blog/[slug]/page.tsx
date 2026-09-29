@@ -318,9 +318,7 @@ export default async function BlogPostPage({ params }: Params) {
             )}
 
             <p className="mt-12 border-t border-rule pt-6 text-xs leading-relaxed text-ink-faint">
-              General information, written for a demonstration build. It is not medical or legal
-              advice, and laws and evidence change. Where it matters, check the primary sources
-              above and speak to a qualified professional where you live.
+              General information for educational purposes. It is not medical or legal advice, and laws and evidence change. Where it matters, check the primary sources above and speak to a qualified professional where you live.
             </p>
           </div>
         </div>
