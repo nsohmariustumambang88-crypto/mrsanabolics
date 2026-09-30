@@ -191,6 +191,33 @@ export default async function ProductPage({ params }: Params) {
           returnMethod: 'ReturnByMail',
           returnFees: 'https://schema.org/ReturnShippingFees',
         },
+        shippingDetails: {
+          '@type': 'OfferShippingDetails',
+          shippingRate: {
+            '@type': 'PriceSpecification',
+            priceCurrency: 'USD',
+            price: '9.00',
+          },
+          shippingDestination: {
+            '@type': 'DeliveryArea',
+            areaServed: 'US',
+          },
+          deliveryTime: {
+            '@type': 'ShippingDeliveryTime',
+            handlingTime: {
+              '@type': 'QuantitativeValue',
+              minValue: 0,
+              maxValue: 1,
+              unitCode: 'DAY',
+            },
+            transitTime: {
+              '@type': 'QuantitativeValue',
+              minValue: 3,
+              maxValue: 6,
+              unitCode: 'DAY',
+            },
+          },
+        },
       },
       /* A rating of 0 from 0 reviews is not a rating; search engines flag it as invalid. */
       ...(product.reviewCount > 0
