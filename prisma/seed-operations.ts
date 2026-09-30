@@ -41,7 +41,7 @@ const PAYMENT_METHODS = [
   {
     key: 'crypto',
     label: 'Cryptocurrency',
-    notice: 'Pay with Bitcoin or Ethereum. You will be redirected to complete payment securely.',
+    notice: 'Pay with Bitcoin or Ethereum.',
     walletAddress: null,
     position: 2,
   },

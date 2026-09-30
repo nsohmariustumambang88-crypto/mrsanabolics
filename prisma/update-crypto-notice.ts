@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 async function main() {
   const updated = await prisma.paymentMethod.update({
     where: { key: 'crypto' },
-    data: { notice: 'Pay with Bitcoin or Ethereum. You will be redirected to complete payment securely.' }
+    data: { notice: 'Pay with Bitcoin or Ethereum.' }
   });
 
   console.log('✅ Updated crypto payment method notice');
