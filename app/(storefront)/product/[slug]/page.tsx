@@ -183,6 +183,14 @@ export default async function ProductPage({ params }: Params) {
           : 'https://schema.org/OutOfStock',
         itemCondition: 'https://schema.org/NewCondition',
         seller: { '@id': `${SITE.url}/#organization` },
+        hasMerchantReturnPolicy: {
+          '@type': 'MerchantReturnPolicy',
+          applicableCountry: 'US',
+          returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+          merchantReturnDays: 30,
+          returnMethod: 'ReturnByMail',
+          returnFees: 'https://schema.org/ReturnShippingFees',
+        },
       },
       /* A rating of 0 from 0 reviews is not a rating; search engines flag it as invalid. */
       ...(product.reviewCount > 0
