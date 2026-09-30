@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 */
 
 export type PaymentMethod = 'zelle' | 'cashapp' | 'crypto';
-export type CryptoAsset = 'BTC' | 'ETH' | 'USDT';
+export type CryptoAsset = 'BTC' | 'ETH';
 
 /**
  * A method as administered at /admin/payments: which ones are listed, and the sentence each
@@ -35,7 +35,6 @@ const FALLBACK_PRESENTATION = { hint: 'Payment method', icon: Landmark };
 const ASSETS: { id: CryptoAsset; label: string; network: string }[] = [
   { id: 'BTC', label: 'Bitcoin', network: 'Bitcoin network' },
   { id: 'ETH', label: 'Ethereum', network: 'ERC-20' },
-  { id: 'USDT', label: 'USDT', network: 'Tron (TRC-20)' },
 ];
 
 export function PaymentMethods({

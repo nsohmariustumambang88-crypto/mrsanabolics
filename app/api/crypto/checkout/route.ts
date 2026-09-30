@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate pay_currency is supported
-    const supportedCurrencies = ['btc', 'eth', 'usdt'];
+    const supportedCurrencies = ['btc', 'eth'];
     if (!supportedCurrencies.includes(pay_currency.toLowerCase())) {
       return NextResponse.json(
         { error: `Unsupported currency: ${pay_currency}. Supported: ${supportedCurrencies.join(', ')}` },
