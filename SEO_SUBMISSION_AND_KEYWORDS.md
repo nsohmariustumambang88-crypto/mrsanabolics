@@ -3,7 +3,9 @@
 ## PHASE 1: TOP 5 HIGH-IMPACT ARTICLES (WRITTEN ✅)
 
 ### Article 1: How to Spot Fake Steroids Online
-- **URL**: https://mrsanabolics.com/blog/how-to-spot-fake-steroids-online
+- **URL** (After seeding): `https://mrsanabolics.com/blog/how-to-spot-fake-steroids-online`
+- **Slug**: `how-to-spot-fake-steroids-online`
+- **Markdown file**: `content/journal/how-to-spot-fake-steroids-online.md` ✅ CREATED
 - **Primary Keyword**: "how to spot fake steroids online"
   - Monthly Search Volume: 2,900
   - Search Intent: HIGH (ready to buy from trusted source)
@@ -25,7 +27,9 @@
 ---
 
 ### Article 2: Best PCT After Steroid Cycle
-- **URL**: https://mrsanabolics.com/blog/best-pct-after-steroid-cycle
+- **URL** (After seeding): `https://mrsanabolics.com/blog/best-pct-after-steroid-cycle`
+- **Slug**: `best-pct-after-steroid-cycle`
+- **Markdown file**: `content/journal/best-pct-after-steroid-cycle.md` ✅ CREATED
 - **Primary Keyword**: "best pct after steroid cycle"
   - Monthly Search Volume: 7,200
   - Search Intent: HIGH (active buyers)
@@ -49,7 +53,9 @@
 ---
 
 ### Article 3: Pharma Grade vs Underground Steroids
-- **URL**: https://mrsanabolics.com/blog/pharma-grade-vs-underground-steroids
+- **URL** (After seeding): `https://mrsanabolics.com/blog/pharma-grade-vs-underground-steroids`
+- **Slug**: `pharma-grade-vs-underground-steroids`
+- **Markdown file**: `content/journal/pharma-grade-vs-underground-steroids.md` ✅ CREATED
 - **Primary Keyword**: "pharma grade vs underground steroids"
   - Monthly Search Volume: 1,200
   - Search Intent: HIGH (sourcing decision)
@@ -71,7 +77,9 @@
 ---
 
 ### Article 4: Testosterone Enanthate vs Propionate
-- **URL**: https://mrsanabolics.com/blog/testosterone-enanthate-vs-propionate
+- **URL** (After seeding): `https://mrsanabolics.com/blog/testosterone-enanthate-vs-propionate`
+- **Slug**: `testosterone-enanthate-vs-propionate`
+- **Markdown file**: `content/journal/testosterone-enanthate-vs-propionate.md` ✅ CREATED
 - **Primary Keyword**: "testosterone enanthate vs propionate"
   - Monthly Search Volume: 3,400
   - Search Intent: HIGH (product comparison - ready to buy)
@@ -95,7 +103,9 @@
 ---
 
 ### Article 5: Best Cutting Cycle Steroids
-- **URL**: https://mrsanabolics.com/blog/best-cutting-cycle-steroids
+- **URL** (After seeding): `https://mrsanabolics.com/blog/best-cutting-cycle-steroids`
+- **Slug**: `best-cutting-cycle-steroids`
+- **Markdown file**: `content/journal/best-cutting-cycle-steroids.md` ✅ CREATED
 - **Primary Keyword**: "best cutting cycle steroids"
   - Monthly Search Volume: 18,100
   - Search Intent: HIGH (product research - ready to buy)
@@ -120,29 +130,75 @@
 
 ---
 
-## URL SUBMISSION CHECKLIST
+## CRITICAL: SEED ARTICLES TO DATABASE FIRST
 
-### URLs to Submit to Google Search Console
+**The markdown files are created but NOT YET LIVE on the website.**
 
-**Step 1: Add Articles to Sitemap**
-The sitemap.xml will auto-update with new blog posts. No manual action needed.
+The blog uses a two-step process:
+1. Markdown files in `content/journal/` (✅ CREATED)
+2. Metadata in `lib/data/journal.ts` (⏳ NEEDS TO BE ADDED)
+3. Seed command to write to database (⏳ NEEDS TO BE RUN)
 
-**Step 2: Manual URL Submission**
-In Google Search Console:
+### Step 1: Add Metadata to lib/data/journal.ts
+
+Add the following 5 article entries to the `articles` array in `lib/data/journal.ts`:
+
+```typescript
+{
+  slug: 'how-to-spot-fake-steroids-online',
+  title: 'How to Spot Fake Steroids Online: A Complete Verification Guide',
+  metaTitle: 'How to Spot Fake Steroids Online',
+  excerpt: 'A comprehensive guide to identifying counterfeit steroids, red flags that mark fake products, and verification methods to ensure you buy from legitimate sources.',
+  metaDescription: 'Learn to identify fake steroids online: red flags, verification methods, and how to confirm manufacturer legitimacy before buying.',
+  category: 'Verification',
+  author: BYLINE,
+  date: '2026-09-30',
+  image: pexels(8533016),  // Lab/testing image
+  imageAlt: 'Laboratory equipment and testing setup',
+  imageCredit: credit('Your Photographer'),
+  faqs: [
+    { question: 'How can I verify a steroid source?', answer: 'Contact the manufacturer directly with the batch number, request Certificates of Analysis, and check regulatory databases...' },
+    // Add 3-4 more FAQs
+  ],
+  sources: [
+    // Add 5-8 sources with URLs
+  ],
+},
+// Repeat for other 4 articles...
+```
+
+### Step 2: Run the Seed Command
+
+```bash
+npm run db:seed-journal
+```
+
+This will:
+1. Read markdown files from `content/journal/`
+2. Read metadata from `lib/data/journal.ts`
+3. Validate everything
+4. Write to database
+
+### Step 3: After Seeding - URLs to Submit to Google Search Console
+
+**Once seeded, articles will be LIVE at:**
 
 ```
-1. Search Console → URL Inspection
-2. Paste each URL below
-3. Click "Request Indexing"
-4. Repeat for all 5 URLs
+https://mrsanabolics.com/blog/how-to-spot-fake-steroids-online
+https://mrsanabolics.com/blog/best-pct-after-steroid-cycle
+https://mrsanabolics.com/blog/pharma-grade-vs-underground-steroids
+https://mrsanabolics.com/blog/testosterone-enanthate-vs-propionate
+https://mrsanabolics.com/blog/best-cutting-cycle-steroids
 ```
 
-**URLs to Submit**:
-- [ ] https://mrsanabolics.com/blog/how-to-spot-fake-steroids-online
-- [ ] https://mrsanabolics.com/blog/best-pct-after-steroid-cycle
-- [ ] https://mrsanabolics.com/blog/pharma-grade-vs-underground-steroids
-- [ ] https://mrsanabolics.com/blog/testosterone-enanthate-vs-propionate
-- [ ] https://mrsanabolics.com/blog/best-cutting-cycle-steroids
+**To submit to Google Search Console**:
+```
+1. Go to search.google.com/search-console
+2. URL Inspection tool
+3. Paste each URL above
+4. Click "Request Indexing"
+5. Repeat for all 5 URLs
+```
 
 **Step 3: Monitor Indexing**
 - Check status after 24-48 hours
