@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
   Crypto payments are processed through NOWPayments API.
 */
 
-export type PaymentMethod = 'zelle' | 'cashapp' | 'crypto';
+export type PaymentMethod = 'cashapp' | 'bank_transfer' | 'crypto';
 export type CryptoAsset = 'BTC' | 'ETH';
 
 /**
@@ -25,9 +25,9 @@ export type PaymentMethodOption = {
 };
 
 const PRESENTATION: Record<string, { hint: string; icon: typeof Landmark }> = {
-  zelle: { hint: 'Send money via Zelle', icon: Landmark },
   cashapp: { hint: 'Pay with CashApp', icon: Landmark },
-  crypto: { hint: 'Bitcoin or USDT', icon: Bitcoin },
+  bank_transfer: { hint: 'Bank transfer', icon: Landmark },
+  crypto: { hint: 'Bitcoin or Ethereum', icon: Bitcoin },
 };
 
 const FALLBACK_PRESENTATION = { hint: 'Payment method', icon: Landmark };
@@ -103,8 +103,8 @@ export function PaymentMethods({
       </fieldset>
 
       <div className="mt-6">
-        {method === 'zelle' && <ZellePanel notice={notice} />}
         {method === 'cashapp' && <CashAppPanel notice={notice} />}
+        {method === 'bank_transfer' && <BankTransferPanel notice={notice} />}
         {method === 'crypto' && (
           <CryptoPanel total={total} notice={notice} email={email} />
         )}
@@ -113,16 +113,14 @@ export function PaymentMethods({
   );
 }
 
-/* ------------------------------------------------------------------ zelle */
+/* ---------------------------------------------------------------- bank transfer */
 
-function ZellePanel({ notice }: { notice: string }) {
+function BankTransferPanel({ notice }: { notice: string }) {
   return (
     <div className="space-y-4">
       <p className="text-sm leading-relaxed text-ink-soft">
-        Send money directly from your bank account using Zelle.
+        Transfer funds directly from your bank account. Bank details will be provided via email.
       </p>
-
-      <Field id="email" label="Email or phone number" placeholder="you@email.com" />
 
       <NotConnected>{notice}</NotConnected>
     </div>
@@ -135,10 +133,8 @@ function CashAppPanel({ notice }: { notice: string }) {
   return (
     <div className="space-y-4">
       <p className="text-sm leading-relaxed text-ink-soft">
-        Send payment directly through CashApp.
+        Send payment directly through CashApp. Payment details will be provided via email.
       </p>
-
-      <Field id="cashapp-tag" label="CashApp tag" placeholder="$yourname" />
 
       <NotConnected>{notice}</NotConnected>
     </div>

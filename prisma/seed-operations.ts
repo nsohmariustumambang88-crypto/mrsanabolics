@@ -26,15 +26,15 @@ const PAYMENT_METHODS = [
     key: 'cashapp',
     label: 'Cash App',
     notice:
-      'Send payment to our CashApp account. You will receive order confirmation via email.',
+      'Send payment to our CashApp account. Payment details will be sent via email.',
     walletAddress: null,
     position: 0,
   },
   {
-    key: 'zelle',
-    label: 'Zelle',
+    key: 'bank_transfer',
+    label: 'Bank Transfer',
     notice:
-      'Send payment via Zelle. You will receive order confirmation and shipping details via email.',
+      'Transfer funds to our bank account. Payment details will be sent via email.',
     walletAddress: null,
     position: 1,
   },
