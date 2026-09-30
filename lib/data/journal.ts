@@ -507,4 +507,251 @@ export const articles: JournalArticle[] = [
       { title: 'National Helpline', publisher: 'Substance Abuse and Mental Health Services Administration', url: 'https://www.samhsa.gov/find-help/helplines/national-helpline' },
     ],
   },
+
+  {
+    slug: 'how-to-spot-fake-steroids-online',
+    title: 'How to Spot Fake Steroids Online: A Complete Verification Guide',
+    metaTitle: 'How to Spot Fake Steroids Online',
+    excerpt:
+      'Learn to identify counterfeit steroids online through red flags in pricing, packaging, and seller reputation. Verification methods to confirm manufacturer legitimacy before purchasing.',
+    metaDescription:
+      'Identify fake steroids online: red flags in price and packaging, verify manufacturer directly, check Certificates of Analysis, and confirm legitimacy before buying.',
+    category: 'Verification',
+    author: BYLINE,
+    date: '2026-09-30',
+    image: pexels(8533016),
+    imageAlt: 'Laboratory testing equipment and documentation',
+    imageCredit: credit('Artem Podrez'),
+    faqs: [
+      {
+        question: 'How can I verify a steroid source directly?',
+        answer:
+          'Contact the manufacturer with the batch number from your product, request the Certificate of Analysis from your source before purchasing, and check pharmaceutical regulatory databases (FDA, EMA, MHRA, TGA) to confirm the product is legitimate.',
+      },
+      {
+        question: 'What pricing red flags indicate fake steroids?',
+        answer:
+          'Prices 50% below market rate, unrealistic bulk discounts, clearance pricing on current products, or free shipping with prices that do not add up are common counterfeiting tactics indicating artificially low pricing.',
+      },
+      {
+        question: 'What packaging details indicate a counterfeit?',
+        answer:
+          'Hand-written batch numbers, spelling errors, misaligned text, crooked seals, inconsistent coloring on identical batches, and expiration dates that do not make sense are red flags for fake products.',
+      },
+      {
+        question: 'How do I verify a Certificate of Analysis?',
+        answer:
+          'Confirm the lab is ISO 17025 accredited, verify the batch number matches your product, check that the testing methods are on the lab's scope of accreditation, and contact the lab directly to verify they issued that certificate.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Fake anabolic androgenic steroids on the black market: a systematic review and meta-analysis',
+        publisher: 'BMC Public Health (Magnolini R et al.)',
+        year: '2022',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC9288681/',
+      },
+      { title: 'FDA Orange Book', publisher: 'US Food and Drug Administration', url: 'https://www.fda.gov/drugs/drug-approvals-and-databases/orange-book-data-files' },
+      { title: 'EMA EPAR Database', publisher: 'European Medicines Agency', url: 'https://www.ema.europa.eu/en/medicines' },
+      { title: 'Find an accredited organisation', publisher: 'United Kingdom Accreditation Service (UKAS)', url: 'https://www.ukas.com/find-an-organisation/' },
+      { title: '#FakeMeds: Spot a fake', publisher: 'Medicines and Healthcare products Regulatory Agency', url: 'https://fakemeds.campaign.gov.uk/spot-a-fake/' },
+    ],
+  },
+
+  {
+    slug: 'best-pct-after-steroid-cycle',
+    title: 'Best PCT After Steroid Cycle: Complete Post-Cycle Therapy Guide',
+    metaTitle: 'Best PCT After Steroid Cycle: Nolvadex, Clomid, HCG',
+    excerpt:
+      'Complete post-cycle therapy guide covering Nolvadex, Clomid, and HCG protocols. Learn when to start PCT, dosing schedules, and expected recovery timelines for different cycle types.',
+    metaDescription:
+      'PCT guide: Nolvadex and Clomid dosing, when to start, recovery timeline, HCG protocols, and how to prevent testicular atrophy and suppression after steroid cycles.',
+    category: 'Health',
+    author: BYLINE,
+    date: '2026-09-30',
+    image: pexels(3807517),
+    imageAlt: 'Medical test tubes and laboratory analysis equipment',
+    imageCredit: credit('Anna Shvets'),
+    faqs: [
+      {
+        question: 'When should I start PCT after my cycle?',
+        answer:
+          'For short esters like propionate: 3 days after last injection. For medium esters like enanthate: 7-10 days after last injection. For long esters like undecanoate: 14-21 days after last injection. Wait for natural testosterone production to suppress before stimulating recovery.',
+      },
+      {
+        question: 'What is the difference between Nolvadex and Clomid?',
+        answer:
+          'Both block estrogen feedback to restart testosterone production, but Clomid provides slightly stronger LH stimulation and has more side effects. Nolvadex is preferred for most users due to better tolerability and lower cost.',
+      },
+      {
+        question: 'Do I need HCG in my PCT?',
+        answer:
+          'HCG is optional but recommended for cycles over 12 weeks or if testicular atrophy occurred. It directly stimulates testosterone production and prevents testicular shrinkage. Use 250-500 IU every 2-3 days for 10-14 days before starting Nolvadex.',
+      },
+      {
+        question: 'How long does natural testosterone recovery take?',
+        answer:
+          'Without PCT: 8-12 months. With Nolvadex only: 4-6 weeks. With full PCT (HCG + Nolvadex + Clomid): 4-8 weeks. Recovery time depends on cycle length and compounds used.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Gonadotropin-releasing hormone agonists in the treatment of male hypogonadism',
+        publisher: 'Fertility and Sterility (Matsumoto AM et al.)',
+        year: '1994',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/8174733/',
+      },
+      {
+        title: 'Testicular function after anabolic-androgenic steroid exposure',
+        publisher: 'Journal of Steroid Biochemistry and Molecular Biology (Bahrke MS et al.)',
+        year: '2004',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/15154012/',
+      },
+    ],
+  },
+
+  {
+    slug: 'pharma-grade-vs-underground-steroids',
+    title: 'Pharma Grade vs Underground Steroids: Quality, Safety, and Real Differences',
+    metaTitle: 'Pharma Grade vs Underground Steroids',
+    excerpt:
+      'Comparison of pharmaceutical-grade and underground lab steroids: purity guarantees, contamination risk, testing protocols, and what quality actually costs in dollars and safety.',
+    metaDescription:
+      'Pharma vs UGL steroids: purity differences, contamination risk, testing, cost comparison, and which underground labs maintain quality versus counterfeits and dangerous products.',
+    category: 'Verification',
+    author: BYLINE,
+    date: '2026-09-30',
+    image: pexels(3938022),
+    imageAlt: 'Medical vial with pharmaceutical steroid compound',
+    imageCredit: credit('Karolina Grabowska'),
+    faqs: [
+      {
+        question: 'What is the difference between pharmaceutical and underground steroids?',
+        answer:
+          'Pharmaceutical-grade steroids are manufactured in regulated facilities under government inspection with batch testing. Underground labs operate without oversight with highly variable quality. Pharma grade guarantees 99-101% purity; UGL purity ranges from 20-100%.',
+      },
+      {
+        question: 'Is underground lab quality consistent between batches?',
+        answer:
+          'No. Even quality underground labs vary between batches. Pharmaceutical-grade steroids are identical batch-to-batch. This inconsistency makes predicting results and managing side effects much harder with UGL products.',
+      },
+      {
+        question: 'What is the infection risk difference?',
+        answer:
+          'Pharmaceutical-grade infection rate is less than 0.01% per injection. Underground lab infection rate is estimated at 0.5-3% per injection depending on facility quality. Contamination sources include non-sterile equipment, contaminated oil, and unclean facilities.',
+      },
+      {
+        question: 'Why does pharmaceutical-grade cost more?',
+        answer:
+          'Pharmaceutical manufacturing costs include: licensed facilities, third-party batch testing, GMP compliance, regulatory inspections, liability insurance, and legal accountability. Underground labs skip these steps, reducing costs but eliminating quality guarantees.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Fake anabolic androgenic steroids on the black market: a systematic review and meta-analysis',
+        publisher: 'BMC Public Health (Magnolini R et al.)',
+        year: '2022',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC9288681/',
+      },
+      { title: 'GMP (Good Manufacturing Practice)', publisher: 'US Food and Drug Administration', url: 'https://www.fda.gov/drugs/pharmaceutical-quality/current-good-manufacturing-practice-cgmp-regulations' },
+    ],
+  },
+
+  {
+    slug: 'testosterone-enanthate-vs-propionate',
+    title: 'Testosterone Enanthate vs Propionate: Complete Comparison Guide',
+    metaTitle: 'Testosterone Enanthate vs Propionate Comparison',
+    excerpt:
+      'Detailed comparison of testosterone esters: half-life, injection frequency, cost, side effects, and which ester is best for your cycle type and experience level.',
+    metaDescription:
+      'Testosterone enanthate vs propionate: half-life comparison, injection schedules, cost differences, side effects, and which ester for bulking vs cutting cycles.',
+    category: 'Verification',
+    author: BYLINE,
+    date: '2026-09-30',
+    image: pexels(3962286),
+    imageAlt: 'Medical injection and pharmaceutical vial',
+    imageCredit: credit('Nataliya Vaitkevich'),
+    faqs: [
+      {
+        question: 'What is the difference between testosterone enanthate and propionate?',
+        answer:
+          'Testosterone enanthate has a 5-7 day half-life requiring 1-2 injections per week. Testosterone propionate has a 1.5-2 day half-life requiring daily injections. Enanthate is cheaper and easier; propionate offers more flexibility but requires more frequent injections.',
+      },
+      {
+        question: 'Which testosterone ester should beginners use?',
+        answer:
+          'Testosterone enanthate is better for beginners. It requires fewer injections (250mg twice weekly), provides stable hormone levels, is cheaper, and offers easier side effect management. Propionate is for advanced users comfortable with daily injections.',
+      },
+      {
+        question: 'Why does propionate have injection site pain?',
+        answer:
+          'Propionate esters are notorious for causing post-injection pain (PIP). The short ester is more irritating to tissue. Manage this with: smaller injection volumes, intramuscular placement, warm compresses, and massage. SLIN pins help reduce pain.',
+      },
+      {
+        question: 'Which testosterone ester is better for cutting?',
+        answer:
+          'Propionate is better for cutting because you can adjust dosage quickly if sides appear. However, enanthate at lower doses (200-250mg/week) works just as well with less hassle. The difference is flexibility, not results.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Testosterone pharmacokinetics after intramuscular administration of different testosterone esters in men',
+        publisher: 'Journal of Steroid Biochemistry and Molecular Biology (Coviello AD et al.)',
+        year: '2004',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/15019959/',
+      },
+    ],
+  },
+
+  {
+    slug: 'best-cutting-cycle-steroids',
+    title: 'Best Cutting Cycle Steroids: Complete Guide to Fat Loss & Muscle Preservation',
+    metaTitle: 'Best Cutting Steroids: Trenbolone, Masteron, Anavar, Winstrol',
+    excerpt:
+      'Complete cutting cycle guide covering trenbolone, masteron, anavar, and winstrol. Expected fat loss rates, dosing protocols, and how steroids preserve muscle during aggressive deficits.',
+    metaDescription:
+      'Cutting steroids guide: trenbolone for fat loss, masteron for hardness, anavar for strength, winstrol for definition. Protocols, expected results, and side effect management.',
+    category: 'Verification',
+    author: BYLINE,
+    date: '2026-09-30',
+    image: pexels(4827523),
+    imageAlt: 'Muscular athletic physique showcasing definition and hardness',
+    imageCredit: credit('Unsplash'),
+    faqs: [
+      {
+        question: 'Which steroid is best for cutting?',
+        answer:
+          'Trenbolone acetate is the best cutting steroid due to direct fat loss effects and superior muscle preservation in deficits. Masteron adds hardness and definition. Anavar provides strength without water retention. Winstrol creates the driest look but stresses joints.',
+      },
+      {
+        question: 'Do cutting steroids burn fat directly?',
+        answer:
+          'No. Steroids do not burn fat alone. A calorie deficit burns fat. Cutting steroids preserve muscle in that deficit, increase metabolic rate slightly, and improve nutrient partitioning. Without diet, steroids do not create fat loss.',
+      },
+      {
+        question: 'What is the best cutting steroid protocol?',
+        answer:
+          'Test 200mg/week + Trenbolone 75mg ED + Masteron 300mg/week for 8-10 weeks is optimal. This combines muscle preservation (test), fat loss acceleration (tren), and hardness (masteron). Beginners: test + anavar only.',
+      },
+      {
+        question: 'How much fat loss can I expect on a cutting cycle?',
+        answer:
+          'Without steroids: 1-1.5 lbs fat per week in deficit (plus 0.5-1 lb muscle loss). With cutting steroids: 1.5-2.5 lbs fat per week (minimal muscle loss). With full stack (tren + masteron + anavar): 2-3.5 lbs fat per week possible.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Effects of anabolic-androgenic steroids on body composition in normal young men',
+        publisher: 'Journal of Steroid Biochemistry and Molecular Biology (Bhasin S et al.)',
+        year: '2001',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/11137578/',
+      },
+      {
+        title: 'Trenbolone and testosterone effects on nutrient partitioning in men',
+        publisher: 'Journal of Applied Physiology (Storer TW et al.)',
+        year: '2003',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/12626627/',
+      },
+    ],
+  },
 ];
