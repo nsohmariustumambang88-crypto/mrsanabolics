@@ -10,6 +10,7 @@ import { FeaturedCollections } from '@/components/home/featured-collections';
 import { RecentlyViewed } from '@/components/home/recently-viewed';
 import { doors, spread, PER_DOOR, TILES, PER_TILE } from '@/components/home/home-samples';
 import { Testimonials } from '@/components/home/testimonials';
+import { TrustBadges } from '@/components/home/trust-badges';
 import { WhyChoose } from '@/components/home/why-choose';
 import { BlogTeaser } from '@/components/home/blog-teaser';
 import { toJournalCard } from '@/lib/journal/fields';
@@ -142,6 +143,7 @@ export default async function Home() {
       <RecentlyViewed allProducts={products.map(toSummary)} />
       <FeaturedCollections samples={doorSamples} />
       <AssuranceRegister />
+      <TrustBadges />
 
       {/*
         Summaries, not records, into client components. Passing the full Product put long copy,
