@@ -632,7 +632,7 @@ export const articles: JournalArticle[] = [
     title: 'Best Place to Buy Testosterone: Where to Source Safely',
     metaTitle: 'How to Buy Testosterone: Pharmaceutical vs UGL Sources',
     excerpt: 'Pharmaceutical (prescription) safest. Reputable UGL with CoA cheaper. Verify supplier, get bloodwork at week 4, verify CoA independently.',
-    metaDescription: 'Where to buy testosterone safely: pharmaceutical through TRT prescription vs underground labs. How to verify authenticity, avoid counterfeits, and source responsibly.',
+    metaDescription: 'Buy testosterone safely: pharmaceutical TRT prescription vs underground labs. How to verify authenticity, avoid counterfeits, source responsibly.',
     category: 'Verification',
     author: BYLINE,
     date: '2026-10-04',
