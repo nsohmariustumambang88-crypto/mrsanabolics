@@ -6,7 +6,7 @@ import { useSubscribe } from './use-subscribe';
 
 export function LeadMagnetModal() {
   const [isOpen, setIsOpen] = useState(false);
-  const { email, setEmail, consent, setConsent, busy, done, error, submit } = useSubscribe('lead-magnet');
+  const { email, setEmail, consent, setConsent, busy, done, error, submit } = useSubscribe('newsletter');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
