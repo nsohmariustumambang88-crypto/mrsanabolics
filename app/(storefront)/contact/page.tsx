@@ -143,18 +143,6 @@ export default function ContactPage() {
         <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 lg:px-10">
           <div className="grid gap-px bg-rule lg:grid-cols-[minmax(0,1fr)_22rem]">
             <div className="bg-card p-6 sm:p-8 lg:p-10">
-              <p className="mb-8 flex gap-2.5 border border-rule bg-paper-sunk p-3.5 text-xs leading-relaxed text-ink-soft">
-                <Info
-                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-pigment-saffron"
-                  strokeWidth={1.75}
-                />
-                <span>
-                  This form is connected: your message is stored and reaches the team&rsquo;s
-                  queue. No automatic email is sent, so a reply comes from a person and takes as
-                  long as that takes.
-                </span>
-              </p>
-
               {sent ? (
                 <div className="border border-rule bg-paper-sunk p-8 text-center">
                   <Check
