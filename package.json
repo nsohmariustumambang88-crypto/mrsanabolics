@@ -20,6 +20,7 @@
     "db:import-neon": "node --env-file=.env --import tsx prisma/import-from-neon.ts",
     "db:seed-journal": "node --env-file=.env --import tsx prisma/seed-journal.ts",
     "db:seed-operations": "node --env-file=.env --import tsx prisma/seed-operations.ts",
+    "db:cleanup": "node --env-file=.env --import tsx prisma/cleanup-database.ts",
     "prebuild": "node scripts/wake-db.mjs",
     "brand:build": "node scripts/make-brand.mjs",
     "setup:vercel": "node scripts/setup-vercel-env.mjs"

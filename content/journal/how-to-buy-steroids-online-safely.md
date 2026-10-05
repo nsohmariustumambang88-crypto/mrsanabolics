@@ -6,7 +6,7 @@ Buying steroids online involves real risks. This guide covers what to verify, re
 
 Anabolic steroids are available through multiple channels: pharmaceutical suppliers with prescriptions, underground laboratories (UGL), and illegal sellers. Each carries different risks regarding product authenticity, legal consequences, and personal safety.
 
-When sourcing online, you're navigating a market where counterfeit products, contamination, and scams are common. Legitimate suppliers exist, but they require careful verification.
+When sourcing online, you're navigating a market where [counterfeit products](/blog/how-to-spot-counterfeit-steroids), contamination, and scams are common. Legitimate suppliers exist, but they require careful verification.
 
 ## How to Verify a Supplier
 
@@ -38,7 +38,7 @@ Underground lab (UGL) products are harder to verify:
 - **Consistent quality** across multiple orders
 - **Community reviews** from verified buyers
 
-**How to verify a CoA:**
+**How to verify a CoA:** [Read our detailed guide on reading certificates of analysis](/blog/how-to-read-a-certificate-of-analysis) for step-by-step verification.
 1. Note the lab name on the certificate
 2. Find the lab independently (don't use links from the seller)
 3. Contact the lab directly and ask if they issued it
@@ -105,13 +105,13 @@ Safe suppliers implement:
 - Canada: Prescription-only (Schedule F)
 - EU: Varies by country but generally illegal
 
-Importing carries additional penalties. Research your jurisdiction.
+For detailed legal information by country, [read our steroid laws by country guide](/blog/steroid-laws-by-country-2026). Importing carries additional penalties. Research your jurisdiction.
 
 ### Health & Safety
 
 Before ordering, understand:
 - **Contraindications** (medical conditions that make use dangerous)
-- **Realistic side effects** (not marketing hype from sellers)
+- **Realistic side effects** — [see our complete guide to steroid side effects](/blog/steroid-side-effects-complete-guide) (not marketing hype from sellers)
 - **Appropriate dosing** (doses that work vs. dangerous overdose)
 - **How to identify reactions** (what symptoms mean stop immediately)
 
@@ -178,7 +178,7 @@ Do not rely on seller information. Consult medical literature or knowledgeable c
    - Confirm batch number matches any CoA provided
    - For pharmaceutical products, contact manufacturer with batch number
 
-4. **Test quality** (if available to you)
+4. **Test quality** (if available to you) — [see our guide on testing steroids authenticity](/blog/how-to-test-steroids-authenticity) for methods
    - Local lab testing services (some test steroid samples)
    - Reagent testing (basic but not definitive)
    - Immunoassay strips (test for presence of compound, not purity)

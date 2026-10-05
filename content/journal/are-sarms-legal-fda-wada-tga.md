@@ -1,6 +1,6 @@
 Selective androgen receptor modulators, usually shortened to SARMs, are sold online as "research chemicals" and gym supplements, often with the suggestion that they sit in a legal grey area. The regulators who have looked at them do not see much grey. This article sets out, with sources, what the US Food and Drug Administration, the World Anti-Doping Agency and Australia's Therapeutic Goods Administration have actually said, what laboratory testing found inside products sold as SARMs, and where the law is genuinely unsettled.
 
-It contains no guidance on using them.
+It contains no guidance on using them. [See WADA banned list](/blog/wada-banned-list-explained). [Review steroid laws by country](/blog/steroid-laws-by-country-2026).
 
 ## What SARMs are, and are not
 

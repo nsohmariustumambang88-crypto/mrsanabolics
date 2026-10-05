@@ -1,6 +1,6 @@
 # Best Steroids for Endurance: Performance Enhancement Guide
 
-Endurance athletes — distance runners, cyclists, rowers, swimmers — have different steroid priorities than strength athletes. Endurance compounds increase red blood cell production, oxygen delivery, and aerobic capacity. This guide explains which steroids maximize endurance performance.
+Endurance athletes — distance runners, cyclists, rowers, swimmers — have different steroid priorities than strength athletes. Endurance compounds increase red blood cell production, oxygen delivery, and aerobic capacity. This guide explains which steroids maximize endurance performance. For muscle gain, [see our bodybuilding guide](/blog/best-steroids-for-muscle-gain). For strength, [see our powerlifting guide](/blog/best-steroids-for-strength).
 
 ## How Steroids Improve Endurance
 

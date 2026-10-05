@@ -1,6 +1,6 @@
 # Underground Labs vs Pharmaceutical Steroids: Quality Comparison
 
-Both UGL and pharmaceutical steroids exist, but they differ dramatically in quality, cost, and risk. This guide compares them directly.
+Both UGL and pharmaceutical steroids exist, but they differ dramatically in quality, cost, and risk. This guide compares them directly. [See where to buy testosterone](/blog/best-place-to-buy-testosterone). [Learn to identify legit suppliers](/blog/steroid-suppliers-which-are-legit).
 
 ## Pharmaceutical Steroids (Prescription)
 

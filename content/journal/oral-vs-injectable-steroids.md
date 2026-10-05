@@ -1,6 +1,6 @@
 # Oral vs Injectable Steroids: Comparison Guide
 
-Oral and injectable steroids work differently. This guide explains the practical differences and helps you choose which is better for your goals.
+Oral and injectable steroids work differently. This guide explains the practical differences and helps you choose which is better for your goals. [See which steroids beginners should use](/blog/best-steroids-for-beginners) or [understand steroid mechanism](/blog/how-do-steroids-work).
 
 ## Key Differences
 

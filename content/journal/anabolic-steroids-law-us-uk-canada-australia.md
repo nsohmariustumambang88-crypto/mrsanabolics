@@ -1,6 +1,6 @@
 Whether an anabolic steroid is legal to own, import or sell depends almost entirely on where you are. The same vial can be a federal controlled substance in one country, and in another something whose possession is not an offence but whose posting across a border is. This article sets out what the law says in the United States, the United Kingdom, Canada and Australia, quoted from the legislation itself.
 
-It is general information, checked against the primary legislation in September 2026. It is not legal advice. Laws change, and how they apply to you depends on details this article cannot know.
+It is general information, checked against the primary legislation in September 2026. It is not legal advice. Laws change, and how they apply to you depends on details this article cannot know. [See steroid laws by country guide](/blog/steroid-laws-by-country-2026). [Review WADA prohibited list](/blog/wada-banned-list-explained).
 
 [[figure:law-at-a-glance]]
 

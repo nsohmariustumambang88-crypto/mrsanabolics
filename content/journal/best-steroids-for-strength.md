@@ -1,6 +1,6 @@
 # Best Steroids for Strength: Maximum Power Output Guide
 
-Strength athletes — powerlifters, Olympic weightlifters, and strongmen — require different steroids than bodybuilders. Strength-focused compounds maximize neurological adaptations and power output. This guide explains which steroids deliver the most dramatic strength gains.
+Strength athletes — powerlifters, Olympic weightlifters, and strongmen — require different steroids than bodybuilders. Strength-focused compounds maximize neurological adaptations and power output. This guide explains which steroids deliver the most dramatic strength gains. For muscle gain, [see our hypertrophy guide](/blog/best-steroids-for-muscle-gain). For cutting, [see our fat loss guide](/blog/best-steroids-for-fat-loss).
 
 ## What Makes a Steroid "Good" for Strength?
 

@@ -1,6 +1,6 @@
 # How Do Steroids Work? The Mechanism Behind Muscle Growth
 
-Anabolic steroids work through a specific biological mechanism that promotes muscle growth. Understanding this mechanism requires knowing how your body naturally builds muscle and how steroids amplify the process.
+Anabolic steroids work through a specific biological mechanism that promotes muscle growth. Understanding this mechanism requires knowing how your body naturally builds muscle and how steroids amplify the process. For an overview of what steroids are, [see our definition guide](/blog/what-are-anabolic-steroids). To understand potential risks, [read about steroid side effects](/blog/steroid-side-effects-complete-guide).
 
 ## Natural Muscle Growth Process
 

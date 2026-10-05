@@ -1,6 +1,6 @@
 # Steroid Side Effects: Complete Medical Guide
 
-All anabolic steroids cause side effects. Understanding severity, likelihood, and reversibility helps you make informed decisions.
+All anabolic steroids cause side effects. Understanding severity, likelihood, and reversibility helps you make informed decisions. For an overview of how steroids work, [read our mechanism guide](/blog/how-do-steroids-work). For buying safely, [see our safety guide](/blog/how-to-buy-steroids-online-safely). If you're a beginner, [check our beginner recommendations](/blog/best-steroids-for-beginners).
 
 ## Common Reversible Side Effects
 

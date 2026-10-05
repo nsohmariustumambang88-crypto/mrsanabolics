@@ -1,6 +1,6 @@
 # WADA Banned List Explained: What's Illegal in Sports 2026
 
-The World Anti-Doping Agency (WADA) publishes an annual Prohibited List that determines which substances athletes cannot use. Understanding WADA's rules is critical for competitive athletes.
+The World Anti-Doping Agency (WADA) publishes an annual Prohibited List that determines which substances athletes cannot use. Understanding WADA's rules is critical for competitive athletes. [See SARMs legal status](/blog/are-sarms-legal-fda-wada-tga). [Review steroid laws](/blog/steroid-laws-by-country-2026).
 
 ## What is WADA?
 

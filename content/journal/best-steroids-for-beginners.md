@@ -1,6 +1,6 @@
 # Best Steroids for Beginners: A Complete Guide for First-Time Users
 
-Choosing the right steroid for a first cycle is the most critical decision a beginner will make. The wrong choice leads to unnecessary side effects, wasted money, and discouragement. This guide explains which steroids are safest, most effective, and most forgiving for your first cycle.
+Choosing the right steroid for a first cycle is the most critical decision a beginner will make. The wrong choice leads to unnecessary side effects, wasted money, and discouragement. This guide explains which steroids are safest, most effective, and most forgiving for your first cycle. For a complete beginner's cycle blueprint, [see our steroid cycle guide](/blog/steroid-cycle-guide-beginners).
 
 ## What Makes a Steroid "Good" for Beginners?
 
@@ -13,7 +13,7 @@ Androgenic effects include acne, hair loss, prostate enlargement, and mood swing
 Some steroids have variable effects between individuals. Beginners need compounds where the results are consistent and well-understood — so you know what to expect.
 
 ### Reversible Side Effects
-All steroid side effects are not permanent. Beginners should choose compounds where side effects resolve quickly after stopping, not ones that cause lasting damage.
+All steroid side effects are not permanent. Beginners should choose compounds where [side effects resolve quickly after stopping](/blog/steroid-side-effects-complete-guide), not ones that cause lasting damage.
 
 ### Mild Virilization Risk
 If female, virilization (development of male characteristics) is a serious concern. Some steroids are safer than others.

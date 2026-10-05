@@ -83,8 +83,6 @@ export function HeroOffer({
   const [tabHidden, setTabHidden] = React.useState(false);
   const [added, setAdded] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
-  const [hoverZone, setHoverZone] = React.useState<'left' | 'right' | null>(null);
-  const hoverTimeoutRef = React.useRef<number | NodeJS.Timeout>();
 
   const onOffer = offers.length > 0;
   const list = onOffer ? offers : fallback ? [fallback] : [];
@@ -92,13 +90,6 @@ export function HeroOffer({
 
   /* A new slide is a new product: its "added" confirmation must not carry over. */
   React.useEffect(() => setAdded(false), [index]);
-
-  /* Cleanup hover timeout on unmount */
-  React.useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-    };
-  }, []);
 
   /* Reduced motion: no automatic rotation until the visitor asks for it. */
   React.useEffect(() => {
@@ -132,21 +123,6 @@ export function HeroOffer({
   const step = (delta: number) => {
     setDirection(delta > 0 ? 1 : -1);
     setIndex((current) => (current + delta + list.length) % list.length);
-  };
-
-  const handleHoverZone = (zone: 'left' | 'right' | null) => {
-    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-    setHoverZone(zone);
-
-    if (zone === 'left' && list.length > 1) {
-      hoverTimeoutRef.current = window.setTimeout(() => {
-        step(-1);
-      }, 400);
-    } else if (zone === 'right' && list.length > 1) {
-      hoverTimeoutRef.current = window.setTimeout(() => {
-        step(1);
-      }, 400);
-    }
   };
 
   const onKeyDown = (event: React.KeyboardEvent) => {
@@ -186,7 +162,7 @@ export function HeroOffer({
   const stock = product ? stockState(product, lowStockThreshold) : null;
 
   return (
-    <div
+    <section
       aria-roledescription="carousel"
       aria-label={onOffer ? 'Current offers' : 'Featured product'}
       onKeyDown={onKeyDown}
@@ -204,7 +180,13 @@ export function HeroOffer({
         /* Only when focus leaves the carousel altogether, not when it moves between its buttons. */
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHeld(false);
       }}
-      className="relative flex flex-col"
+      /*
+        No background of its own. It sits on the same paper as the headline beside it; an opaque
+        `bg-paper` here covered the page's paper texture and measured a few steps off the headline
+        column in both themes (244,241,235 against 241,238,232 in light), which read as a
+        separate, faintly tinted block rather than one sheet.
+      */
+      className="relative flex flex-col lg:flex-1"
     >
       {product && (
         <>
@@ -292,71 +274,40 @@ export function HeroOffer({
               `flex: 1 1 0%` in a column of indefinite height can collapse the box it is meant
               to size.
             */}
-            <div
-              className="relative block aspect-square overflow-hidden border border-rule bg-card dark:bg-white"
-              onMouseLeave={() => handleHoverZone(null)}
+            <Link
+              href={`/product/${product.slug}`}
+              /*
+                White in the dark theme. The pack shots are square and photographed on white, and
+                this box is not square, so on the dark card the photo sat as a white rectangle
+                between two dark bars. A white plate is how the product cards already show pack
+                shots in the dark theme; this matches them.
+              */
+              className="relative mx-4 mt-5 block aspect-[5/4] min-h-[12rem] overflow-hidden border border-rule bg-card dark:bg-white sm:mx-6 lg:mx-10 lg:aspect-auto lg:flex-1"
+              tabIndex={-1}
+              aria-hidden="true"
             >
-              <Link
-                href={`/product/${product.slug}`}
-                /*
-                  White in the dark theme. The pack shots are square and photographed on white, and
-                  this box is not square, so on the dark card the photo sat as a white rectangle
-                  between two dark bars. A white plate is how the product cards already show pack
-                  shots in the dark theme; this matches them.
-                */
-                className="relative block h-full w-full"
-                tabIndex={-1}
-                aria-hidden="true"
-              >
-                {/*
-                  Multiplied onto the paper, in the light theme only. The store's pack shots are
-                  photographed on white, and at this size the white showed as a pasted-in rectangle
-                  inside the warmer paper box. Multiply turns white into whatever it sits on, so the
-                  pack sits ON the sheet. It is switched off in the dark theme, where multiplying
-                  onto a dark ground would sink the photograph into it, and never applied to a drawn
-                  plate, which carries its own ground colour.
-                */}
-                <ProductPlate
-                  product={product}
-                  showMarking={false}
-                  priority={index === 0}
-                  sizes="(min-width: 1024px) 44vw, 100vw"
-                  className={
-                    isPhotograph(product.images[0])
-                      ? 'mix-blend-multiply dark:mix-blend-normal'
-                      : undefined
-                  }
-                />
-              </Link>
+              {/*
+                Multiplied onto the paper, in the light theme only. The store's pack shots are
+                photographed on white, and at this size the white showed as a pasted-in rectangle
+                inside the warmer paper box. Multiply turns white into whatever it sits on, so the
+                pack sits ON the sheet. It is switched off in the dark theme, where multiplying
+                onto a dark ground would sink the photograph into it, and never applied to a drawn
+                plate, which carries its own ground colour.
+              */}
+              <ProductPlate
+                product={product}
+                showMarking={false}
+                priority={index === 0}
+                sizes="(min-width: 1024px) 44vw, 100vw"
+                className={
+                  isPhotograph(product.images[0])
+                    ? 'mix-blend-multiply dark:mix-blend-normal'
+                    : undefined
+                }
+              />
+            </Link>
 
-              {/* Left hover zone */}
-              {list.length > 1 && (
-                <div
-                  onMouseEnter={() => handleHoverZone('left')}
-                  onMouseLeave={() => handleHoverZone(null)}
-                  className={cn(
-                    'absolute inset-y-0 left-0 w-1/3 cursor-pointer transition-colors',
-                    hoverZone === 'left' ? 'bg-black/20' : 'bg-black/0 hover:bg-black/10'
-                  )}
-                  aria-label="Previous product"
-                />
-              )}
-
-              {/* Right hover zone */}
-              {list.length > 1 && (
-                <div
-                  onMouseEnter={() => handleHoverZone('right')}
-                  onMouseLeave={() => handleHoverZone(null)}
-                  className={cn(
-                    'absolute inset-y-0 right-0 w-1/3 cursor-pointer transition-colors',
-                    hoverZone === 'right' ? 'bg-black/20' : 'bg-black/0 hover:bg-black/10'
-                  )}
-                  aria-label="Next product"
-                />
-              )}
-            </div>
-
-            <div className="flex flex-1 flex-col p-3 sm:p-4">
+            <div className="px-4 pb-8 pt-5 sm:px-6 lg:px-10 lg:pb-10">
               <p className="text-xs text-ink-faint">
                 {product.brand}
                 {strength && (
@@ -373,7 +324,7 @@ export function HeroOffer({
                 {product.subcategoryName ?? product.category}
               </p>
 
-              <h2 className="mt-1.5 font-display text-lg font-semibold leading-snug text-ink tracking-[-0.02em]">
+              <h2 className="mt-1.5 font-display text-[clamp(1.6rem,2.6vw,2.25rem)] font-semibold leading-[1.05] tracking-[-0.03em]">
                 <Link
                   href={`/product/${product.slug}`}
                   className="transition-colors hover:text-pigment-indigo"
@@ -383,15 +334,15 @@ export function HeroOffer({
               </h2>
 
               <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="font-semibold tabular text-base text-ink">
+                <span className="font-display text-2xl font-semibold tabular">
                   {formatPrice(product.price)}
                 </span>
                 {saving > 0 && compareAt && (
                   <>
-                    <span className="text-xs text-ink-faint line-through tabular">
+                    <span className="text-sm text-ink-faint line-through tabular">
                       {formatPrice(compareAt)}
                     </span>
-                    <span className="text-xs font-medium text-ink-soft tabular">
+                    <span className="text-sm font-medium text-pigment-madder tabular">
                       Save {formatPrice(saving)}
                     </span>
                   </>
@@ -408,18 +359,18 @@ export function HeroOffer({
                 )}
               </div>
 
-              <div className="mt-auto flex flex-wrap items-center gap-3 pt-3 sm:pt-4">
+              <div className="mt-5 flex flex-wrap items-center gap-3">
                 <button
                   type="button"
                   onClick={add}
                   disabled={!product.inStock}
                   className={cn(
-                    'flex items-center justify-center gap-2 border-t border-rule px-3 py-2.5 text-sm font-medium transition-colors sm:px-4 sm:py-3',
+                    'inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium transition-colors',
                     !product.inStock
-                      ? 'cursor-not-allowed text-ink-faint'
+                      ? 'cursor-not-allowed bg-paper-sunk text-ink-faint'
                       : added
                         ? 'bg-pigment-verdigris text-primary-foreground'
-                        : 'text-ink-soft hover:bg-pigment-indigo hover:text-primary-foreground'
+                        : 'bg-pigment-indigo text-primary-foreground hover:bg-pigment-indigo-lift'
                   )}
                 >
                   {!product.inStock ? (
@@ -436,6 +387,23 @@ export function HeroOffer({
                     </>
                   )}
                 </button>
+
+                <Link
+                  href={`/product/${product.slug}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-rule-strong px-5 py-3 text-sm font-medium transition-colors hover:border-pigment-indigo hover:text-pigment-indigo"
+                >
+                  View product
+                  <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
+                </Link>
+
+                {onOffer && (
+                  <Link
+                    href="/shop?filter=deals"
+                    className="ml-auto font-mono text-2xs uppercase tracking-[0.14em] text-ink-soft underline decoration-rule-strong underline-offset-4 transition-colors hover:text-pigment-indigo hover:decoration-pigment-indigo"
+                  >
+                    All offers
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -479,6 +447,6 @@ export function HeroOffer({
           </button>
         </div>
       )}
-    </div>
+    </section>
   );
 }

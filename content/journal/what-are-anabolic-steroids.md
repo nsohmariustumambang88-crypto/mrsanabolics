@@ -34,6 +34,8 @@ The "anabolic" and "androgenic" effects cannot be completely separated. Modifyin
 
 ### By Route of Administration
 
+For a detailed comparison, [read our guide on oral vs. injectable steroids](/blog/oral-vs-injectable-steroids).
+
 **Injectable steroids:**
 - Dissolved in oil and injected intramuscularly
 - Absorbed slowly from the injection site
@@ -77,6 +79,8 @@ The "anabolic" and "androgenic" effects cannot be completely separated. Modifyin
 - Oxymetholone (Anadrol) — extreme mass gain
 
 ## What Anabolic Steroids Actually Do
+
+For a detailed explanation of the biological mechanisms, [read how steroids work at the cellular level](/blog/how-do-steroids-work).
 
 ### Primary Effects
 

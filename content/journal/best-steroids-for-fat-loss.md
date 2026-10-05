@@ -1,6 +1,6 @@
 # Best Steroids for Fat Loss and Cutting: Lean Muscle Guide
 
-Cutting steroids are different from bulking steroids. Cutting compounds preserve muscle while you lose fat, increase vascularity, and improve conditioning. This guide explains which steroids deliver the leanest physique.
+Cutting steroids are different from bulking steroids. Cutting compounds preserve muscle while you lose fat, increase vascularity, and improve conditioning. This guide explains which steroids deliver the leanest physique. For muscle gain goals, [see our muscle-building steroids guide](/blog/best-steroids-for-muscle-gain). For strength focus, [read our strength guide](/blog/best-steroids-for-strength).
 
 ## What Makes a Steroid "Good" for Cutting?
 
@@ -20,7 +20,7 @@ Cutting steroids share specific traits:
 **Cost:** $150-300/month
 **Best dosage:** 200-400 mg/week
 
-Trenbolone is unmatched for cutting. It burns fat faster, preserves more muscle, and creates more hardness than any other steroid. Results are visible within 2 weeks.
+Trenbolone is unmatched for cutting. It burns fat faster, preserves more muscle, and creates more hardness than any other steroid. Results are visible within 2 weeks. Note: [Trenbolone carries significant side effects](/blog/steroid-side-effects-complete-guide) — review them before use.
 
 **Example:** A 200 lb person at 20% bodyfat can drop to 8% in 8 weeks while gaining 5-10 lbs muscle.
 

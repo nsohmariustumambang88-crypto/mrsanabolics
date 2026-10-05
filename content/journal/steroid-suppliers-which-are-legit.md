@@ -1,6 +1,6 @@
 # Steroid Suppliers: Which Are Legit? How to Identify Real vs. Fake
 
-Counterfeit steroids are a $1+ billion/year problem. 60-80% of black market testosterone is fake. This guide teaches you how to identify legitimate suppliers and avoid scams.
+Counterfeit steroids are a $1+ billion/year problem. 60-80% of black market testosterone is fake. This guide teaches you how to identify legitimate suppliers and avoid scams. [See our comprehensive buying guide](/blog/how-to-buy-steroids-online-safely) for payment safety. [Learn how to test authenticity](/blog/how-to-test-steroids-authenticity).
 
 ## Red Flags: Illegitimate Suppliers
 

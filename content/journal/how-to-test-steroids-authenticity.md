@@ -1,6 +1,6 @@
 # How to Test Steroids for Authenticity: Complete Verification Guide
 
-Counterfeit steroids are 60-80% of black market supply. This guide explains how to verify authenticity before injecting.
+Counterfeit steroids are 60-80% of black market supply. This guide explains how to verify authenticity before injecting. [See our guide on spotting counterfeits](/blog/how-to-spot-counterfeit-steroids). [Learn about certificates of analysis](/blog/how-to-read-a-certificate-of-analysis). [Review buying safety](/blog/how-to-buy-steroids-online-safely).
 
 ## Visual Inspection (Free, Basic)
 

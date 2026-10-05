@@ -1,6 +1,6 @@
 # Complete Steroid Cycle Guide for Beginners: 12-Week Blueprint
 
-This is a complete, step-by-step guide for someone running their first steroid cycle. Follow this to maximize gains while minimizing mistakes and side effects.
+This is a complete, step-by-step guide for someone running their first steroid cycle. Follow this to maximize gains while minimizing mistakes and side effects. Start with [our beginner steroids guide](/blog/best-steroids-for-beginners) first, and review [side effects](/blog/steroid-side-effects-complete-guide) before starting.
 
 ## Pre-Cycle Requirements (4 Weeks Before)
 

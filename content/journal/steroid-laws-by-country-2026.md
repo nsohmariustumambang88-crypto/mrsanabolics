@@ -1,6 +1,6 @@
 # Steroid Laws by Country 2026: Complete Legal Status Guide
 
-Anabolic steroids are controlled substances globally, but penalties vary dramatically by jurisdiction. This guide covers legal status in major countries for 2026.
+Anabolic steroids are controlled substances globally, but penalties vary dramatically by jurisdiction. This guide covers legal status in major countries for 2026. [See related legal article](/blog/anabolic-steroids-law-us-uk-canada-australia). [Learn about WADA prohibited list](/blog/wada-banned-list-explained).
 
 ## United States
 
