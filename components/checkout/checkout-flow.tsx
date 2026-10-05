@@ -59,6 +59,7 @@ export function CheckoutFlow({
   const [firstName, setFirstName] = React.useState('');
   const [lastName, setLastName] = React.useState('');
   const [shippingAddr, setShippingAddr] = React.useState('');
+  const [shippingAddr2, setShippingAddr2] = React.useState('');
   const [shippingCity, setShippingCity] = React.useState('');
   const [shippingPost, setShippingPost] = React.useState('');
 
@@ -128,6 +129,7 @@ export function CheckoutFlow({
         })),
         shipping: {
           line1: shippingAddr,
+          line2: shippingAddr2,
           city: shippingCity,
           postcode: shippingPost,
         },
@@ -330,6 +332,8 @@ export function CheckoutFlow({
                   label="Apartment, suite (optional)"
                   autoComplete="address-line2"
                   required={false}
+                  value={shippingAddr2}
+                  onChange={setShippingAddr2}
                 />
                 <Row>
                   <Input
