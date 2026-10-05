@@ -6,14 +6,13 @@ import { useSubscribe } from './use-subscribe';
 
 export function LeadMagnetModal() {
   const [isOpen, setIsOpen] = useState(false);
-  const [email, setEmail] = useState('');
-  const { subscribe, isLoading, error, success } = useSubscribe();
+  const { email, setEmail, consent, setConsent, busy, done, error, submit } = useSubscribe('lead-magnet');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await subscribe(email);
-    if (success) {
-      setEmail('');
+    setConsent(true);
+    await submit(e);
+    if (done) {
       setTimeout(() => setIsOpen(false), 2000);
     }
   };
@@ -46,7 +45,7 @@ export function LeadMagnetModal() {
           Complete guide to buying steroids online safely. Includes supplier verification checklist, red flags, and authentication tips.
         </p>
 
-        {success ? (
+        {done ? (
           <div className="rounded-lg bg-pigment-verdigris/10 p-4 text-center">
             <p className="font-semibold text-pigment-verdigris">
               ✓ Check your email!
@@ -64,10 +63,23 @@ export function LeadMagnetModal() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={busy}
                 className="w-full rounded border border-rule bg-paper-sunk px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-pigment-indigo focus:outline-none disabled:opacity-50"
               />
             </div>
+
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                disabled={busy}
+                className="rounded"
+              />
+              <span className="text-ink-soft">
+                I agree to receive emails about steroid education and safety
+              </span>
+            </label>
 
             {error && (
               <p className="text-xs text-pigment-madder">{error}</p>
@@ -75,10 +87,10 @@ export function LeadMagnetModal() {
 
             <button
               type="submit"
-              disabled={isLoading || !email}
+              disabled={busy || !email || !consent}
               className="w-full rounded bg-pigment-indigo px-4 py-2 font-semibold text-white hover:bg-pigment-indigo/90 disabled:opacity-50 transition-colors"
             >
-              {isLoading ? 'Sending...' : 'Get Free Guide'}
+              {busy ? 'Sending...' : 'Get Free Guide'}
             </button>
 
             <p className="text-xs text-ink-faint text-center">
