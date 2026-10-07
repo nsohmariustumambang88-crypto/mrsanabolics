@@ -180,7 +180,7 @@ export async function sendWelcomeEmail3(to: string, unsubscribeToken: string) {
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: 'Ready to start? Here's where to begin (+ 10% off)',
+    subject: "Ready to start? Here's where to begin (+ 10% off)",
     html: renderWelcomeEmail3(unsubscribeLink),
   });
 }
