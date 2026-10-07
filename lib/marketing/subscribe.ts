@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { CONSENT, type ConsentSource, looksLikeEmail, normaliseEmail } from '@/lib/marketing/consent';
 import { hashIp } from '@/lib/ip-hash';
 import { attachContactForSubscriber, recordUnsubscribeActivity } from '@/lib/crm/contacts';
+import { initiateWelcomeSequence } from '@/lib/email/welcome-sequence';
 
 /*
   Writing and revoking marketing consent.
@@ -61,11 +62,12 @@ export async function subscribe(input: SubscribeInput): Promise<SubscribeResult>
   };
 
   if (!existing) {
+    const unsubscribeToken = randomBytes(24).toString('base64url');
     await prisma.subscriber.create({
       data: {
         email,
         ...shared,
-        unsubscribeToken: randomBytes(24).toString('base64url'),
+        unsubscribeToken,
       },
     });
 
@@ -76,6 +78,11 @@ export async function subscribe(input: SubscribeInput): Promise<SubscribeResult>
       path: input.path ?? null,
       resubscribed: false,
       logConsent: true,
+    });
+
+    /* Trigger welcome sequence for new subscribers */
+    await initiateWelcomeSequence(email, unsubscribeToken).catch((error) => {
+      console.error('Failed to initiate welcome sequence:', error);
     });
 
     return { ok: true, created: true, resubscribed: false };

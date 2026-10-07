@@ -222,3 +222,142 @@ export function renderPasswordResetHTML(
   </body>
 </html>`;
 }
+
+export function renderWelcomeEmail1(unsubscribeLink: string): string {
+  return `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Welcome to MrAnabolics</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; background-color: #f9f9f9;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #1d2327; color: #fff; padding: 20px; text-align: center; border-radius: 4px 4px 0 0;">
+        <h1 style="margin: 0; font-size: 24px;">Welcome to MrAnabolics</h1>
+      </div>
+
+      <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd;">
+        <p style="margin: 0 0 15px 0; color: #333;">Thanks for subscribing. We're glad you're here.</p>
+
+        <p style="margin: 0 0 20px 0; color: #333;">Before you start shopping, here's what you need to know about evaluating quality and spotting counterfeits.</p>
+
+        <div style="background-color: #f0f0f1; padding: 15px; border-left: 4px solid #2271b1; margin: 20px 0;">
+          <h3 style="margin: 0 0 10px 0; color: #1d2327; font-size: 16px;">What to Look For When Buying</h3>
+          <ul style="margin: 0; padding-left: 20px; color: #333;">
+            <li>Authentic packaging with correct serial numbers</li>
+            <li>Holograms or security features (varies by manufacturer)</li>
+            <li>Clear batch numbers and expiry dates</li>
+            <li>Certificates of analysis (CoA) from third-party testing</li>
+          </ul>
+        </div>
+
+        <p style="margin: 20px 0; color: #333;">Every product we carry comes with verification documentation. We only work with manufacturers who can prove quality and authenticity.</p>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="https://mrsanabolics.com/blog/how-to-spot-counterfeit-steroids" style="background-color: #2271b1; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Read Our Complete Safety Guide</a>
+        </div>
+
+        <p style="margin: 20px 0 0 0; color: #666; font-size: 14px;">Questions? We're here to help. Reply to this email or visit our <a href="https://mrsanabolics.com/contact" style="color: #2271b1;">contact page</a>.</p>
+      </div>
+
+      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
+        <p style="margin: 0;"><a href="${unsubscribeLink}" style="color: #2271b1; text-decoration: none;">Unsubscribe</a></p>
+        <p style="margin: 10px 0 0 0;">MrAnabolics - Professional Supplements</p>
+      </div>
+    </div>
+  </body>
+</html>`;
+}
+
+export function renderWelcomeEmail2(unsubscribeLink: string): string {
+  return `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>3 Things Most People Get Wrong</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; background-color: #f9f9f9;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #1d2327; color: #fff; padding: 20px; text-align: center; border-radius: 4px 4px 0 0;">
+        <h1 style="margin: 0; font-size: 20px;">3 Common Misconceptions</h1>
+      </div>
+
+      <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd;">
+        <p style="margin: 0 0 20px 0; color: #333;">Continuing from our last email—here are three things we see beginners misunderstand:</p>
+
+        <div style="margin: 20px 0; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+          <h3 style="margin: 0 0 10px 0; color: #1d2327;">1. Cheaper = Counterfeit</h3>
+          <p style="margin: 0; color: #333; line-height: 1.6;">Not always true. Some manufacturers have lower overhead. What matters: Do they have third-party testing? Can they provide batch verification?</p>
+        </div>
+
+        <div style="margin: 20px 0; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+          <h3 style="margin: 0 0 10px 0; color: #1d2327;">2. Underground Labs vs Pharma</h3>
+          <p style="margin: 0; color: #333; line-height: 1.6;">UGL products can be legitimate and tested. Pharmaceutical products can be counterfeit. What matters: Third-party verification, not the source.</p>
+        </div>
+
+        <div style="margin: 20px 0;">
+          <h3 style="margin: 0 0 10px 0; color: #1d2327;">3. "If It Works, It's Real"</h3>
+          <p style="margin: 0; color: #333; line-height: 1.6;">Counterfeit products might work (or be a different compound). The only way to know for certain: Lab testing and documentation.</p>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="https://mrsanabolics.com/shop" style="background-color: #2271b1; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Explore Our Collection</a>
+        </div>
+
+        <p style="margin: 20px 0 0 0; color: #666; font-size: 14px;">Every product in our store comes with documentation. We make verification simple.</p>
+      </div>
+
+      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
+        <p style="margin: 0;"><a href="${unsubscribeLink}" style="color: #2271b1; text-decoration: none;">Unsubscribe</a></p>
+        <p style="margin: 10px 0 0 0;">MrAnabolics - Professional Supplements</p>
+      </div>
+    </div>
+  </body>
+</html>`;
+}
+
+export function renderWelcomeEmail3(unsubscribeLink: string): string {
+  return `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Start Here (+ 10% Off)</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; background-color: #f9f9f9;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #1d2327; color: #fff; padding: 20px; text-align: center; border-radius: 4px 4px 0 0;">
+        <h1 style="margin: 0; font-size: 24px;">Ready to Start?</h1>
+      </div>
+
+      <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd;">
+        <p style="margin: 0 0 20px 0; color: #333;">Based on our research and customer feedback, here's where most people start:</p>
+
+        <div style="background-color: #f0f0f1; padding: 15px; border-radius: 4px; margin: 20px 0;">
+          <h3 style="margin: 0 0 10px 0; color: #1d2327;">Bestsellers for Beginners</h3>
+          <ul style="margin: 0; padding-left: 20px; color: #333;">
+            <li>Testosterone Cypionate (reliable, predictable results)</li>
+            <li>Nolvadex (for cycle support)</li>
+            <li>Clomid (post-cycle therapy)</li>
+          </ul>
+          <p style="margin: 15px 0 0 0; font-size: 13px; color: #666;">All products come with certificates of analysis and batch verification.</p>
+        </div>
+
+        <div style="background-color: #fffbee; padding: 15px; border-left: 4px solid #f9a825; margin: 20px 0;">
+          <p style="margin: 0; color: #333;"><strong>New subscriber offer: Use code WELCOME10 for 10% off your first order.</strong></p>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="https://mrsanabolics.com/shop" style="background-color: #2271b1; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; font-size: 16px;">Browse All Products</a>
+        </div>
+
+        <p style="margin: 20px 0 0 0; color: #666; font-size: 14px;">Not sure what to order? <a href="https://mrsanabolics.com/contact" style="color: #2271b1;">Reach out</a>—our team can help you find exactly what you need.</p>
+      </div>
+
+      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
+        <p style="margin: 0;"><a href="${unsubscribeLink}" style="color: #2271b1; text-decoration: none;">Unsubscribe</a></p>
+        <p style="margin: 10px 0 0 0;">MrAnabolics - Professional Supplements</p>
+      </div>
+    </div>
+  </body>
+</html>`;
+}

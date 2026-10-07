@@ -4,6 +4,9 @@ import {
   renderAdminNotificationHTML,
   renderNewsletterHTML,
   renderPasswordResetHTML,
+  renderWelcomeEmail1,
+  renderWelcomeEmail2,
+  renderWelcomeEmail3,
 } from './templates';
 
 export const FROM_EMAIL = 'orders@mrsanabolics.com';
@@ -143,5 +146,41 @@ export async function sendCustomerNotification(to: string, subject: string, mess
     </div>
   </body>
 </html>`,
+  });
+}
+
+export async function sendWelcomeEmail1(to: string, unsubscribeToken: string) {
+  const resend = getResend();
+  const unsubscribeLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://mrsanabolics.com'}/unsubscribe?token=${unsubscribeToken}`;
+
+  return resend.emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: 'What you need to know before buying—a safety guide',
+    html: renderWelcomeEmail1(unsubscribeLink),
+  });
+}
+
+export async function sendWelcomeEmail2(to: string, unsubscribeToken: string) {
+  const resend = getResend();
+  const unsubscribeLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://mrsanabolics.com'}/unsubscribe?token=${unsubscribeToken}`;
+
+  return resend.emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: '3 things most people get wrong about quality',
+    html: renderWelcomeEmail2(unsubscribeLink),
+  });
+}
+
+export async function sendWelcomeEmail3(to: string, unsubscribeToken: string) {
+  const resend = getResend();
+  const unsubscribeLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://mrsanabolics.com'}/unsubscribe?token=${unsubscribeToken}`;
+
+  return resend.emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: 'Ready to start? Here's where to begin (+ 10% off)',
+    html: renderWelcomeEmail3(unsubscribeLink),
   });
 }

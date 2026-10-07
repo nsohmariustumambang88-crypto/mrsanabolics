@@ -312,6 +312,11 @@ model Subscriber {
   abandonedValue Decimal?  @db.Decimal(10, 2)
   abandonedAt    DateTime?
 
+  /// Welcome sequence tracking (0 = not started, 1 = email 1 sent, 2 = email 2 sent, 3 = complete).
+  welcomeStep    Int       @default(0)
+  welcomeEmail2At DateTime?
+  welcomeEmail3At DateTime?
+
   /// The CRM record for this person.
   ///
   /// Optional, and the direction matters: a Contact never implies consent, but a Subscriber
