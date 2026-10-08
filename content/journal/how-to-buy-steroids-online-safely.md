@@ -229,3 +229,6 @@ When it arrives:
 ---
 
 **This article is for informational purposes. Laws vary by jurisdiction. Anabolic steroids are controlled substances in most countries and illegal without prescription. Understand the legal status before purchasing.**
+---
+
+**Ready to order?** [Shop now](/shop) — All products come with certificates of analysis and batch verification.

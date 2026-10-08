@@ -211,3 +211,6 @@ Higher test = more aromatization = more AI needed
 [Use AI preventively on testosterone cycles to prevent gynecomastia](/blog/steroid-gynecomastia-prevention-treatment). Start at 0.25-0.5mg anastrozole daily, adjust based on symptoms and blood work.
 
 [See complete steroid cycle guide](/blog/steroid-cycle-guide-beginners) for full AI protocols by cycle type.
+---
+
+**Ready to order?** [Shop now](/shop) — All products come with certificates of analysis and batch verification.

@@ -268,3 +268,6 @@ Trenbolone and masteron can reduce appetite, making it easier to stay in a calor
 ---
 
 **This article is educational. Anabolic steroids are controlled substances. Unauthorized possession is illegal in most jurisdictions. Consult qualified medical professionals before considering steroid use.**
+---
+
+**Ready to order?** [Shop now](/shop) — All products come with certificates of analysis and batch verification.

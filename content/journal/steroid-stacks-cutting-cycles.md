@@ -357,3 +357,6 @@ Recheck lipids (change dramatically on cutting compounds).
 [Cutting stacks range from conservative (Test only)](/blog/best-steroids-for-beginners) to extreme (Tren + Mast). Trenbolone remains the gold standard for cutting — unmatched fat loss combined with muscle preservation.
 
 Choose based on experience level and side effect tolerance. [See complete cycle guide for full protocols](/blog/steroid-cycle-guide-beginners).
+---
+
+**Ready to order?** [Shop now](/shop) — All products come with certificates of analysis and batch verification.

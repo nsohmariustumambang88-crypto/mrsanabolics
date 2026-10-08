@@ -282,3 +282,6 @@ Nandrolone is one of the best bulking compounds available. It builds muscle powe
 For bulking phases, especially if you have joint issues, [nandrolone stacks powerfully with testosterone](/blog/best-steroids-for-muscle-gain).
 
 See our [complete steroid cycle guide](/blog/steroid-cycle-guide-beginners) for detailed pre/during/post cycle protocols.
+---
+
+**Ready to order?** [Shop now](/shop) — All products come with certificates of analysis and batch verification.

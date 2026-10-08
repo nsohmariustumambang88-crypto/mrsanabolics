@@ -215,3 +215,6 @@ Testosterone is the most commonly purchased steroid and also the most counterfei
 ---
 
 **This article is educational. Anabolic steroids are controlled substances. Unauthorized possession is illegal in most jurisdictions. Consult qualified medical professionals before considering steroid use.**
+---
+
+**Ready to order?** [Shop now](/shop) — All products come with certificates of analysis and batch verification.

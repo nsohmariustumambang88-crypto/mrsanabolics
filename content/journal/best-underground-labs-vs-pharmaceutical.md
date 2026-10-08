@@ -240,3 +240,6 @@ Lab analysis of 100 UGL testosterone samples (2024):
 ---
 
 **This article is educational. Underground lab steroids are illegal in most jurisdictions. Purchasing carries legal risk and health risk from counterfeits.**
+---
+
+**Ready to order?** [Shop now](/shop) — All products come with certificates of analysis and batch verification.

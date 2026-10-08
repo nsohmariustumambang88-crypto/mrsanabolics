@@ -287,3 +287,6 @@ Boldenone is an excellent, underutilized steroid for lean muscle gain. It delive
 The main drawback is slow action and long cycle requirements. For bulking, boldenone stacks beautifully with testosterone, nandrolone, or even small amounts of trenbolone.
 
 [See complete bulking guides for all compounds](/blog/best-steroids-for-muscle-gain).
+---
+
+**Ready to order?** [Shop now](/shop) — All products come with certificates of analysis and batch verification.

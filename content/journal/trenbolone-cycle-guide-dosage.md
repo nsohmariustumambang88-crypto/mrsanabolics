@@ -278,3 +278,7 @@ Trenbolone delivers results nothing else can match. A 10-week trenbolone cycle p
 If you're ready for trenbolone, understand the risks completely. Get blood work, manage sides aggressively, and have an exit plan if things go wrong.
 
 [See our complete steroid cycle guide](/blog/steroid-cycle-guide-beginners) for pre/during/post cycle protocols.
+
+---
+
+**Ready to start?** [Shop Trenbolone & cycle support](/shop) — We stock pharmaceutical-grade trenbolone, testosterone, and everything you need for a complete cycle protocol.

@@ -216,3 +216,6 @@ TRT is legal testosterone replacement for diagnosed hypogonadism. Typical dosing
 [Compare to steroid cycles](/blog/steroid-cycle-guide-beginners) — TRT is replacement (lifelong), cycles are supraphysiologic (temporary).
 
 TRT requires monitoring, legitimate doctors, and commitment to lifelong treatment. Results are gradual but sustainable.
+---
+
+**Ready to order?** [Shop now](/shop) — All products come with certificates of analysis and batch verification.

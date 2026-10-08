@@ -286,3 +286,6 @@ Some experienced users stay on low-dose testosterone year-round instead of PCT:
 Verify recovery with blood work 2 weeks post-PCT. Full recovery typically takes 4-8 weeks depending on cycle severity.
 
 Don't skip PCT.
+---
+
+**Ready to order?** [Shop now](/shop) — All products come with certificates of analysis and batch verification.

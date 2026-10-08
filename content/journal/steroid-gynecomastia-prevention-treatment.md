@@ -224,3 +224,6 @@ Gynecomastia is preventable with proper AI use. Catch early (Stage 1) for best r
 [See aromatase inhibitor guide for detailed AI protocols](/blog/best-steroids-for-beginners).
 
 **Prevention >> Treatment.** Use AI if needed.
+---
+
+**Ready to order?** [Shop now](/shop) — All products come with certificates of analysis and batch verification.

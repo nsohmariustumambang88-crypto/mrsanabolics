@@ -251,3 +251,6 @@ All anabolic steroids cause side effects. Understanding severity, likelihood, an
 ---
 
 **This article is educational. Anabolic steroids carry real health risks. Consult qualified medical professionals before use.**
+---
+
+**Ready to order?** [Shop now](/shop) — All products come with certificates of analysis and batch verification.

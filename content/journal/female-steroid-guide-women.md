@@ -310,3 +310,6 @@ Female steroid use requires more caution than male use due to virilization risk.
 Choose based on goals and risk tolerance. Always monitor weekly for virilization and stop if changes begin.
 
 [See complete steroid cycle guide for full protocols](/blog/steroid-cycle-guide-beginners).
+---
+
+**Ready to order?** [Shop now](/shop) — All products come with certificates of analysis and batch verification.

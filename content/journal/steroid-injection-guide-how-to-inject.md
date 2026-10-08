@@ -244,3 +244,6 @@ Sterile injection technique is the most important factor in safe steroid use. Us
 Poor injection technique causes infections, scar tissue, and abscesses — the most common serious complication of steroid use.
 
 [See complete steroid cycle guide for injection schedules](/blog/steroid-cycle-guide-beginners).
+---
+
+**Ready to order?** [Shop now](/shop) — All products come with certificates of analysis and batch verification.

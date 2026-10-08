@@ -368,3 +368,6 @@ Why this stack:
 [Bulking stacks range from simple (Test only)](/blog/best-steroids-for-beginners) to complex (triple compounds). Start conservatively, progress based on experience, and [see complete cycle guide for pre/during/post protocols](/blog/steroid-cycle-guide-beginners).
 
 The most popular stack is still Test + Deca — proven, effective, manageable sides, and results speak for themselves.
+---
+
+**Ready to order?** [Shop now](/shop) — All products come with certificates of analysis and batch verification.
