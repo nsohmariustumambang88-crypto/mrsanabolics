@@ -32,7 +32,6 @@ export async function sendOrderConfirmation(
     from: FROM_EMAIL,
     replyTo: SUPPORT_EMAIL,
     to,
-    replyTo: SUPPORT_EMAIL,
     subject: `Order Confirmed - ${orderRef}`,
     html: renderOrderConfirmationHTML(orderRef, items, total),
   });
