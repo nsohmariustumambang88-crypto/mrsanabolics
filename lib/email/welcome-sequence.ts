@@ -28,7 +28,12 @@ const WELCOME_SEQUENCE_SCHEDULE: Record<WelcomeSequenceStep, number> = {
 export async function initiateWelcomeSequence(email: string, unsubscribeToken: string) {
   try {
     // Send email 1 immediately
-    await sendWelcomeEmail1(email, unsubscribeToken);
+    const emailResult = await sendWelcomeEmail1(email, unsubscribeToken);
+
+    if (emailResult.error) {
+      console.error(`Welcome email 1 failed for ${email}:`, emailResult.error);
+      return { ok: false, error: `Email send failed: ${emailResult.error}` };
+    }
 
     // Get the subscriber to update tracking
     const subscriber = await prisma.subscriber.findUnique({
@@ -36,22 +41,25 @@ export async function initiateWelcomeSequence(email: string, unsubscribeToken: s
       select: { id: true, welcomeStep: true },
     });
 
-    if (subscriber) {
-      // Schedule emails 2 and 3
-      const now = new Date();
-      const email2Scheduled = new Date(now.getTime() + WELCOME_SEQUENCE_SCHEDULE[2]);
-      const email3Scheduled = new Date(now.getTime() + WELCOME_SEQUENCE_SCHEDULE[3]);
-
-      await prisma.subscriber.update({
-        where: { id: subscriber.id },
-        data: {
-          welcomeStep: 1,
-          welcomeEmail2At: email2Scheduled,
-          welcomeEmail3At: email3Scheduled,
-        },
-      });
+    if (!subscriber) {
+      return { ok: false, error: 'Subscriber not found after creation' };
     }
 
+    // Schedule emails 2 and 3
+    const now = new Date();
+    const email2Scheduled = new Date(now.getTime() + WELCOME_SEQUENCE_SCHEDULE[2]);
+    const email3Scheduled = new Date(now.getTime() + WELCOME_SEQUENCE_SCHEDULE[3]);
+
+    await prisma.subscriber.update({
+      where: { id: subscriber.id },
+      data: {
+        welcomeStep: 1,
+        welcomeEmail2At: email2Scheduled,
+        welcomeEmail3At: email3Scheduled,
+      },
+    });
+
+    console.log(`Welcome sequence initiated for ${email} (step 1 sent)`);
     return { ok: true };
   } catch (error) {
     console.error('Welcome sequence error:', error);
