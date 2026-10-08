@@ -10,6 +10,7 @@ import { RestockAlertsModal } from '@/components/marketing/restock-alerts-modal'
 import { LeadMagnetModal } from '@/components/marketing/lead-magnet-modal';
 import { VisitTracker } from '@/components/analytics/visit-tracker';
 import { ChatWidget } from '@/components/chat/chat-widget';
+import { WhatsappWidget } from '@/components/chat/whatsapp-widget';
 import { getCategories, getBrands } from '@/lib/db/catalogue';
 import { getSettingsSafe, asBoolean, asNumber } from '@/lib/settings';
 
@@ -85,6 +86,7 @@ export default async function StorefrontLayout({
           somebody writes in it.
         */}
         {asBoolean(settings.chat_enabled) && <ChatWidget />}
+        <WhatsappWidget />
         {/*
           Storefront only, and only when the analytics_enabled setting is on. It sends a path
           and a referrer host to /api/track, which sets a random first-party token: no IP is
