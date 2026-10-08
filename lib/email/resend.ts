@@ -11,6 +11,7 @@ import {
 
 export const FROM_EMAIL = 'orders@mrsanabolics.com';
 export const ADMIN_EMAIL = 'shoponlinesteriod@gmail.com';
+export const SUPPORT_EMAIL = 'support@mrsanabolics.com'; // Routes to /contact form
 
 function getResend() {
   if (!process.env.RESEND_API_KEY) {
@@ -29,7 +30,9 @@ export async function sendOrderConfirmation(
 
   return resend.emails.send({
     from: FROM_EMAIL,
+    replyTo: SUPPORT_EMAIL,
     to,
+    replyTo: SUPPORT_EMAIL,
     subject: `Order Confirmed - ${orderRef}`,
     html: renderOrderConfirmationHTML(orderRef, items, total),
   });
@@ -45,6 +48,7 @@ export async function sendAdminOrderNotification(
 
   return resend.emails.send({
     from: FROM_EMAIL,
+    replyTo: SUPPORT_EMAIL,
     to: ADMIN_EMAIL,
     subject: `New Order - ${orderRef}`,
     html: renderAdminNotificationHTML(orderRef, customerEmail, items, dashboardLink),
@@ -66,6 +70,7 @@ export async function sendNewsletterCampaign(
     recipients.map((email) =>
       resend.emails.send({
         from: FROM_EMAIL,
+    replyTo: SUPPORT_EMAIL,
         to: email,
         subject,
         html: renderNewsletterHTML(message, unsubscribeLink),
@@ -78,6 +83,7 @@ export async function sendPasswordResetEmail(to: string, resetLink: string) {
   const resend = getResend();
   return resend.emails.send({
     from: FROM_EMAIL,
+    replyTo: SUPPORT_EMAIL,
     to,
     subject: 'Reset Your Password',
     html: renderPasswordResetHTML(resetLink),
@@ -88,6 +94,7 @@ export async function sendOrderStatusUpdate(to: string, orderRef: string, status
   const resend = getResend();
   return resend.emails.send({
     from: FROM_EMAIL,
+    replyTo: SUPPORT_EMAIL,
     to,
     subject: `Order ${status} - ${orderRef}`,
     html: `<!DOCTYPE html>
@@ -112,6 +119,7 @@ export async function sendContactFormReply(to: string, subject: string, message:
   const resend = getResend();
   return resend.emails.send({
     from: FROM_EMAIL,
+    replyTo: SUPPORT_EMAIL,
     to,
     subject: `Re: ${subject}`,
     html: `<!DOCTYPE html>
@@ -133,6 +141,7 @@ export async function sendCustomerNotification(to: string, subject: string, mess
   const resend = getResend();
   return resend.emails.send({
     from: FROM_EMAIL,
+    replyTo: SUPPORT_EMAIL,
     to,
     subject,
     html: `<!DOCTYPE html>
@@ -155,6 +164,7 @@ export async function sendWelcomeEmail1(to: string, unsubscribeToken: string) {
 
   return resend.emails.send({
     from: FROM_EMAIL,
+    replyTo: SUPPORT_EMAIL,
     to,
     subject: 'What you need to know before buying—a safety guide',
     html: renderWelcomeEmail1(unsubscribeLink),
@@ -167,6 +177,7 @@ export async function sendWelcomeEmail2(to: string, unsubscribeToken: string) {
 
   return resend.emails.send({
     from: FROM_EMAIL,
+    replyTo: SUPPORT_EMAIL,
     to,
     subject: '3 things most people get wrong about quality',
     html: renderWelcomeEmail2(unsubscribeLink),
@@ -179,6 +190,7 @@ export async function sendWelcomeEmail3(to: string, unsubscribeToken: string) {
 
   return resend.emails.send({
     from: FROM_EMAIL,
+    replyTo: SUPPORT_EMAIL,
     to,
     subject: "Ready to start? Here's where to begin (+ 10% off)",
     html: renderWelcomeEmail3(unsubscribeLink),
