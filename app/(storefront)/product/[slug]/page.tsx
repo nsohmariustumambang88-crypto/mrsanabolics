@@ -190,6 +190,11 @@ export default async function ProductPage({ params }: Params) {
           merchantReturnDays: 30,
           returnMethod: 'ReturnByMail',
           returnFees: 'https://schema.org/ReturnShippingFees',
+          returnShippingFeesAmount: {
+            '@type': 'MonetaryAmount',
+            currency: 'USD',
+            value: '14.00',
+          },
         },
         shippingDetails: {
           '@type': 'OfferShippingDetails',
