@@ -199,9 +199,9 @@ export default async function ProductPage({ params }: Params) {
         shippingDetails: {
           '@type': 'OfferShippingDetails',
           shippingRate: {
-            '@type': 'PriceSpecification',
-            priceCurrency: 'USD',
-            price: '9.00',
+            '@type': 'MonetaryAmount',
+            currency: 'USD',
+            value: '9.00',
           },
           shippingDestination: {
             '@type': 'DefinedRegion',
