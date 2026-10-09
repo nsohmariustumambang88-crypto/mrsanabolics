@@ -199,8 +199,8 @@ export default async function ProductPage({ params }: Params) {
             price: '9.00',
           },
           shippingDestination: {
-            '@type': 'DeliveryArea',
-            areaServed: 'US',
+            '@type': 'DefinedRegion',
+            addressCountry: 'US',
           },
           deliveryTime: {
             '@type': 'ShippingDeliveryTime',
