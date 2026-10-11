@@ -110,6 +110,8 @@ export type CreateOrderResult =
   | { ok: true; id: string; reference: string }
   | { ok: false; error: string };
 
+export const MINIMUM_ORDER = 150;
+
 function money(value: Prisma.Decimal | number | string): number {
   return Number(value);
 }
@@ -183,6 +185,12 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
   /* Never below zero, whatever a percentage and a minimum conspire to produce. */
   const goods = Math.max(0, subtotal - discountTotal);
+  if (goods < MINIMUM_ORDER) {
+    return {
+      ok: false,
+      error: `The minimum order is $${MINIMUM_ORDER.toFixed(2)} after any discount code is applied. Your basket comes to $${goods.toFixed(2)}.`,
+    };
+  }
   const total = goods + shippingCost;
 
   const reference = await uniqueReference();
