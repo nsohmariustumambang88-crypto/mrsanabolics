@@ -5,8 +5,8 @@ import { clientIp, hashIp } from '@/lib/ip-hash';
 /*
   The public review form.
 
-  Same shape as /api/enquiry, for the same reasons: it is an open write path attached to a free
-  text body, so it is rate limited per IP and carries a honeypot. The cost of getting this wrong
+  Same shape as /api/enquiry: it is an open write path attached to a free text body, so it
+  carries a honeypot. There is no per-connection limit; every submission waits for moderation. The cost of getting this wrong
   does not land on the server, it lands on whoever has to read the moderation queue.
 
   Two things it deliberately does not do:
@@ -27,32 +27,8 @@ import { clientIp, hashIp } from '@/lib/ip-hash';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const WINDOW_MS = 10 * 60 * 1000;
-const MAX_PER_WINDOW = 3;
-const hits = new Map<string, { count: number; first: number }>();
-
-function rateLimited(key: string): boolean {
-  const now = Date.now();
-  const entry = hits.get(key);
-
-  if (!entry || now - entry.first > WINDOW_MS) {
-    hits.set(key, { count: 1, first: now });
-    return false;
-  }
-
-  entry.count += 1;
-  return entry.count > MAX_PER_WINDOW;
-}
-
 export async function POST(request: Request) {
   const ip = clientIp(request);
-
-  if (rateLimited(ip ?? 'local')) {
-    return NextResponse.json(
-      { error: 'Too many reviews from this connection. Try again shortly.' },
-      { status: 429 }
-    );
-  }
 
   const body = (await request.json().catch(() => null)) as {
     productId?: string;
