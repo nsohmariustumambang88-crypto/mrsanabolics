@@ -125,14 +125,6 @@ export function ReviewForm({
         Write a review{productName ? <span className="sr-only"> of {productName}</span> : null}
       </h3>
 
-      <p className="mt-5 flex gap-2.5 border border-rule bg-paper-sunk p-3.5 text-xs leading-relaxed text-ink-soft">
-        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-pigment-saffron" strokeWidth={1.75} />
-        <span>
-          Reviews are read by a person before they appear, so yours will not show up
-          immediately. Your name and what you write are published; your email address is not.
-        </span>
-      </p>
-
       <div className="mt-8 space-y-6">
         {/* ------------------------------------------------------------- rating */}
         <fieldset>

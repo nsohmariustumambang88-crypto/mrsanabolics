@@ -32,7 +32,6 @@ import { submitCheckout } from '@/app/checkout/checkout-actions';
 const STEPS = ['Shipping', 'Review', 'Payment', 'Done'] as const;
 const FREE_SHIPPING_AT = 250;
 const SHIPPING_FLAT = 14;
-const TAX_RATE = 0.08;
 
 export type CheckoutPaymentMethod = {
   key: string;
@@ -99,8 +98,7 @@ export function CheckoutFlow({
   const discountAmount = Math.min(discount.applied?.amount ?? 0, cartSubtotal);
 
   const taxable = Math.max(0, cartSubtotal - discountAmount);
-  const tax = taxable * TAX_RATE;
-  const total = taxable + shipping + tax;
+  const total = taxable + shipping;
 
   const next = () => {
     /*
@@ -574,10 +572,6 @@ export function CheckoutFlow({
                 <dd className={cn('tabular', shipping === 0 && 'text-pigment-verdigris')}>
                   {shipping === 0 ? 'Free' : formatPrice(shipping)}
                 </dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-ink-soft">Estimated tax</dt>
-                <dd className="tabular">{formatPrice(tax)}</dd>
               </div>
               <div className="flex items-baseline justify-between border-t border-rule pt-4">
                 <dt className="font-medium">Total</dt>
