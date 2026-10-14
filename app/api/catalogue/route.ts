@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getProducts, toSummary } from '@/lib/db/catalogue';
+import { foldText } from '@/lib/search/fold';
+import { matchesQuery } from '@/lib/search/match';
 import type { Product, ProductSummary } from '@/lib/types';
 
 /*
@@ -33,14 +35,9 @@ function priceCeiling(list: { price: number }[]): number {
   return Math.ceil(list.reduce((max, p) => Math.max(max, p.price), 0) / 10) * 10;
 }
 
-function matches(p: Product, q: string): boolean {
-  return (
-    p.name.toLowerCase().includes(q) ||
-    p.brand.toLowerCase().includes(q) ||
-    p.category.toLowerCase().includes(q) ||
-    (p.subcategoryName ?? '').toLowerCase().includes(q) ||
-    p.description.toLowerCase().includes(q)
-  );
+function matches(p: Product, q: string, loose: boolean): boolean {
+  if (matchesQuery([p.name, p.brand, p.category, p.subcategoryName ?? ''], q, loose)) return true;
+  return !loose && foldText(p.description).includes(q);
 }
 
 function sorted(list: Product[], sort: Sort): Product[] {
@@ -80,7 +77,7 @@ export async function GET(request: Request) {
   const group = category ? param('group') : '';
   const brand = param('brand');
   const filter = param('filter');
-  const query = param('q').toLowerCase();
+  const query = foldText(param('q'));
   const sort = (param('sort') || 'featured') as Sort;
   const max = Number(param('max') || ceiling);
   const page = Math.max(0, Number(param('page') || 0));
@@ -95,7 +92,16 @@ export async function GET(request: Request) {
   if (filter === 'trending') list = list.filter((p) => p.isTrending);
   if (filter === 'deals') list = list.filter((p) => p.isDeal);
   if (Number.isFinite(max) && max < ceiling) list = list.filter((p) => p.price <= max);
-  if (query) list = list.filter((p) => matches(p, query));
+  let similar = false;
+  if (query) {
+    const exact = list.filter((p) => matches(p, query, false));
+    if (exact.length > 0) {
+      list = exact;
+    } else {
+      list = list.filter((p) => matches(p, query, true));
+      similar = list.length > 0;
+    }
+  }
 
   /*
     The groups a category actually holds, counted BEFORE the other filters narrow it — the
@@ -119,7 +125,7 @@ export async function GET(request: Request) {
     .slice(page * limit, page * limit + limit)
     .map(toSummary);
 
-  return json({ items, total, ceiling, groups });
+  return json({ items, total, ceiling, groups, similar });
 }
 
 function json(body: unknown) {
