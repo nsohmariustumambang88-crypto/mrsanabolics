@@ -2,7 +2,7 @@
 
 import { Send } from 'lucide-react';
 
-const TELEGRAM_URL = 'https://t.me/STR8TDrops';
+const TELEGRAM_URL = 'https://t.me/mrsanabolics';
 
 export function TelegramWidget() {
   return (
