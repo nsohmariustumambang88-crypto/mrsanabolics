@@ -109,7 +109,7 @@ export const GROUP_COPY: Record<string, string> = {
   'injectables/testosterone-cypionate':
     'Testosterone with a cypionate ester, supplied as an oil-based solution for injection. It is the form of testosterone most often prescribed in the United States.',
   'injectables/nandrolone':
-    'Nandrolone (19-nortestosterone) for injection, mainly as nandrolone decanoate and nandrolone phenylpropionate.',
+    'Nandrolone is an injectable steroid, sold mainly as nandrolone decanoate and nandrolone phenylpropionate. In the United States it is a Schedule III controlled substance, and in the United Kingdom a Class C drug. The laws differ from one country to the next, so check our law guide for yours. Our certificate guide explains how to check a batch.',
   'injectables/drostanolone':
     'Drostanolone, known as Masteron, supplied as the propionate or enanthate ester for injection.',
   'injectables/methenolone-primobolan':
@@ -133,7 +133,8 @@ export const GROUP_COPY: Record<string, string> = {
   'orals/dianabol-methandienone': 'Methandienone, also called methandrostenolone, in tablets sold under the Dianabol name.',
   'orals/anavar-oxandrolone': 'Oxandrolone tablets, sold as Anavar.',
   'orals/anadrol-oxymetholone': 'Oxymetholone tablets, sold as Anadrol.',
-  'orals/turinabol': 'Chlorodehydromethyltestosterone tablets, sold as Oral Turinabol.',
+  'orals/turinabol':
+    'Turinabol is the brand name for chlorodehydromethyltestosterone, sold as oral tablets. Like other oral steroids, it is processed by the liver. Anabolic steroids are controlled in most countries, including as Schedule III substances in the United States and Class C drugs in the United Kingdom. Our law guide covers each country, and our health guide sets out what is known about oral steroids.',
   'orals/halotestin-fluoxymesterone': 'Fluoxymesterone tablets, sold as Halotestin.',
   'orals/primobolan-methenolone-acetate': 'Methenolone acetate tablets, the oral form of Primobolan.',
   'orals/methyltestosterone': 'Methyltestosterone in tablets and capsules.',
