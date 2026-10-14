@@ -46,3 +46,6 @@ project-tree.txt
 .env*
 # ...but the tracked template must stay tracked: it holds no real values.
 !.env.example
+
+# local database backups (contain personal data)
+/backups/

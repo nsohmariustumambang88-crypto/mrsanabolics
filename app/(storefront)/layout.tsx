@@ -9,7 +9,7 @@ import { ExitCapture } from '@/components/marketing/exit-capture';
 import { RestockAlertsModal } from '@/components/marketing/restock-alerts-modal';
 import { LeadMagnetModal } from '@/components/marketing/lead-magnet-modal';
 import { VisitTracker } from '@/components/analytics/visit-tracker';
-import { ChatWidget } from '@/components/chat/chat-widget';
+import { TelegramWidget } from '@/components/chat/telegram-widget';
 import { WhatsappWidget } from '@/components/chat/whatsapp-widget';
 import { getCategories, getBrands } from '@/lib/db/catalogue';
 import { getSettingsSafe, asBoolean, asNumber } from '@/lib/settings';
@@ -80,12 +80,7 @@ export default async function StorefrontLayout({
         <ExitCapture />
         <RestockAlertsModal />
         <LeadMagnetModal />
-        {/*
-          The live chat button. Storefront only, so the admin never shows a visitor's widget, and
-          switchable off under Settings (chat_enabled) without a deploy. It sends nothing until
-          somebody writes in it.
-        */}
-        {asBoolean(settings.chat_enabled) && <ChatWidget />}
+        <TelegramWidget />
         <WhatsappWidget />
         {/*
           Storefront only, and only when the analytics_enabled setting is on. It sends a path
