@@ -80,6 +80,47 @@ export function factsFor(products: Product[]): CollectionFacts {
   };
 }
 
+export type StrengthPrice = {
+  strength: string;
+  listings: number;
+  priceFrom: number;
+  priceTo: number;
+};
+
+/** The number a strength starts with, for sorting "2.5 mg" before "10 mg". */
+function leadingNumber(value: string): number {
+  const n = parseFloat(value.replace(',', '.'));
+  return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+}
+
+/**
+ * Price range per strength, lowest strength first. Answers "what does the 50 mg cost" — the
+ * question people search for — straight from the listings, so it moves when a price does.
+ */
+export function pricesByStrength(products: Product[]): StrengthPrice[] {
+  const rows = new Map<string, StrengthPrice>();
+  for (const p of products) {
+    const strength = spec(p, 'Strength');
+    if (!strength || !Number.isFinite(p.price) || p.price <= 0) continue;
+    const row = rows.get(strength);
+    if (row) {
+      row.listings++;
+      row.priceFrom = Math.min(row.priceFrom, p.price);
+      row.priceTo = Math.max(row.priceTo, p.price);
+    } else {
+      rows.set(strength, { strength, listings: 1, priceFrom: p.price, priceTo: p.price });
+    }
+  }
+  return Array.from(rows.values()).sort(
+    (a, b) => leadingNumber(a.strength) - leadingNumber(b.strength) || a.strength.localeCompare(b.strength)
+  );
+}
+
+/** "10 mg per tablet" → "10 mg", for titles and running text where the unit is already said. */
+export function shortStrength(strength: string): string {
+  return strength.replace(/\s+per\s+\w+$/i, '').trim();
+}
+
 /** Listing order inside a collection: in stock first, then by manufacturer, then by name. */
 function byListingOrder(a: Product, b: Product): number {
   return (

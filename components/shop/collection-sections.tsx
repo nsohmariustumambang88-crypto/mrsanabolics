@@ -4,7 +4,7 @@ import { ArrowUpRight, ChevronRight } from 'lucide-react';
 import { formatPrice } from '@/lib/format';
 import { UNDER_HEADER_INSET } from '@/lib/site';
 import { GridFillers } from '@/components/layout/grid-fillers';
-import type { CollectionFacts, GroupCollection } from '@/lib/db/collections';
+import type { CollectionFacts, GroupCollection, StrengthPrice } from '@/lib/db/collections';
 import type { Product } from '@/lib/types';
 
 /*
@@ -147,6 +147,45 @@ export function ComparisonTable({ products, caption }: { products: Product[]; ca
               <td className="px-4 py-2.5 font-mono text-xs text-ink tabular">{formatPrice(p.price)}</td>
               <td className={`px-4 py-2.5 text-xs ${p.inStock ? 'text-pigment-verdigris' : 'text-ink-faint'}`}>
                 {p.inStock ? 'In stock' : 'Out of stock'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** One row per strength: how many listings and what they cost. Computed from the listings. */
+export function StrengthPriceTable({ rows, caption }: { rows: StrengthPrice[]; caption: string }) {
+  return (
+    <div className="overflow-x-auto border border-rule bg-card">
+      <table className="w-full min-w-[22rem] border-collapse text-left text-sm">
+        <caption className="sr-only">{caption}</caption>
+        <thead className="bg-paper-sunk">
+          <tr>
+            {['Strength', 'Listings', 'Price'].map((h) => (
+              <th
+                key={h}
+                scope="col"
+                className="border-b border-rule px-4 py-2.5 font-mono text-2xs font-medium uppercase tracking-[0.12em] text-ink-faint"
+              >
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.strength} className="border-b border-rule last:border-0">
+              <th scope="row" className="px-4 py-2.5 font-mono text-xs font-medium text-ink tabular">
+                {r.strength}
+              </th>
+              <td className="px-4 py-2.5 font-mono text-xs text-ink-soft tabular">{r.listings}</td>
+              <td className="px-4 py-2.5 font-mono text-xs text-ink tabular">
+                {r.priceFrom === r.priceTo
+                  ? formatPrice(r.priceFrom)
+                  : `${formatPrice(r.priceFrom)} – ${formatPrice(r.priceTo)}`}
               </td>
             </tr>
           ))}

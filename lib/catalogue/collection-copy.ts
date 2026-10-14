@@ -31,6 +31,12 @@ export type CategoryCopy = {
   articles: ArticleSlug[];
   /** Prescription-only in the US, UK, Canada and Australia — adds that question to the FAQ. */
   prescription?: boolean;
+  /**
+   * The route of administration, put in front of a compound's name in its page title and heading
+   * ("Oral Winstrol (Stanozolol)"). People search "winstrol oral" and "oral winstrol", and the
+   * same compound often has a page in both categories, which this word tells apart.
+   */
+  qualifier?: string;
 };
 
 export const CATEGORY_COPY: Record<string, CategoryCopy> = {
@@ -42,6 +48,7 @@ export const CATEGORY_COPY: Record<string, CategoryCopy> = {
     ],
     articles: ['how-to-spot-counterfeit-steroids', 'how-to-read-a-certificate-of-analysis', 'anabolic-steroids-law-us-uk-canada-australia', 'anabolic-steroid-health-risks'],
     prescription: true,
+    qualifier: 'Injectable',
   },
   orals: {
     heading: 'Oral steroids',
@@ -51,6 +58,7 @@ export const CATEGORY_COPY: Record<string, CategoryCopy> = {
     ],
     articles: ['how-to-spot-counterfeit-steroids', 'anabolic-steroid-health-risks', 'anabolic-steroids-law-us-uk-canada-australia', 'how-to-read-a-certificate-of-analysis'],
     prescription: true,
+    qualifier: 'Oral',
   },
   'post-cycle': {
     heading: 'Post-cycle and estrogen control',
@@ -129,7 +137,8 @@ export const GROUP_COPY: Record<string, string> = {
   'injectables/testosterone-base':
     'Testosterone with no ester attached, supplied as a water-based suspension.',
 
-  'orals/winstrol-stanozolol': 'Stanozolol tablets, sold as Winstrol.',
+  'orals/winstrol-stanozolol':
+    'Stanozolol is a synthetic anabolic steroid derived from dihydrotestosterone, best known under the brand name Winstrol. This page lists the oral tablets. In the United States stanozolol is a Schedule III controlled substance.',
   'orals/dianabol-methandienone': 'Methandienone, also called methandrostenolone, in tablets sold under the Dianabol name.',
   'orals/anavar-oxandrolone': 'Oxandrolone tablets, sold as Anavar.',
   'orals/anadrol-oxymetholone': 'Oxymetholone tablets, sold as Anadrol.',

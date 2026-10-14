@@ -1,5 +1,5 @@
 import { formatPrice } from '@/lib/format';
-import type { CategoryCollection, GroupCollection } from '@/lib/db/collections';
+import type { CategoryCollection, GroupCollection, StrengthPrice } from '@/lib/db/collections';
 import type { CategoryCopy } from '@/lib/catalogue/collection-copy';
 import type { FaqItem } from '@/components/shop/collection-sections';
 
@@ -90,31 +90,96 @@ function legalAnswer(
       };
 }
 
-export function groupFaq(group: GroupCollection, copy: CategoryCopy): FaqItem[] {
+/** A delivery option to the United States, as the delivery zones define it. */
+export type UsDeliveryOption = { name: string; price: number; freeOver: number | null; estimate: string };
+
+/** What a group page knows beyond the group itself. Everything in it is read from the database. */
+export type GroupFaqContext = {
+  /** The compound with its route: "Oral Winstrol (Stanozolol)". */
+  title: string;
+  byStrength: StrengthPrice[];
+  /** The same compound's page in the other category (oral ↔ injectable), when there is one. */
+  alternate?: { title: string; path: string; listings: number } | null;
+  /** Active delivery options for the US, or null when no zone covers it (or it could not be read). */
+  usDelivery?: UsDeliveryOption[] | null;
+};
+
+function range(from: number, to: number): string {
+  return from === to ? formatPrice(from) : `${formatPrice(from)} to ${formatPrice(to)}`;
+}
+
+function deliveryOption(o: UsDeliveryOption): string {
+  const details = [
+    formatPrice(o.price),
+    o.estimate ? o.estimate.charAt(0).toLowerCase() + o.estimate.slice(1) : '',
+    o.freeOver !== null ? `free on orders of ${formatPrice(o.freeOver)} or more` : '',
+  ].filter(Boolean);
+  return `${o.name.toLowerCase()} (${details.join(', ')})`;
+}
+
+export function groupFaq(group: GroupCollection, copy: CategoryCopy, ctx: GroupFaqContext): FaqItem[] {
   const f = group.facts;
   const label = group.name;
-  const items: FaqItem[] = [
-    {
-      question: `Which manufacturers make ${label}?`,
+  const steroid = group.categorySlug === 'injectables' || group.categorySlug === 'orals';
+  const items: FaqItem[] = [];
+
+  if (f.priceFrom !== null && f.priceTo !== null) {
+    /* The commonest strengths by listing count, each with its own range. */
+    const common = [...ctx.byStrength].sort((a, b) => b.listings - a.listings).slice(0, 3);
+    const perStrength =
+      ctx.byStrength.length > 1
+        ? ` By strength: ${common
+            .map((s) => `${s.strength}: ${range(s.priceFrom, s.priceTo)} (${s.listings} ${s.listings === 1 ? 'listing' : 'listings'})`)
+            .join('; ')}.`
+        : '';
+    items.push({
+      question: `What is the price of ${label}?`,
       answer:
-        f.manufacturers.length === 1
-          ? `One manufacturer is listed here: ${f.manufacturers[0].name}.`
-          : `${makers(f.manufacturers.length)} are listed here: ${names(f.manufacturers.map((m) => m.name))}.`,
-    },
-  ];
+        f.priceFrom === f.priceTo
+          ? `${f.listings === 1 ? 'It is listed at' : 'Every listing is priced at'} ${formatPrice(f.priceFrom)}. ${f.inStock} of ${f.listings} ${f.listings === 1 ? 'is' : 'are'} in stock.`
+          : `Listed prices run from ${formatPrice(f.priceFrom)} to ${formatPrice(f.priceTo)}, depending on the manufacturer, strength and pack.${perStrength} ${f.inStock} of ${f.listings} listings are in stock.`,
+    });
+  }
+
+  items.push({
+    question: `Where can I buy ${ctx.title}?`,
+    answer: `Every listing on this page can be ordered here: open the product, add it to your basket and check out. ${f.inStock} of ${f.listings} ${f.listings === 1 ? 'listing is' : 'listings are'} in stock now. If you have a question before ordering, message us on Telegram or WhatsApp using the buttons at the bottom of the page.`,
+  });
+
+  if (ctx.usDelivery && ctx.usDelivery.length > 0) {
+    const options = ctx.usDelivery.map(deliveryOption);
+    items.push({
+      question: `Do you ship ${label} to the USA?`,
+      answer:
+        `Yes. Orders to the United States go by ${
+          options.length === 1 ? options[0] : `${options.slice(0, -1).join(', ')} or ${options[options.length - 1]}`
+        }.` +
+        (steroid
+          ? ' Anabolic steroids are Schedule III controlled substances under US federal law, which prohibits importing them without authorisation and buying them online without a valid prescription.'
+          : ''),
+      link: steroid ? { href: LAW, label: 'Our guide to steroid law quotes the legislation.' } : undefined,
+    });
+  }
+
+  if (ctx.alternate) {
+    items.push({
+      question: `Is ${label} sold as tablets or as an injection?`,
+      answer: `This page lists ${ctx.title}: ${f.listings} ${f.listings === 1 ? 'listing' : 'listings'}. ${ctx.alternate.title} is listed separately, with ${ctx.alternate.listings} ${ctx.alternate.listings === 1 ? 'listing' : 'listings'}.`,
+      link: { href: ctx.alternate.path, label: `See ${ctx.alternate.title}.` },
+    });
+  }
+
+  items.push({
+    question: `Which manufacturers make ${label}?`,
+    answer:
+      f.manufacturers.length === 1
+        ? `One manufacturer is listed here: ${f.manufacturers[0].name}.`
+        : `${makers(f.manufacturers.length)} are listed here: ${names(f.manufacturers.map((m) => m.name))}.`,
+  });
   if (f.strengths.length > 0) {
     items.push({
       question: `What strengths of ${label} are listed?`,
       answer: `Listings come in ${names(f.strengths)}. Each product page shows the strength and container exactly as printed on the label.`,
-    });
-  }
-  if (f.priceFrom !== null && f.priceTo !== null) {
-    items.push({
-      question: `What do ${label} listings cost here?`,
-      answer:
-        f.priceFrom === f.priceTo
-          ? `${f.listings === 1 ? 'It is listed at' : 'Every listing is priced at'} ${formatPrice(f.priceFrom)}. ${f.inStock} of ${f.listings} ${f.listings === 1 ? 'is' : 'are'} in stock.`
-          : `Listed prices run from ${formatPrice(f.priceFrom)} to ${formatPrice(f.priceTo)}, depending on the manufacturer, strength and pack. ${f.inStock} of ${f.listings} listings are in stock.`,
     });
   }
   items.push(genuineAnswer(label, group.categorySlug, group.slug));
