@@ -90,24 +90,28 @@ export function SearchDialog() {
   const results = productSearch.items;
 
   const [articles, setArticles] = React.useState<ArticleHit[]>([]);
+  const [articlesSimilar, setArticlesSimilar] = React.useState(false);
   const [articlesLoading, setArticlesLoading] = React.useState(false);
   React.useEffect(() => {
     if (!showArticles || debounced.length === 0) {
       setArticles([]);
+      setArticlesSimilar(false);
       setArticlesLoading(false);
       return;
     }
     const controller = new AbortController();
     setArticlesLoading(true);
     fetch(`/api/journal/search?q=${encodeURIComponent(debounced)}`, { signal: controller.signal })
-      .then((r) => (r.ok ? (r.json() as Promise<{ items: ArticleHit[] }>) : { items: [] }))
+      .then((r) => (r.ok ? (r.json() as Promise<{ items: ArticleHit[]; similar?: boolean }>) : { items: [], similar: false }))
       .then((data) => {
         setArticles(data.items);
+        setArticlesSimilar(Boolean(data.similar));
         setArticlesLoading(false);
       })
       .catch((err: unknown) => {
         if (err instanceof Error && err.name === 'AbortError') return;
         setArticles([]);
+        setArticlesSimilar(false);
         setArticlesLoading(false);
       });
     return () => controller.abort();
@@ -271,14 +275,22 @@ export function SearchDialog() {
         ) : (
           <ul id="search-results" role="listbox" className="max-h-[24rem] overflow-y-auto">
             {entries.map((entry, i) => {
-              const showArticleLabel =
-                entry.kind === 'article' && showProducts && (i === 0 || entries[i - 1].kind !== 'article');
+              const firstProduct = entry.kind === 'product' && (i === 0 || entries[i - 1].kind !== 'product');
+              const firstArticle = entry.kind === 'article' && (i === 0 || entries[i - 1].kind !== 'article');
+              const label =
+                firstProduct && productSearch.similar
+                  ? 'Closest products'
+                  : firstArticle && articlesSimilar
+                    ? 'Closest articles'
+                    : firstArticle && showProducts
+                      ? 'From the journal'
+                      : null;
               return (
                 <React.Fragment key={entry.key}>
-                  {showArticleLabel && (
+                  {label && (
                     <li role="presentation" className="border-b border-rule bg-paper-sunk px-4 py-2">
                       <p className="font-mono text-2xs uppercase tracking-[0.16em] text-ink-faint">
-                        From the journal
+                        {label}
                       </p>
                     </li>
                   )}

@@ -36,6 +36,8 @@ type Result = {
   /** The most expensive product in the catalogue, rounded up: the price slider's top. */
   ceiling: number;
   groups: CatalogueGroup[];
+  /** True when nothing matched exactly and these are the closest products instead. */
+  similar: boolean;
   loading: boolean;
   loadingMore: boolean;
   error: boolean;
@@ -66,6 +68,7 @@ export function useCatalogueSearch(query: CatalogueQuery, limit = 24, enabled = 
     total: 0,
     ceiling: 0,
     groups: [],
+    similar: false,
     loading: true,
     loadingMore: false,
     error: false,
@@ -79,7 +82,7 @@ export function useCatalogueSearch(query: CatalogueQuery, limit = 24, enabled = 
   React.useEffect(() => {
     /* Nothing to ask for — an empty search box must not fetch the whole catalogue. */
     if (!enabled) {
-      setState({ items: [], total: 0, ceiling: 0, groups: [], loading: false, loadingMore: false, error: false });
+      setState({ items: [], total: 0, ceiling: 0, groups: [], similar: false, loading: false, loadingMore: false, error: false });
       return;
     }
 
@@ -98,6 +101,7 @@ export function useCatalogueSearch(query: CatalogueQuery, limit = 24, enabled = 
           total: data.total,
           ceiling: data.ceiling || s.ceiling,
           groups: data.groups ?? [],
+          similar: Boolean(data.similar),
           loading: false,
           loadingMore: false,
           error: false,
