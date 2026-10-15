@@ -1,6 +1,8 @@
 export const metadata = {
-  title: 'Shipping Policy | MrAnabolics',
-  description: 'Shipping information and delivery details for MrAnabolics',
+  title: 'Shipping Policy: Rates and Delivery Times',
+  description:
+    'Tracked shipping rates and delivery times for the United States, Europe and the rest of the world, plus order processing, tracking and undeliverable parcels.',
+  alternates: { canonical: '/legal/shipping' },
 };
 
 export default function ShippingPage() {

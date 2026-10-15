@@ -1,6 +1,8 @@
 export const metadata = {
-  title: 'Terms of Service | MrAnabolics',
-  description: 'Terms and conditions for purchasing from MrAnabolics',
+  title: 'Terms of Service',
+  description:
+    'The terms for using the MrAnabolics website and buying from it: use licence, disclaimer, limitations, accuracy of materials, links, changes and governing law.',
+  alternates: { canonical: '/legal/terms' },
 };
 
 export default function TermsPage() {

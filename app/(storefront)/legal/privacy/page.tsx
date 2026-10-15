@@ -1,6 +1,8 @@
 export const metadata = {
-  title: 'Privacy Policy | MrAnabolics',
-  description: 'Privacy policy for MrAnabolics',
+  title: 'Privacy Policy',
+  description:
+    'What information MrAnabolics collects, how it is used and protected, how cookies and third-party services are handled, and your rights over your data.',
+  alternates: { canonical: '/legal/privacy' },
 };
 
 export default function PrivacyPage() {

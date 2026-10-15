@@ -43,7 +43,11 @@ export const metadata: Metadata = {
     SITE.name,
   ],
   authors: [{ name: SITE.name }],
-  alternates: { canonical: '/' },
+  /*
+    No canonical here. A canonical in the root layout is inherited by every page that does not
+    set its own, and '/' told search engines that /contact and the legal pages were copies of the
+    home page. Each indexable page declares its own address instead.
+  */
   openGraph: {
     type: 'website',
     locale: 'en_US',

@@ -1,6 +1,8 @@
 export const metadata = {
-  title: 'Returns & Refund Policy | MrAnabolics',
-  description: 'Return and refund policy for MrAnabolics',
+  title: 'Returns and Refund Policy',
+  description:
+    'How to return an unopened order, which items cannot be returned, who pays return shipping, how refunds are processed and what happens with damaged items.',
+  alternates: { canonical: '/legal/returns' },
 };
 
 export default function ReturnsPage() {
