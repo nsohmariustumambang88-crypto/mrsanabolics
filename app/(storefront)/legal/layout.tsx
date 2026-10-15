@@ -1,13 +1,8 @@
+/* The column and the breadcrumb bar are drawn by components/legal/legal-page.tsx. */
 export default function LegalLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <main className="min-h-screen bg-paper px-4 py-12 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-2xl">
-        {children}
-      </div>
-    </main>
-  );
+  return <main className="min-h-screen bg-paper">{children}</main>;
 }

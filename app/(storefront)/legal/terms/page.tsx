@@ -1,20 +1,30 @@
-export const metadata = {
-  title: 'Terms of Service',
-  description:
-    'The terms for using the MrAnabolics website and buying from it: use licence, disclaimer, limitations, accuracy of materials, links, changes and governing law.',
-  alternates: { canonical: '/legal/terms' },
+import type { Metadata } from 'next';
+import { LegalPage } from '@/components/legal/legal-page';
+
+/* The policy text is unchanged; only the frame around it, the metadata and the contact address are new. */
+
+const PATH = '/legal/terms';
+const TITLE = 'Terms of Service: Using This Website';
+const DESCRIPTION =
+  'The terms for using the MrAnabolics website: acceptance, use licence, disclaimer, limitations, accuracy of materials, links, changes and governing law.';
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: PATH },
+  openGraph: { type: 'website', url: PATH, title: TITLE, description: DESCRIPTION },
 };
 
 export default function TermsPage() {
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="font-display text-3xl font-semibold tracking-[-0.03em] text-ink">
-          Terms of Service
-        </h1>
-        <p className="mt-2 text-sm text-ink-soft">Last updated: {new Date().toLocaleDateString()}</p>
-      </div>
-
+    <LegalPage
+      path={PATH}
+      title={TITLE}
+      description={DESCRIPTION}
+      heading="Terms of Service"
+      intro="These terms apply to anyone using this website. They cover the licence to use its materials, the limits of our liability, links to other sites, changes to the terms and the law that governs them."
+      updated="2026-09-29"
+    >
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold text-ink">1. Acceptance of Terms</h2>
         <p className="text-sm leading-relaxed text-ink-soft">
@@ -70,6 +80,6 @@ export default function TermsPage() {
           These terms and conditions are governed by and construed in accordance with the laws of the United States, and you irrevocably submit to the exclusive jurisdiction of the courts in that location.
         </p>
       </section>
-    </div>
+    </LegalPage>
   );
 }

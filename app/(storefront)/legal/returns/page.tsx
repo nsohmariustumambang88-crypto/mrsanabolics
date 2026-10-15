@@ -1,20 +1,70 @@
-export const metadata = {
-  title: 'Returns and Refund Policy',
-  description:
-    'How to return an unopened order, which items cannot be returned, who pays return shipping, how refunds are processed and what happens with damaged items.',
-  alternates: { canonical: '/legal/returns' },
+import type { Metadata } from 'next';
+import { LegalPage } from '@/components/legal/legal-page';
+import type { FaqItem } from '@/components/shop/collection-sections';
+import { getSettingsSafe } from '@/lib/settings';
+
+/*
+  The policy text is unchanged; only the frame around it is new. The questions restate what
+  the policy already says and nothing more.
+
+  OPEN QUESTION FOR THE OWNER: this page and the return-policy markup on product pages say 30
+  days, but each product's own returns line (Product.returns, written by the seed) says 14. Until
+  he decides, neither is changed here and the questions do not repeat the period.
+*/
+
+export const revalidate = 60;
+
+const PATH = '/legal/returns';
+const TITLE = 'Returns and Refund Policy: How to Return an Order';
+const DESCRIPTION =
+  'How to return an unopened order, which items cannot be returned, who pays return shipping, how refunds are processed and what to do if an item arrives damaged.';
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: PATH },
+  openGraph: { type: 'website', url: PATH, title: TITLE, description: DESCRIPTION },
 };
 
-export default function ReturnsPage() {
-  return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="font-display text-3xl font-semibold tracking-[-0.03em] text-ink">
-          Returns & Refund Policy
-        </h1>
-        <p className="mt-2 text-sm text-ink-soft">Last updated: {new Date().toLocaleDateString()}</p>
-      </div>
+function returnsFaq(email: string): FaqItem[] {
+  return [
+    {
+      question: 'How do I return an order?',
+      answer: `Email ${email} with your order number and the reason for the return. Once the return is approved, we send you return shipping instructions.`,
+    },
+    {
+      question: 'Which items cannot be returned?',
+      answer: 'Opened, damaged or used items cannot be returned. Custom, specialty or discontinued items may not be eligible either, so contact us to check a specific product.',
+    },
+    {
+      question: 'Who pays for return shipping?',
+      answer: 'The customer pays return shipping, unless the return is due to a defect or damage caused by us.',
+    },
+    {
+      question: 'How long does a refund take?',
+      answer: 'Once we receive and inspect your return, the refund is processed within 7-10 business days, to the original payment method.',
+    },
+    {
+      question: 'What if my order arrives damaged?',
+      answer: 'Contact us straight away with photos of the damage and the packaging, and we will arrange a replacement or a refund.',
+    },
+  ];
+}
 
+export default async function ReturnsPage() {
+  const settings = await getSettingsSafe();
+  const email = settings.support_email;
+
+  return (
+    <LegalPage
+      path={PATH}
+      title={TITLE}
+      description={DESCRIPTION}
+      heading="Returns & Refund Policy"
+      intro="Unopened items in their original condition can be returned. This page explains how to request a return, what cannot be returned, who pays for return shipping and how refunds are made."
+      updated="2026-09-29"
+      faq={returnsFaq(email)}
+    >
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold text-ink">Return Period</h2>
         <p className="text-sm leading-relaxed text-ink-soft">
@@ -32,7 +82,7 @@ export default function ReturnsPage() {
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold text-ink">How to Request a Return</h2>
         <p className="text-sm leading-relaxed text-ink-soft">
-          Contact us at support@mranabolics.com with your order number and reason for return. Once approved, we will provide return shipping instructions.
+          Contact us at {email} with your order number and reason for return. Once approved, we will provide return shipping instructions.
         </p>
       </section>
 
@@ -67,9 +117,9 @@ export default function ReturnsPage() {
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold text-ink">Contact</h2>
         <p className="text-sm leading-relaxed text-ink-soft">
-          Questions about returns? Email support@mranabolics.com with your order number.
+          Questions about returns? Email {email} with your order number.
         </p>
       </section>
-    </div>
+    </LegalPage>
   );
 }

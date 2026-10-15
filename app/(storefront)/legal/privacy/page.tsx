@@ -1,20 +1,35 @@
-export const metadata = {
-  title: 'Privacy Policy',
-  description:
-    'What information MrAnabolics collects, how it is used and protected, how cookies and third-party services are handled, and your rights over your data.',
-  alternates: { canonical: '/legal/privacy' },
+import type { Metadata } from 'next';
+import { LegalPage } from '@/components/legal/legal-page';
+import { getSettingsSafe } from '@/lib/settings';
+
+/* The policy text is unchanged; only the frame around it, the metadata and the contact address are new. */
+
+export const revalidate = 60;
+
+const PATH = '/legal/privacy';
+const TITLE = 'Privacy Policy: How We Handle Your Data';
+const DESCRIPTION =
+  'What information MrAnabolics collects, how it is used and protected, how cookies and third-party services are handled, and your rights over your data.';
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: PATH },
+  openGraph: { type: 'website', url: PATH, title: TITLE, description: DESCRIPTION },
 };
 
-export default function PrivacyPage() {
-  return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="font-display text-3xl font-semibold tracking-[-0.03em] text-ink">
-          Privacy Policy
-        </h1>
-        <p className="mt-2 text-sm text-ink-soft">Last updated: {new Date().toLocaleDateString()}</p>
-      </div>
+export default async function PrivacyPage() {
+  const email = (await getSettingsSafe()).support_email;
 
+  return (
+    <LegalPage
+      path={PATH}
+      title={TITLE}
+      description={DESCRIPTION}
+      heading="Privacy Policy"
+      intro="This policy explains what personal information we collect when you shop or get in touch, what we use it for, how it is protected, and how to access, correct or delete it."
+      updated="2026-09-29"
+    >
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold text-ink">1. Information We Collect</h2>
         <p className="text-sm leading-relaxed text-ink-soft">
@@ -53,7 +68,7 @@ export default function PrivacyPage() {
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold text-ink">6. Your Rights</h2>
         <p className="text-sm leading-relaxed text-ink-soft">
-          You have the right to access, correct, or delete your personal information. Contact us at support@mranabolics.com to exercise these rights.
+          You have the right to access, correct, or delete your personal information. Contact us at {email} to exercise these rights.
         </p>
       </section>
 
@@ -67,9 +82,9 @@ export default function PrivacyPage() {
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold text-ink">8. Contact Us</h2>
         <p className="text-sm leading-relaxed text-ink-soft">
-          If you have questions about this privacy policy, please contact us at support@mranabolics.com.
+          If you have questions about this privacy policy, please contact us at {email}.
         </p>
       </section>
-    </div>
+    </LegalPage>
   );
 }
