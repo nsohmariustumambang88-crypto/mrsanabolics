@@ -52,7 +52,10 @@ export function CheckoutFlow({
   const [step, setStep] = React.useState(0);
   const [placed, setPlaced] = React.useState(false);
   const [orderReference, setOrderReference] = React.useState('');
-  const [method, setMethod] = React.useState<PaymentMethod>('cashapp');
+  /* Pre-select whichever method the admin lists first. */
+  const [method, setMethod] = React.useState<PaymentMethod>(
+    () => (paymentMethods[0]?.key as PaymentMethod | undefined) ?? 'crypto'
+  );
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState('');
 
