@@ -37,6 +37,8 @@ const ASSETS: { id: CryptoAsset; label: string; network: string }[] = [
   { id: 'ETH', label: 'Ethereum', network: 'ERC-20' },
 ];
 
+export type CryptoPayResult = { ok: true; paymentUrl: string } | { ok: false; error: string };
+
 export function PaymentMethods({
   total,
   method,
@@ -44,7 +46,7 @@ export function PaymentMethods({
   cryptoAsset,
   onCryptoAssetChange,
   methods,
-  email,
+  onCryptoPay,
 }: {
   total: number;
   method: PaymentMethod;
@@ -53,7 +55,8 @@ export function PaymentMethods({
   onCryptoAssetChange: (a: CryptoAsset) => void;
   /** Enabled methods from the database, in administered order. */
   methods: PaymentMethodOption[];
-  email?: string;
+  /** Places the order and starts the crypto payment; the server works out the amount. */
+  onCryptoPay: (asset: CryptoAsset) => Promise<CryptoPayResult>;
 }) {
 
   /* The notice for whichever method is showing, so each panel states its own position. */
@@ -106,7 +109,7 @@ export function PaymentMethods({
         {method === 'cashapp' && <CashAppPanel notice={notice} />}
         {method === 'bank_transfer' && <BankTransferPanel notice={notice} />}
         {method === 'crypto' && (
-          <CryptoPanel total={total} notice={notice} email={email} />
+          <CryptoPanel total={total} notice={notice} onPay={onCryptoPay} />
         )}
       </div>
     </div>
@@ -146,13 +149,11 @@ function CashAppPanel({ notice }: { notice: string }) {
 function CryptoPanel({
   total,
   notice,
-  email,
+  onPay,
 }: {
   total: number;
-  asset?: CryptoAsset;
-  onAssetChange?: (a: CryptoAsset) => void;
   notice: string;
-  email?: string;
+  onPay: (asset: CryptoAsset) => Promise<CryptoPayResult>;
 }) {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -160,41 +161,13 @@ function CryptoPanel({
   const handleCryptoPayment = async (cryptoAsset: CryptoAsset) => {
     setIsProcessing(true);
     setError(null);
-
-    try {
-      if (!email) {
-        throw new Error('Email required - please fill in your email address');
-      }
-
-      const response = await fetch('/api/crypto/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: [],
-          total,
-          email,
-          pay_currency: cryptoAsset.toLowerCase(),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || `Payment failed: ${response.statusText}`);
-      }
-
-      if (data.success && data.payment_url) {
-        // Redirect to NOWPayments to complete payment
-        window.location.href = data.payment_url;
-      } else {
-        throw new Error(data.error || 'Failed to get payment details');
-      }
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Payment processing failed';
-      setError(errorMsg);
-      console.error('Crypto checkout error:', err);
-      setIsProcessing(false);
+    const result = await onPay(cryptoAsset);
+    if (result.ok) {
+      window.location.href = result.paymentUrl;
+      return;
     }
+    setError(result.error);
+    setIsProcessing(false);
   };
 
   return (

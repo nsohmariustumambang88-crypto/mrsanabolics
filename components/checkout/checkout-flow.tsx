@@ -10,6 +10,8 @@ import Image from 'next/image';
 import { formatPrice } from '@/lib/format';
 import {
   PaymentMethods,
+  type CryptoAsset,
+  type CryptoPayResult,
   type PaymentMethod,
 } from '@/components/checkout/payment-methods';
 import { useSubscribe } from '@/components/marketing/use-subscribe';
@@ -19,7 +21,7 @@ import {
 } from '@/components/checkout/use-checkout-quotes';
 import { CONSENT } from '@/lib/marketing/consent';
 import { cn } from '@/lib/utils';
-import { submitCheckout } from '@/app/checkout/checkout-actions';
+import { submitCheckout, type CheckoutSubmitInput } from '@/app/checkout/checkout-actions';
 
 /*
   The lift: one contact, and the sheet is committed. The wizard mirrors that — each step is a
@@ -111,32 +113,50 @@ export function CheckoutFlow({
   };
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
+  /* The same order details for every payment method; the server prices them itself. */
+  const checkoutInput = (paymentMethod: string): CheckoutSubmitInput => ({
+    email: marketing.email,
+    firstName,
+    lastName,
+    country,
+    cart: cart.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+    })),
+    shipping: {
+      line1: shippingAddr,
+      line2: shippingAddr2,
+      city: shippingCity,
+      postcode: shippingPost,
+    },
+    shippingMethod: chosenRate?.name,
+    discountCode: discount.code,
+    paymentMethod,
+  });
+
+  const payWithCrypto = async (asset: CryptoAsset): Promise<CryptoPayResult> => {
+    try {
+      const response = await fetch('/api/crypto/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...checkoutInput('crypto'), pay_currency: asset.toLowerCase() }),
+      });
+      const data = (await response.json().catch(() => ({}))) as { error?: string; payment_url?: string };
+      if (!response.ok || !data.payment_url) {
+        return { ok: false, error: data.error ?? 'The payment could not be started. Please try again.' };
+      }
+      return { ok: true, paymentUrl: data.payment_url };
+    } catch {
+      return { ok: false, error: 'The payment could not be started. Check your connection and try again.' };
+    }
+  };
+
   const place = async () => {
     setSubmitError('');
     setIsSubmitting(true);
 
     try {
-      const result = await submitCheckout({
-        email: marketing.email,
-        firstName,
-        lastName,
-        country,
-        cart: cart.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-        })),
-        shipping: {
-          line1: shippingAddr,
-          line2: shippingAddr2,
-          city: shippingCity,
-          postcode: shippingPost,
-        },
-        shippingMethod: chosenRate?.name,
-        shippingCost: shipping,
-        discountCode: discount.code,
-        paymentMethod: method,
-        total,
-      });
+      const result = await submitCheckout(checkoutInput(method));
 
       if (result.ok) {
         setOrderReference(result.reference);
@@ -478,7 +498,7 @@ export function CheckoutFlow({
                 cryptoAsset="BTC"
                 onCryptoAssetChange={() => {}}
                 methods={paymentMethods}
-                email={marketing.email}
+                onCryptoPay={payWithCrypto}
               />
             )}
 

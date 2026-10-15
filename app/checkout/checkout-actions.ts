@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { createOrder, type CreateOrderInput } from '@/lib/orders/orders';
+import { quoteDelivery } from '@/lib/delivery';
 
 export type CheckoutSubmitInput = {
   email: string;
@@ -16,11 +17,9 @@ export type CheckoutSubmitInput = {
     postcode: string;
   };
   shippingMethod?: string;
-  shippingCost: number;
   discountCode?: string;
   paymentMethod?: string;
   cryptoAsset?: string;
-  total: number;
 };
 
 export async function submitCheckout(
@@ -45,6 +44,22 @@ export async function submitCheckout(
   }
 
   try {
+    /* Shipping is quoted here from the delivery zones, never taken from the browser. */
+    const products = await prisma.product.findMany({
+      where: { id: { in: input.cart.map((line) => line.productId) } },
+      select: { id: true, price: true },
+    });
+    const priceOf = new Map(products.map((p) => [p.id, Number(p.price)]));
+    const subtotal = input.cart.reduce(
+      (sum, line) => sum + (priceOf.get(line.productId) ?? 0) * line.quantity,
+      0
+    );
+    const quote = await quoteDelivery({ country: input.country, subtotal });
+    const rate = quote.options.find((option) => option.name === input.shippingMethod);
+    if (!rate) {
+      return { ok: false, error: 'Choose a delivery option for your country.' };
+    }
+
     /* Upsert contact - create if new, fetch if exists */
     const contact = await prisma.contact.upsert({
       where: { email: input.email },
@@ -80,8 +95,8 @@ export async function submitCheckout(
         postcode: input.shipping.postcode,
         country: input.country,
       },
-      shippingCost: input.shippingCost,
-      shippingMethod: input.shippingMethod,
+      shippingCost: rate.price,
+      shippingMethod: rate.name,
       discountCode: input.discountCode,
       notes: notes || null,
     });
