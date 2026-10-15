@@ -7,7 +7,6 @@ import { CartDrawer } from '@/components/cart/cart-drawer';
 import { SearchDialog } from '@/components/search/search-dialog';
 import { ExitCapture } from '@/components/marketing/exit-capture';
 import { RestockAlertsModal } from '@/components/marketing/restock-alerts-modal';
-import { LeadMagnetModal } from '@/components/marketing/lead-magnet-modal';
 import { VisitTracker } from '@/components/analytics/visit-tracker';
 import { TelegramWidget } from '@/components/chat/telegram-widget';
 import { WhatsappWidget } from '@/components/chat/whatsapp-widget';
@@ -79,7 +78,6 @@ export default async function StorefrontLayout({
         <SearchDialog />
         <ExitCapture />
         <RestockAlertsModal />
-        <LeadMagnetModal />
         <TelegramWidget />
         <WhatsappWidget />
         {/*
