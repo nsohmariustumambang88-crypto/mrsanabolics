@@ -518,9 +518,7 @@ export function ProductDetail({
           <SectionHeading
             title="Reviews"
             description={
-              product.reviewCount > 0
-                ? `${product.reviewCount} ${product.reviewCount === 1 ? 'buyer has' : 'buyers have'} rated this compound ${product.rating.toFixed(1)} out of 5.`
-                : 'Nobody has reviewed this compound yet.'
+              product.reviewCount > 0 ? undefined : 'Nobody has reviewed this compound yet.'
             }
           />
 
@@ -546,8 +544,8 @@ export function ProductDetail({
 
           {product.reviews.length > 0 && (
             <p className="mt-6 text-xs text-ink-faint">
-              Every review here was submitted by a buyer and read by a person before it was
-              published. The rating above counts published reviews only.
+              Every review here was submitted through our review form and checked before it was
+              published.
             </p>
           )}
 
