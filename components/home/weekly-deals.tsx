@@ -10,6 +10,7 @@ import { stockState } from '@/components/product/product-card';
 import { useSiteSettings } from '@/components/providers/settings-provider';
 import { formatPrice } from '@/lib/format';
 import type { ProductSummary } from '@/lib/types';
+import { referencePrice } from '@/lib/pricing';
 
 /*
   The bath drains on a clock. A real countdown to the end of the week, computed from the
@@ -92,7 +93,7 @@ export function WeeklyDeals({ products }: { products: ProductSummary[] }) {
   const rest = others.slice(0, REGISTER_ROWS);
 
   const saved = products.reduce(
-    (sum, p) => sum + ((p.compareAtPrice ?? p.price) - p.price),
+    (sum, p) => sum + ((referencePrice(p) ?? p.price) - p.price),
     0
   );
 
@@ -117,11 +118,18 @@ export function WeeklyDeals({ products }: { products: ProductSummary[] }) {
               This week&rsquo;s bath
             </h2>
             <p className="measure-tight mt-3 text-sm leading-relaxed text-field-foreground/80 sm:text-base">
-              {products.length} compounds marked down until Sunday midnight — a combined{' '}
-              <span className="tabular">{formatPrice(saved)}</span> off list.
+              {saved > 0 ? (
+                <>
+                  {products.length} compounds marked down until Sunday midnight — a combined{' '}
+                  <span className="tabular">{formatPrice(saved)}</span> off list.
+                </>
+              ) : (
+                <>{products.length} compounds picked for this week.</>
+              )}
             </p>
           </div>
-          <Countdown />
+          {/* A countdown with no markdown behind it is urgency about nothing. */}
+          {saved > 0 && <Countdown />}
         </div>
       </div>
 
@@ -144,9 +152,9 @@ export function WeeklyDeals({ products }: { products: ProductSummary[] }) {
               <span className="font-display text-2xl font-semibold tabular">
                 {formatPrice(lead.price)}
               </span>
-              {lead.compareAtPrice && (
+              {referencePrice(lead) && (
                 <span className="text-sm text-ink-faint line-through tabular">
-                  {formatPrice(lead.compareAtPrice)}
+                  {formatPrice(referencePrice(lead) as number)}
                 </span>
               )}
             </p>
@@ -197,9 +205,9 @@ export function WeeklyDeals({ products }: { products: ProductSummary[] }) {
                           <span className="block text-base font-semibold tabular">
                             {formatPrice(p.price)}
                           </span>
-                          {p.compareAtPrice && (
+                          {referencePrice(p) && (
                             <span className="mt-0.5 block text-xs text-ink-faint line-through tabular">
-                              {formatPrice(p.compareAtPrice)}
+                              {formatPrice(referencePrice(p) as number)}
                             </span>
                           )}
                         </span>

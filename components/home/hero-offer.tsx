@@ -20,6 +20,7 @@ import { formatPrice } from '@/lib/format';
 import { categoryPigment } from '@/lib/site';
 import { cn } from '@/lib/utils';
 import type { AdvertisedDiscount, ProductSummary } from '@/lib/types';
+import { referencePrice } from '@/lib/pricing';
 
 /*
   The hero's promotion panel.
@@ -155,7 +156,7 @@ export function HeroOffer({
     }
   };
 
-  const compareAt = product?.compareAtPrice ?? null;
+  const compareAt = product ? referencePrice(product) : null;
   const saving = product && compareAt && compareAt > product.price ? compareAt - product.price : 0;
   const percent = saving && compareAt ? Math.round((saving / compareAt) * 100) : 0;
   const strength = product ? (product.specifications[0]?.value ?? '') : '';

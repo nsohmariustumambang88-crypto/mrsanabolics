@@ -20,6 +20,7 @@ import { getProducts, getCategories, getBlogPosts, getTestimonials, toSummary } 
 import { advertisedDiscount } from '@/lib/discounts';
 import { getSettingsSafe } from '@/lib/settings';
 import { SITE } from '@/lib/site';
+import { referencePrice } from '@/lib/pricing';
 
 export const metadata: Metadata = {
   /* Absolute, so the brand leads on the one page a searcher is most likely to see. */
@@ -85,10 +86,12 @@ export default async function Home() {
     by the share of the price saved, so the strongest offer leads; `sort` is stable, so ties keep
     catalogue order and the server and the browser agree on which one is first.
   */
-  const savingShare = (p: (typeof products)[number]) =>
-    p.compareAtPrice ? (p.compareAtPrice - p.price) / p.compareAtPrice : 0;
+  const savingShare = (p: (typeof products)[number]) => {
+    const was = referencePrice(p);
+    return was ? (was - p.price) / was : 0;
+  };
   const offers = deals
-    .filter((p) => p.compareAtPrice !== undefined && p.compareAtPrice > p.price)
+    .filter((p) => referencePrice(p) !== null)
     .sort((a, b) => savingShare(b) - savingShare(a))
     .slice(0, 6)
     .map(toSummary);

@@ -10,6 +10,7 @@ import { categoryPigment } from '@/lib/site';
 import { useSiteSettings } from '@/components/providers/settings-provider';
 import type { ProductSummary } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { referencePrice } from '@/lib/pricing';
 
 /*
   A product is a sheet lifted out of the bath.
@@ -40,9 +41,8 @@ export function ProductCard({ product }: { product: ProductSummary }) {
   const { lowStockThreshold } = useSiteSettings();
   const state = stockState(product, lowStockThreshold);
 
-  const discount = product.compareAtPrice
-    ? Math.round((1 - product.price / product.compareAtPrice) * 100)
-    : 0;
+  const was = referencePrice(product);
+  const discount = was ? Math.round((1 - product.price / was) * 100) : 0;
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -123,9 +123,9 @@ export function ProductCard({ product }: { product: ProductSummary }) {
                 <span className="text-base font-semibold tabular">
                   {formatPrice(product.price)}
                 </span>
-                {product.compareAtPrice && (
+                {was && (
                   <span className="text-xs text-ink-faint line-through tabular">
-                    {formatPrice(product.compareAtPrice)}
+                    {formatPrice(was)}
                   </span>
                 )}
               </p>

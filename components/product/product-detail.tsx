@@ -30,6 +30,7 @@ import { categoryPigment, UNDER_HEADER_INSET } from '@/lib/site';
 import { categoryPath, groupPath } from '@/lib/catalogue/paths';
 import type { Product } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { referencePrice } from '@/lib/pricing';
 
 /*
   The evaluation surface. PRODUCT.md's first principle is that evidence outranks atmosphere,
@@ -133,6 +134,7 @@ export function ProductDetail({
   related,
   reviewsOpen = false,
   compound = null,
+  summary,
 }: {
   product: Product;
   related: Product[];
@@ -140,6 +142,8 @@ export function ProductDetail({
   reviewsOpen?: boolean;
   /** The compound page this product belongs to, where it has one. Computed on the server. */
   compound?: ProductCompound | null;
+  /** The short description under the price, computed on the server from the label facts. */
+  summary?: string;
 }) {
   const { addToCart, toggleWishlist, isWishlisted } = useStore();
   const [active, setActive] = React.useState(0);
@@ -149,9 +153,8 @@ export function ProductDetail({
   const { lowStockThreshold } = useSiteSettings();
   const state = stockState(product, lowStockThreshold);
 
-  const discount = product.compareAtPrice
-    ? Math.round((1 - product.price / product.compareAtPrice) * 100)
-    : 0;
+  const was = referencePrice(product);
+  const discount = was ? Math.round((1 - product.price / was) * 100) : 0;
 
   /* Track recently viewed for homepage carousel */
   React.useEffect(() => {
@@ -261,9 +264,9 @@ export function ProductDetail({
               <span className="font-display text-3xl font-semibold tabular">
                 {formatPrice(product.price)}
               </span>
-              {product.compareAtPrice && (
+              {was && (
                 <span className="text-base text-ink-faint line-through tabular">
-                  {formatPrice(product.compareAtPrice)}
+                  {formatPrice(was)}
                 </span>
               )}
             </div>
@@ -278,7 +281,7 @@ export function ProductDetail({
             </p>
 
             <p className="measure mt-6 text-sm leading-relaxed text-ink-soft">
-              {product.description}
+              {summary ?? product.description}
             </p>
 
             <ProtocolChain product={product} />
