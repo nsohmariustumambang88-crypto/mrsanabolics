@@ -78,8 +78,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     /*
       Articles carry their real revision date, not today's. A sitemap that claims everything
       changed this morning tells a crawler nothing, and Google says it ignores lastmod when a
-      site reports one it cannot believe. Editorial pages outrank the placeholder-priced
-      products here because they are the pages worth arriving on from a search.
+      site reports one it cannot believe. Editorial pages carry a higher priority than the
+      product pages here because they are the pages worth arriving on from a search.
     */
     ...blogPosts.map((p) => ({
       url: `${base}/blog/${p.slug}`,

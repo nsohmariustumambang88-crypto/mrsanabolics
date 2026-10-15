@@ -244,7 +244,15 @@ async function importProducts(categories: Map<string, string>, brands: Map<strin
       if (APPLY) {
         await target.product.update({
           where: { id: found.id },
-          data: { ...content(row, ['slug', 'categoryId', 'brandId', 'rating', 'reviewCount']), categoryId, brandId },
+          /*
+            Prices are left as they are on this side. The owner confirmed the current prices as the
+            store's real ones (October 2026), so an old Neon edit must not overwrite them.
+          */
+          data: {
+            ...content(row, ['slug', 'categoryId', 'brandId', 'rating', 'reviewCount', 'price', 'compareAtPrice']),
+            categoryId,
+            brandId,
+          },
         });
       }
       await replaceChildren(row.id, found.id);

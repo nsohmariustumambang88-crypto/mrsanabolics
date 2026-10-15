@@ -13,8 +13,10 @@
   - No dosing. Directions say to follow the manufacturer's label.
   - No product copy beyond what the file name and folder state: the name, the manufacturer,
     the group, and a strength transcribed from the number in the name.
-  Prices ARE placeholders (see baselinePrice in the taxonomy) and are flagged as such in the
-  admin's data; the files carry none, and a shop cannot be browsed without them.
+  Prices: a brand-new product (a photograph added to the folder) starts at baselinePrice() from
+  the taxonomy, because the files carry no price and a product cannot be listed without one.
+  That is the ONLY time a generated price is written. Existing products keep the prices set in
+  the admin, which are the store's real prices; neither a re-run nor --refresh touches them.
 
   Skipped on purpose:
   - Files named by a hash rather than a product. 35 of those are byte-identical to a named
@@ -402,13 +404,18 @@ async function main() {
     Rows that already exist are LEFT ALONE. After the first run the admin owns them — prices,
     stock, flags — and a re-run must not undo that work. A re-run therefore adds what is new
     (a file added to the folder) and touches nothing else. `--refresh` forces the slow per-row
-    rewrite of existing products for the case where the taxonomy or the copy generator changed.
+    rewrite of existing products' COPY for the case where the taxonomy or the copy generator
+    changed — never their prices, stock, flags or ratings, and never a row re-filed by hand.
   */
   const BATCH = 100;
   const refresh = process.argv.includes('--refresh');
-  const existingSlugs = new Set(
-    (await prisma.product.findMany({ select: { slug: true } })).map((r) => r.slug)
+  const existingRows = new Map(
+    (await prisma.product.findMany({ select: { slug: true, categoryId: true, subcategory: true } })).map((r) => [
+      r.slug,
+      r,
+    ])
   );
+  const existingSlugs = new Set(existingRows.keys());
   let created = 0;
   let updated = 0;
   let skipped = 0;
@@ -486,12 +493,36 @@ async function main() {
     };
 
     if (existingSlugs.has(p.slug)) {
-      if (refresh) {
+      const current = existingRows.get(p.slug);
+      const refiled =
+        !!current && (current.categoryId !== scalars.categoryId || current.subcategory !== scalars.subcategory);
+      if (refresh && !refiled) {
+        /*
+          --refresh rewrites COPY only. Prices are the store's real prices and belong to the admin,
+          as do stock, flags, ratings and position — so none of them is in this update, and a
+          refresh can never put a generated baseline price back over a price somebody set.
+          A row re-filed by hand (category or group no longer what its folder says) is skipped
+          whole: rewriting it would undo the correction.
+        */
+        const {
+          price: _price,
+          compareAtPrice: _compareAt,
+          rating: _rating,
+          reviewCount: _reviews,
+          inStock: _inStock,
+          stockCount: _stock,
+          isNew: _new,
+          isBestSeller: _best,
+          isTrending: _trending,
+          isDeal: _deal,
+          position: _position,
+          ...copy
+        } = scalars;
         /* Specification rows are replaced wholesale: they have no identity of their own. */
         await prisma.product.update({
           where: { slug: p.slug },
           data: {
-            ...scalars,
+            ...copy,
             specifications: {
               deleteMany: {},
               create: p.specifications.map((s, position) => ({ ...s, position })),

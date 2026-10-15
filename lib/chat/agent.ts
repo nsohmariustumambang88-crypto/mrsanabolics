@@ -215,7 +215,7 @@ async function productFacts(question: string): Promise<string | null> {
     const stock = !p.inStock ? 'out of stock' : p.stockCount <= low ? `${p.stockCount} left` : 'in stock';
     return `- [${p.name} (${p.brand})](/product/${p.slug}): ${formatPrice(p.price)}, ${stock}`;
   });
-  return [...lines, 'Prices on this demonstration build are placeholders.'].join('\n');
+  return lines.join('\n');
 }
 
 async function promoFacts(): Promise<string> {
@@ -232,7 +232,7 @@ async function promoFacts(): Promise<string> {
 const FIXED = {
   medical: `I can't help with doses, cycles, or whether something is right for you. That needs a doctor who knows your health. What the evidence says about the risks is in ${LINKS.health}. For delivery, payment or stock, ask away.`,
   legal: `Whether it's legal depends on where you live, and I can't give legal advice. The journal sets out what the legislation says: ${LINKS.law}, and for SARMs, ${LINKS.sarms}.`,
-  trust: `Straight answer: this is a demonstration storefront. Checkout does not take payment, prices are placeholders, and reviews and ratings are illustrative. If you want to check any seller, ${LINKS.counterfeit} and ${LINKS.certificate} go through how.`,
+  trust: `Straight answer: this is a demonstration storefront. Checkout does not take payment, and reviews and ratings are illustrative. If you want to check any seller, ${LINKS.counterfeit} and ${LINKS.certificate} go through how.`,
   order: `I can't see individual orders. If you have an account, your orders are in ${LINKS.account}. For anything about a specific order, ${HANDOFF.charAt(0).toLowerCase()}${HANDOFF.slice(1)}`,
   greeting: `Hi. I can answer questions about delivery, payment methods, prices and stock. For anything else, switch to **Support** to reach a person.`,
   thanks: `You're welcome.`,
@@ -267,7 +267,7 @@ async function ruleBasedAnswer(question: string): Promise<string> {
 
 /* ------------------------------------------------------------------ Claude engine */
 
-const RULES = `You are the automated agent in the live chat of MrAnabolics, an online store. The store is a demonstration build: checkout does not take payment, prices are placeholders, and reviews and ratings are illustrative. Say so plainly when it matters.
+const RULES = `You are the automated agent in the live chat of MrAnabolics, an online store. The store is a demonstration build: checkout does not take payment, and reviews and ratings are illustrative. Say so plainly when it matters.
 
 Answer only from the STORE FACTS below. They are read from the store's systems for this question and are the only facts you have. If they do not answer the question, say you can't answer it and tell the visitor to switch to Support, where a person replies.
 

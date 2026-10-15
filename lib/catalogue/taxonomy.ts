@@ -7,9 +7,9 @@
   those folders hold. prisma/seed-catalogue.ts reads prisma/image-library.json against this
   file to build categories, subcategories, brands and products.
 
-  Prices are placeholders. The files carry no prices, and a shop without prices cannot be
-  browsed, so each group gets a baseline that staff are expected to correct in the admin.
-  They are not offers.
+  Prices: the files carry none, so a brand-new product starts at its group's baseline
+  (baselinePrice below). Once a product exists its price belongs to the admin, and the prices
+  now in the database are the store's real prices.
 */
 
 export type CategoryDef = {
@@ -257,9 +257,9 @@ export function strengthUnitFor(category: string, subcategory: string | null): s
 }
 
 /**
- * Placeholder baseline price in USD, by group. Deliberately coarse. The admin's inline price
- * editor is where real prices go; these exist so the shop has a price slider and a sort order
- * from day one rather than 800 rows at $0.
+ * Starting price in USD, by group, for a product the seed is creating for the first time and
+ * which therefore has no price yet. It is never applied to an existing product: neither a
+ * re-run of the seed nor --refresh writes a price, so the prices set in the admin stand.
  */
 export function baselinePrice(category: string, subcategory: string | null): number {
   const key = `${category}/${subcategory ?? ''}`;

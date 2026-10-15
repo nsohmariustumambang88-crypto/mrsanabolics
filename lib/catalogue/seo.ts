@@ -14,10 +14,7 @@ import { formatPriceShort } from '@/lib/format';
   "winstrol 50 mg price", "winstrol for sale usa"), and every figure in them is computed: prices,
   strengths and counts from the catalogue, shipping from the delivery zones. Nothing here is
   written by hand, so a page can never promise a price, strength or destination the data does
-  not hold.
-
-  Prices are whatever the admin has set. Until real prices are entered, "from $45" is the
-  placeholder the catalogue seed wrote.
+  not hold. Prices are the ones set in the admin.
 */
 
 /** "Oral Winstrol (Stanozolol)": the compound with its route, where the category has one. */

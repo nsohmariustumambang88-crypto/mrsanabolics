@@ -168,10 +168,15 @@ gone; `prisma/seed.ts` now seeds only testimonials and FAQs (the journal has its
 
 **What the seed refuses to invent.** No ratings, review counts or reviews (zero and empty — the
 product page hides the review block and says "No reviews yet"; the JSON-LD omits
-`aggregateRating`). No dosing. No copy beyond what the file name and folder state. It DOES set
-placeholder prices from `baselinePrice()` in the taxonomy, because a shop with no prices cannot
-be browsed; the chat agent says so when it quotes one (the footer notice that also said so was removed at the owner's request), and the admin's inline price editor is where real
-prices go. Merchandising flags (best seller / new / deal / trending) are the first four listings
+`aggregateRating`). No dosing. No copy beyond what the file name and folder state.
+
+**Prices are real and belong to the admin.** In October 2026 the owner confirmed the prices in
+the database as the store's real selling prices; nothing should describe them as placeholders or
+estimates. `baselinePrice()` in the taxonomy prices only a brand-new product the seed is
+creating, which has no price yet. Neither a seed re-run nor `--refresh` writes a price, stock,
+flag or rating to an existing row (and `--refresh` skips rows re-filed by hand), and
+`db:import-neon` does not copy prices onto matched products. Prices are changed with the
+admin's inline price editor. Merchandising flags (best seller / new / deal / trending) are the first four listings
 of each group, deterministically — a starting position for staff to change, not a judgement.
 
 **Name parsing is the fragile part.** Files are `Name - Brand.ext`, inconsistently. `splitTitle`
@@ -487,10 +492,13 @@ page also passes `ProductSummary`, not `Product`, into its client components now
 put long copy, FAQs and reviews for 81 products into the payload, and the HTML fell from 1.28 MB
 to 928 KB when they came out.
 
-**The reference prices are placeholders.** The seed set each group's third listing to a
-compare-at price 15% above its price, so the "was" figures this card promotes were never charged.
-Before any real sale, a strikethrough has to be a price that was actually charged — under EU
-Omnibus rules the lowest in the preceding 30 days — or the offer is a misleading one.
+**The reference ("was") prices are switched off.** The selling prices are real; the compare-at
+prices are not — the seed set each group's third listing 15% above its price, and nobody was
+charged that figure. [lib/pricing.ts](lib/pricing.ts) gates every storefront read of a compare-at
+price through `referencePrice()`, which returns nothing while `SHOW_REFERENCE_PRICES` is false, so
+there is no strikethrough, discount badge, "save" line, markdown banner or countdown, and the hero
+falls back to a product with no offer framing. Turn it on only once the reference prices are
+prices that were actually charged (under EU Omnibus rules, the lowest in the preceding 30 days).
 
 ```bash
 BASE=http://localhost:3210 node --env-file=.env .impeccable/hero-offer-e2e.mjs
