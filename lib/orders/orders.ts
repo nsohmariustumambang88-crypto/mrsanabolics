@@ -185,13 +185,13 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
   /* Never below zero, whatever a percentage and a minimum conspire to produce. */
   const goods = Math.max(0, subtotal - discountTotal);
-  if (goods < MINIMUM_ORDER) {
+  const total = goods + shippingCost;
+  if (total < MINIMUM_ORDER) {
     return {
       ok: false,
-      error: `The minimum order is $${MINIMUM_ORDER.toFixed(2)} after any discount code is applied. Your basket comes to $${goods.toFixed(2)}.`,
+      error: `The minimum order is $${MINIMUM_ORDER.toFixed(2)}, including shipping and after any discount code. Your order comes to $${total.toFixed(2)}.`,
     };
   }
-  const total = goods + shippingCost;
 
   const reference = await uniqueReference();
 
