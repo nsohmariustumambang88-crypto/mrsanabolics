@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { verifyNowpaymentsWebhook } from '@/lib/crypto/webhook-verify';
-import { sendOrderConfirmation } from '@/lib/emails/send-order-confirmation';
+import { sendOrderConfirmation } from '@/lib/email/resend';
 import { WebhookPayload } from '@/lib/crypto/nowpayments';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -54,12 +54,30 @@ export async function POST(request: NextRequest) {
         const updatedOrder = await prisma.order.update({
           where: { id: order.id },
           data: { status: 'CONFIRMED' },
-          include: { contact: true },
+          include: { contact: true, items: true },
         });
 
         // Send confirmation email
         try {
-          await sendOrderConfirmation(updatedOrder);
+          if (!updatedOrder.contact?.email) throw new Error('No customer email on order');
+          await sendOrderConfirmation(
+            updatedOrder.contact.email,
+            updatedOrder.reference,
+            updatedOrder.items.map((i) => ({
+              name: i.name,
+              quantity: i.quantity,
+              price: Number(i.unitPrice),
+            })),
+            {
+              subtotal: Number(updatedOrder.subtotal),
+              discountCode: updatedOrder.discountCode,
+              discountTotal: Number(updatedOrder.discountTotal),
+              shippingMethod: updatedOrder.shippingMethod,
+              shipping: Number(updatedOrder.shipping),
+              total: Number(updatedOrder.total),
+            },
+            true
+          );
           console.log(`[Webhook] Sent confirmation email for order ${order_id}`);
         } catch (emailError) {
           console.error(`[Webhook] Failed to send email for order ${order_id}:`, emailError);

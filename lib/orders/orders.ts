@@ -267,7 +267,15 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       name: i.name,
       quantity: i.quantity,
       price: Number(i.unitPrice),
-    }))
+    })),
+    {
+      subtotal,
+      discountCode,
+      discountTotal,
+      shippingMethod: input.shippingMethod ?? null,
+      shipping: shippingCost,
+      total,
+    }
   ).catch(() => {
     /* Order is already created; email failure must not undo it */
   });

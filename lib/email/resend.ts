@@ -7,6 +7,7 @@ import {
   renderWelcomeEmail1,
   renderWelcomeEmail2,
   renderWelcomeEmail3,
+  type OrderEmailTotals,
 } from './templates';
 
 export const FROM_EMAIL = 'orders@mrsanabolics.com';
@@ -23,17 +24,18 @@ function getResend() {
 export async function sendOrderConfirmation(
   to: string,
   orderRef: string,
-  items: Array<{ name: string; quantity: number; price: number }>
+  items: Array<{ name: string; quantity: number; price: number }>,
+  totals: OrderEmailTotals,
+  paid = false
 ) {
   const resend = getResend();
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return resend.emails.send({
     from: FROM_EMAIL,
     replyTo: SUPPORT_EMAIL,
     to,
-    subject: `Order Confirmed - ${orderRef}`,
-    html: renderOrderConfirmationHTML(orderRef, items, total),
+    subject: `${paid ? 'Order Confirmed' : 'Order Received'} - ${orderRef}`,
+    html: renderOrderConfirmationHTML(orderRef, items, totals, paid),
   });
 }
 

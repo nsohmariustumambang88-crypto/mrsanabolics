@@ -43,11 +43,41 @@ export const emailStyles = {
   },
 };
 
+export type OrderEmailTotals = {
+  subtotal: number;
+  discountCode?: string | null;
+  discountTotal?: number;
+  shippingMethod?: string | null;
+  shipping: number;
+  total: number;
+};
+
+/* `paid` switches the wording: an order is "received" when placed and "confirmed" once paid. */
 export function renderOrderConfirmationHTML(
   orderRef: string,
   items: Array<{ name: string; quantity: number; price: number }>,
-  total: number
+  totals: OrderEmailTotals,
+  paid = false
 ): string {
+  const money = (n: number) => `$${n.toFixed(2)}`;
+  const row = (label: string, value: string, strong = false) =>
+    `<tr>
+      <td style="padding: 6px 0; color: #333;${strong ? ' font-weight: bold; font-size: 18px;' : ''}">${label}</td>
+      <td style="padding: 6px 0; text-align: right; color: #333;${strong ? ' font-weight: bold; font-size: 18px;' : ''}">${value}</td>
+    </tr>`;
+  const totalsHTML = [
+    row('Subtotal', money(totals.subtotal)),
+    totals.discountTotal && totals.discountTotal > 0
+      ? row(`Discount${totals.discountCode ? ` (${totals.discountCode})` : ''}`, `-${money(totals.discountTotal)}`)
+      : '',
+    row(`Shipping${totals.shippingMethod ? ` (${totals.shippingMethod})` : ''}`, money(totals.shipping)),
+    row('Total', money(totals.total), true),
+  ].join('');
+  const heading = paid ? 'Order Confirmed' : 'Order Received';
+  const intro = paid
+    ? `We've received your payment for order <strong>${orderRef}</strong>, and your order is confirmed. We're preparing it for shipping.`
+    : `We've received your order <strong>${orderRef}</strong>. We'll confirm it as soon as your payment arrives.`;
+
   const itemsHTML = items
     .map(
       (item) =>
@@ -63,16 +93,16 @@ export function renderOrderConfirmationHTML(
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Order Confirmed</title>
+    <title>${heading}</title>
   </head>
   <body style="font-family: Arial, sans-serif; background-color: #f9f9f9;">
     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background-color: #1d2327; color: #fff; padding: 20px; text-align: center; border-radius: 4px 4px 0 0;">
-        <h1 style="margin: 0; font-size: 24px;">Order Confirmed</h1>
+        <h1 style="margin: 0; font-size: 24px;">${heading}</h1>
       </div>
 
       <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd;">
-        <p style="margin: 0 0 20px 0; color: #333;">Your order <strong>${orderRef}</strong> has been received and confirmed.</p>
+        <p style="margin: 0 0 20px 0; color: #333;">${intro}</p>
 
         <h2 style="font-size: 16px; margin: 20px 0 10px 0; color: #1d2327;">Order Items</h2>
         <table style="width: 100%; border-collapse: collapse;">
@@ -88,16 +118,17 @@ export function renderOrderConfirmationHTML(
           </tbody>
         </table>
 
-        <div style="text-align: right; margin-top: 20px; padding-top: 20px; border-top: 2px solid #ddd;">
-          <p style="margin: 0; font-size: 18px; font-weight: bold; color: #1d2327;">Total: <span style="color: #2271b1;">$${total.toFixed(2)}</span></p>
-        </div>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px; padding-top: 20px; border-top: 2px solid #ddd;">
+          <tbody>
+            ${totalsHTML}
+          </tbody>
+        </table>
 
-        <p style="margin: 20px 0 0 0; color: #666; font-size: 14px;">We'll send you tracking information as soon as your order ships. If you have any questions, please reply to this email or contact support@mrsanabolics.com</p>
+        <p style="margin: 20px 0 0 0; color: #666; font-size: 14px;">We'll send you tracking information as soon as your order ships. If you have any questions, reply to this email and our support team will help.</p>
       </div>
 
       <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
-        <p style="margin: 0;">MrAnabolics - Professional Supplements</p>
-        <p style="margin: 5px 0 0 0;">This is an automated message. Please do not reply to this email.</p>
+        <p style="margin: 0;">MrAnabolics</p>
       </div>
     </div>
   </body>

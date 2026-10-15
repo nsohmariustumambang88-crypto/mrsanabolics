@@ -18,7 +18,13 @@ export async function POST(request: Request) {
     ];
 
     // Send to customer
-    const customerEmail = await sendOrderConfirmation(to, orderRef, testItems);
+    const subtotal = testItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const customerEmail = await sendOrderConfirmation(to, orderRef, testItems, {
+      subtotal,
+      shippingMethod: 'Standard tracked',
+      shipping: 9,
+      total: subtotal + 9,
+    });
 
     // Send to admin
     const adminEmail = await sendAdminOrderNotification(
