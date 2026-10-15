@@ -116,11 +116,6 @@ export function pricesByStrength(products: Product[]): StrengthPrice[] {
   );
 }
 
-/** "10 mg per tablet" → "10 mg", for titles and running text where the unit is already said. */
-export function shortStrength(strength: string): string {
-  return strength.replace(/\s+per\s+\w+$/i, '').trim();
-}
-
 /** Listing order inside a collection: in stock first, then by manufacturer, then by name. */
 function byListingOrder(a: Product, b: Product): number {
   return (

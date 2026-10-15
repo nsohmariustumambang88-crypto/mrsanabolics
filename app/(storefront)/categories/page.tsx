@@ -10,7 +10,7 @@ import { CATEGORY_COPY } from '@/lib/catalogue/collection-copy';
 /* Server component: a pure index needs no client JS, and now it can carry its own metadata. */
 
 export const metadata: Metadata = {
-  title: 'Shop by category',
+  title: 'Shop by Category: Steroids, Peptides, SARMs and PCT',
   description:
     'Injectable and oral steroids, post-cycle and estrogen control, peptides, SARMs and growth hormone, fat burners and more, each broken down by compound.',
   alternates: { canonical: '/categories' },

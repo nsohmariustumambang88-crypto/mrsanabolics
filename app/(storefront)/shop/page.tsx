@@ -5,13 +5,22 @@ import { CatalogueDirectory, SectionTitle } from '@/components/shop/collection-s
 import { getProducts } from '@/lib/db/catalogue';
 import { getCategoryCollections } from '@/lib/db/collections';
 import { SITE } from '@/lib/site';
+import { factsFor } from '@/lib/db/collections';
+import { fitDescription, getUsDelivery, shortRange, usShippingLine } from '@/lib/catalogue/seo';
+import { formatPriceShort } from '@/lib/format';
 
-export const metadata: Metadata = {
-  title: 'Shop all products',
-  description:
-    'Browse the whole catalogue by category, compound, manufacturer and price, or go straight to a compound to compare every manufacturer’s version.',
-  alternates: { canonical: '/shop' },
-};
+/* Counts and prices computed from the catalogue, so the snippet stays true as stock changes. */
+export async function generateMetadata(): Promise<Metadata> {
+  const [products, usDelivery] = await Promise.all([getProducts(), getUsDelivery()]);
+  const f = factsFor(products);
+  const range = shortRange(f);
+  const title = `Buy Steroids, Peptides and SARMs: ${f.listings} Listings${f.priceFrom !== null ? ` from ${formatPriceShort(f.priceFrom)}` : ''}`;
+  const description = fitDescription([
+    `Injectable and oral steroids, post-cycle, peptides, SARMs and more for sale: ${f.listings} listings from ${f.manufacturers.length} manufacturers${range ? `, priced ${range}` : ''}.${usShippingLine(usDelivery)}`,
+    `Steroids, peptides and SARMs for sale: ${f.listings} listings from ${f.manufacturers.length} manufacturers${range ? `, priced ${range}` : ''}.`,
+  ]);
+  return { title, description, alternates: { canonical: '/shop' }, openGraph: { type: 'website', url: `${SITE.url}/shop`, title, description } };
+}
 
 export const revalidate = 60;
 

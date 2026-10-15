@@ -12,6 +12,8 @@ import { GROUP_COPY } from '@/lib/catalogue/collection-copy';
 import { getGroupCollection } from '@/lib/db/collections';
 import { cloudinaryUrl } from '@/lib/cloudinary';
 import type { Product } from '@/lib/types';
+import { fitDescription, getUsDelivery, shortStrength, usShippingLine } from '@/lib/catalogue/seo';
+import { formatPrice } from '@/lib/format';
 
 /*
   Server component.
@@ -87,33 +89,84 @@ async function compoundFor(product: Product) {
   is a template ("X by Y. Injectable, vial, listed under Blends, in Injectables.") shared in
   shape by all 792 products, and search engines treat near-identical descriptions as noise.
 */
-function describe(product: Product, compound: Awaited<ReturnType<typeof compoundFor>>) {
+/** What a form is called in a title: "Tablets", "Injection", "Vial". */
+function formNoun(form: string | undefined): string {
+  if (!form) return '';
+  if (/tablet/i.test(form)) return 'Tablets';
+  if (/capsule/i.test(form) || form === 'Oral') return 'Capsules';
+  if (/injectable/i.test(form)) return 'Injection';
+  if (/powder/i.test(form)) return 'Vial';
+  return '';
+}
+
+/*
+  Title, description and the short line under the heading, built from the facts on the label:
+  "Oxa 10 by Ultima Pharma: Oxandrolone 10 mg Tablets". Searches name the compound and strength
+  ("anavar 10mg price"), and the product's own name often names neither. Every figure is
+  computed — strength and form from the specification, price from the row, shipping from the
+  delivery zones — so nothing is stated that the catalogue does not hold.
+
+  The stored description is a seed template ("X by Y. Oral tablet, listed under Z.") shared in
+  shape by every product. Where it is still that template, the page shows the computed summary
+  instead; an administrator's own wording, once written, is shown as it is.
+*/
+function describe(
+  product: Product,
+  compound: Awaited<ReturnType<typeof compoundFor>>,
+  usDelivery: Awaited<ReturnType<typeof getUsDelivery>> = null
+) {
   const strength = spec(product, 'Strength');
   const form = spec(product, 'Form');
-  const title = `${product.name} by ${product.brand}${strength ? `, ${strength}` : ''}`;
+  const substance = spec(product, 'Compound');
+  const shortStr = strength ? shortStrength(strength) : '';
+  const noun = formNoun(form);
+  /* The compound, unless the product's own name already says it. */
+  const named = substance && !product.name.toLowerCase().includes(substance.split(' ')[0].toLowerCase()) ? substance : '';
+  const label = [named, shortStr, noun].filter(Boolean).join(' ');
+  /* Google shows about 60 characters; drop the maker, then the compound, before the title runs over. */
+  const title = fitDescription(
+    [
+      `${product.name} by ${product.brand}${label ? `: ${label}` : ''}`,
+      `${product.name}${label ? `: ${label}` : ''}`,
+      `${product.name}: ${[shortStr, noun].filter(Boolean).join(' ')}`,
+      `${product.name} by ${product.brand}`,
+    ],
+    60
+  );
+
   /* The compound's first sentence: what it is, without the regulatory detail that follows. */
   const identity = compound?.identity ? `${compound.identity.split('. ')[0].replace(/\.$/, '')}.` : null;
-  const facts = [strength, form?.toLowerCase()].filter(Boolean).join(', ');
-  const parts = [
-    `${product.name} by ${product.brand}${facts ? `: ${facts}` : ''}.`,
-    identity,
+  const facts = [substance, strength, form?.toLowerCase()].filter(Boolean).join(', ');
+  const lead = `${product.name} by ${product.brand}${facts ? `: ${facts}` : ''}. ${formatPrice(product.price)}, ${product.inStock ? 'in stock' : 'out of stock'}.`;
+  const compare =
+    compound && compound.listings > 1 ? ` Compare it with ${compound.listings - 1} other ${compound.name} listings.` : '';
+  const shipping = usShippingLine(usDelivery);
+  const description = fitDescription([
+    `${lead}${shipping}${compare}`,
+    `${lead}${shipping}`,
+    `${lead}${identity ? ` ${identity}` : ''}`,
+    lead,
+  ]);
+
+  /* The visible short description: what it is, who makes it, where to compare it. */
+  const summary = [
+    `${substance ?? product.name}${strength ? `, ${strength}` : ''}${form ? `, ${form.toLowerCase()}` : ''}, made by ${product.brand}.`,
     compound && compound.listings > 1
-      ? `Compare it with ${compound.listings - 1} other ${compound.name} listings.`
+      ? `Filed under ${compound.name}, with ${compound.listings - 1} other ${compound.listings - 1 === 1 ? 'listing' : 'listings'} to compare by strength and price.`
       : null,
-  ].filter((p): p is string => !!p);
-  let description = '';
-  for (const part of parts) {
-    if ((description + ' ' + part).trim().length > 160) break;
-    description = (description + ' ' + part).trim();
-  }
-  return { title, description: description || product.description };
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const isTemplate = product.description.startsWith(`${product.name} by ${product.brand}.`);
+  return { title, description, summary: isTemplate ? summary : product.description };
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const product = await getProductBySlug(params.slug);
   if (!product) return { title: 'Product not found' };
 
-  const { title, description } = describe(product, await compoundFor(product));
+  const [compound, usDelivery] = await Promise.all([compoundFor(product), getUsDelivery()]);
+  const { title, description } = describe(product, compound, usDelivery);
   const url = `${SITE.url}/product/${product.slug}`;
   const image = productImage(product);
 
@@ -148,7 +201,7 @@ export default async function ProductPage({ params }: Params) {
   const reviewsOpen = asBoolean(settings.reviews_open);
   const url = `${SITE.url}/product/${product.slug}`;
   const compound = await compoundFor(product);
-  const { description } = describe(product, compound);
+  const { description, summary } = describe(product, compound, await getUsDelivery());
   const image = productImage(product);
 
   const schema = [
@@ -303,6 +356,7 @@ export default async function ProductPage({ params }: Params) {
         related={related}
         reviewsOpen={reviewsOpen}
         compound={compound}
+        summary={summary}
       />
     </>
   );

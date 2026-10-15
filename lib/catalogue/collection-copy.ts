@@ -131,7 +131,7 @@ export const GROUP_COPY: Record<string, string> = {
   'injectables/winstrol-stanozolol':
     'Stanozolol as an injectable suspension, sold as Winstrol Depot.',
   'injectables/trestolone-acetate-ment':
-    'Trestolone acetate, also called MENT, a synthetic androgen studied as a male contraceptive and never approved as a medicine.',
+    'Trestolone, also called MENT, as the acetate or enanthate ester: a synthetic androgen studied as a male contraceptive and never approved as a medicine.',
   'injectables/testosterone-undecanoate':
     'Testosterone undecanoate for injection, the long-acting ester used in medicines such as Nebido.',
   'injectables/testosterone-base':

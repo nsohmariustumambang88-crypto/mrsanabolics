@@ -3,13 +3,23 @@ import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { getBrands } from '@/lib/db/catalogue';
 import { SITE } from '@/lib/site';
+import { andList, fitDescription } from '@/lib/catalogue/seo';
 
-export const metadata: Metadata = {
-  title: 'Manufacturers',
-  description:
-    'The laboratories behind the catalogue. Each manufacturer holds its own specification and its own testing chain.',
-  alternates: { canonical: '/brands' },
-};
+/*
+  Computed from the brands table. The old description said every manufacturer "holds its own
+  testing chain", which nothing in the catalogue shows.
+*/
+export async function generateMetadata(): Promise<Metadata> {
+  const brands = (await getBrands()).filter((b) => b.productCount > 0).sort((a, b) => b.productCount - a.productCount);
+  const title = `Steroid and Peptide Manufacturers: ${brands.length} Brands`;
+  const description = fitDescription(
+    [4, 3, 2].map(
+      (n) =>
+        `All ${brands.length} manufacturers in the catalogue, including ${andList(brands.slice(0, n).map((b) => b.name))}. Each has a page listing its products and prices.`
+    )
+  );
+  return { title, description, alternates: { canonical: '/brands' }, openGraph: { type: 'website', url: `${SITE.url}/brands`, title, description } };
+}
 
 export const revalidate = 60;
 

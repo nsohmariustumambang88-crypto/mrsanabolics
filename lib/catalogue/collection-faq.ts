@@ -117,6 +117,29 @@ function deliveryOption(o: UsDeliveryOption): string {
   return `${o.name.toLowerCase()} (${details.join(', ')})`;
 }
 
+/** The US delivery answer, from the zones. Steroid pages add the federal position from the law article. */
+function usShippingAnswer(label: string, options: UsDeliveryOption[], steroid: boolean): FaqItem {
+  const parts = options.map(deliveryOption);
+  return {
+    question: `Do you ship ${label} to the USA?`,
+    answer:
+      `Yes. Orders to the United States go by ${
+        parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} or ${parts[parts.length - 1]}`
+      }.` +
+      (steroid
+        ? ' Anabolic steroids are Schedule III controlled substances under US federal law, which prohibits importing them without authorisation and buying them online without a valid prescription.'
+        : ''),
+    link: steroid ? { href: LAW, label: 'Our guide to steroid law quotes the legislation.' } : undefined,
+  };
+}
+
+function whereToBuy(label: string, inStock: number, listings: number): FaqItem {
+  return {
+    question: `Where can I buy ${label}?`,
+    answer: `Every listing on this page can be ordered here: open the product, add it to your basket and check out. ${inStock} of ${listings} ${listings === 1 ? 'listing is' : 'listings are'} in stock now. If you have a question before ordering, message us on Telegram or WhatsApp using the buttons at the bottom of the page.`,
+  };
+}
+
 export function groupFaq(group: GroupCollection, copy: CategoryCopy, ctx: GroupFaqContext): FaqItem[] {
   const f = group.facts;
   const label = group.name;
@@ -141,25 +164,8 @@ export function groupFaq(group: GroupCollection, copy: CategoryCopy, ctx: GroupF
     });
   }
 
-  items.push({
-    question: `Where can I buy ${ctx.title}?`,
-    answer: `Every listing on this page can be ordered here: open the product, add it to your basket and check out. ${f.inStock} of ${f.listings} ${f.listings === 1 ? 'listing is' : 'listings are'} in stock now. If you have a question before ordering, message us on Telegram or WhatsApp using the buttons at the bottom of the page.`,
-  });
-
-  if (ctx.usDelivery && ctx.usDelivery.length > 0) {
-    const options = ctx.usDelivery.map(deliveryOption);
-    items.push({
-      question: `Do you ship ${label} to the USA?`,
-      answer:
-        `Yes. Orders to the United States go by ${
-          options.length === 1 ? options[0] : `${options.slice(0, -1).join(', ')} or ${options[options.length - 1]}`
-        }.` +
-        (steroid
-          ? ' Anabolic steroids are Schedule III controlled substances under US federal law, which prohibits importing them without authorisation and buying them online without a valid prescription.'
-          : ''),
-      link: steroid ? { href: LAW, label: 'Our guide to steroid law quotes the legislation.' } : undefined,
-    });
-  }
+  items.push(whereToBuy(ctx.title, f.inStock, f.listings));
+  if (ctx.usDelivery && ctx.usDelivery.length > 0) items.push(usShippingAnswer(label, ctx.usDelivery, steroid));
 
   if (ctx.alternate) {
     items.push({
@@ -188,9 +194,14 @@ export function groupFaq(group: GroupCollection, copy: CategoryCopy, ctx: GroupF
   return items;
 }
 
-export function categoryFaq(category: CategoryCollection, copy: CategoryCopy): FaqItem[] {
+export function categoryFaq(
+  category: CategoryCollection,
+  copy: CategoryCopy,
+  ctx: { usDelivery?: UsDeliveryOption[] | null } = {}
+): FaqItem[] {
   const f = category.facts;
   const label = copy.heading.toLowerCase();
+  const steroid = category.slug === 'injectables' || category.slug === 'orals';
   const items: FaqItem[] = [
     {
       question: `What is in the ${label} range?`,
@@ -204,6 +215,21 @@ export function categoryFaq(category: CategoryCollection, copy: CategoryCopy): F
       answer: `${makers(f.manufacturers.length)}: ${names(f.manufacturers.map((m) => m.name), 12)}.`,
     },
   ];
+  if (f.priceFrom !== null && f.priceTo !== null) {
+    /* What the largest compounds start at, each computed from its own listings. */
+    const from = category.groups
+      .filter((g) => g.facts.priceFrom !== null)
+      .slice(0, 4)
+      .map((g) => `${g.name} from ${formatPrice(g.facts.priceFrom as number)}`);
+    items.splice(1, 0, {
+      question: `What are the prices of ${label}?`,
+      answer:
+        `Listed prices run from ${formatPrice(f.priceFrom)} to ${formatPrice(f.priceTo)}, depending on the compound, manufacturer, strength and pack.` +
+        (from.length > 0 ? ` For example: ${from.join('; ')}. Each compound page breaks its prices down by strength.` : ''),
+    });
+  }
+  items.push(whereToBuy(label, f.inStock, f.listings));
+  if (ctx.usDelivery && ctx.usDelivery.length > 0) items.push(usShippingAnswer(label, ctx.usDelivery, steroid));
   if (category.slug !== 'syringes-needles') items.push(genuineAnswer(label, category.slug));
   const legal = legalAnswer(label, copy, category.slug, undefined, true);
   if (legal) items.push(legal);

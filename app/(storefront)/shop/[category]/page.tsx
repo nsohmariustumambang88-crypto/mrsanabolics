@@ -4,6 +4,8 @@ import { getBlogPosts, toSummary } from '@/lib/db/catalogue';
 import { getCategoryCollection, getCategoryCollections } from '@/lib/db/collections';
 import { CATEGORY_COPY, type CategoryCopy } from '@/lib/catalogue/collection-copy';
 import { categoryFaq } from '@/lib/catalogue/collection-faq';
+import { andList, fitDescription, getUsDelivery, shortRange, usShippingLine } from '@/lib/catalogue/seo';
+import { formatPriceShort } from '@/lib/format';
 import { SITE } from '@/lib/site';
 import { ProductGrid } from '@/components/product/product-grid';
 import {
@@ -14,7 +16,6 @@ import {
   ManufacturerList,
   RelatedReading,
   SectionTitle,
-  listOf,
 } from '@/components/shop/collection-sections';
 
 /*
@@ -46,16 +47,21 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   if (!category) return { title: 'Category not found' };
   const copy = copyFor(category.slug, category.name, category.description);
   const f = category.facts;
+  const usDelivery = await getUsDelivery();
 
-  const title =
+  /* "Oral Steroids for Sale: 8 Compounds from $40". Every figure is computed. */
+  const scope = category.groups.length > 1 ? `${category.groups.length} compounds` : `${f.listings} listings`;
+  const title = `${copy.heading} for sale: ${scope}${f.priceFrom !== null ? ` from ${formatPriceShort(f.priceFrom)}` : ''}`;
+  const range = shortRange(f);
+  const lead = `${copy.heading} for sale: ${f.listings} listings from ${f.manufacturers.length} manufacturers`;
+  const shipping = usShippingLine(usDelivery);
+  const description = fitDescription([
     category.groups.length > 0
-      ? `${copy.heading}: ${category.groups.length} compounds, ${f.listings} listings`
-      : `${copy.heading}: ${f.listings} listings`;
-  const description = (
-    category.groups.length > 0
-      ? `${copy.heading} by compound: ${listOf(category.groups.map((g) => g.name), 4)}. Compare ${f.listings} listings from ${f.manufacturers.length} manufacturers side by side.`
-      : `${f.listings} ${copy.heading.toLowerCase()} listings from ${f.manufacturers.length} manufacturers, with strength, pack and price on every one.`
-  ).slice(0, 160);
+      ? `${lead}, including ${andList(category.groups.slice(0, 3).map((g) => g.name))}${range ? `, priced ${range}` : ''}.${shipping}`
+      : `${lead}${range ? `, priced ${range}` : ''}.${shipping}`,
+    `${lead}${range ? `, priced ${range}` : ''}.${shipping}`,
+    `${lead}${range ? `, priced ${range}` : ''}.`,
+  ]);
 
   return {
     title,
@@ -70,7 +76,7 @@ export default async function CategoryPage({ params }: Params) {
   if (!category) notFound();
   const copy = copyFor(category.slug, category.name, category.description);
 
-  const posts = await getBlogPosts();
+  const [posts, usDelivery] = await Promise.all([getBlogPosts(), getUsDelivery()]);
   const articles = copy.articles
     .map((slug) => posts.find((p) => p.slug === slug))
     .filter((p): p is NonNullable<typeof p> => !!p)
@@ -89,7 +95,7 @@ export default async function CategoryPage({ params }: Params) {
           .slice(0, 12)
       : category.products;
 
-  const faq = categoryFaq(category, copy);
+  const faq = categoryFaq(category, copy, { usDelivery });
   const url = `${SITE.url}${category.path}`;
 
   const schema = [
@@ -137,7 +143,7 @@ export default async function CategoryPage({ params }: Params) {
       <CollectionBreadcrumb trail={[{ name: 'Shop', href: '/shop' }, { name: category.name }]} />
 
       <CollectionHeader
-        heading={copy.heading}
+        heading={`${copy.heading} for sale`}
         intro={copy.intro}
         facts={category.facts}
         compounds={category.groups.length || undefined}

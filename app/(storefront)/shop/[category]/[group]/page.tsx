@@ -1,18 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { cache } from 'react';
 import { getBlogPosts, toSummary } from '@/lib/db/catalogue';
 import {
   getCategoryCollections,
   getGroupCollection,
   pricesByStrength,
-  shortStrength,
-  type CollectionFacts,
 } from '@/lib/db/collections';
-import { formatEstimate, zoneForCountry } from '@/lib/delivery';
+import { commonStrengths, fitDescription, getUsDelivery, shortRange, titleFor, usShippingLine } from '@/lib/catalogue/seo';
 import { CATEGORY_COPY, GROUP_COPY, type CategoryCopy } from '@/lib/catalogue/collection-copy';
-import { groupFaq, type UsDeliveryOption } from '@/lib/catalogue/collection-faq';
+import { groupFaq } from '@/lib/catalogue/collection-faq';
 import { formatPriceShort } from '@/lib/format';
 import { SITE } from '@/lib/site';
 import { ProductGrid } from '@/components/product/product-grid';
@@ -50,46 +47,6 @@ function copyFor(slug: string, name: string): CategoryCopy {
   return CATEGORY_COPY[slug] ?? { heading: name, intro: [], articles: [] };
 }
 
-/** "Oral Winstrol (Stanozolol)": the compound with its route, where the category has one. */
-function titleFor(groupName: string, categorySlug: string): string {
-  const qualifier = CATEGORY_COPY[categorySlug]?.qualifier;
-  return qualifier ? `${qualifier} ${groupName}` : groupName;
-}
-
-function shortRange(facts: CollectionFacts): string | null {
-  if (facts.priceFrom === null || facts.priceTo === null) return null;
-  return facts.priceFrom === facts.priceTo
-    ? formatPriceShort(facts.priceFrom)
-    : `${formatPriceShort(facts.priceFrom)}–${formatPriceShort(facts.priceTo)}`;
-}
-
-/** "10 mg, 50 mg and 25 mg": the commonest strengths, without the "per tablet" the title already implies. */
-function commonStrengths(facts: CollectionFacts, max = 3): string {
-  const short = Array.from(new Set(facts.strengths.map(shortStrength))).slice(0, max);
-  if (short.length <= 1) return short.join('');
-  return `${short.slice(0, -1).join(', ')} and ${short[short.length - 1]}`;
-}
-
-/*
-  Delivery options to the United States, read from the delivery zones the admin edits — so the
-  page says "we ship to the USA" only while a zone actually covers it. Wrapped in React's cache so
-  the metadata and the page share one read, and failing soft: an unreachable database drops the
-  shipping line from the page, it does not take the page down.
-*/
-const getUsDelivery = cache(async (): Promise<UsDeliveryOption[] | null> => {
-  try {
-    const zone = await zoneForCountry('US');
-    if (!zone) return null;
-    const options = zone.rates
-      .filter((r) => r.active)
-      .map((r) => ({ name: r.name, price: r.price, freeOver: r.freeOverSubtotal, estimate: formatEstimate(r) }))
-      .sort((a, b) => a.price - b.price);
-    return options.length > 0 ? options : null;
-  } catch {
-    return null;
-  }
-});
-
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const found = await getGroupCollection(params.category, params.group);
   if (!found) return { title: 'Not found' };
@@ -111,13 +68,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       ? `${heading} by ${f.manufacturers[0].name} for sale`
       : `${heading} for sale: ${f.listings} listings from ${f.manufacturers.length} manufacturers`;
   const detail = [strengths ? `in ${strengths}` : '', range ? `priced ${range}` : ''].filter(Boolean).join(', ');
-  const shipping = usDelivery ? ` Tracked US shipping from ${formatPriceShort(usDelivery[0].price)}.` : '';
+  const shipping = usShippingLine(usDelivery);
   const candidates = [
     `${lead}${detail ? ` ${detail}` : ''}.${shipping}`,
     `${lead}${range ? `, priced ${range}` : ''}.${shipping}`,
     `${lead}${range ? `, priced ${range}` : ''}.`,
   ];
-  const description = (candidates.find((c) => c.length <= 160) ?? candidates[candidates.length - 1]).slice(0, 160);
+  const description = fitDescription(candidates);
 
   return {
     title,
