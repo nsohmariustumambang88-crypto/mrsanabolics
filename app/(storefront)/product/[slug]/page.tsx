@@ -53,7 +53,7 @@ export async function generateStaticParams() {
 }
 
 /* Re-read at most once a minute; see the note in app/layout.tsx. */
-export const revalidate = 60;
+export const revalidate = 3600;
 
 function spec(product: Product, label: string): string | undefined {
   return product.specifications.find((s) => s.label === label)?.value?.trim() || undefined;

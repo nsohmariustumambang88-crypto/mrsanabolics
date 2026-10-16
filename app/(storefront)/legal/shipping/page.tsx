@@ -10,7 +10,7 @@ import { getSettingsSafe } from '@/lib/settings';
   checkout quotes from, so the page and the till cannot disagree. They used to be typed in here.
 */
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 const PATH = '/legal/shipping';
 const TITLE = 'Shipping Policy: Tracked Delivery Rates and Times';

@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title, description, alternates: { canonical: '/brands' }, openGraph: { type: 'website', url: `${SITE.url}/brands`, title, description } };
 }
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 export default async function BrandsPage() {
   const brands = await getBrands();

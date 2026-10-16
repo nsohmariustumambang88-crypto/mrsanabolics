@@ -4,7 +4,7 @@ import { getSettingsSafe } from '@/lib/settings';
 
 /* The policy text is unchanged; only the frame around it, the metadata and the contact address are new. */
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 const PATH = '/legal/privacy';
 const TITLE = 'Privacy Policy: How We Handle Your Data';

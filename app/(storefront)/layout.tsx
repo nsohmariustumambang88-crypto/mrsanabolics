@@ -27,8 +27,12 @@ import { getSettingsSafe, asBoolean, asNumber } from '@/lib/settings';
   beside it rather than inside it.
 */
 
-/* Re-read at most once a minute; see lib/db/catalogue.ts for why this is memoised. */
-export const revalidate = 60;
+/*
+  Regenerated at most once an hour: every regeneration counts against Vercel's ISR write
+  allowance, and at once a minute the Hobby plan ran out. Admin edits refresh their own pages
+  through revalidatePath, so price and stock changes still appear at once.
+*/
+export const revalidate = 3600;
 
 export default async function StorefrontLayout({
   children,

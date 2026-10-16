@@ -43,7 +43,7 @@ export const metadata: Metadata = {
 */
 
 /* Re-read at most once a minute; see the note in app/layout.tsx. */
-export const revalidate = 60;
+export const revalidate = 3600;
 
 export default async function Home() {
   const [products, categories, posts, testimonials] = await Promise.all([

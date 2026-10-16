@@ -103,11 +103,12 @@ const directionContract = `
 /*
   Revalidate rather than freeze.
 
-  The catalogue is read from Neon at build time and re-read at most once a minute, so an edit
-  in the database reaches the site without a redeploy while pages still serve as static HTML.
+  The catalogue is read from the database at build time and regenerated at most once an hour, so
+  an edit reaches the site without a redeploy while pages still serve as static HTML. Admin edits
+  refresh their own pages immediately through revalidatePath.
   For per-request freshness instead, swap this for `export const dynamic = 'force-dynamic'`.
 */
-export const revalidate = 60;
+export const revalidate = 3600;
 
 /*
   The document shell, and nothing else.
