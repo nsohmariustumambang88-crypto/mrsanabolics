@@ -21,6 +21,8 @@ import {
 } from '@/components/checkout/use-checkout-quotes';
 import { CONSENT } from '@/lib/marketing/consent';
 import { cn } from '@/lib/utils';
+import type { AdvertisedDiscount } from '@/lib/types';
+import { MINIMUM_ORDER } from '@/lib/orders/minimum';
 import { submitCheckout, type CheckoutSubmitInput } from '@/app/checkout/checkout-actions';
 
 /*
@@ -32,8 +34,10 @@ import { submitCheckout, type CheckoutSubmitInput } from '@/app/checkout/checkou
 */
 
 const STEPS = ['Shipping', 'Review', 'Payment', 'Done'] as const;
-const FREE_SHIPPING_AT = 250;
-const SHIPPING_FLAT = 14;
+/* Shown only until a country is chosen; then the zone's own rate replaces it. Set to the US
+   standard rate (the usual case) so the first total shown is the likeliest real one. */
+const FREE_SHIPPING_AT = 150;
+const SHIPPING_FLAT = 9;
 
 export type CheckoutPaymentMethod = {
   key: string;
@@ -43,9 +47,12 @@ export type CheckoutPaymentMethod = {
 
 export function CheckoutFlow({
   paymentMethods,
+  promo = null,
 }: {
   /** Enabled methods, in order, read from the database by the server page above. */
   paymentMethods: CheckoutPaymentMethod[];
+  /** The live promotion, if any (`advertisedDiscount`). Shows the one-tick checkbox. */
+  promo?: AdvertisedDiscount | null;
 }) {
   const { cart, cartSubtotal, clearCart, cartCount } = useStore();
 
@@ -87,7 +94,6 @@ export function CheckoutFlow({
   */
   const [country, setCountry] = React.useState('');
   const delivery = useDeliveryQuote(country, cartSubtotal);
-  const discount = useDiscountCode(cartSubtotal);
 
   const chosenRate =
     delivery.options.find((o) => o.rateId === delivery.selectedId) ?? delivery.options[0] ?? null;
@@ -98,12 +104,37 @@ export function CheckoutFlow({
       ? 0
       : SHIPPING_FLAT;
 
+  /* A code comes off products AND shipping, so the quote needs both. */
+  const discount = useDiscountCode(cartSubtotal, shippingBase);
+
   /* A free-shipping code zeroes the carriage, not the goods. */
   const shipping = discount.applied?.freeShipping ? 0 : shippingBase;
-  const discountAmount = Math.min(discount.applied?.amount ?? 0, cartSubtotal);
+  const discountAmount = Math.min(discount.applied?.amount ?? 0, cartSubtotal + shipping);
 
-  const taxable = Math.max(0, cartSubtotal - discountAmount);
-  const total = taxable + shipping;
+  /* The same sum createOrder writes: products + shipping − discount. */
+  const total = Math.max(0, cartSubtotal + shipping - discountAmount);
+
+  /*
+    The promotion checkbox. Shown while the code is live (the end date is re-checked here, as
+    the page may have been open a while). Ticked means "apply this code": it goes through the
+    same server check as a typed code, so the total shown is the total charged.
+  */
+  const promoLive = Boolean(
+    promo && (!promo.endsAt || new Date(promo.endsAt).getTime() > Date.now())
+  );
+  const [promoTicked, setPromoTicked] = React.useState(false);
+  const togglePromo = (checked: boolean) => {
+    if (!promo) return;
+    setPromoTicked(checked);
+    if (checked) void discount.apply(promo.code);
+    else discount.clear();
+  };
+  /* Removing the code by hand, or applying a different one, unticks the box. */
+  React.useEffect(() => {
+    if (promoTicked && promo && !discount.checking && discount.code.toUpperCase() !== promo.code.toUpperCase()) {
+      setPromoTicked(false);
+    }
+  }, [promoTicked, promo, discount.code, discount.checking]);
 
   const next = () => {
     /*
@@ -133,7 +164,8 @@ export function CheckoutFlow({
       postcode: shippingPost,
     },
     shippingMethod: chosenRate?.name,
-    discountCode: discount.code,
+    /* Only a code the server accepted for this basket; a half-typed one is not sent. */
+    discountCode: discount.applied?.code,
     paymentMethod,
   });
 
@@ -572,6 +604,18 @@ export function CheckoutFlow({
                 <dt className="text-ink-soft">Subtotal</dt>
                 <dd className="tabular">{formatPrice(cartSubtotal)}</dd>
               </div>
+              <div className="flex justify-between">
+                <dt className="text-ink-soft">
+                  Shipping
+                  {chosenRate && (
+                    <span className="ml-1.5 text-xs text-ink-faint">{chosenRate.name}</span>
+                  )}
+                </dt>
+                <dd className={cn('tabular', shipping === 0 && 'text-pigment-verdigris')}>
+                  {shipping === 0 ? 'Free' : formatPrice(shipping)}
+                </dd>
+              </div>
+              {/* After shipping, because the code is struck on products and shipping together. */}
               {discountAmount > 0 && discount.applied && (
                 <div className="flex justify-between">
                   <dt className="text-ink-soft">
@@ -585,17 +629,6 @@ export function CheckoutFlow({
                   </dd>
                 </div>
               )}
-              <div className="flex justify-between">
-                <dt className="text-ink-soft">
-                  Shipping
-                  {chosenRate && (
-                    <span className="ml-1.5 text-xs text-ink-faint">{chosenRate.name}</span>
-                  )}
-                </dt>
-                <dd className={cn('tabular', shipping === 0 && 'text-pigment-verdigris')}>
-                  {shipping === 0 ? 'Free' : formatPrice(shipping)}
-                </dd>
-              </div>
               <div className="flex items-baseline justify-between border-t border-rule pt-4">
                 <dt className="font-medium">Total</dt>
                 <dd className="font-display text-xl font-semibold tabular">
@@ -603,6 +636,36 @@ export function CheckoutFlow({
                 </dd>
               </div>
             </dl>
+
+            {cartCount > 0 && total < MINIMUM_ORDER && (
+              <p role="status" className="mt-3 text-xs leading-relaxed text-pigment-madder">
+                The minimum order is {formatPrice(MINIMUM_ORDER)}, including shipping and after
+                any discount. Add {formatPrice(MINIMUM_ORDER - total)} more to place this order.
+              </p>
+            )}
+
+            {promo && promoLive && (
+              <label className="mt-6 flex cursor-pointer items-start gap-3 border border-rule bg-paper-sunk px-3 py-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={promoTicked}
+                  onChange={(e) => togglePromo(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-pigment-indigo"
+                />
+                <span>
+                  <span className="font-medium">
+                    Apply {promo.headline.replace(/ off$/, '')} discount ({promo.code})
+                  </span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-ink-soft">
+                    {promo.includesShipping
+                      ? 'Off your order total including shipping. '
+                      : 'Off your products. '}
+                    Your total after discount must be{' '}
+                    {formatPrice(MINIMUM_ORDER)} or more.
+                  </span>
+                </span>
+              </label>
+            )}
 
             {/*
               The code is checked by the server, never in the browser. The message it returns

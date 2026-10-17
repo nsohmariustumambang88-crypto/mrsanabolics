@@ -98,6 +98,8 @@ export async function submitCheckout(
       shippingCost: rate.price,
       shippingMethod: rate.name,
       discountCode: input.discountCode,
+      /* The shopper was shown this code applied; never charge them more than that silently. */
+      requireDiscount: Boolean(input.discountCode),
       notes: notes || null,
     });
 

@@ -181,4 +181,8 @@ export type AdvertisedDiscount = {
   condition: string;
   /** ISO timestamp, or null when the code has no end date. */
   endsAt: string | null;
+  /** True when the code is not limited to a category, so "everything" is a true word. */
+  sitewide: boolean;
+  /** True when the code also comes off shipping, so the popup may say "including shipping". */
+  includesShipping: boolean;
 };

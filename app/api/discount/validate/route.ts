@@ -71,6 +71,7 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as {
     code?: unknown;
     subtotal?: unknown;
+    shipping?: unknown;
   } | null;
 
   const code = typeof body?.code === 'string' ? body.code : '';
@@ -109,15 +110,26 @@ export async function POST(request: Request) {
     caller supplied is not a limit — it would be checked against whoever they claimed to be.
     That check happens where the identity is known: when the order is recorded.
   */
-  const result = await evaluateDiscount({ code, subtotal: subtotalRaw });
+  /*
+    Shipping is taken from the request for the QUOTE only — it is the rate the checkout was
+    itself quoted by /api/delivery/quote. When the order is placed, createOrder re-evaluates the
+    code against the shipping the server worked out, so an edited number here buys nothing.
+  */
+  const shippingRaw = typeof body?.shipping === 'number' ? body.shipping : 0;
+  const shipping = Number.isFinite(shippingRaw) && shippingRaw > 0 ? shippingRaw : 0;
+
+  const result = await evaluateDiscount({ code, subtotal: subtotalRaw, shipping });
 
   if (!result.ok) {
-    return reply({
-      valid: false,
-      amount: 0,
-      freeShipping: false,
-      message: reasonMessage(result.reason),
-    });
+    /*
+      The minimum is stated because the shopper needs it to act, and it reveals nothing new:
+      "below the minimum" already tells them the code exists.
+    */
+    const message =
+      result.reason === 'below-minimum' && result.minimum !== undefined
+        ? `This code needs ${formatPrice(result.minimum)} or more of products in your basket, before shipping.`
+        : reasonMessage(result.reason);
+    return reply({ valid: false, amount: 0, freeShipping: false, message });
   }
 
   const message = result.freeShipping

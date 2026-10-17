@@ -105,82 +105,132 @@ type DiscountState = {
   applied: AppliedDiscount | null;
   message: string | null;
   checking: boolean;
-  apply: () => Promise<void>;
+  /**
+   * Check a code with the server. With `override` (the promotion checkbox) that code is used
+   * instead of whatever is typed, and it is kept applied as the basket or shipping changes.
+   */
+  apply: (override?: string) => Promise<void>;
   clear: () => void;
 };
 
-export function useDiscountCode(subtotal: number): DiscountState {
+/**
+ * A discount quote for this basket.
+ *
+ * `shipping` is passed because a code now comes off the order total INCLUDING shipping, and
+ * the server refuses a code that would take the total under the shop minimum. Both are the
+ * server's decisions; this hook only holds the answer.
+ */
+export function useDiscountCode(subtotal: number, shipping: number): DiscountState {
   const [code, setCode] = React.useState('');
   const [applied, setApplied] = React.useState<AppliedDiscount | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
   const [checking, setChecking] = React.useState(false);
 
-  const apply = React.useCallback(async () => {
-    const trimmed = code.trim();
-    if (!trimmed) return;
+  /* Set when the checkbox applied the code: then a changed basket re-checks it rather than
+     dropping it, so the total on screen is always the total that will be charged. */
+  const auto = React.useRef<string | null>(null);
+  /* Only the newest answer counts; an older reply arriving late must not overwrite it. */
+  const latest = React.useRef(0);
+  /* The basket (subtotal|shipping) the current quote was made for. */
+  const quotedFor = React.useRef<string | null>(null);
+  const basketKey = `${subtotal}|${shipping}`;
 
-    setChecking(true);
-    setMessage(null);
-    try {
-      const response = await fetch('/api/discount/validate', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ code: trimmed, subtotal }),
-      });
-      const data = (await response.json()) as {
-        valid?: boolean;
-        amount?: number;
-        freeShipping?: boolean;
-        message?: string;
-      };
+  const check = React.useCallback(
+    async (raw: string) => {
+      const trimmed = raw.trim();
+      if (!trimmed) return;
 
-      if (data.valid) {
-        setApplied({
-          code: trimmed.toUpperCase(),
-          amount: Number(data.amount) || 0,
-          freeShipping: Boolean(data.freeShipping),
+      const ticket = ++latest.current;
+      setChecking(true);
+      setMessage(null);
+      try {
+        const response = await fetch('/api/discount/validate', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ code: trimmed, subtotal, shipping }),
         });
-        setMessage(null);
-      } else {
+        const data = (await response.json()) as {
+          valid?: boolean;
+          amount?: number;
+          freeShipping?: boolean;
+          message?: string;
+        };
+        if (ticket !== latest.current) return;
+
+        if (data.valid) {
+          setApplied({
+            code: trimmed.toUpperCase(),
+            amount: Number(data.amount) || 0,
+            freeShipping: Boolean(data.freeShipping),
+          });
+          setMessage(null);
+        } else {
+          setApplied(null);
+          /*
+            Whatever the server says, verbatim. It deliberately gives the same sentence for a
+            code that does not exist and one that has expired — distinguishing them turns this
+            box into a way to enumerate live codes.
+          */
+          setMessage(data.message ?? 'That code is not valid.');
+        }
+      } catch {
+        if (ticket !== latest.current) return;
         setApplied(null);
-        /*
-          Whatever the server says, verbatim. It deliberately gives the same sentence for a
-          code that does not exist and one that has expired — distinguishing them turns this
-          box into a way to enumerate live codes.
-        */
-        setMessage(data.message ?? 'That code is not valid.');
+        setMessage('That code could not be checked just now. Try again in a moment.');
+      } finally {
+        if (ticket === latest.current) setChecking(false);
       }
-    } catch {
-      setApplied(null);
-      setMessage('That code could not be checked just now. Try again in a moment.');
-    } finally {
-      setChecking(false);
-    }
-  }, [code, subtotal]);
+    },
+    [subtotal, shipping]
+  );
+
+  const apply = React.useCallback(
+    async (override?: string) => {
+      if (override) {
+        auto.current = override;
+        setCode(override);
+      } else {
+        auto.current = null;
+      }
+      quotedFor.current = basketKey;
+      await check(override ?? code);
+    },
+    [check, code, basketKey]
+  );
 
   /*
-    A basket that changes after a code was accepted invalidates the quote — the amount is a
-    function of the subtotal, and a percentage struck on a bigger basket is not the discount
-    that was granted. Rather than silently recompute, drop it and make them apply it again.
+    A basket or shipping change after a code was accepted invalidates the quote — the amount is
+    a function of both. A code the shopper typed is dropped and must be applied again; the
+    promotion's checkbox code is simply re-checked against the new total.
   */
-  const appliedAt = React.useRef<number | null>(null);
   React.useEffect(() => {
+    if (auto.current) {
+      if (quotedFor.current !== basketKey) {
+        quotedFor.current = basketKey;
+        void check(auto.current);
+      }
+      return;
+    }
     if (!applied) {
-      appliedAt.current = null;
+      quotedFor.current = null;
       return;
     }
-    if (appliedAt.current === null) {
-      appliedAt.current = subtotal;
+    if (quotedFor.current === null) {
+      quotedFor.current = basketKey;
       return;
     }
-    if (appliedAt.current !== subtotal) {
-      appliedAt.current = null;
+    if (quotedFor.current !== basketKey) {
+      quotedFor.current = null;
       setApplied(null);
       setMessage('Your basket changed, so the code needs applying again.');
     }
-  }, [subtotal, applied]);
+  }, [basketKey, applied, check]);
 
   const clear = React.useCallback(() => {
+    auto.current = null;
+    quotedFor.current = null;
+    latest.current++;
+    setChecking(false);
     setApplied(null);
     setMessage(null);
     setCode('');

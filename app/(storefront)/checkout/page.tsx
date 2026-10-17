@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { CheckoutFlow } from '@/components/checkout/checkout-flow';
+import { getSettingsSafe } from '@/lib/settings';
+import { advertisedDiscount, promotedCode } from '@/lib/discounts';
 
 /*
   Checkout.
@@ -51,5 +53,14 @@ export default async function CheckoutPage() {
         },
       ];
 
-  return <CheckoutFlow paymentMethods={paymentMethods} />;
+  /*
+    The promotion checkbox appears only for the code named in `hero_promo_code`, and only while
+    `advertisedDiscount` says it is live. Ticking it still goes through /api/discount/validate,
+    so the server decides the amount exactly as it does for a typed code.
+  */
+  const settings = await getSettingsSafe();
+  const promoCode = promotedCode(settings.hero_promo_code);
+  const promo = promoCode ? await advertisedDiscount(promoCode) : null;
+
+  return <CheckoutFlow paymentMethods={paymentMethods} promo={promo} />;
 }

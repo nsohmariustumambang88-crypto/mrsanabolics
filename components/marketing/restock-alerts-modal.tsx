@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { useSubscribe } from './use-subscribe';
 import { CONSENT } from '@/lib/marketing/consent';
 import { BullMark } from '@/components/brand/bull-mark';
+import { claimPopupSlot, popupSlotFree } from './popup-slot';
 
 export function RestockAlertsModal() {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -24,8 +25,9 @@ export function RestockAlertsModal() {
     }
 
     /* Show modal initially after 1 second */
+    /* Stand down when another popup (the promotion) already has this visit. */
     const initialTimer = setTimeout(() => {
-      setIsOpen(true);
+      if (claimPopupSlot('restock')) setIsOpen(true);
     }, 1000);
 
     return () => clearTimeout(initialTimer);
@@ -35,7 +37,7 @@ export function RestockAlertsModal() {
     setIsOpen(false);
     /* Show again in 10 seconds if not subscribed */
     setTimeout(() => {
-      if (!done && !sessionStorage.getItem('restock-alerts-subscribed')) {
+      if (!done && !sessionStorage.getItem('restock-alerts-subscribed') && popupSlotFree('restock')) {
         setIsOpen(true);
       }
     }, 10000);

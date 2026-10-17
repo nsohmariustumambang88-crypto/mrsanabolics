@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { X, Check } from 'lucide-react';
 import { useSubscribe } from '@/components/marketing/use-subscribe';
 import { CONSENT } from '@/lib/marketing/consent';
+import { claimPopupSlot } from './popup-slot';
 
 /*
   The last ask before someone leaves.
@@ -65,7 +66,8 @@ export function ExitCapture() {
     const show = () => {
       if (fired) return;
       fired = true;
-      setOpen(true);
+      /* One popup per visit: if the promotion or restock card had it, stay closed. */
+      if (claimPopupSlot('exit')) setOpen(true);
     };
 
     /* Pointer devices: the cursor leaving through the top of the window. */

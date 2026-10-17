@@ -3,6 +3,7 @@ import 'server-only';
 import type { Discount } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { formatPrice } from '@/lib/format';
+import { MINIMUM_ORDER } from '@/lib/orders/minimum';
 import type { AdvertisedDiscount } from '@/lib/types';
 
 /*
@@ -45,12 +46,27 @@ export type DiscountRefusal =
   | 'expired'
   | 'not-started'
   | 'below-minimum'
+  /** The total after the discount (shipping included) would be under the shop minimum. */
+  | 'below-order-minimum'
   | 'usage-limit-reached'
   | 'per-contact-limit-reached';
 
 export type DiscountEvaluation =
   | { ok: true; discount: Discount; amount: number; freeShipping: boolean }
-  | { ok: false; reason: DiscountRefusal };
+  /** `minimum` is set for `below-minimum` and `below-order-minimum`, so the shopper can be told the amount. */
+  | { ok: false; reason: DiscountRefusal; minimum?: number };
+
+/*
+  Codes whose percentage or fixed amount also comes off the shipping. The owner set this for the
+  BLACK15 promotion only; WELCOME15 and every other code stay products-only. A list in code rather
+  than a column, so the promotion needed no schema change; move it to the Discount row if staff
+  need to set it themselves.
+*/
+const SHIPPING_INCLUSIVE_CODES = new Set(['BLACK15']);
+
+export function coversShipping(code: string): boolean {
+  return SHIPPING_INCLUSIVE_CODES.has(code.trim().toUpperCase());
+}
 
 export type EvaluateDiscountInput = {
   code: string;
@@ -62,6 +78,12 @@ export type EvaluateDiscountInput = {
    * see the basket and deliberately does not guess at it.
    */
   subtotal: number;
+  /**
+   * The shipping charge on this order. A code in SHIPPING_INCLUSIVE_CODES comes off the order
+   * total INCLUDING shipping; every other code comes off the products only. Either way the total
+   * after the discount must still reach MINIMUM_ORDER. `minSubtotal` is measured on products alone.
+   */
+  shipping?: number;
   /** Optional. Without it, `perContactLimit` cannot be checked and is not pretended to be. */
   contactId?: string | null;
 };
@@ -111,7 +133,7 @@ export async function evaluateDiscount(
     Number.isFinite(input.subtotal) && input.subtotal > 0 ? round2(input.subtotal) : 0;
 
   if (discount.minSubtotal !== null && subtotal < Number(discount.minSubtotal)) {
-    return { ok: false, reason: 'below-minimum' };
+    return { ok: false, reason: 'below-minimum', minimum: Number(discount.minSubtotal) };
   }
 
   if (discount.usageLimit !== null && discount.usageCount >= discount.usageLimit) {
@@ -127,26 +149,44 @@ export async function evaluateDiscount(
     }
   }
 
+  const shipping =
+    Number.isFinite(input.shipping) && (input.shipping as number) > 0
+      ? round2(input.shipping as number)
+      : 0;
+  /* What the code is struck on: products plus shipping for the codes that cover shipping,
+     products alone for every other code. */
+  const base = coversShipping(discount.code) ? round2(subtotal + shipping) : subtotal;
+
   const value = Number(discount.value);
   let amount = 0;
   let freeShipping = false;
 
   switch (discount.type) {
     case 'PERCENTAGE':
-      /* Capped at the subtotal. A 120% code is refused at the door by validation, but a cap
+      /* Capped at the total. A 120% code is refused at the door by validation, but a cap
          here means even a row written by hand cannot produce a negative total. */
-      amount = Math.min(round2((subtotal * value) / 100), subtotal);
+      amount = Math.min(round2((base * value) / 100), base);
       break;
     case 'FIXED':
-      /* Same reasoning: $50 off a $20 basket is $20 off, never $30 handed back. */
-      amount = Math.min(round2(value), subtotal);
+      /* Same reasoning: $50 off a $20 order is $20 off, never $30 handed back. */
+      amount = Math.min(round2(value), base);
       break;
     case 'FREE_SHIPPING':
-      /* Worth nothing against the subtotal — the saving is on the shipping line, which this
-         function does not see. The caller zeroes the delivery charge. */
+      /* The saving is the shipping line. The caller zeroes the delivery charge; `amount`
+         stays 0 so the shipping saving is not counted twice. */
       amount = 0;
       freeShipping = true;
       break;
+  }
+
+  /*
+    The shop minimum is on the amount payable, so a code that would take the order under it is
+    refused rather than applied: "Your total after discount must be $100 or more" is something a
+    shopper can act on, where an order refused at the last step is not.
+  */
+  const payable = round2(subtotal + shipping - amount - (freeShipping ? shipping : 0));
+  if (payable < MINIMUM_ORDER) {
+    return { ok: false, reason: 'below-order-minimum', minimum: MINIMUM_ORDER };
   }
 
   return { ok: true, discount, amount: round2(amount), freeShipping };
@@ -225,6 +265,16 @@ export async function expireDiscountsPastEnd(): Promise<number> {
  * Returns null for any of those, and never throws: a failed read costs the promotion, never the
  * home page.
  */
+/**
+ * The code to promote: the `hero_promo_code` setting. On a development server only,
+ * `PREVIEW_PROMO_CODE` stands in when the setting is blank, so the popup and the checkout
+ * checkbox can be previewed locally without advertising the code on the live site.
+ */
+export function promotedCode(setting: string | undefined): string {
+  if (setting) return setting;
+  return process.env.NODE_ENV === 'development' ? process.env.PREVIEW_PROMO_CODE ?? '' : '';
+}
+
 export async function advertisedDiscount(raw: string): Promise<AdvertisedDiscount | null> {
   const code = normaliseCode(raw ?? '');
   if (!code) return null;
@@ -262,7 +312,8 @@ export async function advertisedDiscount(raw: string): Promise<AdvertisedDiscoun
       if (category) conditions.push(`on ${category.name}`);
     }
     if (discount.minSubtotal !== null) {
-      conditions.push(`on orders over ${formatPrice(Number(discount.minSubtotal))}`);
+      /* "or more", not "over": a basket of exactly the minimum qualifies. */
+      conditions.push(`on orders of ${formatPrice(Number(discount.minSubtotal))} or more`);
     }
 
     return {
@@ -270,6 +321,8 @@ export async function advertisedDiscount(raw: string): Promise<AdvertisedDiscoun
       headline,
       condition: conditions.join(' '),
       endsAt: discount.endsAt ? discount.endsAt.toISOString() : null,
+      sitewide: !discount.categoryId,
+      includesShipping: discount.type !== 'FREE_SHIPPING' && coversShipping(discount.code),
     };
   } catch {
     return null;
@@ -300,6 +353,7 @@ const SHOPPER_MESSAGE: Record<DiscountRefusal, string> = {
   paused: 'That code is not currently being accepted.',
   'not-started': 'That code cannot be used yet.',
   'below-minimum': 'Your basket is below the minimum for that code.',
+  'below-order-minimum': `Your total after discount must be ${formatPrice(MINIMUM_ORDER)} or more.`,
   'usage-limit-reached': 'That code has been fully claimed.',
   'per-contact-limit-reached': 'You have already used that code.',
 };
@@ -315,6 +369,7 @@ export const ADMIN_REASON: Record<DiscountRefusal, string> = {
   paused: 'It is paused.',
   'not-started': 'Its window has not opened yet.',
   'below-minimum': 'The basket is below its minimum.',
+  'below-order-minimum': 'With the code applied, the order would be under the shop minimum.',
   'usage-limit-reached': 'Its usage limit is used up.',
   'per-contact-limit-reached': 'This customer has used it as often as allowed.',
 };

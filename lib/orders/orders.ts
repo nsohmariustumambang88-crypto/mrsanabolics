@@ -2,7 +2,8 @@ import 'server-only';
 
 import type { OrderStatus, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { evaluateDiscount, redeemDiscount } from '@/lib/discounts';
+import { evaluateDiscount, reasonMessage, redeemDiscount } from '@/lib/discounts';
+import { MINIMUM_ORDER } from '@/lib/orders/minimum';
 import { sendOrderConfirmation, sendAdminOrderNotification, sendOrderStatusUpdate } from '@/lib/email/resend';
 
 /*
@@ -102,6 +103,12 @@ export type CreateOrderInput = {
    * an amount — because the only place a discount may be decided is the server.
    */
   discountCode?: string | null;
+  /**
+   * Storefront checkout: the shopper saw this code applied, so if the server now refuses it the
+   * order is NOT placed at a higher price than they were shown — it fails with the reason. The
+   * admin leaves this off: an order taken by phone is recorded at full price instead.
+   */
+  requireDiscount?: boolean;
   notes?: string | null;
   actorEmail?: string | null;
 };
@@ -110,7 +117,7 @@ export type CreateOrderResult =
   | { ok: true; id: string; reference: string }
   | { ok: false; error: string };
 
-export const MINIMUM_ORDER = 150;
+export { MINIMUM_ORDER };
 
 function money(value: Prisma.Decimal | number | string): number {
   return Number(value);
@@ -172,6 +179,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     const evaluated = await evaluateDiscount({
       code: input.discountCode,
       subtotal,
+      /* The code comes off products AND shipping; see evaluateDiscount. */
+      shipping: shippingCost,
       contactId: contact.id,
     });
 
@@ -180,16 +189,23 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       discountTotal = evaluated.amount;
       if (evaluated.freeShipping) shippingCost = 0;
       redeemable = { discountId: evaluated.discount.id, amount: evaluated.amount };
+    } else if (input.requireDiscount) {
+      return { ok: false, error: reasonMessage(evaluated.reason) };
     }
   }
 
-  /* Never below zero, whatever a percentage and a minimum conspire to produce. */
-  const goods = Math.max(0, subtotal - discountTotal);
-  const total = goods + shippingCost;
+  /*
+    `discountTotal` is struck on products plus shipping, so it is taken off the whole. It is the
+    snapshot on the order, and subtotal + shipping − discountTotal = total always holds.
+    Never below zero, whatever a percentage and a minimum conspire to produce.
+  */
+  const total = Math.round(Math.max(0, subtotal + shippingCost - discountTotal) * 100) / 100;
   if (total < MINIMUM_ORDER) {
     return {
       ok: false,
-      error: `The minimum order is $${MINIMUM_ORDER.toFixed(2)}, including shipping and after any discount code. Your order comes to $${total.toFixed(2)}.`,
+      error: discountCode
+        ? `Your total after discount must be $${MINIMUM_ORDER.toFixed(2)} or more. Your order comes to $${total.toFixed(2)}.`
+        : `The minimum order is $${MINIMUM_ORDER.toFixed(2)}, including shipping. Your order comes to $${total.toFixed(2)}.`,
     };
   }
 

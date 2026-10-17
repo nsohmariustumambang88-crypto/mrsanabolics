@@ -7,6 +7,8 @@ import { CartDrawer } from '@/components/cart/cart-drawer';
 import { SearchDialog } from '@/components/search/search-dialog';
 import { ExitCapture } from '@/components/marketing/exit-capture';
 import { RestockAlertsModal } from '@/components/marketing/restock-alerts-modal';
+import { PromoPopup } from '@/components/marketing/promo-popup';
+import { advertisedDiscount, promotedCode } from '@/lib/discounts';
 import { VisitTracker } from '@/components/analytics/visit-tracker';
 import { TelegramWidget } from '@/components/chat/telegram-widget';
 import { WhatsappWidget } from '@/components/chat/whatsapp-widget';
@@ -51,6 +53,13 @@ export default async function StorefrontLayout({
     getSettingsSafe(),
   ]);
 
+  /*
+    The promotion popup announces only the code named in `hero_promo_code`, and only while
+    `advertisedDiscount` says the checkout would accept it. It never throws; null hides the popup.
+  */
+  const promoCode = promotedCode(settings.hero_promo_code);
+  const promo = promoCode ? await advertisedDiscount(promoCode) : null;
+
   return (
     <CatalogueProvider value={{ categories, brands }}>
       <SettingsProvider
@@ -80,6 +89,8 @@ export default async function StorefrontLayout({
 
         <CartDrawer />
         <SearchDialog />
+        {/* Promo first: its effect claims the visit before the other two look. */}
+        <PromoPopup promo={promo} />
         <ExitCapture />
         <RestockAlertsModal />
         <TelegramWidget />
