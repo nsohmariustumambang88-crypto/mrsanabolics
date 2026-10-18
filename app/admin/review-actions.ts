@@ -4,7 +4,13 @@ import { revalidatePath } from 'next/cache';
 import type { ReviewStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
-import { moderateReview, recomputeProductRating } from '@/lib/reviews';
+import {
+  MAX_BODY_LENGTH,
+  MAX_TITLE_LENGTH,
+  MIN_BODY_LENGTH,
+  moderateReview,
+  recomputeProductRating,
+} from '@/lib/reviews';
 import { invalidateCatalogue } from '@/lib/db/catalogue';
 
 /*
@@ -76,6 +82,117 @@ export async function moderateReviewAction(
   if (!result.ok) return fail(result.error);
 
   refreshStorefront(await slugsFor([result.productId]));
+  return { ok: true };
+}
+
+/* -------------------------------------------------------------------- edit */
+
+/*
+  A MODERATION edit: fixing a typo, removing a phone number or a name, masking profanity.
+
+  The headline, the message and the DISPLAYED date (`date`) can change. Rating and author are
+  not editable — changing those is writing a review on the customer's behalf. `createdAt`, the
+  true submission timestamp, is never touched, so a moved date can always be told apart from
+  when the review actually arrived.
+
+  The displayed date is bounded on both sides: not in the future, and not before the product's
+  own `createdAt` — a review cannot predate the listing it is about. Within that window a change
+  is still recorded: the owner has said the team will not backdate reviews, and the record is
+  what makes that checkable.
+
+  The originals are copied into originalTitle/originalBody/originalDate on the FIRST change to
+  each and never overwritten afterwards, so however many times a moderator touches it, what was
+  first published survives. editedAt/editedBy record who is answerable for the current version,
+  and the storefront says the review was edited.
+
+  Status, the rating and reviewCount are untouched: the stars are unchanged, so the aggregate is.
+*/
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+export async function editReviewAction(id: string, form: FormData): Promise<ActionResult> {
+  const who = await admin();
+  if (!who) return fail('Your session has expired. Sign in again.');
+
+  const title = String(form.get('title') ?? '').trim();
+  const body = String(form.get('body') ?? '').trim();
+  const day = String(form.get('date') ?? '').trim();
+
+  /* The same limits a submission is held to (lib/reviews), so an edit cannot produce a review
+     the form would have refused. */
+  if (!title) return fail('The headline cannot be empty.');
+  if (title.length > MAX_TITLE_LENGTH) {
+    return fail(`The headline must be ${MAX_TITLE_LENGTH} characters or fewer.`);
+  }
+  if (body.length < MIN_BODY_LENGTH) {
+    return fail(`The message must be at least ${MIN_BODY_LENGTH} characters.`);
+  }
+  if (body.length > MAX_BODY_LENGTH) {
+    return fail(`The message must be ${MAX_BODY_LENGTH} characters or fewer.`);
+  }
+
+  /* `date` is a Postgres DATE, so compare whole UTC days as YYYY-MM-DD strings. */
+  if (!ISO_DAY.test(day) || Number.isNaN(Date.parse(`${day}T00:00:00Z`))) {
+    return fail('Enter the review date as a full date.');
+  }
+  const existing = await prisma.review.findUnique({
+    where: { id },
+    select: {
+      productId: true,
+      title: true,
+      body: true,
+      date: true,
+      originalTitle: true,
+      originalBody: true,
+      originalDate: true,
+      product: { select: { createdAt: true } },
+    },
+  });
+  if (!existing) return fail('That review no longer exists.');
+
+  const currentDay = existing.date.toISOString().slice(0, 10);
+  const textChanged = existing.title !== title || existing.body !== body;
+  const dateChanged = currentDay !== day;
+
+  /*
+    The bounds apply to a NEW date only. A review already dated before its product's createdAt
+    (rows carried over from the old database, where the product row is newer than the review)
+    must still be fixable for a typo without being forced onto a different date.
+  */
+  if (dateChanged) {
+    const today = new Date().toISOString().slice(0, 10);
+    if (day > today) return fail('The review date cannot be in the future.');
+
+    const listedOn = existing.product.createdAt.toISOString().slice(0, 10);
+    if (day < listedOn) {
+      return fail(
+        `The review date cannot be earlier than ${listedOn}, when this product was listed.`
+      );
+    }
+  }
+
+  /* Saving unchanged fields is not an edit, and must not stamp "Edited" on the storefront. */
+  if (!textChanged && !dateChanged) return { ok: true };
+
+  await prisma.review.update({
+    where: { id },
+    data: {
+      title,
+      body,
+      date: new Date(`${day}T00:00:00Z`),
+      /* Each original is captured the first time THAT field changes, and never again. */
+      ...(textChanged &&
+        existing.originalTitle === null &&
+        existing.originalBody === null && {
+          originalTitle: existing.title,
+          originalBody: existing.body,
+        }),
+      ...(dateChanged && existing.originalDate === null && { originalDate: existing.date }),
+      editedAt: new Date(),
+      editedBy: who.email,
+    },
+  });
+
+  refreshStorefront(await slugsFor([existing.productId]));
   return { ok: true };
 }
 

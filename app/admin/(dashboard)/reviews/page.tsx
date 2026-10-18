@@ -6,6 +6,7 @@ import { asBoolean, getSetting } from '@/lib/settings';
 import { WpStaticNotice, WpSubsubsub } from '@/components/admin/wp-ui';
 import { WpScreenMeta } from '@/components/admin/wp-notice';
 import { ReviewsTable, type ReviewRow } from '@/components/admin/reviews-table';
+import { MAX_BODY_LENGTH, MAX_TITLE_LENGTH, MIN_BODY_LENGTH } from '@/lib/reviews';
 
 /*
   The moderation queue, modelled on wp-admin's Comments screen.
@@ -65,7 +66,7 @@ export default async function AdminReviewsPage({ searchParams }: { searchParams:
       where,
       orderBy: { createdAt: 'desc' },
       take: 200,
-      include: { product: { select: { id: true, name: true, slug: true } } },
+      include: { product: { select: { id: true, name: true, slug: true, createdAt: true } } },
     }),
     Promise.all(TABS.map((t) => prisma.review.count({ where: filterWhere(t.key) }))),
     getSetting('reviews_open'),
@@ -82,6 +83,13 @@ export default async function AdminReviewsPage({ searchParams }: { searchParams:
     createdAt: r.createdAt.toISOString(),
     moderatedAt: r.moderatedAt?.toISOString() ?? null,
     moderatedBy: r.moderatedBy,
+    date: r.date.toISOString().slice(0, 10),
+    originalTitle: r.originalTitle,
+    originalBody: r.originalBody,
+    originalDate: r.originalDate?.toISOString().slice(0, 10) ?? null,
+    productListedOn: r.product.createdAt.toISOString().slice(0, 10),
+    editedAt: r.editedAt?.toISOString() ?? null,
+    editedBy: r.editedBy,
     productId: r.product.id,
     productName: r.product.name,
     productSlug: r.product.slug,
@@ -172,6 +180,7 @@ export default async function AdminReviewsPage({ searchParams }: { searchParams:
 
       <ReviewsTable
         rows={data}
+        limits={{ maxTitle: MAX_TITLE_LENGTH, minBody: MIN_BODY_LENGTH, maxBody: MAX_BODY_LENGTH }}
         emptyHint={
           activeTab === 'pending'
             ? 'No review is waiting on a decision.'

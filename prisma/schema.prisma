@@ -177,6 +177,16 @@ model Review {
   /// SHA-256 of the submitter's IP with the same salt the subscriber table uses.
   ipHash      String?
 
+  /// Moderation edits (typos, personal details, profanity, a wrong displayed date). The
+  /// author's own words — and the displayed `date` — are copied here on the FIRST change to each
+  /// and never overwritten, so what was originally published survives. Rating and author are
+  /// never editable, and `createdAt` (the true submission time) is never touched.
+  originalTitle String?
+  originalBody  String?   @db.Text
+  originalDate  DateTime? @db.Date
+  editedAt      DateTime?
+  editedBy      String?
+
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 

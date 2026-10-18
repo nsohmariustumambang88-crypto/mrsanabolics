@@ -237,6 +237,7 @@ function toProduct(row: ProductRow): Product {
       date: isoDate(r.date),
       title: r.title,
       body: r.body,
+      editedAt: r.editedAt ? r.editedAt.toISOString() : null,
     })),
   };
 }

@@ -36,6 +36,8 @@ export type Product = {
     date: string;
     title: string;
     body: string;
+    /** Set when staff made a moderation edit to the headline or message. */
+    editedAt: string | null;
   }[];
 };
 
