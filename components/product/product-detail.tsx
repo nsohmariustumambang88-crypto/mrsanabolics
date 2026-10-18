@@ -39,15 +39,10 @@ import { referencePrice } from '@/lib/pricing';
 */
 
 function Rating({ value, count }: { value: number; count?: number }) {
-  /* Nothing to rate with yet. Five hollow stars and "0.0" would read as a bad score. Per-review
+  /* Nothing to rate with yet: render nothing. Five hollow stars and "0.0" would read as a bad
+     score, and at the owner's direction there is no "No reviews yet" line either. Per-review
      stars pass no count at all and keep rendering. */
-  if (count === 0) {
-    return (
-      <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
-        No reviews yet
-      </p>
-    );
-  }
+  if (count === 0) return null;
   return (
     <p className="flex items-center gap-2.5">
       <span className="flex gap-0.5" role="img" aria-label={`${value} out of 5`}>
@@ -256,9 +251,11 @@ export function ProductDetail({
               </Link>
             </p>
 
-            <div className="mt-4">
-              <Rating value={product.rating} count={product.reviewCount} />
-            </div>
+            {product.reviewCount > 0 && (
+              <div className="mt-4">
+                <Rating value={product.rating} count={product.reviewCount} />
+              </div>
+            )}
 
             <div className="mt-6 flex items-baseline gap-3">
               <span className="font-display text-3xl font-semibold tabular">
@@ -515,19 +512,13 @@ export function ProductDetail({
       {(product.reviews.length > 0 || reviewsOpen) && (
       <section className="border-b border-rule">
         <div className="mx-auto max-w-[86rem] px-4 py-14 sm:px-6 lg:px-10">
-          <SectionHeading
-            title="Reviews"
-            description={
-              product.reviewCount > 0 ? undefined : 'Nobody has reviewed this compound yet.'
-            }
-          />
+          {/* With no approved reviews the section is the form alone: no "Reviews" heading over
+              nothing and no empty-state sentence, at the owner's direction. */}
+          {product.reviews.length > 0 && (
+          <>
+          <SectionHeading title="Reviews" />
 
-          <div
-            className={cn(
-              'grid gap-px bg-rule md:grid-cols-3',
-              product.reviews.length > 0 && 'mt-8'
-            )}
-          >
+          <div className="mt-8 grid gap-px bg-rule md:grid-cols-3">
             {product.reviews.map((r) => (
               <article key={r.id} className="flex flex-col bg-card p-6">
                 <Rating value={r.rating} />
@@ -535,6 +526,9 @@ export function ProductDetail({
                   {r.title}
                 </h3>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-soft">{r.body}</p>
+                {/* A moderation edit is disclosed, never silent: the words above are not
+                    exactly what the reviewer typed. */}
+                {r.editedAt && <p className="mt-3 text-xs text-ink-faint">Edited by MrAnabolics</p>}
                 <p className="mt-5 border-t border-rule pt-3 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
                   {r.author} · <time dateTime={r.date}>{r.date}</time>
                 </p>
@@ -542,15 +536,15 @@ export function ProductDetail({
             ))}
           </div>
 
-          {product.reviews.length > 0 && (
-            <p className="mt-6 text-xs text-ink-faint">
-              Every review here was submitted through our review form and checked before it was
-              published.
-            </p>
+          <p className="mt-6 text-xs text-ink-faint">
+            Every review here was submitted through our review form and checked before it was
+            published.
+          </p>
+          </>
           )}
 
           {reviewsOpen && (
-            <div className="mt-10 border-t border-rule pt-10">
+            <div className={cn(product.reviews.length > 0 && 'mt-10 border-t border-rule pt-10')}>
               <ReviewForm productId={product.id} productName={product.name} />
             </div>
           )}
