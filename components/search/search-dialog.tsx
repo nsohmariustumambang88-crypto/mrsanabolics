@@ -181,7 +181,10 @@ export function SearchDialog() {
 
   return (
     <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-      <DialogContent className="top-[12%] max-w-xl translate-y-0 gap-0 border-rule bg-paper p-0 shadow-lift-strong">
+      <DialogContent
+        className="top-[12%] max-w-xl translate-y-0 gap-0 border-rule bg-paper p-0 shadow-lift-strong"
+        aria-describedby={undefined}
+      >
         <DialogTitle className="sr-only">Search the site</DialogTitle>
 
         <div className="flex items-center gap-3 border-b border-rule px-4">

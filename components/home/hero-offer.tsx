@@ -63,13 +63,13 @@ const AUTO_ADVANCE_MS = 6000;
 
 export function HeroOffer({
   offers,
-  fallback,
+  featured,
   promoCode,
 }: {
   /** Deals with a real markdown, already ordered by the server. */
   offers: ProductSummary[];
-  /** Shown, without any offer framing, when nothing is on offer. */
-  fallback: ProductSummary | null;
+  /** Rotated, without any offer framing, when nothing has a real markdown. */
+  featured: ProductSummary[];
   promoCode: AdvertisedDiscount | null;
 }) {
   const { addToCart } = useStore();
@@ -86,7 +86,7 @@ export function HeroOffer({
   const [copied, setCopied] = React.useState(false);
 
   const onOffer = offers.length > 0;
-  const list = onOffer ? offers : fallback ? [fallback] : [];
+  const list = onOffer ? offers : featured;
   const product = list.length ? list[index % list.length] : null;
 
   /* A new slide is a new product: its "added" confirmation must not carry over. */
@@ -165,7 +165,7 @@ export function HeroOffer({
   return (
     <section
       aria-roledescription="carousel"
-      aria-label={onOffer ? 'Current offers' : 'Featured product'}
+      aria-label={onOffer ? 'Current offers' : 'Featured products'}
       onKeyDown={onKeyDown}
       onMouseEnter={() => setHeld(true)}
       onMouseLeave={() => setHeld(false)}

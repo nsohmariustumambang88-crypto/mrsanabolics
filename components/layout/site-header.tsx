@@ -311,6 +311,8 @@ export function SiteHeader() {
             <SheetContent
               side="right"
               className="w-full border-rule bg-paper p-0 sm:max-w-md"
+              /* The title says it all; this tells Radix there is no description, not a missing one. */
+              aria-describedby={undefined}
             >
               <SheetHeader className="border-b border-rule px-5 py-4 text-left">
                 <SheetTitle className="font-display text-base">{t.nav.menu}</SheetTitle>

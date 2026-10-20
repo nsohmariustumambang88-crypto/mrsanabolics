@@ -98,9 +98,15 @@ export default async function Home() {
     .slice(0, 6)
     .map(toSummary);
 
-  /* Nothing on offer: the card still shows a real product, framed as nothing more than that. */
-  const fallbackSource = bestSellers[0] ?? products[0];
-  const fallback = fallbackSource ? toSummary(fallbackSource) : null;
+  /*
+    Nothing with a real markdown (the reference prices are switched off — see lib/pricing.ts): the
+    card still rotates, through up to six in-stock products the admin flagged as deals, then best
+    sellers, framed as featured products and nothing more — no "was" price, no percentage.
+  */
+  const featuredPool = [...deals, ...bestSellers].filter(
+    (p, i, all) => p.inStock && Boolean(p.images[0]) && all.findIndex((q) => q.id === p.id) === i
+  );
+  const featured = (featuredPool.length ? featuredPool : products.slice(0, 1)).slice(0, 6).map(toSummary);
 
   /* A code, only if an administrator named one and the checkout would accept it right now. */
   const settings = await getSettingsSafe();
@@ -133,12 +139,12 @@ export default async function Home() {
       {/* Promotional card in separate section with white background */}
       <section className="border-b border-rule bg-paper">
         <div className="mx-auto max-w-[86rem] px-4 py-8 sm:px-6 sm:py-12 lg:px-10 lg:py-16">
-          {offers.length > 0 || fallback ? (
+          {offers.length > 0 || featured.length > 0 ? (
             <div className="rounded-lg border border-rule bg-card">
               <div className="p-4 sm:p-6 lg:p-8">
                 <h2 className="mb-6 font-display text-2xl font-semibold text-ink">Featured Offer</h2>
                 <div className="max-w-sm">
-                  <HeroOffer offers={offers} fallback={fallback} promoCode={promoCode} />
+                  <HeroOffer offers={offers} featured={featured} promoCode={promoCode} />
                 </div>
               </div>
             </div>

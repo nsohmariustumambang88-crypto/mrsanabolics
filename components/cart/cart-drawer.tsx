@@ -85,6 +85,7 @@ export function CartDrawer() {
       <SheetContent
         side="right"
         className="flex w-full flex-col border-rule bg-paper p-0 sm:max-w-md"
+        aria-describedby={undefined}
       >
         <SheetHeader className="border-b border-rule px-5 py-4 text-left">
           <SheetTitle className="flex items-baseline gap-2.5 font-display text-base tracking-[-0.02em]">
