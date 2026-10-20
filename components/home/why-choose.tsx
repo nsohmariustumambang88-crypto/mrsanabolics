@@ -1,6 +1,7 @@
 'use client';
 
 import { SectionHeading } from '@/components/product/section-heading';
+import { useDictionary } from '@/components/i18n/use-locale';
 
 /*
   The chain a batch travels, in order, because the order is the argument.
@@ -18,41 +19,14 @@ import { SectionHeading } from '@/components/product/section-heading';
   claims with nothing behind them, on the busiest page of the site, and they came off at the same
   time as the decorative taglines.
 */
-const stages = [
-  {
-    n: '01',
-    title: 'Check the maker',
-    body: 'Every listing names its manufacturer, and each manufacturer has a page listing everything it makes here.',
-    record: 'Manufacturer named',
-  },
-  {
-    n: '02',
-    title: 'Ask for the certificate',
-    body: 'Ask for the certificate of analysis for the exact batch, and check that the laboratory that issued it is accredited for that test.',
-    record: 'Certificate for the batch',
-  },
-  {
-    n: '03',
-    title: 'Match the batch',
-    body: 'The batch number on the certificate should match the one printed on the pack in your hand. If it does not, the certificate describes a different product.',
-    record: 'Batch numbers match',
-  },
-  {
-    n: '04',
-    title: 'Compare the versions',
-    body: 'Every compound has a page comparing each manufacturer’s version side by side, by strength, form and price.',
-    record: 'Compared by compound',
-  },
-];
-
+/* The four stages' words live in lib/i18n/dictionaries (home.checks), in each language. */
 export function WhyChoose() {
+  const t = useDictionary().home;
+  const stages = t.checks.map((c, i) => ({ ...c, n: String(i + 1).padStart(2, '0') }));
   return (
     <section className="border-b border-rule bg-paper-sunk">
       <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-24">
-        <SectionHeading
-          title="Four checks before you buy"
-          description="What is worth checking before any order, here or anywhere else. Our guide to reading a certificate of analysis goes through each one."
-        />
+        <SectionHeading title={t.checksTitle} description={t.checksBody} />
 
         <ol className="mt-8 border-t border-rule sm:mt-12">
           {stages.map((stage) => (

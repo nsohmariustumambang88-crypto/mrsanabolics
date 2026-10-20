@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { SectionHeading } from '@/components/product/section-heading';
 import { journalDate } from '@/components/journal/journal-date';
 import type { JournalCard } from '@/lib/types';
+import { useDictionary } from '@/components/i18n/use-locale';
 
 /*
   The journal on the home page: the lead article beside the three that follow it.
@@ -17,21 +18,18 @@ import type { JournalCard } from '@/lib/types';
   most useful thing a card can say about an article.
 */
 export function BlogTeaser({ posts }: { posts: JournalCard[] }) {
+  const t = useDictionary().home;
   const lead = posts.find((p) => p.featured) ?? posts[0];
   if (!lead) return null;
   const rest = posts.filter((p) => p !== lead).slice(0, 3);
 
+  /* On a translated page the cards stay in English (the articles are), and the heading says so. */
   return (
     <section className="border-b border-rule">
       <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
-        <SectionHeading
-          title="The journal"
-          description="How to check a certificate, spot a fake, and read the law and the health evidence — every claim linked to its source."
-          href="/blog"
-          hrefLabel="Read everything"
-        />
+        <SectionHeading title={t.journalTitle} description={t.journalBody} href="/blog" hrefLabel={t.journalLink} />
 
-        <div className="mt-8 grid gap-px bg-rule sm:mt-10 lg:grid-cols-2">
+        <div className="mt-8 grid gap-px bg-rule sm:mt-10 lg:grid-cols-2" lang="en">
           <Link
             href={`/blog/${lead.slug}`}
             className="group flex flex-col bg-card transition-colors hover:bg-paper-raised"
@@ -98,6 +96,7 @@ export function BlogTeaser({ posts }: { posts: JournalCard[] }) {
 }
 
 function Meta({ post, className }: { post: JournalCard; className?: string }) {
+  const t = useDictionary().home;
   return (
     <p
       className={`flex flex-wrap gap-x-3 gap-y-1 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint ${
@@ -105,15 +104,15 @@ function Meta({ post, className }: { post: JournalCard; className?: string }) {
       }`}
     >
       <time dateTime={post.updated ?? post.date}>
-        {post.updated && post.updated !== post.date ? 'Updated ' : ''}
+        {post.updated && post.updated !== post.date ? t.updated : ''}
         {journalDate(post.updated ?? post.date, 'short')}
       </time>
       <span aria-hidden="true">·</span>
-      <span>{post.readTime} read</span>
+      <span>{t.readTime(post.readTime)}</span>
       {post.sourceCount > 0 && (
         <>
           <span aria-hidden="true">·</span>
-          <span>{post.sourceCount} sources</span>
+          <span>{t.sources(post.sourceCount)}</span>
         </>
       )}
     </p>

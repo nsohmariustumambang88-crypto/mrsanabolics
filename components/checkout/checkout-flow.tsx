@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Check, ArrowLeft, ArrowRight, Lock, Info, ShoppingBag, Loader2 } from 'lucide-react';
 import { useStore } from '@/components/providers/store-provider';
+import { useCountry } from '@/components/providers/country-provider';
 import { BullMark } from '@/components/brand/bull-mark';
 import Image from 'next/image';
 
@@ -94,6 +95,18 @@ export function CheckoutFlow({
   */
   const [country, setCountry] = React.useState('');
   const delivery = useDeliveryQuote(country, cartSubtotal);
+
+  /*
+    Start from the country picked in the header, once it is known, unless the field already has
+    something in it. Only a starting value: the field stays editable, and the server still quotes
+    delivery from whatever is in it. "Other" names no country, so it fills nothing.
+  */
+  const { country: selectedCountry } = useCountry();
+  React.useEffect(() => {
+    if (selectedCountry && selectedCountry !== 'OTHER') {
+      setCountry((current) => current || selectedCountry);
+    }
+  }, [selectedCountry]);
 
   const chosenRate =
     delivery.options.find((o) => o.rateId === delivery.selectedId) ?? delivery.options[0] ?? null;

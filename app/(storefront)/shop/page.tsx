@@ -8,6 +8,7 @@ import { SITE } from '@/lib/site';
 import { factsFor } from '@/lib/db/collections';
 import { fitDescription, getUsDelivery, shortRange, usShippingLine } from '@/lib/catalogue/seo';
 import { formatPriceShort } from '@/lib/format';
+import { alternatesFor } from '@/lib/i18n/routes';
 
 /* Counts and prices computed from the catalogue, so the snippet stays true as stock changes. */
 export async function generateMetadata(): Promise<Metadata> {
@@ -19,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
     `Injectable and oral steroids, post-cycle, peptides, SARMs and more for sale: ${f.listings} listings from ${f.manufacturers.length} manufacturers${range ? `, priced ${range}` : ''}.${usShippingLine(usDelivery)}`,
     `Steroids, peptides and SARMs for sale: ${f.listings} listings from ${f.manufacturers.length} manufacturers${range ? `, priced ${range}` : ''}.`,
   ]);
-  return { title, description, alternates: { canonical: '/shop' }, openGraph: { type: 'website', url: `${SITE.url}/shop`, title, description } };
+  return { title, description, alternates: alternatesFor('en', '/shop'), openGraph: { type: 'website', url: `${SITE.url}/shop`, title, description } };
 }
 
 export const revalidate = 3600;

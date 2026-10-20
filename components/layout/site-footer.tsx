@@ -6,29 +6,41 @@ import { ArrowRight, Check } from 'lucide-react';
 import { MarbleBath } from '@/components/ebru/marble-bath';
 import { BullMark } from '@/components/brand/bull-mark';
 import { useCategories, useBrands } from '@/components/providers/catalogue-provider';
+import { useLocale } from '@/components/i18n/use-locale';
 import { categoryPigment } from '@/lib/site';
 import { categoryPath } from '@/lib/catalogue/paths';
+import { categoryName, dictionary, type Dictionary } from '@/lib/i18n/dictionaries';
+import { localizedHref } from '@/lib/i18n/routes';
+import type { Locale } from '@/lib/i18n/locales';
+import { DELIVERY_PAGES } from '@/lib/countries';
 
-const shopLinks = [
-  { label: 'All compounds', href: '/shop' },
-  { label: 'Categories', href: '/categories' },
-  { label: 'Brands', href: '/brands' },
-  { label: 'Weekly deals', href: '/shop?filter=deals' },
-];
-
-const readLinks = [
-  { label: 'Journal', href: '/blog' },
-  { label: 'Questions', href: '/faq' },
-  { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' },
-];
-
-const accountLinks = [
-  { label: 'Your account', href: '/account' },
-  { label: 'Orders', href: '/account?tab=orders' },
-  { label: 'Wishlist', href: '/account?tab=wishlist' },
-  { label: 'Sign in', href: '/auth' },
-];
+function linksFor(t: Dictionary, locale: Locale) {
+  return {
+    shop: [
+      { label: t.footer.allCompounds, href: localizedHref(locale, '/shop') },
+      { label: t.footer.categories, href: '/categories' },
+      { label: t.footer.brands, href: '/brands' },
+      { label: t.footer.weeklyDeals, href: localizedHref(locale, '/shop?filter=deals') },
+    ],
+    read: [
+      { label: t.footer.journal, href: '/blog' },
+      { label: t.footer.questions, href: '/faq' },
+      { label: t.footer.about, href: '/about' },
+      { label: t.footer.contact, href: '/contact' },
+    ],
+    account: [
+      { label: t.footer.yourAccount, href: '/account' },
+      { label: t.footer.orders, href: '/account?tab=orders' },
+      { label: t.footer.wishlist, href: '/account?tab=wishlist' },
+      { label: t.footer.signIn, href: '/auth' },
+    ],
+    /* The countries with a delivery page of their own, then every zone on one page. */
+    delivery: [
+      ...DELIVERY_PAGES.map((d) => ({ label: t.country.names[d.code], href: `/delivery/${d.slug}` })),
+      { label: t.footer.allCountries, href: '/delivery' },
+    ],
+  };
+}
 
 function LinkColumn({
   heading,
@@ -58,7 +70,7 @@ function LinkColumn({
   );
 }
 
-function Newsletter() {
+function Newsletter({ t }: { t: Dictionary }) {
   const [email, setEmail] = React.useState('');
   const [sent, setSent] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -66,7 +78,7 @@ function Newsletter() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('That address is missing an @ or a domain.');
+      setError(t.footer.invalidEmail);
       return;
     }
     setError(null);
@@ -76,22 +88,22 @@ function Newsletter() {
   return (
     <div>
       <h3 className="font-mono text-2xs uppercase tracking-[0.18em] text-ink-faint">
-        New batches
+        {t.footer.newBatches}
       </h3>
       <p className="measure-tight mt-4 text-sm leading-relaxed text-ink-soft">
-        One note when a batch is released, with its certificate attached. Nothing else.
+        {t.footer.newsletterBody}
       </p>
 
       {sent ? (
         <p className="mt-4 flex items-center gap-2 text-sm text-pigment-verdigris">
           <Check className="h-4 w-4" strokeWidth={2} />
-          Added. Watch for the next release note.
+          {t.footer.added}
         </p>
       ) : (
         <form onSubmit={submit} className="mt-4" noValidate>
           <div className="flex items-stretch border-b border-rule-strong focus-within:border-pigment-indigo">
             <label htmlFor="footer-email" className="sr-only">
-              Email address
+              {t.footer.emailLabel}
             </label>
             <input
               id="footer-email"
@@ -106,7 +118,7 @@ function Newsletter() {
             <button
               type="submit"
               className="flex items-center px-2 text-ink-soft transition-colors hover:text-pigment-indigo"
-              aria-label="Subscribe"
+              aria-label={t.footer.subscribe}
             >
               <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
             </button>
@@ -125,6 +137,9 @@ function Newsletter() {
 export function SiteFooter() {
   const categories = useCategories();
   const brands = useBrands();
+  const locale = useLocale();
+  const t = dictionary(locale);
+  const links = linksFor(t, locale);
 
   return (
     <footer className="relative mt-24 border-t border-rule bg-paper-sunk">
@@ -140,24 +155,22 @@ export function SiteFooter() {
       </div>
 
       <div className="mx-auto max-w-[86rem] px-4 sm:px-6 lg:px-10">
-        <div className="grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-5 lg:gap-8">
+        <div className="grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-6 lg:gap-8">
           <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center gap-3">
+            <Link href={localizedHref(locale, '/')} className="flex items-center gap-3">
               <BullMark className="w-20 shrink-0" />
               <span className="font-display text-lg font-semibold tracking-[-0.03em]">
                 MrAnabolics
               </span>
             </Link>
             <p className="measure-tight mt-5 text-sm leading-relaxed text-ink-soft">
-              Injectable and oral steroids, post-cycle, peptides and SARMs, grouped by compound
-              so every manufacturer’s version can be compared by strength, form and price
-              before you decide.
+              {t.footer.tagline}
             </p>
             <div className="mt-6 flex flex-wrap gap-1.5">
               {categories.slice(0, 8).map((c) => (
                 <Link
                   key={c.slug}
-                  href={categoryPath(c.slug)}
+                  href={localizedHref(locale, categoryPath(c.slug))}
                   className="group inline-flex items-center gap-1.5 rounded-full border border-rule px-2.5 py-1 text-xs text-ink-soft transition-colors hover:border-pigment-indigo-lift hover:text-ink"
                 >
                   <span
@@ -165,23 +178,24 @@ export function SiteFooter() {
                     style={{ backgroundColor: categoryPigment(c.slug) }}
                     aria-hidden="true"
                   />
-                  {c.name}
+                  {categoryName(locale, c.slug, c.name)}
                 </Link>
               ))}
             </div>
           </div>
 
-          <LinkColumn heading="Shop" links={shopLinks} />
-          <LinkColumn heading="Read" links={readLinks} />
-          <LinkColumn heading="Account" links={accountLinks} />
+          <LinkColumn heading={t.footer.shop} links={links.shop} />
+          <LinkColumn heading={t.footer.read} links={links.read} />
+          <LinkColumn heading={t.footer.account} links={links.account} />
+          <LinkColumn heading={t.footer.delivery} links={links.delivery} />
         </div>
 
         <div className="border-t border-rule py-10">
           <div className="grid gap-10 md:grid-cols-2">
-            <Newsletter />
+            <Newsletter t={t} />
             <div>
               <h3 className="font-mono text-2xs uppercase tracking-[0.18em] text-ink-faint">
-                Manufacturers
+                {t.footer.manufacturers}
               </h3>
               <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5">
                 {brands.map((b) => (
@@ -205,10 +219,10 @@ export function SiteFooter() {
           </p>
           <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-2">
             {[
-              { label: 'Terms', href: '/legal/terms' },
-              { label: 'Privacy', href: '/legal/privacy' },
-              { label: 'Shipping', href: '/legal/shipping' },
-              { label: 'Returns', href: '/legal/returns' },
+              { label: t.footer.terms, href: '/legal/terms' },
+              { label: t.footer.privacy, href: '/legal/privacy' },
+              { label: t.footer.shipping, href: '/legal/shipping' },
+              { label: t.footer.returns, href: '/legal/returns' },
             ].map((l) => (
               <Link
                 key={l.label}

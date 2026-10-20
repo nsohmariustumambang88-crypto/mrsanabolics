@@ -11,6 +11,8 @@ import { useSiteSettings } from '@/components/providers/settings-provider';
 import type { ProductSummary } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { referencePrice } from '@/lib/pricing';
+import { useDictionary } from '@/components/i18n/use-locale';
+import { ApproxPrice } from '@/components/currency/approx-price';
 
 /*
   A product is a sheet lifted out of the bath.
@@ -39,7 +41,17 @@ export function ProductCard({ product }: { product: ProductSummary }) {
   const [added, setAdded] = React.useState(false);
   const wished = isWishlisted(product.id);
   const { lowStockThreshold } = useSiteSettings();
-  const state = stockState(product, lowStockThreshold);
+  const t = useDictionary().card;
+  /* The same three states, worded in the page's language. */
+  const base = stockState(product, lowStockThreshold);
+  const state = {
+    ...base,
+    label: !product.inStock
+      ? t.outOfStock
+      : product.stockCount <= lowStockThreshold
+        ? t.left(product.stockCount)
+        : t.inStock,
+  };
 
   const was = referencePrice(product);
   const discount = was ? Math.round((1 - product.price / was) * 100) : 0;
@@ -85,7 +97,7 @@ export function ProductCard({ product }: { product: ProductSummary }) {
             type="button"
             onClick={handleWishlist}
             aria-pressed={wished}
-            aria-label={wished ? `Remove ${product.name} from wishlist` : `Save ${product.name}`}
+            aria-label={wished ? t.unsave(product.name) : t.save(product.name)}
             className={cn(
               'absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border transition-colors duration-300',
               wished
@@ -129,6 +141,8 @@ export function ProductCard({ product }: { product: ProductSummary }) {
                   </span>
                 )}
               </p>
+              {/* Approximate local price for EUR/GBP/CAD/AUD countries; nothing for USD. */}
+              <ApproxPrice usd={product.price} className="mt-0.5 block text-2xs" />
               <p className={cn('mt-1.5 flex items-center gap-1.5 text-2xs', state.tone)}>
                 <span
                   className="h-1.5 w-1.5 rounded-full"
@@ -146,7 +160,7 @@ export function ProductCard({ product }: { product: ProductSummary }) {
         type="button"
         onClick={handleAdd}
         disabled={!product.inStock}
-        aria-label={`Add ${product.name} to cart`}
+        aria-label={t.addAria(product.name)}
         className={cn(
           'flex items-center justify-center gap-2 border-t border-rule px-3 py-2.5 text-sm font-medium transition-colors duration-300 sm:px-4 sm:py-3',
           !product.inStock
@@ -157,16 +171,16 @@ export function ProductCard({ product }: { product: ProductSummary }) {
         )}
       >
         {!product.inStock ? (
-          'Unavailable'
+          t.unavailable
         ) : added ? (
           <>
             <Check className="h-4 w-4" strokeWidth={2} />
-            In the cart
+            {t.inCart}
           </>
         ) : (
           <>
             <Plus className="h-4 w-4" strokeWidth={1.75} />
-            Add to cart
+            {t.addToCart}
           </>
         )}
       </button>

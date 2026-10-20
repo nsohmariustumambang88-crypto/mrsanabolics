@@ -2,6 +2,9 @@ import type { MetadataRoute } from 'next';
 import { getProducts, getBrands, getBlogPosts } from '@/lib/db/catalogue';
 import { getCategoryCollections } from '@/lib/db/collections';
 import { SITE } from '@/lib/site';
+import { COUNTRY_PAGES } from '@/lib/delivery/country-pages';
+import { TRANSLATED_PATHS } from '@/lib/i18n/routes';
+import { INTL_LOCALES, withLocale } from '@/lib/i18n/locales';
 
 /*
   The sitemap is generated from the database, so a new product is indexed without a code change.
@@ -39,7 +42,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ['/faq', 0.6, 'monthly'],
     ['/about', 0.5, 'monthly'],
     ['/contact', 0.5, 'monthly'],
+    ['/delivery', 0.5, 'monthly'],
+    ...COUNTRY_PAGES.map((c): [string, number, 'monthly'] => [`/delivery/${c.slug}`, 0.6, 'monthly']),
   ];
+
+  /*
+    The translated pages: every English page listed in lib/i18n/routes.ts, under each language.
+    Their hreflang pairs are declared in each page's own <head>, which is where Google reads them.
+  */
+  const translated = TRANSLATED_PATHS.flatMap((path) =>
+    INTL_LOCALES.map((locale) => ({
+      url: `${base}${withLocale(locale, path)}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: path === '/' ? 0.8 : 0.7,
+    }))
+  );
 
   return [
     ...staticPages.map(([path, priority, changeFrequency]) => ({
@@ -48,6 +66,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency,
       priority,
     })),
+    ...translated,
     ...products.map((p) => ({
       url: `${base}/product/${p.slug}`,
       lastModified: now,

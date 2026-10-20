@@ -21,12 +21,14 @@ import { advertisedDiscount } from '@/lib/discounts';
 import { getSettingsSafe } from '@/lib/settings';
 import { SITE } from '@/lib/site';
 import { referencePrice } from '@/lib/pricing';
+import { alternatesFor } from '@/lib/i18n/routes';
 
 export const metadata: Metadata = {
   /* Absolute, so the brand leads on the one page a searcher is most likely to see. */
   title: { absolute: `${SITE.name} — ${SITE.tagline}` },
   description: SITE.description,
-  alternates: { canonical: '/' },
+  /* Canonical to itself, plus hreflang for /es, /fr, /de, /it and x-default. */
+  alternates: alternatesFor('en', '/'),
 };
 
 /*

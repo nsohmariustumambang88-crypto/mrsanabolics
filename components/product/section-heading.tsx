@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDictionary } from '@/components/i18n/use-locale';
 
 /*
   No eyebrow. The heading carries its own weight — a label above it is a crutch the craft
@@ -12,7 +13,7 @@ export function SectionHeading({
   title,
   description,
   href,
-  hrefLabel = 'View all',
+  hrefLabel,
   className,
   align = 'left',
 }: {
@@ -23,6 +24,8 @@ export function SectionHeading({
   className?: string;
   align?: 'left' | 'center';
 }) {
+  /* "View all", in the page's language, unless the caller names the link. */
+  const viewAll = useDictionary().section.viewAll;
   return (
     <div
       className={cn(
@@ -52,7 +55,7 @@ export function SectionHeading({
           href={href}
           className="group inline-flex shrink-0 items-center gap-2 border-b border-rule-strong pb-1 text-sm font-medium text-ink-soft transition-colors hover:border-pigment-indigo hover:text-pigment-indigo"
         >
-          {hrefLabel}
+          {hrefLabel ?? viewAll}
           <ArrowRight
             className="h-4 w-4"
             strokeWidth={1.75}

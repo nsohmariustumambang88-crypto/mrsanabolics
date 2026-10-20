@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { Archivo, Familjen_Grotesk, JetBrains_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
+import { HtmlRoot } from '@/components/i18n/html-root';
 import { SITE } from '@/lib/site';
 
 const archivo = Archivo({
@@ -127,11 +128,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={`${archivo.variable} ${familjen.variable} ${jetbrains.variable}`}
-    >
+    /* <html lang> follows the page's language (/es → es); see components/i18n/html-root.tsx. */
+    <HtmlRoot className={`${archivo.variable} ${familjen.variable} ${jetbrains.variable}`}>
       <body className="font-sans" suppressHydrationWarning>
         <div dangerouslySetInnerHTML={{ __html: `<!--${directionContract}-->` }} />
 
@@ -221,6 +219,6 @@ export default function RootLayout({
           <Analytics />
         </ThemeProvider>
       </body>
-    </html>
+    </HtmlRoot>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { ProductGrid } from '@/components/product/product-grid';
 import {
@@ -12,6 +12,8 @@ import { formatPrice } from '@/lib/format';
 import { categoryPigment } from '@/lib/site';
 import { useSearchLog } from '@/components/analytics/use-search-log';
 import { useCatalogueSearch } from '@/components/shop/use-catalogue-search';
+import { useLocale } from '@/components/i18n/use-locale';
+import { categoryName, dictionary } from '@/lib/i18n/dictionaries';
 import { cn } from '@/lib/utils';
 
 /*
@@ -22,20 +24,10 @@ import { cn } from '@/lib/utils';
 
 type Sort = 'featured' | 'price-asc' | 'price-desc' | 'rating' | 'newest';
 
-const SORTS: { value: Sort; label: string }[] = [
-  { value: 'featured', label: 'Featured' },
-  { value: 'price-asc', label: 'Price, low to high' },
-  { value: 'price-desc', label: 'Price, high to low' },
-  { value: 'rating', label: 'Best rated' },
-  { value: 'newest', label: 'Newest' },
-];
+/* Labels come from the page's language (lib/i18n/dictionaries); these are the values. */
+const SORTS: Sort[] = ['featured', 'price-asc', 'price-desc', 'rating', 'newest'];
 
-const NAMED_FILTERS: { value: string; label: string }[] = [
-  { value: 'best-sellers', label: 'Best sellers' },
-  { value: 'new', label: 'New arrivals' },
-  { value: 'trending', label: 'Trending' },
-  { value: 'deals', label: 'On offer' },
-];
+const NAMED_FILTERS: string[] = ['best-sellers', 'new', 'trending', 'deals'];
 
 /** How many products arrive per request. The rest come on "Show more". */
 const PAGE_SIZE = 24;
@@ -49,6 +41,10 @@ const FALLBACK_CEILING = 500;
 export function ShopBrowser() {
   const router = useRouter();
   const params = useSearchParams();
+  /* /shop or /es/shop: filters stay on the page they were set on, in its language. */
+  const base = usePathname() ?? '/shop';
+  const locale = useLocale();
+  const t = dictionary(locale).shop;
   /* The catalogue is no longer shipped to the browser: the server filters and pages it. */
   const categories = useCategories();
   const brands = useBrands();
@@ -76,12 +72,12 @@ export function ShopBrowser() {
       /* A group belongs to its category: changing or clearing the category drops it. */
       if (key === 'category') next.delete('group');
       const qs = next.toString();
-      router.replace(qs ? `/shop?${qs}` : '/shop', { scroll: false });
+      router.replace(qs ? `${base}?${qs}` : base, { scroll: false });
     },
-    [params, router]
+    [params, router, base]
   );
 
-  const clearAll = () => router.replace('/shop', { scroll: false });
+  const clearAll = () => router.replace(base, { scroll: false });
 
   /*
     The results, from the server. The filtering that used to run here over every product in the
@@ -127,18 +123,23 @@ export function ShopBrowser() {
     (query ? 1 : 0) +
     (maxPrice < PRICE_CEILING ? 1 : 0);
 
+  const catName = (slug: string) => {
+    const c = categories.find((x) => x.slug === slug);
+    return c ? categoryName(locale, c.slug, c.name) : undefined;
+  };
+
   const heading =
     groups.find((g) => g.slug === group)?.name ??
-    categories.find((c) => c.slug === category)?.name ??
+    catName(category) ??
     brands.find((b) => b.slug === brand)?.name ??
-    NAMED_FILTERS.find((f) => f.value === filter)?.label ??
-    'The catalogue';
+    t.filters[filter] ??
+    t.catalogue;
 
   const Filters = (
     <div className="space-y-8">
       <div>
         <h2 className="font-mono text-2xs uppercase tracking-[0.16em] text-ink-faint">
-          Category
+          {t.category}
         </h2>
         <ul className="mt-3 space-y-0.5">
           <li>
@@ -150,7 +151,7 @@ export function ShopBrowser() {
                 !category ? 'font-medium text-pigment-indigo' : 'text-ink-soft hover:text-ink'
               )}
             >
-              Everything
+              {t.everything}
             </button>
           </li>
           {categories.map((c) => (
@@ -170,7 +171,7 @@ export function ShopBrowser() {
                   style={{ backgroundColor: categoryPigment(c.slug) }}
                   aria-hidden="true"
                 />
-                <span className="flex-1">{c.name}</span>
+                <span className="flex-1">{categoryName(locale, c.slug, c.name)}</span>
                 <span className="font-mono text-2xs text-ink-faint tabular">
                   {c.listed}
                 </span>
@@ -207,7 +208,7 @@ export function ShopBrowser() {
 
       <div>
         <h2 className="font-mono text-2xs uppercase tracking-[0.16em] text-ink-faint">
-          Manufacturer
+          {t.manufacturer}
         </h2>
         <ul className="mt-3 space-y-0.5">
           {brands.map((b) => (
@@ -231,22 +232,22 @@ export function ShopBrowser() {
 
       <div>
         <h2 className="font-mono text-2xs uppercase tracking-[0.16em] text-ink-faint">
-          Collections
+          {t.collections}
         </h2>
         <ul className="mt-3 space-y-0.5">
           {NAMED_FILTERS.map((f) => (
-            <li key={f.value}>
+            <li key={f}>
               <button
                 type="button"
-                onClick={() => setParam('filter', filter === f.value ? null : f.value)}
+                onClick={() => setParam('filter', filter === f ? null : f)}
                 className={cn(
                   'w-full py-1.5 text-left text-sm transition-colors',
-                  filter === f.value
+                  filter === f
                     ? 'font-medium text-pigment-indigo'
                     : 'text-ink-soft hover:text-ink'
                 )}
               >
-                {f.label}
+                {t.filters[f]}
               </button>
             </li>
           ))}
@@ -258,7 +259,7 @@ export function ShopBrowser() {
           htmlFor="max-price"
           className="font-mono text-2xs uppercase tracking-[0.16em] text-ink-faint"
         >
-          Up to {formatPrice(maxPrice)}
+          {t.upTo(formatPrice(maxPrice))}
         </label>
         <input
           id="max-price"
@@ -287,9 +288,9 @@ export function ShopBrowser() {
             {heading}
           </h1>
           <p className="measure mt-3 text-sm leading-relaxed text-ink-soft sm:text-base">
-            {loading ? 'Loading the catalogue…' : `${total} ${total === 1 ? 'product' : 'products'}`}
-            {!loading && activeCount > 0 ? ' match these filters.' : '.'} Each listing carries its
-            manufacturer, strength and pack as printed on the product.
+            {loading ? t.loadingCatalogue : t.products(total)}
+            {!loading && activeCount > 0 ? t.matchFilters : '.'}
+            {t.eachListing}
           </p>
         </div>
       </section>
@@ -315,13 +316,13 @@ export function ShopBrowser() {
                   aria-hidden="true"
                 />
                 <label htmlFor="shop-search" className="sr-only">
-                  Search the catalogue
+                  {dictionary(locale).nav.search}
                 </label>
                 <input
                   id="shop-search"
                   value={draftQuery}
                   onChange={(e) => setDraftQuery(e.target.value)}
-                  placeholder="Search compounds, brands, categories"
+                  placeholder={t.searchPlaceholder}
                   className="w-full bg-transparent py-2 text-sm outline-none placeholder:text-ink-faint"
                 />
               </form>
@@ -332,7 +333,7 @@ export function ShopBrowser() {
                 className="flex items-center gap-2 border border-rule-strong px-3 py-2 text-sm transition-colors hover:border-pigment-indigo lg:hidden"
               >
                 <SlidersHorizontal className="h-4 w-4" strokeWidth={1.6} />
-                Filters
+                {t.filtersButton}
                 {activeCount > 0 && (
                   <span className="font-mono text-2xs tabular">({activeCount})</span>
                 )}
@@ -343,7 +344,7 @@ export function ShopBrowser() {
                   htmlFor="sort"
                   className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint"
                 >
-                  Sort
+                  {t.sort}
                 </label>
                 <select
                   id="sort"
@@ -354,8 +355,8 @@ export function ShopBrowser() {
                   className="border border-rule-strong bg-paper px-2 py-1.5 text-sm outline-none focus:border-pigment-indigo"
                 >
                   {SORTS.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
+                    <option key={s} value={s}>
+                      {t.sorts[s]}
                     </option>
                   ))}
                 </select>
@@ -370,34 +371,39 @@ export function ShopBrowser() {
               <div className="flex flex-wrap items-center gap-2 py-4">
                 {category && (
                   <FilterChip
-                    label={categories.find((c) => c.slug === category)?.name ?? category}
+                    label={catName(category) ?? category}
+                    removeLabel={t.removeFilter}
                     onClear={() => setParam('category', null)}
                   />
                 )}
                 {group && (
                   <FilterChip
                     label={groups.find((g) => g.slug === group)?.name ?? group}
+                    removeLabel={t.removeFilter}
                     onClear={() => setParam('group', null)}
                   />
                 )}
                 {brand && (
                   <FilterChip
                     label={brands.find((b) => b.slug === brand)?.name ?? brand}
+                    removeLabel={t.removeFilter}
                     onClear={() => setParam('brand', null)}
                   />
                 )}
                 {filter && (
                   <FilterChip
-                    label={NAMED_FILTERS.find((f) => f.value === filter)?.label ?? filter}
+                    label={t.filters[filter] ?? filter}
+                    removeLabel={t.removeFilter}
                     onClear={() => setParam('filter', null)}
                   />
                 )}
                 {query && (
-                  <FilterChip label={`“${query}”`} onClear={() => setParam('q', null)} />
+                  <FilterChip label={`“${query}”`} removeLabel={t.removeFilter} onClear={() => setParam('q', null)} />
                 )}
                 {maxPrice < PRICE_CEILING && (
                   <FilterChip
-                    label={`Under ${formatPrice(maxPrice)}`}
+                    label={t.under(formatPrice(maxPrice))}
+                    removeLabel={t.removeFilter}
                     onClear={() => setParam('max', null)}
                   />
                 )}
@@ -406,7 +412,7 @@ export function ShopBrowser() {
                   onClick={clearAll}
                   className="text-xs text-ink-faint underline underline-offset-4 transition-colors hover:text-ink"
                 >
-                  Clear all
+                  {t.clearAll}
                 </button>
               </div>
             )}
@@ -414,32 +420,31 @@ export function ShopBrowser() {
             {loading ? (
               /* Not an empty state: "nothing matches" while the answer is in flight is a lie. */
               <p className="mt-6 border border-rule bg-card px-6 py-20 text-center text-sm text-ink-soft">
-                Loading…
+                {t.loading}
               </p>
             ) : error ? (
               <div className="mt-6 border border-rule bg-card px-6 py-20 text-center">
                 <h2 className="font-display text-xl font-semibold tracking-[-0.025em]">
-                  The catalogue did not answer
+                  {t.errorTitle}
                 </h2>
                 <p className="measure-tight mx-auto mt-3 text-sm leading-relaxed text-ink-soft">
-                  Something went wrong fetching these products. Try again in a moment.
+                  {t.errorBody}
                 </p>
               </div>
             ) : visible.length === 0 ? (
               <div className="border border-rule bg-card px-6 py-20 text-center">
                 <h2 className="font-display text-xl font-semibold tracking-[-0.025em]">
-                  Nothing matches those filters
+                  {t.emptyTitle}
                 </h2>
                 <p className="measure-tight mx-auto mt-3 text-sm leading-relaxed text-ink-soft">
-                  Try a broader price range, or clear a filter. Every compound in the
-                  catalogue is listed under exactly one category.
+                  {t.emptyBody}
                 </p>
                 <button
                   type="button"
                   onClick={clearAll}
                   className="mt-6 rounded-full bg-pigment-indigo px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift"
                 >
-                  Clear all filters
+                  {t.clearAllFilters}
                 </button>
               </div>
             ) : (
@@ -453,10 +458,10 @@ export function ShopBrowser() {
                       disabled={loadingMore}
                       className="rounded-full border border-rule-strong px-6 py-3 text-sm font-medium transition-colors hover:border-pigment-indigo hover:bg-paper-sunk disabled:opacity-60"
                     >
-                      {loadingMore ? 'Loading…' : 'Show more'}
+                      {loadingMore ? t.loading : t.showMore}
                     </button>
                     <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint tabular">
-                      {visible.length} of {total} shown
+                      {t.shown(visible.length, total)}
                     </p>
                   </div>
                 )}
@@ -469,14 +474,22 @@ export function ShopBrowser() {
   );
 }
 
-function FilterChip({ label, onClear }: { label: string; onClear: () => void }) {
+function FilterChip({
+  label,
+  removeLabel,
+  onClear,
+}: {
+  label: string;
+  removeLabel: (label: string) => string;
+  onClear: () => void;
+}) {
   return (
     <span className="inline-flex items-center gap-1.5 border border-rule bg-paper-sunk px-2.5 py-1 text-xs">
       {label}
       <button
         type="button"
         onClick={onClear}
-        aria-label={`Remove ${label} filter`}
+        aria-label={removeLabel(label)}
         className="text-ink-faint transition-colors hover:text-pigment-madder"
       >
         <X className="h-3 w-3" strokeWidth={2} />

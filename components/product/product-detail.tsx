@@ -31,6 +31,8 @@ import { categoryPath, groupPath } from '@/lib/catalogue/paths';
 import type { Product } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { referencePrice } from '@/lib/pricing';
+import { ApproxPrice, CurrencyNote } from '@/components/currency/approx-price';
+import { DeliveryLine } from '@/components/currency/delivery-line';
 
 /*
   The evaluation surface. PRODUCT.md's first principle is that evidence outranks atmosphere,
@@ -266,7 +268,9 @@ export function ProductDetail({
                   {formatPrice(was)}
                 </span>
               )}
+              <ApproxPrice usd={product.price} className="text-sm" />
             </div>
+            <CurrencyNote className="measure mt-2" />
 
             <p className={cn('mt-3 flex items-center gap-2 text-sm', state.tone)}>
               <span
@@ -375,6 +379,9 @@ export function ProductDetail({
                 </li>
               ))}
             </ul>
+
+            {/* Delivery to the visitor's country, from the zones the checkout quotes from. */}
+            <DeliveryLine className="mt-5" />
           </div>
         </div>
       </section>

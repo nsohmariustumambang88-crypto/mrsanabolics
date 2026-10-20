@@ -61,19 +61,36 @@ export function fitDescription(candidates: string[], max = 160): string {
   between a page and its metadata. It fails soft: an unreachable database drops the shipping line,
   it does not take the page down.
 */
-export const getUsDelivery = cache(async (): Promise<UsDeliveryOption[] | null> => {
-  try {
-    const zone = await zoneForCountry('US');
-    if (!zone) return null;
-    const options = zone.rates
-      .filter((r) => r.active)
-      .map((r) => ({ name: r.name, price: r.price, freeOver: r.freeOverSubtotal, estimate: formatEstimate(r) }))
-      .sort((a, b) => a.price - b.price);
-    return options.length > 0 ? options : null;
-  } catch {
-    return null;
+export const getUsDelivery = cache(async (): Promise<UsDeliveryOption[] | null> => getCountryDelivery('US'));
+
+/**
+ * The same for any country — the translated pages ask about Spain, France, Germany and Italy.
+ * Carries the raw day counts as well, so the estimate can be written in the page's language.
+ */
+export const getCountryDelivery = cache(
+  async (
+    country: string
+  ): Promise<(UsDeliveryOption & { minDays: number | null; maxDays: number | null })[] | null> => {
+    try {
+      const zone = await zoneForCountry(country);
+      if (!zone) return null;
+      const options = zone.rates
+        .filter((r) => r.active)
+        .map((r) => ({
+          name: r.name,
+          price: r.price,
+          freeOver: r.freeOverSubtotal,
+          estimate: formatEstimate(r),
+          minDays: r.estimateMinDays,
+          maxDays: r.estimateMaxDays,
+        }))
+        .sort((a, b) => a.price - b.price);
+      return options.length > 0 ? options : null;
+    } catch {
+      return null;
+    }
   }
-});
+);
 
 /** " Tracked US shipping from $9." or "" when the US is not covered. */
 export function usShippingLine(options: UsDeliveryOption[] | null): string {

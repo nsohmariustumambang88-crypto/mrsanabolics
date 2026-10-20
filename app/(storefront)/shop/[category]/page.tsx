@@ -7,6 +7,7 @@ import { categoryFaq } from '@/lib/catalogue/collection-faq';
 import { andList, fitDescription, getUsDelivery, shortRange, usShippingLine } from '@/lib/catalogue/seo';
 import { formatPriceShort } from '@/lib/format';
 import { SITE } from '@/lib/site';
+import { alternatesFor } from '@/lib/i18n/routes';
 import { ProductGrid } from '@/components/product/product-grid';
 import {
   CollectionBreadcrumb,
@@ -66,7 +67,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical: category.path },
+    /* hreflang only where lib/i18n/routes.ts lists a translation (injectables, orals). */
+    alternates: alternatesFor('en', category.path),
     openGraph: { type: 'website', url: `${SITE.url}${category.path}`, title, description },
   };
 }

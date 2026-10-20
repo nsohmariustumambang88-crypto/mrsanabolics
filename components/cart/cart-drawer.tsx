@@ -13,8 +13,28 @@ import { useStore } from '@/components/providers/store-provider';
 import Image from 'next/image';
 
 import { formatPrice } from '@/lib/format';
+import { useCountry } from '@/components/providers/country-provider';
+import { useDictionary } from '@/components/i18n/use-locale';
+import { ApproxPrice, CurrencyNote } from '@/components/currency/approx-price';
+import { matchZone } from '@/lib/delivery/match';
 
-const FREE_SHIPPING_AT = 250;
+/*
+  The free-delivery line follows the visitor's country.
+
+  It used to read a constant of $250 that matched no zone — the US rate is free from $150 and
+  Europe's from $200 — so it promised the wrong figure everywhere. It now takes the threshold
+  from the zone that serves the selected country (the US until a country is known, as the
+  store's home market), and a zone with no free-delivery rate gets its starting price instead
+  of a progress bar toward something that does not exist. Checkout still quotes for itself.
+*/
+function useFreeDelivery() {
+  const { country, zones } = useCountry();
+  const zone = matchZone(zones, country ?? 'US');
+  const freeRates = (zone?.rates ?? []).filter((r) => r.freeOver !== null);
+  const freeOver = freeRates.length ? Math.min(...freeRates.map((r) => r.freeOver as number)) : null;
+  const cheapest = zone?.rates[0]?.price ?? null;
+  return { country: country ?? 'US', freeOver, cheapest };
+}
 
 /*
   The cart's own snapshot draws the thumbnail.
@@ -54,8 +74,11 @@ export function CartDrawer() {
     cartCount,
   } = useStore();
 
-  const remaining = Math.max(0, FREE_SHIPPING_AT - cartSubtotal);
-  const progress = Math.min(100, (cartSubtotal / FREE_SHIPPING_AT) * 100);
+  const t = useDictionary();
+  const free = useFreeDelivery();
+  const remaining = free.freeOver !== null ? Math.max(0, free.freeOver - cartSubtotal) : 0;
+  const progress = free.freeOver !== null ? Math.min(100, (cartSubtotal / free.freeOver) * 100) : 0;
+  const countryName = free.country === 'OTHER' ? t.delivery.otherCountries : t.country.names[free.country];
 
   return (
     <Sheet open={cartOpen} onOpenChange={setCartOpen}>
@@ -65,9 +88,9 @@ export function CartDrawer() {
       >
         <SheetHeader className="border-b border-rule px-5 py-4 text-left">
           <SheetTitle className="flex items-baseline gap-2.5 font-display text-base tracking-[-0.02em]">
-            Your cart
+            {t.cart.title}
             <span className="font-mono text-2xs text-ink-faint tabular">
-              {cartCount} {cartCount === 1 ? 'item' : 'items'}
+              {cartCount} {t.cart.items(cartCount)}
             </span>
           </SheetTitle>
         </SheetHeader>
@@ -80,45 +103,54 @@ export function CartDrawer() {
               aria-hidden="true"
             />
             <p className="mt-5 font-display text-lg font-semibold tracking-[-0.025em]">
-              Your cart is empty
+              {t.cart.emptyTitle}
             </p>
             <p className="measure-tight mt-2 text-sm leading-relaxed text-ink-soft">
-              Compounds you add will collect here, with the specification attached to each one.
+              {t.cart.emptyBody}
             </p>
             <Link
               href="/shop"
               onClick={() => setCartOpen(false)}
               className="mt-6 rounded-full bg-pigment-indigo px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift"
             >
-              Browse the catalogue
+              {t.cart.browse}
             </Link>
           </div>
         ) : (
           <>
             <div className="border-b border-rule px-5 py-3.5">
-              {remaining > 0 ? (
-                <p className="text-xs text-ink-soft">
-                  <span className="tabular">{formatPrice(remaining)}</span> more for free
-                  tracked shipping
-                </p>
+              {free.freeOver === null ? (
+                free.cheapest !== null && (
+                  <p className="text-xs text-ink-soft">
+                    {t.cart.deliveryFrom(countryName, formatPrice(free.cheapest))}
+                  </p>
+                )
               ) : (
-                <p className="text-xs text-pigment-verdigris">
-                  Free tracked shipping applied
-                </p>
+                <>
+                  {remaining > 0 ? (
+                    <p className="text-xs text-ink-soft">
+                      {t.cart.moreForFree[0]}
+                      <span className="tabular">{formatPrice(remaining)}</span>
+                      {t.cart.moreForFree[1]}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-pigment-verdigris">{t.cart.freeApplied}</p>
+                  )}
+                  <div
+                    className="mt-2 h-px w-full bg-rule"
+                    role="progressbar"
+                    aria-valuenow={Math.round(progress)}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={t.cart.progress}
+                  >
+                    <div
+                      className="h-px bg-pigment-indigo transition-[width] duration-500 ease-lift"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </>
               )}
-              <div
-                className="mt-2 h-px w-full bg-rule"
-                role="progressbar"
-                aria-valuenow={Math.round(progress)}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label="Progress toward free shipping"
-              >
-                <div
-                  className="h-px bg-pigment-indigo transition-[width] duration-500 ease-lift"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
             </div>
 
             <ul className="flex-1 overflow-y-auto">
@@ -156,7 +188,7 @@ export function CartDrawer() {
                           }
                           disabled={item.quantity <= 1}
                           className="flex h-7 w-7 items-center justify-center text-ink-soft transition-colors hover:bg-paper-sunk disabled:opacity-40"
-                          aria-label={`Decrease quantity of ${item.name}`}
+                          aria-label={t.cart.decrease(item.name)}
                         >
                           <Minus className="h-3 w-3" strokeWidth={2} />
                         </button>
@@ -169,7 +201,7 @@ export function CartDrawer() {
                             updateQuantity(item.productId, item.quantity + 1)
                           }
                           className="flex h-7 w-7 items-center justify-center text-ink-soft transition-colors hover:bg-paper-sunk"
-                          aria-label={`Increase quantity of ${item.name}`}
+                          aria-label={t.cart.increase(item.name)}
                         >
                           <Plus className="h-3 w-3" strokeWidth={2} />
                         </button>
@@ -185,7 +217,7 @@ export function CartDrawer() {
                     type="button"
                     onClick={() => removeFromCart(item.productId)}
                     className="h-fit text-ink-faint transition-colors hover:text-pigment-madder"
-                    aria-label={`Remove ${item.name} from cart`}
+                    aria-label={t.cart.remove(item.name)}
                   >
                     <X className="h-4 w-4" strokeWidth={1.75} />
                   </button>
@@ -195,21 +227,25 @@ export function CartDrawer() {
 
             <div className="border-t border-rule px-5 py-5">
               <div className="flex items-baseline justify-between">
-                <span className="text-sm text-ink-soft">Subtotal</span>
+                <span className="text-sm text-ink-soft">{t.cart.subtotal}</span>
                 <span className="font-display text-xl font-semibold tabular">
                   {formatPrice(cartSubtotal)}
                 </span>
               </div>
-              <p className="mt-1.5 text-xs text-ink-faint">
-                Shipping and duties calculated at checkout.
+              <p className="mt-0.5 text-right">
+                <ApproxPrice usd={cartSubtotal} className="text-xs" />
               </p>
+              <p className="mt-1.5 text-xs text-ink-faint">
+                {t.cart.shippingNote}
+              </p>
+              <CurrencyNote className="mt-1" />
 
               <Link
                 href="/checkout"
                 onClick={() => setCartOpen(false)}
                 className="group mt-5 flex items-center justify-center gap-2.5 rounded-full bg-pigment-indigo px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift"
               >
-                Checkout
+                {t.cart.checkout}
                 <ArrowRight
                   className="h-4 w-4"
                   strokeWidth={1.75}
@@ -220,7 +256,7 @@ export function CartDrawer() {
                 onClick={() => setCartOpen(false)}
                 className="mt-3 w-full text-center text-sm text-ink-soft underline underline-offset-4 transition-colors hover:text-ink"
               >
-                Keep browsing
+                {t.cart.keepBrowsing}
               </button>
             </div>
           </>

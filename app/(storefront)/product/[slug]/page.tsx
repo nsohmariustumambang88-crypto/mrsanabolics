@@ -14,6 +14,8 @@ import { cloudinaryUrl } from '@/lib/cloudinary';
 import type { Product } from '@/lib/types';
 import { fitDescription, getUsDelivery, shortStrength, usShippingLine } from '@/lib/catalogue/seo';
 import { formatPrice } from '@/lib/format';
+import { getDeliverySummary, type ZoneSummary } from '@/lib/delivery/summary';
+import { COUNTRY_CODES } from '@/lib/countries';
 
 /*
   Server component.
@@ -161,6 +163,55 @@ function describe(
   return { title, description, summary: isTemplate ? summary : product.description };
 }
 
+/*
+  OfferShippingDetails, one per active delivery zone, priced at that zone's cheapest active rate.
+
+  This was a single hand-written block — US, $9, 3–6 days — which told search engines the product
+  ships nowhere else, while the zones send it to Europe and the rest of the world. Each zone now
+  becomes one entry with the shapes Search Console already accepted: a MonetaryAmount in USD and
+  a DefinedRegion whose addressCountry lists the zone's own ISO codes.
+
+  The catch-all zone has no country list, and a DefinedRegion cannot say "everywhere else". It is
+  represented only by the countries the store markets to (the selector's list) that no named zone
+  claims — today Canada and Australia, which quoteDelivery does send through it. Nothing is listed
+  that the zones would not actually deliver to; with no such country the catch-all is left out.
+*/
+const MARKETED_COUNTRIES = COUNTRY_CODES.filter((c) => c !== 'OTHER') as string[];
+
+function shippingDetails(zones: ZoneSummary[]) {
+  const named = new Set(zones.flatMap((z) => z.countries));
+  return zones.flatMap((zone) => {
+    const rate = zone.rates[0];
+    if (!rate) return [];
+    const countries = zone.countries.length > 0 ? zone.countries : MARKETED_COUNTRIES.filter((c) => !named.has(c));
+    if (countries.length === 0) return [];
+    const transit =
+      rate.minDays !== null || rate.maxDays !== null
+        ? {
+            minValue: Math.min(rate.minDays ?? rate.maxDays ?? 0, rate.maxDays ?? rate.minDays ?? 0),
+            maxValue: Math.max(rate.minDays ?? rate.maxDays ?? 0, rate.maxDays ?? rate.minDays ?? 0),
+          }
+        : null;
+    return [
+      {
+        '@type': 'OfferShippingDetails',
+        shippingRate: { '@type': 'MonetaryAmount', currency: 'USD', value: rate.price.toFixed(2) },
+        shippingDestination: {
+          '@type': 'DefinedRegion',
+          addressCountry: countries.length === 1 ? countries[0] : countries,
+        },
+        ...(transit && {
+          deliveryTime: {
+            '@type': 'ShippingDeliveryTime',
+            handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 1, unitCode: 'DAY' },
+            transitTime: { '@type': 'QuantitativeValue', ...transit, unitCode: 'DAY' },
+          },
+        }),
+      },
+    ];
+  });
+}
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const product = await getProductBySlug(params.slug);
   if (!product) return { title: 'Product not found' };
@@ -203,6 +254,7 @@ export default async function ProductPage({ params }: Params) {
   const compound = await compoundFor(product);
   const { description, summary } = describe(product, compound, await getUsDelivery());
   const image = productImage(product);
+  const shipping = shippingDetails(await getDeliverySummary());
 
   const schema = [
     {
@@ -249,33 +301,8 @@ export default async function ProductPage({ params }: Params) {
             value: '14.00',
           },
         },
-        shippingDetails: {
-          '@type': 'OfferShippingDetails',
-          shippingRate: {
-            '@type': 'MonetaryAmount',
-            currency: 'USD',
-            value: '9.00',
-          },
-          shippingDestination: {
-            '@type': 'DefinedRegion',
-            addressCountry: 'US',
-          },
-          deliveryTime: {
-            '@type': 'ShippingDeliveryTime',
-            handlingTime: {
-              '@type': 'QuantitativeValue',
-              minValue: 0,
-              maxValue: 1,
-              unitCode: 'DAY',
-            },
-            transitTime: {
-              '@type': 'QuantitativeValue',
-              minValue: 3,
-              maxValue: 6,
-              unitCode: 'DAY',
-            },
-          },
-        },
+        /* One per delivery zone, from the zones the checkout quotes from. See shippingDetails(). */
+        ...(shipping.length > 0 && { shippingDetails: shipping }),
       },
       /* A rating of 0 from 0 reviews is not a rating; search engines flag it as invalid. */
       ...(product.reviewCount > 0

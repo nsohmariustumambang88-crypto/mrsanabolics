@@ -8,6 +8,9 @@ import { ProductPlate } from '@/components/product/product-plate';
 import { categoryPigment } from '@/lib/site';
 import type { ProductSummary } from '@/lib/types';
 import { doors, PER_DOOR } from '@/components/home/home-samples';
+import { useLocale } from '@/components/i18n/use-locale';
+import { dictionary } from '@/lib/i18n/dictionaries';
+import { localizedHref } from '@/lib/i18n/routes';
 
 /*
   Two doors into one catalogue — the audience split PRODUCT.md records, answered directly under
@@ -25,22 +28,26 @@ import { doors, PER_DOOR } from '@/components/home/home-samples';
 */
 
 const collections = [
-  { label: 'New arrivals', href: '/shop?filter=new' },
-  { label: 'Trending', href: '/shop?filter=trending' },
-  { label: 'On offer', href: '/shop?filter=deals' },
-];
+  { key: 'new', href: '/shop?filter=new' },
+  { key: 'trending', href: '/shop?filter=trending' },
+  { key: 'deals', href: '/shop?filter=deals' },
+] as const;
 
 export function FeaturedCollections({ samples }: { samples: Record<string, ProductSummary[]> }) {
+  /* The doors' words in the page's language; their shelves and samples are the same everywhere. */
+  const locale = useLocale();
+  const t = dictionary(locale).home;
 
   return (
     <section className="border-b border-rule">
       <div className="mx-auto grid max-w-[86rem] gap-px bg-rule md:grid-cols-2">
         {doors.map((door) => {
           const sample = samples[door.slug] ?? [];
+          const words = t.doors[door.slug] ?? door;
           return (
             <Link
               key={door.slug}
-              href={door.href}
+              href={localizedHref(locale, door.href)}
               className="group flex flex-col bg-card transition-colors hover:bg-paper-sunk"
             >
               {/* The pigment of the first shelf this door opens onto. */}
@@ -70,14 +77,14 @@ export function FeaturedCollections({ samples }: { samples: Record<string, Produ
 
               <div className="flex flex-1 flex-col p-6 sm:p-8 lg:p-10">
                 <h2 className="font-display text-[clamp(1.5rem,2.6vw,2.25rem)] font-semibold leading-[1.05] tracking-[-0.035em]">
-                  {door.title}
+                  {words.title}
                 </h2>
                 <p className="measure-tight mt-3 text-sm leading-relaxed text-ink-soft sm:text-base">
-                  {door.body}
+                  {words.body}
                 </p>
 
                 <span className="mt-6 inline-flex items-center gap-2 self-start rounded-full border border-rule-strong px-5 py-2.5 text-sm font-medium transition-colors group-hover:border-pigment-indigo group-hover:text-pigment-indigo">
-                  {door.action}
+                  {words.action}
                   <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
                 </span>
               </div>
@@ -88,15 +95,15 @@ export function FeaturedCollections({ samples }: { samples: Record<string, Produ
 
       <div className="mx-auto flex max-w-[86rem] flex-wrap items-center gap-x-6 gap-y-2 border-t border-rule px-4 py-4 sm:px-6 lg:px-10">
         <span className="font-mono text-2xs uppercase tracking-[0.16em] text-ink-faint">
-          Or jump to
+          {t.jumpTo}
         </span>
         {collections.map((c) => (
           <Link
             key={c.href}
-            href={c.href}
+            href={localizedHref(locale, c.href)}
             className="text-sm text-ink-soft underline decoration-rule-strong underline-offset-4 transition-colors hover:text-pigment-indigo hover:decoration-pigment-indigo"
           >
-            {c.label}
+            {t.jumpLinks[c.key]}
           </Link>
         ))}
       </div>

@@ -12,6 +12,7 @@ import { CATEGORY_COPY, GROUP_COPY, type CategoryCopy } from '@/lib/catalogue/co
 import { groupFaq } from '@/lib/catalogue/collection-faq';
 import { formatPriceShort } from '@/lib/format';
 import { SITE } from '@/lib/site';
+import { alternatesFor } from '@/lib/i18n/routes';
 import { ProductGrid } from '@/components/product/product-grid';
 import {
   CollectionBreadcrumb,
@@ -79,7 +80,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical: group.path },
+    /* hreflang only for the compounds lib/i18n/routes.ts lists as translated. */
+    alternates: alternatesFor('en', group.path),
     openGraph: { type: 'website', url: `${SITE.url}${group.path}`, title, description },
   };
 }

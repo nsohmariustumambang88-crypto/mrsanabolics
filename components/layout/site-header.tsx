@@ -19,27 +19,39 @@ import {
 } from '@/components/ui/accordion';
 import { useStore } from '@/components/providers/store-provider';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { CountrySelector } from '@/components/layout/country-selector';
 import { BullMark } from '@/components/brand/bull-mark';
 import { useCategories, useBrands } from '@/components/providers/catalogue-provider';
+import { useLocale } from '@/components/i18n/use-locale';
 import { categoryPigment } from '@/lib/site';
 import { categoryPath } from '@/lib/catalogue/paths';
+import { categoryDescription, categoryName, dictionary, type Dictionary } from '@/lib/i18n/dictionaries';
+import { localizedHref } from '@/lib/i18n/routes';
+import type { Locale } from '@/lib/i18n/locales';
 import { cn } from '@/lib/utils';
 
-const navLinks = [
-  { label: 'Shop', href: '/shop' },
-  { label: 'Categories', href: '/categories', menu: 'categories' as const },
-  { label: 'Brands', href: '/brands', menu: 'brands' as const },
-  { label: 'Journal', href: '/blog' },
-  { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' },
-];
+/*
+  Labels come from the page's language; addresses go to the translation where one exists
+  (Shop → /es/shop on a Spanish page) and to the English page where it does not.
+*/
+function navLinksFor(t: Dictionary, locale: Locale) {
+  return [
+    { label: t.nav.shop, href: localizedHref(locale, '/shop') },
+    { label: t.nav.categories, href: '/categories', menu: 'categories' as const },
+    { label: t.nav.brands, href: '/brands', menu: 'brands' as const },
+    { label: t.nav.journal, href: '/blog' },
+    { label: t.nav.about, href: '/about' },
+    { label: t.nav.contact, href: '/contact' },
+  ];
+}
 
 function Wordmark({ compact }: { compact?: boolean }) {
+  const locale = useLocale();
   return (
     <Link
-      href="/"
+      href={localizedHref(locale, '/')}
       className="group flex items-center gap-2 rounded-sm sm:gap-3"
-      aria-label="MrAnabolics — home"
+      aria-label={dictionary(locale).nav.home}
     >
       {/*
         The bull hangs out of the header. The owner's reference had the mark running past the
@@ -85,12 +97,13 @@ function Wordmark({ compact }: { compact?: boolean }) {
 
 function CategoryMenu({ onNavigate }: { onNavigate?: () => void }) {
   const categories = useCategories();
+  const locale = useLocale();
   return (
     <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 lg:grid-cols-3">
       {categories.map((c) => (
         <Link
           key={c.slug}
-          href={categoryPath(c.slug)}
+          href={localizedHref(locale, categoryPath(c.slug))}
           onClick={onNavigate}
           className="group flex items-baseline gap-3 border-b border-rule/60 py-2.5 last:border-0 hover:border-pigment-indigo-lift"
         >
@@ -101,10 +114,10 @@ function CategoryMenu({ onNavigate }: { onNavigate?: () => void }) {
           />
           <span className="flex-1">
             <span className="block text-sm font-medium group-hover:text-pigment-indigo">
-              {c.name}
+              {categoryName(locale, c.slug, c.name)}
             </span>
             <span className="mt-0.5 block text-xs leading-snug text-ink-faint">
-              {c.description.split('.')[0]}.
+              {categoryDescription(locale, c.slug, c.description).split('.')[0]}.
             </span>
           </span>
           <span className="font-mono text-2xs text-ink-faint tabular">
@@ -151,6 +164,9 @@ export function SiteHeader() {
   const [condensed, setCondensed] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const closeTimer = React.useRef<ReturnType<typeof setTimeout>>();
+  const locale = useLocale();
+  const t = dictionary(locale);
+  const navLinks = navLinksFor(t, locale);
 
   React.useEffect(() => {
     const onScroll = () => setCondensed(window.scrollY > 24);
@@ -199,7 +215,7 @@ export function SiteHeader() {
         </div>
 
         <nav
-          className="hidden flex-1 items-center gap-1 lg:flex"
+          className="hidden flex-1 items-center gap-0 lg:flex xl:gap-1"
           aria-label="Primary"
         >
           {navLinks.map((link) => {
@@ -215,7 +231,8 @@ export function SiteHeader() {
                 <Link
                   href={link.href}
                   className={cn(
-                    'relative block px-3 py-2 font-display text-sm font-medium tracking-[-0.01em] transition-colors',
+                    /* px-2 below xl: the 16px it frees per link is the room the country flag takes at 1024px. */
+                    'relative block px-2 py-2 font-display text-sm font-medium tracking-[-0.01em] transition-colors xl:px-3',
                     active ? 'text-pigment-indigo' : 'text-ink-soft hover:text-ink'
                   )}
                   aria-expanded={link.menu ? openMenu === link.menu : undefined}
@@ -223,7 +240,7 @@ export function SiteHeader() {
                   {link.label}
                   <span
                     className={cn(
-                      'absolute -bottom-px left-3 right-3 h-px origin-left bg-pigment-indigo',
+                      'absolute -bottom-px left-2 right-2 h-px origin-left bg-pigment-indigo xl:left-3 xl:right-3',
                       active || openMenu === link.menu ? 'scale-x-100' : 'scale-x-0'
                     )}
                     aria-hidden="true"
@@ -235,13 +252,19 @@ export function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1 lg:gap-2">
+          {/*
+            Phones carry both of these in the menu sheet: the 360px row has no room for them. The
+            country selector joins the row only from md — at 640px it pushed the row 9px wide — and
+            from lg to xl it is the flag alone (see country-selector.tsx).
+          */}
+          <CountrySelector className="hidden md:flex" />
           <ThemeToggle className="mr-1 hidden sm:inline-flex" />
 
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
             className="flex h-9 w-9 items-center justify-center rounded-sm text-ink-soft transition-colors hover:bg-paper-sunk hover:text-ink"
-            aria-label="Search the catalogue"
+            aria-label={t.nav.search}
           >
             <Search className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.6} />
           </button>
@@ -249,7 +272,7 @@ export function SiteHeader() {
           <Link
             href="/account?tab=wishlist"
             className="relative hidden h-9 w-9 items-center justify-center rounded-sm text-ink-soft transition-colors hover:bg-paper-sunk hover:text-ink sm:flex"
-            aria-label={`Wishlist, ${wishlist.length} items`}
+            aria-label={t.nav.wishlist(wishlist.length)}
           >
             <Heart className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.6} />
             {wishlist.length > 0 && (
@@ -260,7 +283,7 @@ export function SiteHeader() {
           <Link
             href="/account"
             className="hidden h-9 w-9 items-center justify-center rounded-sm text-ink-soft transition-colors hover:bg-paper-sunk hover:text-ink sm:flex"
-            aria-label="Account"
+            aria-label={t.nav.account}
           >
             <User className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.6} />
           </Link>
@@ -269,7 +292,7 @@ export function SiteHeader() {
             type="button"
             onClick={() => setCartOpen(true)}
             className="relative ml-1 flex items-center gap-2 rounded-sm border border-rule-strong px-3 py-2 text-sm font-medium transition-colors hover:border-pigment-indigo hover:bg-paper-sunk"
-            aria-label={`Cart, ${cartCount} items`}
+            aria-label={t.nav.cart(cartCount)}
           >
             <ShoppingBag className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.6} />
             <span className="font-mono text-xs tabular">{cartCount}</span>
@@ -280,7 +303,7 @@ export function SiteHeader() {
               <button
                 type="button"
                 className="flex h-9 w-9 items-center justify-center rounded-sm text-ink-soft transition-colors hover:bg-paper-sunk hover:text-ink lg:hidden"
-                aria-label="Open menu"
+                aria-label={t.nav.openMenu}
               >
                 <Menu className="h-5 w-5" strokeWidth={1.6} />
               </button>
@@ -290,17 +313,21 @@ export function SiteHeader() {
               className="w-full border-rule bg-paper p-0 sm:max-w-md"
             >
               <SheetHeader className="border-b border-rule px-5 py-4 text-left">
-                <SheetTitle className="font-display text-base">Menu</SheetTitle>
+                <SheetTitle className="font-display text-base">{t.nav.menu}</SheetTitle>
               </SheetHeader>
               <div className="h-[calc(100vh-4rem)] overflow-y-auto px-5 py-4">
                 <div className="mb-4 flex items-center justify-between border-b border-rule pb-4">
-                  <span className="text-sm text-ink-soft">Substrate</span>
+                  <span className="text-sm text-ink-soft">{t.nav.country}</span>
+                  <CountrySelector variant="sheet" />
+                </div>
+                <div className="mb-4 flex items-center justify-between border-b border-rule pb-4">
+                  <span className="text-sm text-ink-soft">{t.nav.substrate}</span>
                   <ThemeToggle />
                 </div>
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="categories" className="border-rule">
                     <AccordionTrigger className="font-display text-sm hover:no-underline">
-                      Categories
+                      {t.nav.categories}
                     </AccordionTrigger>
                     <AccordionContent>
                       <CategoryMenu onNavigate={() => setMobileOpen(false)} />
@@ -308,7 +335,7 @@ export function SiteHeader() {
                   </AccordionItem>
                   <AccordionItem value="brands" className="border-rule">
                     <AccordionTrigger className="font-display text-sm hover:no-underline">
-                      Brands
+                      {t.nav.brands}
                     </AccordionTrigger>
                     <AccordionContent>
                       <BrandMenu onNavigate={() => setMobileOpen(false)} />
@@ -319,8 +346,8 @@ export function SiteHeader() {
                   {navLinks
                     .filter((l) => !l.menu)
                     .concat([
-                      { label: 'FAQ', href: '/faq' },
-                      { label: 'Account', href: '/account' },
+                      { label: t.nav.faq, href: '/faq' },
+                      { label: t.nav.account, href: '/account' },
                     ])
                     .map((link) => (
                       <Link

@@ -14,6 +14,9 @@ import { TelegramWidget } from '@/components/chat/telegram-widget';
 import { WhatsappWidget } from '@/components/chat/whatsapp-widget';
 import { getCategories, getBrands } from '@/lib/db/catalogue';
 import { getSettingsSafe, asBoolean, asNumber } from '@/lib/settings';
+import { CountryProvider } from '@/components/providers/country-provider';
+import { getRates } from '@/lib/currency/rates';
+import { getDeliverySummary } from '@/lib/delivery/summary';
 
 /*
   The storefront shell.
@@ -47,10 +50,17 @@ export default async function StorefrontLayout({
     than throwing: the announcement line is a refinement, and a sleeping database should cost
     the site its custom wording, never its home page.
   */
-  const [categories, brands, settings] = await Promise.all([
+  /*
+    The country selector's data: the ECB rates (null when that read fails, and then nothing is
+    converted) and the delivery zones (an empty list when the database is unreachable). Both
+    fail soft, so neither can take the storefront down.
+  */
+  const [categories, brands, settings, rates, zones] = await Promise.all([
     getCategories(),
     getBrands(),
     getSettingsSafe(),
+    getRates(),
+    getDeliverySummary(),
   ]);
 
   /*
@@ -71,6 +81,7 @@ export default async function StorefrontLayout({
           supportPhone: settings.support_phone,
         }}
       >
+      <CountryProvider rates={rates} zones={zones}>
       <StoreProvider>
         <a
           href="#main"
@@ -103,6 +114,7 @@ export default async function StorefrontLayout({
         */}
         {asBoolean(settings.analytics_enabled) && <VisitTracker />}
       </StoreProvider>
+      </CountryProvider>
       </SettingsProvider>
     </CatalogueProvider>
   );

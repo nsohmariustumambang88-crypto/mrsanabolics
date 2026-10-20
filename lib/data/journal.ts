@@ -957,4 +957,108 @@ export const articles: JournalArticle[] = [
     faqs: [],
     sources: [],
   },
+
+  {
+    slug: 'testosterone-enanthate-for-sale-buying-guide',
+    title: 'Testosterone enanthate for sale: how to compare brands, strengths and prices',
+    metaTitle: 'Testosterone Enanthate for Sale: Brands, Strengths, Prices',
+    excerpt:
+      'Every testosterone enanthate listing we stock, compared by brand, strength, pack and price per 100 mg, plus what to check on a label before you buy.',
+    metaDescription:
+      'Compare 24 testosterone enanthate listings by brand, strength and price per 100 mg, what to check on a label, and the law in the US, UK, Canada, Australia.',
+    category: 'Verification',
+    author: BYLINE,
+    date: '2026-10-20',
+    image: pexels(9259963),
+    imageAlt:
+      'A row of clear glass vials with silver crimp caps standing in the round tray of a laboratory sample changer.',
+    imageCredit: credit('Jess Loiterton'),
+    faqs: [
+      {
+        question: 'How much does testosterone enanthate cost?',
+        answer:
+          'Across the 24 listings compared in this guide, a pack costs $55.00 to $75.00 (prices on 19 October 2026). Packs differ in strength and fill, so compare price per 100 mg: from about $1.38 to $2.80 where the label shows both.',
+      },
+      {
+        question: 'What strengths does testosterone enanthate come in?',
+        answer:
+          'The listings we stock are labelled at 250, 300 or 400 mg per mL. The licensed US generic is labelled at 200 mg per mL in sesame oil.',
+      },
+      {
+        question: 'Is it legal to buy testosterone enanthate online?',
+        answer:
+          'It depends on where you live. In the US it is Schedule III and cannot be delivered over the internet without a valid prescription. In the UK the import exemption covers only importation in person. Canada prohibits import unless authorised, and Australia requires written permission to import.',
+      },
+      {
+        question: 'Do you publish certificates of analysis?',
+        answer:
+          'No. If a seller offers one, check the laboratory through its accreditation body, confirm the test is on its accredited scope, and check the batch number matches your pack.',
+      },
+      {
+        question: 'What does shipping cost?',
+        answer:
+          'US standard tracked shipping is $9.00, free from $150.00 of goods, and express is $24.00. Europe standard is $14.00, free from $200.00, and express is $32.00. Everywhere else is $22.00. The minimum order is $100.00, including shipping and after any discount.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Testosterone enanthate injection, solution (Hikma Pharmaceuticals USA Inc.), prescribing information',
+        publisher: 'DailyMed, US National Library of Medicine',
+        year: '2026',
+        url: 'https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=e89d6458-428c-4256-97a3-f1fa851293c1',
+      },
+      { title: 'Testosterone enanthate (CID 9416)', publisher: 'PubChem, US National Library of Medicine', url: 'https://pubchem.ncbi.nlm.nih.gov/compound/9416' },
+      {
+        title: 'Fake anabolic androgenic steroids on the black market: a systematic review and meta-analysis on qualitative and quantitative analytical results found within the literature',
+        publisher: 'BMC Public Health (Magnolini R et al.)',
+        year: '2022',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC9288681/',
+      },
+      { title: '21 CFR 1308.13: Schedule III', publisher: 'eCFR', year: '2026', url: 'https://www.ecfr.gov/current/title-21/section-1308.13' },
+      {
+        title: '21 U.S.C. 844: Penalty for simple possession',
+        publisher: 'US Government Publishing Office',
+        year: '2024',
+        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapI-partD-sec844.htm',
+      },
+      {
+        title: '21 U.S.C. 829: Prescriptions (Ryan Haight Online Pharmacy Consumer Protection Act)',
+        publisher: 'US Government Publishing Office',
+        year: '2024',
+        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapI-partC-sec829.htm',
+      },
+      {
+        title: '21 U.S.C. 952: Importation of controlled substances',
+        publisher: 'US Government Publishing Office',
+        year: '2024',
+        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapII-sec952.htm',
+      },
+      { title: 'Misuse of Drugs Act 1971, Schedule 2', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/ukpga/1971/38/schedule/2' },
+      { title: 'Misuse of Drugs Regulations 2001, regulation 4', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/uksi/2001/3998/regulation/4' },
+      {
+        title: 'The Misuse of Drugs (Amendment No. 2) (England, Wales and Scotland) Regulations 2012: Explanatory Note',
+        publisher: 'legislation.gov.uk',
+        year: '2012',
+        url: 'https://www.legislation.gov.uk/uksi/2012/973/note/made',
+      },
+      {
+        title: 'Controlled Drugs and Substances Act (S.C. 1996, c. 19)',
+        publisher: 'Justice Laws Website, Government of Canada',
+        year: '2026',
+        url: 'https://laws-lois.justice.gc.ca/eng/acts/C-38.8/FullText.html',
+      },
+      {
+        title: 'Therapeutic Goods (Poisons Standard—June 2026) Instrument 2026',
+        publisher: 'Federal Register of Legislation (Australia)',
+        year: '2026',
+        url: 'https://www.legislation.gov.au/F2026L00633/asmade',
+      },
+      {
+        title: 'Customs (Prohibited Imports) Regulations 1956',
+        publisher: 'Federal Register of Legislation (Australia)',
+        year: '2026',
+        url: 'https://www.legislation.gov.au/F1996B03651/latest/text',
+      },
+    ],
+  },
 ];
