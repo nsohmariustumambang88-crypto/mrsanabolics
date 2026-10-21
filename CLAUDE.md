@@ -18,7 +18,19 @@ Windows note: several source files use CRLF. A `String.replace` with an LF-only 
 
 ## What this is
 
-MrAnabolics — a Next.js 13.5 App Router storefront, originally scaffolded from the Bolt `nextjs-shadcn` template. **Deployed to Vercel** from `main`.
+MrAnabolics — a Next.js 13.5 App Router storefront, originally scaffolded from the Bolt `nextjs-shadcn` template, live at **https://www.mrsanabolics.com** (the bare domain 308s to `www`). **Deployed to Vercel** from `main` of the GitHub repo `nsohmariustumambang88-crypto/mrsanabolics` — git remote **`newrepo`**. The remote `origin` (`marztuma/mranabolics`) is retired: never push to it. The new repo is **public**, so nothing secret may ever be committed: `.env*`, `backups/` and `black-friday-email.html` stay out of every commit.
+
+**Working rules from the owner.** Run `npm run typecheck` (and `lint`) before committing. Commit and push only when the owner says "push". Customer or subscriber email goes to `mariustuma88@gmail.com` as a test first and is sent for real only on the owner's approval. API keys are not rotated unless the owner asks.
+
+**Current state (October 2026)**, which some older sections below predate:
+
+- The database is **Supabase** (it was Neon — see "The database moved from Neon to Supabase"). Where a section below says "Neon" about live behaviour, read Supabase; the build-time lessons still hold.
+- **Payments are connected** and the storefront checkout **creates real orders** — see "Payments and checkout, as built".
+- **Email is sent** through Resend ([lib/email/resend.ts](lib/email/resend.ts)) — see "Email, as built".
+- The live chat widget is **unmounted**; the storefront shows Telegram and WhatsApp buttons instead — see "Live chat".
+- Storefront pages regenerate **hourly** (`revalidate = 3600`); checkout and admin are dynamic.
+- The storefront is in **five languages** with a country selector — see "Countries and languages".
+- Reviews have **no rate limit**, and the admin can **edit** them — see "Reviews".
 
 It is a full-featured production e-commerce platform. It has a Supabase Postgres database read through Prisma, a dozen route handlers under `app/api/`, server actions behind every admin screen, and a full back office at `/admin`. The catalogue, the CRM, orders, and "The admin, in full" are each real subsystems powering this business.
 
@@ -257,7 +269,7 @@ Four token distinctions exist because collapsing them visibly broke the build du
 - Chips and cards sitting over live pigment are **opaque**. Translucent ones lost legibility against the field.
 - No kicker/eyebrow labels above headings. `SectionHeading` has no `eyebrow` prop by design.
 - No glass/blur as decoration, no gradient text, no glowing accents. Shadows carry offset *and* blur.
-- **There is no motion.** The build carried a hero reveal, image zooms on hover, card lifts, arrow slides and dot pops; all of it is gone at the user's direction. `MarbleBath` still accepts `animate`, but it defaults to `false` — the bath paints composed. Hover still responds, in colour only. `framer-motion` is in `package.json` and imported by nothing; the client bundle does not carry it. There is no scrolling marquee.
+- **There is no motion** — except the home page's featured carousel, which slides every six seconds at the owner's request (see "The hero's right-hand column is the promotion"). The build carried a hero reveal, image zooms on hover, card lifts, arrow slides and dot pops; all of it is gone at the user's direction. `MarbleBath` still accepts `animate`, but it defaults to `false` — the bath paints composed. Hover still responds, in colour only. `framer-motion` is in `package.json` and imported by nothing; the client bundle does not carry it. There is no scrolling marquee.
 - Icons are lucide or authored SVG at consistent stroke weight — never emoji.
 - Browser surfaces (selection, caret, scrollbars, focus rings, tabular numerals) are themed in `globals.css`.
 
@@ -382,7 +394,7 @@ node --env-file=.env .impeccable/account-e2e.mjs   # needs the app running
 
 ## The journal
 
-The journal (`/blog`, and the section near the foot of the home page) is six sourced articles written for search: reading a certificate of analysis (featured), spotting counterfeit steroids, what HPLC and mass spectrometry can prove, whether SARMs are legal, steroid law in the US/UK/Canada/Australia, and the health risks. The editorial policy they follow is on the About page (`/about#editorial-policy`) and is binding on any new article: **every factual claim cited to a primary source, no dosing or protocols, the byline is the organisation, dates are real.**
+The journal (`/blog`, and the section near the foot of the home page) started as six sourced articles written for search. It now holds about 40: a buying guide, `testosterone-enanthate-for-sale-buying-guide` (October 2026, 13 sources, 42 internal links), and some 30 SEO articles added by other sessions — several of them (cycle guides, dosing, "best steroids for…") break the editorial policy below and are slated to be removed and redirected, about 20 in all, with 6 to merge and 9 to rewrite. The six originals: reading a certificate of analysis (featured), spotting counterfeit steroids, what HPLC and mass spectrometry can prove, whether SARMs are legal, steroid law in the US/UK/Canada/Australia, and the health risks. The editorial policy they follow is on the About page (`/about#editorial-policy`) and is binding on any new article: **every factual claim cited to a primary source, no dosing or protocols, the byline is the organisation, dates are real.**
 
 **Where it lives.** Each body is Markdown at `content/journal/<slug>.md`; its title, search title and description, photograph, FAQs and numbered sources are in [lib/data/journal.ts](lib/data/journal.ts). `npm run db:seed-journal` writes them to Neon and **refuses the whole run** if a `[^n]` has no source, a source is never cited, a `[[figure:key]]` does not exist, more than one article is featured, or an excerpt exceeds 165 characters. Existing rows are skipped unless `--refresh`, because the admin can edit them; `--dry-run` writes nothing. The Markdown dialect and renderer are [components/journal/article-body.tsx](components/journal/article-body.tsx) — no HTML injection. Figures are drawn in [components/journal/figures.tsx](components/journal/figures.tsx) as live text, not images.
 
@@ -396,7 +408,13 @@ The announcement bar setting still reads "Certificates of analysis now published
 
 ## Live chat
 
-A chat button sits on every storefront page ([components/chat/chat-widget.tsx](components/chat/chat-widget.tsx), mounted in the storefront layout behind the `chat_enabled` setting). It opens **empty**: no greeting, no suggested questions. Two modes, always visible and switchable: **Agent** (indigo) answers at once; **Support** (verdigris) goes to `/admin/chat`, where a person replies. Visitor bubbles are `bg-ink`, agent `bg-paper-sunk`, staff tinted verdigris with a border; all carry a time.
+**Not mounted any more.** At the owner's direction the storefront layout renders
+[components/chat/telegram-widget.tsx](components/chat/telegram-widget.tsx) (bottom right, links
+`https://t.me/mrsanabolics`) and [components/chat/whatsapp-widget.tsx](components/chat/whatsapp-widget.tsx)
+(bottom left) instead. The chat code, its routes and `/admin/chat` remain and still work if the
+widget is mounted again; what follows describes it as built.
+
+A chat button sat on every storefront page ([components/chat/chat-widget.tsx](components/chat/chat-widget.tsx), mounted in the storefront layout behind the `chat_enabled` setting). It opens **empty**: no greeting, no suggested questions. Two modes, always visible and switchable: **Agent** (indigo) answers at once; **Support** (verdigris) goes to `/admin/chat`, where a person replies. Visitor bubbles are `bg-ink`, agent `bg-paper-sunk`, staff tinted verdigris with a border; all carry a time.
 
 **A visitor is a token.** `/api/chat/visitor/message` sets `mra_chat`, a random 256-bit value, httpOnly and scoped to `/api/chat`; only its SHA-256 is stored (`ChatConversation.tokenHash`). The conversation is reachable only through that cookie — there is no id in any visitor URL. A browser that never wrote has no cookie, and its polls never touch the database.
 
@@ -479,9 +497,17 @@ Both of its inputs are things an administrator controls rather than things this 
   paused, not-yet-started, expired or used-up code is not advertised — and it states every
   condition the till will enforce (minimum spend, category) beside the headline.
 
-**Stepped by the visitor, never on a timer.** This build has no motion, and content that advances
-on its own also fails WCAG 2.2.2 — the price is pulled away from someone reading it. It follows the
-WAI-ARIA carousel pattern: a labelled region with `aria-roledescription="carousel"`, each slide
+**Where it lives now, and what it rotates.** It is no longer in the hero's right column: it sits in
+its own "Featured Offer" section under the hero (`app/(storefront)/page.tsx`). Because the
+reference prices are switched off (below), no product qualifies as a real offer, so the card rotates
+through `featured` instead — up to six in-stock, photographed products flagged as deals, then best
+sellers — framed as featured products with no "was" price and no percentage. Staff choose what it
+shows by flagging deals in the admin.
+
+**It advances on its own every six seconds, at the owner's request** — the one exception to "there
+is no motion". To satisfy WCAG 2.2.2 it pauses on hover, on keyboard focus and in a hidden tab, has a
+pause/play button, starts paused for reduced-motion users, and restarts its count after a manual
+step. It follows the WAI-ARIA carousel pattern: a labelled region with `aria-roledescription="carousel"`, each slide
 announced as "2 of 6", previous/next buttons *and* the arrow keys, and a polite live region on the
 counter. The panel is not one big link: it holds buttons, and a button inside an `<a>` is invalid
 HTML that also navigates on every press. The photograph is a second link to the product, taken out
@@ -553,16 +579,74 @@ The dev server degrades to a system font instead, so this only bites in `build`.
 
 `/checkout` is still a UI shell where payment is concerned, and says so at the point of entry. `/auth` and `/account` are no longer shells. Keep that distinction honest: a notice comes off only when the flow behind it actually works.
 
-## Checkout and marketing consent
+## Payments and checkout, as built
 
-**Payment is not connected, and that is a decision rather than an unfinished task.**
-[components/checkout/payment-methods.tsx](components/checkout/payment-methods.tsx) offers card,
-Cash App and crypto (BTC/ETH/USDT), and each panel says at the point of entry that nothing is
-wired. The crypto panel deliberately shows **no wallet address**: a plausible-looking string
-there is the most dangerous thing the page could contain, because someone would send real money
-to an address that is either nobody's or somebody else's. This catalogue is controlled
-substances and prescription-only medicines; connecting a live rail is not a matter of filling
-in a constant.
+**The storefront checkout creates real orders.** `/checkout` posts to `submitCheckout` in
+[app/checkout/checkout-actions.ts](app/checkout/checkout-actions.ts), which upserts the Contact and
+calls `createOrder` in [lib/orders/orders.ts](lib/orders/orders.ts) — the same path the admin's
+"new order" uses. **The browser sends no money figure.** It sends product ids, quantities, the
+address, the country, the chosen shipping method name, a discount code and the payment method; the
+server prices the lines from the database, quotes shipping with `quoteDelivery` for that country
+and refuses a method the zone does not offer, re-evaluates the code, and stores the totals.
+
+- **Minimum order: $100**, from [lib/orders/minimum.ts](lib/orders/minimum.ts), measured on the
+  **total paid** — goods − discount + shipping. Checked in `createOrder`.
+- **There is no tax line.** The 8% placeholder was removed.
+- **Methods** come from the PaymentMethod table, ordered crypto (0), bank transfer (1), Cash App
+  (2); checkout preselects the first listed.
+- **Bank transfer and Cash App are manual.** The order is recorded and staff email the payment
+  details; nothing is collected online.
+
+**Crypto is connected through NOWPayments** (BTC and ETH only — USDT was removed because a coin on
+the wrong network is lost). The flow:
+
+1. [app/api/crypto/checkout/route.ts](app/api/crypto/checkout/route.ts) calls `submitCheckout`
+   first, reads the stored order total, and only then calls `createPayment`
+   ([lib/crypto/nowpayments.ts](lib/crypto/nowpayments.ts), `POST /v1/payment`) for that total,
+   with `order_id` = the order reference and `ipn_callback_url` = `${SITE.url}/api/webhooks/nowpayments`
+   (`SITE.url` is the `www` host; NOWPayments does not follow redirects).
+2. The payment id is written to `Order.notes` as `Crypto payment - BTC | Payment ID: 123…`. The
+   payment page and the webhook both parse that exact format — change it in all three places or none.
+3. The customer pays on **our** page, `/checkout/payment-confirmation?order=<ref>`
+   ([page](app/checkout/payment-confirmation/page.tsx) + [client](components/checkout/payment-confirmation-client.tsx)):
+   amount, coin, address, polling `/api/orders/<ref>/status` every 5s. When the order turns
+   CONFIRMED the page itself becomes "Payment received". There is **no `/checkout/success` or
+   `/cancelled` page** — an earlier version redirected a paying customer to a 404.
+4. [app/api/webhooks/nowpayments/route.ts](app/api/webhooks/nowpayments/route.ts) verifies
+   `x-nowpayments-sig` with [lib/crypto/webhook-verify.ts](lib/crypto/webhook-verify.ts):
+   HMAC-SHA512 of the JSON **with keys sorted recursively**, constant-time compare. Hashing only
+   the raw body rejected genuine IPNs. It marks CONFIRMED only on `finished`, only when the IPN's
+   `payment_id` and `price_amount` match the order, sends the "Order Confirmed" email once, and
+   cancels on `failed`/`expired`. `confirming`/`confirmed`/`sending`/`partially_paid` change nothing.
+
+`/api/crypto/payment-status/<id>` answers only with `?order=<ref>` naming the order that owns the
+payment, and returns only amount, coin, address and status. The payment page passes the browser
+only the order's status and total — never the contact.
+
+Env: `NOWPAYMENTS_API_KEY`, `NOWPAYMENTS_IPN_SECRET` (in `.env` and Vercel; read at request time,
+never at module load, or the build fails without them). NOWPayments' `/v1/balance` answers only
+from IP addresses allow-listed in its dashboard; payment creation and status do not, which is why
+the Vercel functions work without a fixed IP. Do not extend the allow-list to all endpoints.
+
+To test a webhook against the live site without touching an order, sign a payload with the IPN
+secret for a made-up `order_id`: a 200 means the secret matches, a 401 means it does not.
+
+## Email, as built
+
+Mail is sent through the Resend REST API ([lib/email/resend.ts](lib/email/resend.ts)) from
+`orders@mrsanabolics.com` with `reply_to` `support@mrsanabolics.com`. `sendOrderConfirmation`
+renders one template ([lib/email/templates.ts](lib/email/templates.ts)) with Subtotal, Discount,
+Shipping and Total rows — "Order Received" when placed, "Order Confirmed" when paid — and is the
+only order email; an older duplicate template in the webhook was deleted. Campaigns and newsletters
+have been sent by script through the same API, test to the owner first.
+
+**Known bug, not yet fixed:** `lib/email/campaigns.ts` builds every recipient's unsubscribe link
+from `subscribers[0].unsubscribeToken`. Each subscriber must get their own token.
+
+Several sections below ("Customer accounts", the CRM's enquiries, "Campaigns and Messages") still
+say this build sends no email; that was true when they were written.
+
+## Marketing consent
 
 **Email capture is consent-first, because the alternative does not work.** There is no way to
 read an address off a visitor who never types one, and mailing people who did not opt in breaks
@@ -642,6 +726,71 @@ It builds `import_test_src`/`import_test_dst` schemas on the Supabase server, re
 target's seeded ids to mimic two separate seeds, and always drops both schemas. It keeps
 `connection_limit=2`: the session pooler allows ~15 connections on the free plan, and exhausting
 it also surfaces as "can't reach database".
+
+**Supabase's Data API must stay closed.** The app connects as `postgres` (owner, `BYPASSRLS`) and
+never uses Supabase's REST API or `@supabase/supabase-js`. On 21 October 2026 the Security Advisor
+flagged that 7 tables added after the first setup (`discount_redemptions`, `order_events`,
+`outbound_messages`, `page_views`, `payment_methods`, `search_queries`, `visitors`) had RLS off while
+`anon`/`authenticated` held full table grants — readable and writable by anyone with the anon key.
+Fixed by enabling RLS on all 32 tables, revoking every table and sequence grant from `anon` and
+`authenticated`, and revoking their default privileges for tables `postgres` creates. **A new table
+added by `db push` must get `alter table … enable row level security`** to keep the Advisor quiet;
+the revoked defaults already keep it unreachable.
+
+**Backups.** [scripts/backup-db.mjs](scripts/backup-db.mjs) exports every Prisma model to
+`backups/<ISO timestamp>/<Model>.json` (gitignored; the folder is inside OneDrive, so it also syncs
+off-machine) and then deletes its own timestamped backups older than `BACKUP_KEEP_DAYS` (7) —
+folders named any other way are never touched. Windows Task Scheduler runs it every 3 hours as
+"MrAnabolics DB backup" through [scripts/backup-db.vbs](scripts/backup-db.vbs) →
+[scripts/backup-db.cmd](scripts/backup-db.cmd), hidden, logging to `backups/backup.log`. Editing
+the task while it runs kills that run (`0xC000013A` in the log), which is harmless.
+
+## Countries and languages
+
+A **country selector** sits beside the theme toggle ([components/layout/country-selector.tsx](components/layout/country-selector.tsx);
+inside the menu sheet on phones, because the 360px header row is full). Countries are in
+[lib/countries.ts](lib/countries.ts): US, GB, CA, AU, ES, FR, DE, IT and "Other". The choice is a
+`mra_country` cookie plus localStorage; with none, `/api/geo` returns the CDN's country header once
+per tab as a **preselection only — nothing ever redirects**.
+
+**Languages: English at bare paths, Spanish/French/German/Italian under `/es` `/fr` `/de` `/it`**
+([lib/i18n/](lib/i18n/), pages in `app/(storefront)/[lang]/`). Only the paths listed in
+[lib/i18n/routes.ts](lib/i18n/routes.ts) are translated — home, `/shop`, the injectables and
+orals categories and ten compound pages; `dynamicParams = false` makes anything else under a
+prefix a 404, so English text is never served at a language URL. Choosing a country switches
+language only where a translation exists. Each translated page declares its own canonical plus
+hreflang for all five and `x-default`; `<html lang>` comes from the path via
+[components/i18n/html-root.tsx](components/i18n/html-root.tsx); the sitemap lists every
+translation. Adding a page = add it to `routes.ts` and its copy to the dictionaries. The editorial
+policy applies in every language — "dosage" in French means strength and is fine.
+
+**Approximate local prices** (EUR, GBP, CAD, AUD) use the ECB daily rates from frankfurter.dev
+([lib/currency/rates.ts](lib/currency/rates.ts), cached a day). Any failure returns null and the
+site shows USD alone — there is deliberately no fallback table. Checkout always charges USD and
+starts its country field from the selector. **Delivery pages:** `/delivery` and
+`/delivery/{united-kingdom,canada,australia}`, built from the delivery zones.
+
+## Search
+
+[lib/search/match.ts](lib/search/match.ts) matches accent-folded text ([fold.ts](lib/search/fold.ts))
+with Levenshtein tolerance and an alias table (gyno, test, tren, deca, npp, dbol, var, winny, pct,
+plus trade names: sustanon/sustaplex → the Susta products, testoviron → enanthate). An alias key of
+five letters or more also matches when misspelt ("sistaplex"). Stopwords ("like", "minutes",
+"price", "tiene"…) are dropped from the query, and numbers match exactly — "400" is a strength, not
+a near-miss for "500".
+
+`/api/catalogue` tries three passes: every word strictly, every word loosely, then
+`closestByWords` — the products matching the MOST words (at least one a word, not a number),
+strict before loose. Anything but the first is flagged `similar`, so the dialog labels it "Closest
+products/articles". The search dialog scopes by page: `/blog` searches articles
+(`/api/journal/search`), shop/product/brand/category pages search products, anywhere else both —
+and in every scope it lists matching **help pages** first (returns, shipping, delivery by country,
+FAQ/payment, contact, privacy, terms), from `HELP_PAGES` in the dialog. `/api/track/search` drops
+any term containing `{` or `}`: crawlers open `/shop?q={search_term_string}` from the WebSite
+JSON-LD template, and that is not a customer search.
+
+The failed searches that drove this (October 2026): "Sistaplex like 5 minutes", "Tren entha",
+"Testoviron", "Ultima-Anomass 400 Mix", "return".
 
 ## The CRM
 
@@ -755,10 +904,11 @@ the strength of somebody ticking it. `orders-e2e.mjs` asserts the absence agains
 What the model does cover is everything after the money question — what was ordered, at what price,
 where it is going, and how far along it is.
 
-**The storefront checkout does not create orders.** It cannot take payment, so there is nothing for
-it to complete. Orders are recorded from `/admin/orders/new`, which is the back-office path for one
-placed by phone or email. `/checkout` keeps its existing notices; do not wire it to `createOrder`
-without dealing with payment first.
+**The storefront checkout now creates orders too** (see "Payments and checkout, as built"), through
+the same `createOrder` as `/admin/orders/new`, the back-office path for one placed by phone or
+email. Payment state still has no columns: the crypto payment id lives in `notes`, and CONFIRMED
+means paid. Orders placed through the very first crypto route (before the server priced
+everything) have no items and no shipping recorded — `MRA-06625956-LQJ0X` is one.
 
 **Lines are snapshots.** `OrderItem` copies the product's name, slug and unit price at the moment
 the line is created and never reads them back through the relation. Renaming or repricing a product
@@ -882,8 +1032,20 @@ the rating counted approved ones would put the two into permanent disagreement, 
 what moderation exists to prevent. On a controlled-substance catalogue an unreviewed "cured my X"
 is a claim the shop is publishing, whoever typed it.
 
-`/api/review` rate-limits per IP, hashes the address with `lib/ip-hash.ts` and carries a honeypot
-that answers exactly like a success. It **never touches the subscriber table**: writing a review
+`/api/review` has **no rate limit** (the owner wants unlimited reviews from one person or
+connection; moderation is the control), hashes the address with `lib/ip-hash.ts` and carries a
+honeypot that answers exactly like a success.
+
+**Staff can edit a review** (`editReviewAction` in `app/admin/review-actions.ts`): headline, body
+and date. The first edit copies the customer's words into `originalTitle`/`originalBody`/
+`originalDate`, and `editedAt`/`editedBy` record who changed it; the product page shows "Edited by
+MrAnabolics". The date cannot be in the future or before the product's `createdAt`. The product
+page shows no star summary or rating count above the reviews.
+
+**Do not invent reviews.** Some approved reviews were written in-house to test how Google shows
+them, while the product page says reviews come from buyers. Google treats that as review spam and
+customers ask to read reviews before buying, so they should be unapproved before advertising
+starts — never add more. It **never touches the subscriber table**: writing a review
 is not consent to be emailed. `moderatedAt`/`moderatedBy` are re-stamped on every decision, unlike
 `Enquiry.handledAt` and the order milestones — those record how long somebody waited, which is a
 fact; this records who is answerable for what is on the page now.

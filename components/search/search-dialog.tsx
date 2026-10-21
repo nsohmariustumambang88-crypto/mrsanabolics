@@ -13,6 +13,7 @@ import { ProductPlate } from '@/components/product/product-plate';
 import { categoryPigment } from '@/lib/site';
 import { categoryPath } from '@/lib/catalogue/paths';
 import { useSearchLog } from '@/components/analytics/use-search-log';
+import { matchesQuery } from '@/lib/search/match';
 import type { ProductSummary } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -35,7 +36,24 @@ function scopeFor(pathname: string): Scope {
 
 type ArticleHit = { slug: string; title: string; excerpt: string; category: string };
 
+/*
+  The store's own help pages. "return" found nothing because search only looked at products and
+  articles; somebody typing it wants the returns policy. Matched with the same forgiving matcher,
+  in every scope, and listed first.
+*/
+type HelpPage = { href: string; title: string; keys: string[] };
+const HELP_PAGES: HelpPage[] = [
+  { href: '/legal/returns', title: 'Returns and refunds', keys: ['return', 'returns', 'refund', 'exchange', 'damaged', 'broken', 'wrong', 'cancel', 'policy'] },
+  { href: '/legal/shipping', title: 'Shipping policy', keys: ['shipping', 'ship', 'delivery', 'deliver', 'tracking', 'track', 'postage', 'courier', 'customs', 'parcel', 'package', 'policy'] },
+  { href: '/delivery', title: 'Delivery by country', keys: ['delivery', 'country', 'countries', 'international', 'europe', 'uk', 'canada', 'australia', 'worldwide'] },
+  { href: '/faq', title: 'Frequently asked questions', keys: ['faq', 'help', 'questions', 'payment', 'pay', 'bitcoin', 'crypto', 'btc', 'eth', 'ethereum', 'cashapp', 'bank', 'transfer', 'minimum', 'discount', 'code', 'coupon'] },
+  { href: '/contact', title: 'Contact us', keys: ['contact', 'email', 'support', 'telegram', 'whatsapp', 'phone', 'message', 'help'] },
+  { href: '/legal/privacy', title: 'Privacy policy', keys: ['privacy', 'data', 'cookies', 'gdpr', 'policy'] },
+  { href: '/legal/terms', title: 'Terms and conditions', keys: ['terms', 'conditions', 'legal', 'policy'] },
+];
+
 type Entry =
+  | { kind: 'page'; key: string; href: string; page: HelpPage }
   | { kind: 'product'; key: string; href: string; product: ProductSummary }
   | { kind: 'article'; key: string; href: string; article: ArticleHit };
 
@@ -117,7 +135,12 @@ export function SearchDialog() {
     return () => controller.abort();
   }, [debounced, showArticles]);
 
+  const pages = debounced
+    ? HELP_PAGES.filter((p) => matchesQuery([p.title, ...p.keys], debounced)).slice(0, 3)
+    : [];
+
   const entries: Entry[] = [
+    ...pages.map((page): Entry => ({ kind: 'page', key: `h-${page.href}`, href: page.href, page })),
     ...(showProducts
       ? results.map((product): Entry => ({
           kind: 'product',
@@ -278,16 +301,20 @@ export function SearchDialog() {
         ) : (
           <ul id="search-results" role="listbox" className="max-h-[24rem] overflow-y-auto">
             {entries.map((entry, i) => {
+              const firstPage = entry.kind === 'page' && i === 0;
               const firstProduct = entry.kind === 'product' && (i === 0 || entries[i - 1].kind !== 'product');
               const firstArticle = entry.kind === 'article' && (i === 0 || entries[i - 1].kind !== 'article');
-              const label =
-                firstProduct && productSearch.similar
+              const label = firstPage
+                ? 'Help'
+                : firstProduct && productSearch.similar
                   ? 'Closest products'
-                  : firstArticle && articlesSimilar
-                    ? 'Closest articles'
-                    : firstArticle && showProducts
-                      ? 'From the journal'
-                      : null;
+                  : firstProduct && pages.length > 0
+                    ? 'Products'
+                    : firstArticle && articlesSimilar
+                      ? 'Closest articles'
+                      : firstArticle && (showProducts || pages.length > 0)
+                        ? 'From the journal'
+                        : null;
               return (
                 <React.Fragment key={entry.key}>
                   {label && (
@@ -307,7 +334,16 @@ export function SearchDialog() {
                         i === cursor ? 'bg-paper-sunk' : 'hover:bg-paper-sunk'
                       )}
                     >
-                      {entry.kind === 'product' ? (
+                      {entry.kind === 'page' ? (
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
+                            Help
+                          </span>
+                          <span className="mt-0.5 block truncate text-sm font-medium">
+                            {entry.page.title}
+                          </span>
+                        </span>
+                      ) : entry.kind === 'product' ? (
                         <>
                           <span className="relative h-11 w-11 shrink-0 overflow-hidden border border-rule bg-paper-sunk">
                             <ProductPlate product={entry.product} showMarking={false} sizes="44px" />

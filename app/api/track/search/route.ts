@@ -54,6 +54,12 @@ export async function POST(request: NextRequest) {
     const term = typeof body.term === 'string' ? body.term.trim().slice(0, MAX_TERM) : '';
     if (!term) return new NextResponse(null, { status: 204 });
 
+    /*
+      "{search_term_string}" is the placeholder in our WebSite JSON-LD search template. Crawlers
+      open /shop?q={search_term_string} literally; nobody typed it, so it is not a search.
+    */
+    if (/[{}]/.test(term)) return new NextResponse(null, { status: 204 });
+
     const resultCount = Number(body.resultCount);
     if (!Number.isFinite(resultCount) || resultCount < 0) {
       return new NextResponse(null, { status: 204 });

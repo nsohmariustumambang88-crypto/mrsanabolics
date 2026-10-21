@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PrismaClient, Prisma } from '@prisma/client';
 
@@ -43,3 +43,21 @@ writeFileSync(join(outDir, '_summary.json'), JSON.stringify({ takenAt: new Date(
 console.log(`Backup written to ${outDir}`);
 console.log(JSON.stringify(summary, null, 2));
 await prisma.$disconnect();
+
+/*
+  Retention, only after this backup is safely written. The scheduled task runs every few hours
+  (scripts/backup-db.cmd), so old copies are pruned: only folders named by this script's own
+  timestamp are candidates — anything named by hand (listing-fixes-…) is never touched.
+*/
+const keepDays = Number(process.env.BACKUP_KEEP_DAYS ?? 7);
+const cutoff = Date.now() - keepDays * 24 * 60 * 60 * 1000;
+const AUTO = /^(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})-(\d{3})Z$/;
+for (const name of readdirSync(outRoot)) {
+  const m = name.match(AUTO);
+  if (!m || name === stamp) continue;
+  const takenAt = Date.parse(`${m[1]}T${m[2]}:${m[3]}:${m[4]}.${m[5]}Z`);
+  if (takenAt < cutoff) {
+    rmSync(join(outRoot, name), { recursive: true, force: true });
+    console.log(`Removed backup older than ${keepDays} days: ${name}`);
+  }
+}

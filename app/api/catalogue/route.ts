@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getProducts, toSummary } from '@/lib/db/catalogue';
 import { foldText } from '@/lib/search/fold';
-import { matchesQuery } from '@/lib/search/match';
+import { matchCount, matchesQuery } from '@/lib/search/match';
 import type { Product, ProductSummary } from '@/lib/types';
 
 /*
@@ -38,6 +38,24 @@ function priceCeiling(list: { price: number }[]): number {
 function matches(p: Product, q: string, loose: boolean): boolean {
   if (matchesQuery([p.name, p.brand, p.category, p.subcategoryName ?? ''], q, loose)) return true;
   return !loose && foldText(p.description).includes(q);
+}
+
+/*
+  Nothing matches every word: return the products matching the MOST words, provided at least one
+  of them is a word rather than a number. Better "closest products" than an empty box — an empty
+  box is a customer who leaves.
+*/
+function closestByWords(list: Product[], q: string): Product[] {
+  /* Strict tolerance first; the looser one only if no word matched anything strictly. */
+  for (const loose of [false, true]) {
+    const scored = list
+      .map((p) => ({ p, ...matchCount([p.name, p.brand, p.category, p.subcategoryName ?? ''], q, loose) }))
+      .filter((s) => s.named > 0);
+    if (scored.length === 0) continue;
+    const best = scored.reduce((max, s) => Math.max(max, s.matched), 0);
+    return scored.filter((s) => s.matched === best).map((s) => s.p);
+  }
+  return [];
 }
 
 function sorted(list: Product[], sort: Sort): Product[] {
@@ -98,7 +116,8 @@ export async function GET(request: Request) {
     if (exact.length > 0) {
       list = exact;
     } else {
-      list = list.filter((p) => matches(p, query, true));
+      const loose = list.filter((p) => matches(p, query, true));
+      list = loose.length > 0 ? loose : closestByWords(list, query);
       similar = list.length > 0;
     }
   }
