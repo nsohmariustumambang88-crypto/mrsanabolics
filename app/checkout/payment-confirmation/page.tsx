@@ -9,9 +9,10 @@ export const metadata = {
 };
 
 async function getOrderDetails(orderReference: string) {
+  /* Only what the page shows. The contact's name, email and address never reach the browser. */
   const order = await prisma.order.findUnique({
     where: { reference: orderReference },
-    include: { contact: true },
+    select: { status: true, total: true, notes: true },
   });
 
   if (!order) {
@@ -65,7 +66,8 @@ export default async function PaymentConfirmationPage({
       <PaymentConfirmationClient
         paymentId={paymentId}
         orderReference={orderReference}
-        order={order}
+        orderStatus={order.status}
+        orderTotal={Number(order.total)}
         cryptoType={cryptoType}
       />
     </Suspense>

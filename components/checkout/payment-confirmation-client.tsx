@@ -1,45 +1,43 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Check, Clock, Copy } from 'lucide-react';
-import { Order, Contact } from '@prisma/client';
 
 interface PaymentConfirmationClientProps {
   paymentId: string;
   orderReference: string;
-  order: Order & { contact: Contact | null };
+  orderStatus: string;
+  orderTotal: number;
   cryptoType: string;
 }
 
 interface PaymentDetails {
-  payment_id: string;
   pay_amount: number;
   pay_currency: string;
   pay_address: string;
   payment_status: string;
-  created_at: string;
 }
 
 export function PaymentConfirmationClient({
   paymentId,
   orderReference,
-  order,
-  cryptoType,
+  orderStatus: initialStatus,
+  orderTotal,
 }: PaymentConfirmationClientProps) {
-  const router = useRouter();
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [orderStatus, setOrderStatus] = useState(order.status);
+  const [orderStatus, setOrderStatus] = useState(initialStatus);
 
   // Fetch payment details from NOWPayments API
   useEffect(() => {
     const fetchPaymentDetails = async () => {
       try {
         // Get payment details from our API which fetches from NOWPayments
-        const response = await fetch(`/api/crypto/payment-status/${paymentId}`);
+        const response = await fetch(
+          `/api/crypto/payment-status/${paymentId}?order=${encodeURIComponent(orderReference)}`
+        );
         if (!response.ok) throw new Error('Failed to fetch payment details');
 
         const data = await response.json();
@@ -53,32 +51,31 @@ export function PaymentConfirmationClient({
     };
 
     fetchPaymentDetails();
-  }, [paymentId]);
+  }, [paymentId, orderReference]);
 
-  // Poll for order status updates (payment confirmation via webhook)
+  /*
+    Poll for the webhook's confirmation. When it lands, this page itself becomes the "Payment
+    received" page and polling stops — it used to redirect to /checkout/success, which does not
+    exist, so a customer who had just paid landed on a 404.
+  */
   useEffect(() => {
+    if (orderStatus === 'CONFIRMED') return;
     const interval = setInterval(async () => {
+      if (document.visibilityState === 'hidden') return;
       try {
-        const response = await fetch(`/api/orders/${orderReference}/status`);
+        const response = await fetch(`/api/orders/${encodeURIComponent(orderReference)}/status`, {
+          cache: 'no-store',
+        });
         if (!response.ok) return;
-
         const data = await response.json();
         setOrderStatus(data.status);
-
-        // If payment confirmed, redirect to success page
-        if (data.status === 'CONFIRMED') {
-          // Wait a moment to show the success state, then redirect
-          setTimeout(() => {
-            router.push(`/checkout/success?order=${orderReference}`);
-          }, 1000);
-        }
       } catch (err) {
         console.error('Error polling order status:', err);
       }
-    }, 3000); // Poll every 3 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
-  }, [orderReference, router]);
+  }, [orderReference, orderStatus]);
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -226,7 +223,7 @@ export function PaymentConfirmationClient({
             </div>
             <div className="flex justify-between">
               <span className="text-ink-soft">Amount:</span>
-              <span className="text-ink">${Number(order.total).toFixed(2)}</span>
+              <span className="text-ink">${orderTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-ink-soft">Status:</span>

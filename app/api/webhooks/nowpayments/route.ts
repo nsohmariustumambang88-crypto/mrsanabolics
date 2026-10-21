@@ -40,10 +40,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
+    /*
+      The notification must be about THIS order's payment, for THIS order's amount. A valid
+      signature proves NOWPayments sent it, not that it describes the invoice we created.
+    */
+    const storedPaymentId = order.notes?.match(/Payment ID: (\d+)/)?.[1];
+    if (storedPaymentId && String(payload.payment_id) !== storedPaymentId) {
+      console.error(`[Webhook] Payment ${payload.payment_id} does not match ${storedPaymentId} on ${order_id}`);
+      return NextResponse.json({ success: true });
+    }
+    if (Math.abs(Number(payload.price_amount) - Number(order.total)) > 0.01) {
+      console.error(`[Webhook] Amount ${payload.price_amount} does not match order total ${order.total} on ${order_id}`);
+      return NextResponse.json({ success: true });
+    }
+
     // Handle different payment statuses
     switch (payment_status) {
-      case 'finished': // Payment confirmed
-      case 'confirmed':
+      /* Only "finished" means the money is settled; "confirmed" is a blockchain confirmation on the way there. */
+      case 'finished':
         // Idempotency check: only process if not already confirmed
         if (order.status === 'CONFIRMED') {
           console.log(`[Webhook] Order ${order_id} already marked as confirmed, skipping`);
@@ -101,9 +115,16 @@ export async function POST(request: NextRequest) {
         break;
 
       case 'waiting':
-      case 'pending':
-        // Payment is pending, no action needed
-        console.log(`[Webhook] Order ${order_id} is pending`);
+      case 'confirming':
+      case 'confirmed':
+      case 'sending':
+        // Seen or confirming, not settled yet: no change until "finished".
+        console.log(`[Webhook] Order ${order_id} is ${payment_status}`);
+        break;
+
+      case 'partially_paid':
+        // Underpaid. Not marked paid; staff decide from the NOWPayments dashboard.
+        console.warn(`[Webhook] Order ${order_id} partially paid`);
         break;
 
       default:

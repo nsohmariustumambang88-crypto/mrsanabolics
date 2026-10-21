@@ -54,9 +54,8 @@ export async function POST(request: NextRequest) {
         pay_currency: payCurrency,
         order_id: order.reference,
         order_description: `Order ${order.reference}`,
+        /* No success/cancel URLs: the customer pays on our own payment-confirmation page. */
         ipn_callback_url: `${SITE.url}/api/webhooks/nowpayments`,
-        success_url: `${SITE.url}/checkout/success?order=${order.reference}`,
-        cancel_url: `${SITE.url}/checkout/cancelled?order=${order.reference}`,
       });
     } catch (paymentError) {
       console.error(`[Crypto Checkout] Payment creation failed for ${order.reference}:`, paymentError);
