@@ -68,6 +68,13 @@ function Rating({ value, count }: { value: number; count?: number }) {
   );
 }
 
+/* The first sentence of a block of copy, or '' when there is none. Appending a full stop to an
+   empty split rendered a row reading only "." — so blank directions now drop the row instead. */
+function firstSentence(text: string): string {
+  const first = text.split('.')[0].trim();
+  return first ? `${first}.` : '';
+}
+
 /* The raise donated by the fracture-glaze shelf: cause and effect visible as one chain. */
 function ProtocolChain({ product }: { product: Product }) {
   const links = [
@@ -82,7 +89,7 @@ function ProtocolChain({ product }: { product: Product }) {
       label: 'Half-life',
       value: product.specifications.find((s) => /half.?life/i.test(s.label))?.value ?? '—',
     },
-    { label: 'Protocol', value: product.directions.split('.')[0] + '.' },
+    { label: 'Protocol', value: firstSentence(product.directions) },
     /*
       A row with nothing in it is dropped rather than shown as a dash. No product in the
       catalogue records a half-life, so every page showed "Half-life —" — an empty field that
@@ -425,12 +432,16 @@ export function ProductDetail({
               ))}
             </ul>
 
-            <h3 className="mt-10 font-display text-lg font-semibold tracking-[-0.025em]">
-              Directions
-            </h3>
-            <p className="measure mt-3 text-sm leading-relaxed text-ink-soft">
-              {product.directions}
-            </p>
+            {product.directions.trim() && (
+              <>
+                <h3 className="mt-10 font-display text-lg font-semibold tracking-[-0.025em]">
+                  Directions
+                </h3>
+                <p className="measure mt-3 text-sm leading-relaxed text-ink-soft">
+                  {product.directions}
+                </p>
+              </>
+            )}
 
             <h3 className="mt-10 font-display text-lg font-semibold tracking-[-0.025em]">
               Ingredients

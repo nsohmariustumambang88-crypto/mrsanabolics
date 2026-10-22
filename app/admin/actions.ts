@@ -317,7 +317,9 @@ export async function createProduct(
         description,
         /* The long copy defaults to the short one rather than shipping an empty section. */
         longDescription: optionalText(form, 'longDescription') ?? description,
-        directions: optionalText(form, 'directions') ?? 'For research purposes only.',
+        directions:
+          optionalText(form, 'directions') ??
+          'Follow the directions on the manufacturer’s label; this listing adds no dosing guidance.',
         shipping:
           optionalText(form, 'shipping') ?? 'Ships within 24 hours in discreet packaging.',
         returns:

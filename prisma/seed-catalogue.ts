@@ -249,7 +249,7 @@ function build(entry: LibraryEntry, categoryName: string): Built | null {
     description,
     longDescription,
     directions:
-      'For research purposes only. Follow the directions on the manufacturer’s label; this listing adds no dosing guidance.',
+      'Follow the directions on the manufacturer’s label; this listing adds no dosing guidance.',
     shipping: 'Ships within 24 hours in discreet packaging. Tracked delivery available.',
     returns: 'Unopened, sealed products may be returned within 14 days.',
     benefits,
