@@ -356,10 +356,24 @@ That produced three convincing false failures before it was spotted.
 
 ## Customer accounts
 
-`/auth` and `/account` are **real**. The "nothing is connected" notice is gone from both, because
-the project's rule is that such a notice comes off only when the flow genuinely works — and it is
-still there on **forgot password**, which cannot work: a reset link is an email and this build
-sends none. That form points at `/contact` instead.
+`/auth` and `/account` are **real**, and so is **forgot password** (October 2026):
+
+- `/auth?mode=forgot` posts to `/api/account/forgot`, which always answers the same sentence ("if
+  there is an account with that address…"), is rate limited per IP and has a honeypot.
+  `requestPasswordReset` in [lib/account/password-reset.ts](lib/account/password-reset.ts) mails
+  only an existing **Customer**'s stored address, at most once a minute.
+- The link is `/auth/reset?token=<32 random bytes, base64url>`. Only its SHA-256 is stored, on
+  `Customer.resetTokenHash` (unique, so no email rides in the URL), with `resetTokenExpiresAt`
+  60 minutes on. The page checks it server-side first and sets `referrer: no-referrer`.
+- `/api/account/reset` sets the password through `checkCustomerPassword`, spends the token with a
+  conditional `updateMany` (two tabs cannot both use it), bumps `sessionVersion` (every other
+  session dies), signs the person in, and sends a "your password was changed" email.
+  `changeCustomerPassword` also clears any outstanding link.
+- A shopper who only ever checked out has a Contact but no Customer, so no email is sent; the
+  form's follow-up note tells them to open an account with the same address, where their orders
+  appear. The old `lib/email/password-reset.ts` wrote to `Contact.password`, which sign-in never
+  reads, and was deleted; `Contact.password`/`passwordResetToken`/`passwordResetExpiresAt` are
+  dead columns.
 
 **The security boundary is two constants, not a conditional.** `lib/account/session.ts` is a
 near-copy of `lib/auth/session.ts` differing in the cookie name (`mranabolics_account`) and the

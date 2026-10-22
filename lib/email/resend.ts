@@ -4,6 +4,7 @@ import {
   renderAdminNotificationHTML,
   renderNewsletterHTML,
   renderPasswordResetHTML,
+  renderPasswordChangedHTML,
   renderWelcomeEmail1,
   renderWelcomeEmail2,
   renderWelcomeEmail3,
@@ -80,15 +81,30 @@ export async function sendNewsletterCampaign(
   );
 }
 
-export async function sendPasswordResetEmail(to: string, resetLink: string) {
-  const resend = getResend();
-  return resend.emails.send({
-    from: FROM_EMAIL,
+/*
+  The two account emails. Resend's client RESOLVES with `{ error }` on an API refusal rather than
+  rejecting, so these throw it themselves — otherwise a failed send looks like a sent one.
+*/
+export async function sendPasswordResetEmail(to: string, resetLink: string, minutes: number) {
+  const { error } = await getResend().emails.send({
+    from: `MrAnabolics <${FROM_EMAIL}>`,
     replyTo: SUPPORT_EMAIL,
     to,
-    subject: 'Reset Your Password',
-    html: renderPasswordResetHTML(resetLink),
+    subject: 'Reset your MrAnabolics password',
+    html: renderPasswordResetHTML(resetLink, minutes),
   });
+  if (error) throw new Error(`Resend refused the reset email: ${error.message}`);
+}
+
+export async function sendPasswordChangedEmail(to: string, signInLink: string) {
+  const { error } = await getResend().emails.send({
+    from: `MrAnabolics <${FROM_EMAIL}>`,
+    replyTo: SUPPORT_EMAIL,
+    to,
+    subject: 'Your MrAnabolics password was changed',
+    html: renderPasswordChangedHTML(signInLink),
+  });
+  if (error) throw new Error(`Resend refused the password-changed email: ${error.message}`);
 }
 
 export async function sendOrderStatusUpdate(to: string, orderRef: string, status: string, details?: string) {

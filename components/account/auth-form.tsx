@@ -13,14 +13,12 @@ type Mode = 'login' | 'register' | 'forgot';
 /*
   Sign in, and open an account.
 
-  These two are REAL now: they post to /api/account/*, which writes a Customer row, hashes the
-  password with bcrypt and sets an HttpOnly session cookie. The "nothing is connected" notice
-  that used to sit at the top of this page is gone, because the project's rule is that such a
-  notice comes off only when the flow genuinely works — and stays on where it does not.
+  These are REAL: they post to /api/account/*, which writes a Customer row, hashes the password
+  with bcrypt and sets an HttpOnly session cookie.
 
-  Which is why FORGOT PASSWORD still carries one. A reset link is an email, and this build
-  sends no email; a form that claims to have sent one is worse than a form that admits it
-  cannot. It points at the contact route instead, where a person answers.
+  FORGOT PASSWORD posts to /api/account/forgot, which emails a single-use link to /auth/reset
+  (lib/account/password-reset.ts). The answer is the same sentence for every address, so the
+  form says "if there is an account" and never confirms one exists.
 
   On success the browser does a full navigation rather than a client-side push. The session
   arrives as a Set-Cookie, and every server component that reads it has to run again — a
@@ -48,14 +46,17 @@ const COPY: Record<Mode, { title: string; body: string; action: string }> = {
 
 export function AuthForm() {
   const params = useSearchParams();
-  const [mode, setMode] = React.useState<Mode>(
-    params.get('mode') === 'register' ? 'register' : 'login'
-  );
+  const [mode, setMode] = React.useState<Mode>(() => {
+    const asked = params.get('mode');
+    return asked === 'register' || asked === 'forgot' ? asked : 'login';
+  });
   const [values, setValues] = React.useState({ name: '', email: '', password: '' });
   /* Honeypot: hidden from people, filled by bots. Never read by a human. */
   const [company, setCompany] = React.useState('');
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  /* The forgot-password answer, once sent. Same sentence whatever the address was. */
+  const [sent, setSent] = React.useState<string | null>(null);
 
   const copy = COPY[mode];
   const set = (key: keyof typeof values) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -64,11 +65,33 @@ export function AuthForm() {
   const switchMode = (next: Mode) => {
     setMode(next);
     setError(null);
+    setSent(null);
   };
+
+  async function requestReset() {
+    setBusy(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/account/forgot', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: values.email, company }),
+      });
+      const data = (await response.json().catch(() => ({}))) as { error?: string; message?: string };
+      if (!response.ok) setError(data.error ?? 'That did not work. Try again.');
+      else setSent(data.message ?? 'If there is an account with that address, we have sent it a reset link.');
+    } catch {
+      setError('We could not reach the server. Check your connection and try again.');
+    }
+    setBusy(false);
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (mode === 'forgot') return;
+    if (mode === 'forgot') {
+      await requestReset();
+      return;
+    }
 
     setBusy(true);
     setError(null);
@@ -117,20 +140,35 @@ export function AuthForm() {
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-ink-soft">{copy.body}</p>
 
-          {/* The one flow that still cannot work, and says so. */}
-          {mode === 'forgot' && (
-            <p className="mt-6 flex gap-2.5 border border-rule bg-paper-sunk p-3.5 text-xs leading-relaxed text-ink-soft">
-              <Info
-                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-pigment-saffron"
-                strokeWidth={1.75}
-              />
-              <span>
-                This build sends no email, so a reset link cannot be sent.{' '}
+          {mode === 'forgot' && sent && (
+            <div role="status" className="mt-6 border border-pigment-verdigris/40 bg-paper-sunk p-4 text-sm leading-relaxed">
+              <p className="flex gap-2.5 text-ink">
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-pigment-verdigris" strokeWidth={1.75} />
+                <span>{sent}</span>
+              </p>
+              <p className="mt-3 text-xs text-ink-soft">
+                Nothing after ten minutes? You may have checked out without opening an account, in
+                which case there is no password to reset:{' '}
+                <button
+                  type="button"
+                  onClick={() => switchMode('register')}
+                  className="underline underline-offset-4"
+                >
+                  open one with the same address
+                </button>{' '}
+                and your past orders will appear in it. Still stuck?{' '}
                 <Link href="/contact" className="underline underline-offset-4">
                   Write to support
-                </Link>{' '}
-                and a person will help you back in.
-              </span>
+                </Link>
+                .
+              </p>
+            </div>
+          )}
+
+          {mode === 'forgot' && !sent && (
+            <p className="mt-6 flex gap-2.5 border border-rule bg-paper-sunk p-3.5 text-xs leading-relaxed text-ink-soft">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-pigment-indigo" strokeWidth={1.75} />
+              <span>The link works once and expires after 60 minutes.</span>
             </p>
           )}
 
@@ -182,7 +220,7 @@ export function AuthForm() {
               />
             )}
 
-            {mode === 'register' && (
+            {(mode === 'register' || mode === 'forgot') && (
               <div aria-hidden="true" className="pointer-events-none absolute left-[-9999px]">
                 <label htmlFor="company">Company</label>
                 <input
@@ -211,13 +249,11 @@ export function AuthForm() {
 
             <button
               type="submit"
-              disabled={busy || mode === 'forgot'}
+              disabled={busy}
               className="flex w-full items-center justify-center gap-2.5 rounded-full bg-pigment-indigo px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift disabled:opacity-50"
             >
-              {busy ? 'One moment…' : copy.action}
-              {!busy && mode !== 'forgot' && (
-                <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
-              )}
+              {busy ? 'One moment…' : mode === 'forgot' && sent ? 'Send it again' : copy.action}
+              {!busy && <ArrowRight className="h-4 w-4" strokeWidth={1.75} />}
             </button>
 
             {mode === 'register' && (
@@ -270,7 +306,7 @@ export function AuthForm() {
   );
 }
 
-function Field({
+export function Field({
   id,
   label,
   type,

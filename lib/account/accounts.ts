@@ -206,6 +206,9 @@ export async function changeCustomerPassword(
     data: {
       passwordHash: await hashPassword(nextPassword),
       sessionVersion: { increment: 1 },
+      /* A reset link issued before this change must not still work after it. */
+      resetTokenHash: null,
+      resetTokenExpiresAt: null,
     },
     select: { sessionVersion: true },
   });

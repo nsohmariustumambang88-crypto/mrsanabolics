@@ -214,44 +214,54 @@ export function renderNewsletterHTML(
 </html>`;
 }
 
-export function renderPasswordResetHTML(
-  resetLink: string,
-  expiresIn: string = '24 hours'
-): string {
+/* The shell the account emails share, in the same layout as the order emails. */
+function accountEmailHTML(heading: string, body: string): string {
   return `<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Reset Your Password</title>
+    <title>${heading}</title>
   </head>
   <body style="font-family: Arial, sans-serif; background-color: #f9f9f9;">
     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background-color: #1d2327; color: #fff; padding: 20px; text-align: center; border-radius: 4px 4px 0 0;">
-        <h1 style="margin: 0; font-size: 24px;">Reset Your Password</h1>
+        <h1 style="margin: 0; font-size: 24px;">${heading}</h1>
       </div>
 
-      <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd;">
-        <p style="margin: 0 0 20px 0; color: #333;">We received a request to reset your password. If you didn't make this request, you can ignore this email.</p>
-
-        <p style="margin: 0 0 20px 0; color: #333;">Click the button below to reset your password. This link expires in ${expiresIn}.</p>
-
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${resetLink}" style="background-color: #2271b1; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; font-size: 16px;">Reset Password</a>
-        </div>
-
-        <p style="margin: 0; color: #666; font-size: 12px; word-break: break-all;">Or copy this link: <a href="${resetLink}" style="color: #2271b1;">${resetLink}</a></p>
-
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-          <p style="margin: 0; color: #666; font-size: 12px;">For security reasons, do not share this email with anyone.</p>
-        </div>
+      <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd; color: #333; font-size: 15px; line-height: 1.6;">
+        ${body}
       </div>
 
       <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
-        <p style="margin: 0;">MrAnabolics - Professional Supplements</p>
+        <p style="margin: 0;">MrAnabolics</p>
       </div>
     </div>
   </body>
 </html>`;
+}
+
+/* The forgot-password link. `minutes` is how long it works; it works once. */
+export function renderPasswordResetHTML(resetLink: string, minutes: number): string {
+  return accountEmailHTML(
+    'Reset your password',
+    `<p style="margin: 0 0 16px 0;">We received a request to reset the password for your MrAnabolics account.</p>
+        <p style="margin: 0 0 16px 0;">Press the button to choose a new one. The link works once and expires in <strong>${minutes} minutes</strong>.</p>
+        <div style="text-align: center; margin: 28px 0;">
+          <a href="${resetLink}" style="background-color: #2271b1; color: #fff; padding: 12px 28px; text-decoration: none; border-radius: 4px; display: inline-block; font-size: 16px; font-weight: bold;">Reset password</a>
+        </div>
+        <p style="margin: 0 0 16px 0; color: #666; font-size: 13px; word-break: break-all;">If the button does not work, copy this link into your browser:<br><a href="${resetLink}" style="color: #2271b1;">${resetLink}</a></p>
+        <p style="margin: 0; padding-top: 16px; border-top: 1px solid #eee; color: #666; font-size: 13px;">Did not ask for this? You can ignore this email: your password has not changed. Do not forward it, because the link lets whoever holds it set a new password.</p>`
+  );
+}
+
+/* Sent after a password is set through the reset link, so a change the owner did not make is noticed. */
+export function renderPasswordChangedHTML(signInLink: string): string {
+  return accountEmailHTML(
+    'Your password was changed',
+    `<p style="margin: 0 0 16px 0;">The password for your MrAnabolics account was just changed using a reset link, and every other device signed in to your account has been signed out.</p>
+        <p style="margin: 0 0 16px 0;">If this was you, there is nothing else to do. You can <a href="${signInLink}" style="color: #2271b1;">sign in here</a>.</p>
+        <p style="margin: 0; padding-top: 16px; border-top: 1px solid #eee; color: #333;"><strong>Was it not you?</strong> Reply to this email straight away and our support team will lock the account and help you back in.</p>`
+  );
 }
 
 export function renderWelcomeEmail1(unsubscribeLink: string): string {
