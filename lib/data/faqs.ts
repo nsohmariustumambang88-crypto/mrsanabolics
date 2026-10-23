@@ -49,6 +49,6 @@ export const faqs: FaqItem[] = [
   {
     question: 'How can I contact customer support?',
     answer:
-      'Our support team is available 24/7 via the contact form on our Contact page, by email at support@mranabolics.example.com, or by opening a support ticket from your account dashboard. Typical response time is under 2 hours.',
+      'Our support team works 24 hours a day, 7 days a week, so there is always someone to answer, day or night, weekends included. Use the form on our Contact page, email support@mrsanabolics.com, or message us on Telegram or WhatsApp with the buttons at the bottom of every page.',
   },
 ];

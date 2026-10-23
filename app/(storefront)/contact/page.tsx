@@ -24,8 +24,8 @@ const channelsFor = (supportEmail: string, supportPhone: string) => [
   {
     icon: Mail,
     title: 'Write to us',
-    body: supportEmail || 'support@mranabolics.example.com',
-    note: 'Answered in the order received.',
+    body: supportEmail || 'support@mrsanabolics.com',
+    note: 'Answered around the clock, 7 days a week.',
   },
   ...(supportPhone
     ? [
@@ -33,15 +33,16 @@ const channelsFor = (supportEmail: string, supportPhone: string) => [
           icon: MessageSquare,
           title: 'Call us',
           body: supportPhone,
-          note: 'During the hours below.',
+          note: 'Any time, day or night.',
         },
       ]
     : []),
+  /* Support is staffed around the clock, at the owner's direction (October 2026). */
   {
     icon: Clock,
     title: 'Hours',
-    body: 'Monday to Friday, 09:00–18:00 CET',
-    note: 'Messages sent overnight are picked up next morning.',
+    body: '24 hours a day, 7 days a week',
+    note: 'There is always someone on support, so a new message is picked up straight away, day or night, weekends included.',
   },
   {
     icon: MessageSquare,
