@@ -14,6 +14,7 @@ import { cloudinaryUrl } from '@/lib/cloudinary';
 import type { Product } from '@/lib/types';
 import { fitDescription, getUsDelivery, shortStrength, usShippingLine } from '@/lib/catalogue/seo';
 import { formatPrice } from '@/lib/format';
+import { titleTestGroup } from '@/lib/catalogue/title-test';
 import { getDeliverySummary, type ZoneSummary } from '@/lib/delivery/summary';
 import { COUNTRY_CODES } from '@/lib/countries';
 
@@ -126,7 +127,7 @@ function describe(
   const named = substance && !product.name.toLowerCase().includes(substance.split(' ')[0].toLowerCase()) ? substance : '';
   const label = [named, shortStr, noun].filter(Boolean).join(' ');
   /* Google shows about 60 characters; drop the maker, then the compound, before the title runs over. */
-  const title = fitDescription(
+  const descriptive = fitDescription(
     [
       `${product.name} by ${product.brand}${label ? `: ${label}` : ''}`,
       `${product.name}${label ? `: ${label}` : ''}`,
@@ -135,6 +136,25 @@ function describe(
     ],
     60
   );
+  /*
+    The title test (lib/catalogue/title-test.ts): group B leads with the purchase and the price.
+    Only for products in stock — "Buy … $60" over a page that cannot sell is a promise broken
+    on arrival. The strength and form stay; the compound name is the first thing dropped.
+  */
+  const price = formatPrice(product.price);
+  const strengthNoun = [shortStr, noun].filter(Boolean).join(' ');
+  const title =
+    product.inStock && titleTestGroup(product.slug) === 'B'
+      ? fitDescription(
+          [
+            `Buy ${product.name} by ${product.brand}${strengthNoun ? `: ${strengthNoun}` : ''}, ${price}`,
+            `Buy ${product.name} by ${product.brand}, ${price}`,
+            `Buy ${product.name}${strengthNoun ? `: ${strengthNoun}` : ''}, ${price}`,
+            `Buy ${product.name}, ${price}`,
+          ],
+          60
+        )
+      : descriptive;
 
   /* The compound's first sentence: what it is, without the regulatory detail that follows. */
   const identity = compound?.identity ? `${compound.identity.split('. ')[0].replace(/\.$/, '')}.` : null;

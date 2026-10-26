@@ -23,7 +23,8 @@
     "db:cleanup": "node --env-file=.env --import tsx prisma/cleanup-database.ts",
     "prebuild": "node scripts/wake-db.mjs",
     "brand:build": "node scripts/make-brand.mjs",
-    "setup:vercel": "node scripts/setup-vercel-env.mjs"
+    "setup:vercel": "node scripts/setup-vercel-env.mjs",
+    "title-test:export": "node --env-file=.env --import tsx scripts/title-test-export.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",
