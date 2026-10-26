@@ -1078,10 +1078,17 @@ and date. The first edit copies the customer's words into `originalTitle`/`origi
 MrAnabolics". The date cannot be in the future or before the product's `createdAt`. The product
 page shows no star summary or rating count above the reviews.
 
-**Do not invent reviews.** Some approved reviews were written in-house to test how Google shows
-them, while the product page says reviews come from buyers. Google treats that as review spam and
-customers ask to read reviews before buying, so they should be unapproved before advertising
-starts — never add more. It **never touches the subscriber table**: writing a review
+**Do not invent reviews.** On 26 October 2026 the 55 approved reviews — all written in-house and
+approved by one staff account, while the product page says reviews come from buyers — were moved
+to REJECTED (`moderatedBy` starts `seo-cleanup:`), leaving no product with a rating. A backup of
+their previous state is in `backups/inhouse-reviews-*.json`; restoring means setting each row's
+`status`/`moderatedAt`/`moderatedBy` back from that file and restating ratings with
+`recomputeProductRating`. Google treats invented reviews as review spam, so never add more.
+
+**Real reviews are asked for instead.** When staff move an order to **Delivered**, `setOrderStatus`
+sends one email ("Your order … has arrived — how was it?") with a **Write a review** link per
+product to `/product/<slug>#reviews`, in place of the bare status email, and records an order
+event "Review request emailed." so it is never sent twice for the same order. It **never touches the subscriber table**: writing a review
 is not consent to be emailed. `moderatedAt`/`moderatedBy` are re-stamped on every decision, unlike
 `Enquiry.handledAt` and the order milestones — those record how long somebody waited, which is a
 fact; this records who is answerable for what is on the page now.

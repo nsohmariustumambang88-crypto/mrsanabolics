@@ -528,7 +528,8 @@ export function ProductDetail({
         them can never disagree.
       */}
       {(product.reviews.length > 0 || reviewsOpen) && (
-      <section className="border-b border-rule">
+      /* `#reviews` is where the "how was your order?" email lands a buyer. */
+      <section id="reviews" className="scroll-mt-24 border-b border-rule">
         <div className="mx-auto max-w-[86rem] px-4 py-14 sm:px-6 lg:px-10">
           {/* With no approved reviews the section is the form alone: no "Reviews" heading over
               nothing and no empty-state sentence, at the owner's direction. */}

@@ -5,6 +5,7 @@ import {
   renderNewsletterHTML,
   renderPasswordResetHTML,
   renderPasswordChangedHTML,
+  renderReviewRequestHTML,
   renderWelcomeEmail1,
   renderWelcomeEmail2,
   renderWelcomeEmail3,
@@ -94,6 +95,21 @@ export async function sendPasswordResetEmail(to: string, resetLink: string, minu
     html: renderPasswordResetHTML(resetLink, minutes),
   });
   if (error) throw new Error(`Resend refused the reset email: ${error.message}`);
+}
+
+export async function sendReviewRequestEmail(
+  to: string,
+  orderRef: string,
+  items: Array<{ name: string; url: string }>
+) {
+  const { error } = await getResend().emails.send({
+    from: `MrAnabolics <${FROM_EMAIL}>`,
+    replyTo: SUPPORT_EMAIL,
+    to,
+    subject: `Your order ${orderRef} has arrived — how was it?`,
+    html: renderReviewRequestHTML(orderRef, items),
+  });
+  if (error) throw new Error(`Resend refused the review request email: ${error.message}`);
 }
 
 export async function sendPasswordChangedEmail(to: string, signInLink: string) {

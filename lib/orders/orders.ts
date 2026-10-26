@@ -4,7 +4,16 @@ import type { OrderStatus, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { evaluateDiscount, reasonMessage, redeemDiscount } from '@/lib/discounts';
 import { MINIMUM_ORDER } from '@/lib/orders/minimum';
-import { sendOrderConfirmation, sendAdminOrderNotification, sendOrderStatusUpdate } from '@/lib/email/resend';
+import {
+  sendOrderConfirmation,
+  sendAdminOrderNotification,
+  sendOrderStatusUpdate,
+  sendReviewRequestEmail,
+} from '@/lib/email/resend';
+import { SITE } from '@/lib/site';
+
+/* The order event that records the review request, so it is sent at most once per order. */
+const REVIEW_REQUEST_EVENT = 'Review request emailed.';
 
 /*
   The order write path.
@@ -385,6 +394,18 @@ export async function setOrderStatus(
     },
   });
 
+  /*
+    Delivered: one email that says it arrived AND asks for a review of each product, instead of a
+    bare status notice — at most once per order, recorded as an order event, because moving an
+    order back and forward again must not ask twice.
+  */
+  if (status === 'DELIVERED') {
+    await sendReviewRequestOnce(orderId, order.reference, order.contact.email).catch(() => {
+      /* Status change is already recorded; email failure doesn't affect it */
+    });
+    return { ok: true };
+  }
+
   /* Send status update email to customer */
   sendOrderStatusUpdate(
     order.contact.email,
@@ -392,16 +413,38 @@ export async function setOrderStatus(
     STATUS_LABEL[status],
     status === 'SHIPPED'
       ? 'Your order is on its way! You can expect delivery within the estimated timeframe.'
-      : status === 'DELIVERED'
-        ? 'Your order has arrived! Please verify the contents match your order.'
-        : status === 'CANCELLED'
-          ? 'Your order has been cancelled. If you have questions, please contact support.'
-          : undefined
+      : status === 'CANCELLED'
+        ? 'Your order has been cancelled. If you have questions, please contact support.'
+        : undefined
   ).catch(() => {
     /* Status change is already recorded; email failure doesn't affect it */
   });
 
   return { ok: true };
+}
+
+async function sendReviewRequestOnce(orderId: string, reference: string, email: string): Promise<void> {
+  const already = await prisma.orderEvent.count({ where: { orderId, summary: REVIEW_REQUEST_EVENT } });
+  if (already > 0) return;
+
+  const items = await prisma.orderItem.findMany({
+    where: { orderId },
+    select: { name: true, slug: true, product: { select: { slug: true } } },
+  });
+  /* The live slug when the product still exists; the snapshot otherwise. One row per product. */
+  const seen = new Set<string>();
+  const links = items.flatMap((item) => {
+    const slug = item.product?.slug ?? item.slug;
+    if (!slug || seen.has(slug)) return [];
+    seen.add(slug);
+    return [{ name: item.name, url: `${SITE.url}/product/${slug}#reviews` }];
+  });
+  if (links.length === 0) return;
+
+  await sendReviewRequestEmail(email, reference, links);
+  await prisma.orderEvent.create({
+    data: { orderId, summary: REVIEW_REQUEST_EVENT, detail: `Sent to ${email} for ${links.length} product(s).` },
+  });
 }
 
 export async function addOrderNote(

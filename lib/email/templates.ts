@@ -254,6 +254,35 @@ export function renderPasswordResetHTML(resetLink: string, minutes: number): str
   );
 }
 
+/*
+  Sent once, when staff mark an order Delivered: the arrival notice and a review link per product.
+  Real reviews from real buyers are the only kind this store should publish; this is how it asks.
+*/
+export function renderReviewRequestHTML(
+  orderRef: string,
+  items: Array<{ name: string; url: string }>
+): string {
+  const rows = items
+    .map(
+      (item) => `<tr>
+          <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #333;">${item.name}</td>
+          <td style="padding: 10px 0; border-bottom: 1px solid #eee; text-align: right;"><a href="${item.url}" style="background-color: #2271b1; color: #fff; padding: 8px 14px; text-decoration: none; border-radius: 4px; display: inline-block; font-size: 14px;">Write a review</a></td>
+        </tr>`
+    )
+    .join('');
+  return accountEmailHTML(
+    'How was your order?',
+    `<p style="margin: 0 0 16px 0;">Your order <strong>${orderRef}</strong> has been delivered. Please check that everything matches what you ordered, and reply to this email if anything is wrong.</p>
+        <p style="margin: 0 0 16px 0;">Once you have had a chance to look at your products, a short review helps other buyers choose. Tell them about the packaging, the delivery and the product as it arrived.</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 8px 0 20px 0;">
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+        <p style="margin: 0; padding-top: 16px; border-top: 1px solid #eee; color: #666; font-size: 13px;">Every review is read by a person before it is published. Please do not include dosing or medical details.</p>`
+  );
+}
+
 /* Sent after a password is set through the reset link, so a change the owner did not make is noticed. */
 export function renderPasswordChangedHTML(signInLink: string): string {
   return accountEmailHTML(
