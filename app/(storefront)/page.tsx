@@ -151,7 +151,7 @@ export default async function Home() {
           ) : null}
         </div>
       </section>
-      <RecentlyViewed allProducts={products.map(toSummary)} />
+      <RecentlyViewed />
       <FeaturedCollections samples={doorSamples} />
       <AssuranceRegister />
       <TrustBadges />

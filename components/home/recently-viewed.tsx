@@ -4,26 +4,36 @@ import * as React from 'react';
 import { ProductGrid } from '@/components/product/product-grid';
 import type { ProductSummary } from '@/lib/types';
 
-export function RecentlyViewed({ allProducts }: { allProducts: ProductSummary[] }) {
+/*
+  "Continue shopping": the visitor's last viewed products, from the ids kept in localStorage.
+
+  It asks /api/catalogue for just those ids — the same route the wishlist uses. It used to be
+  handed every product in the catalogue as a prop, which put all ~790 summaries into the home
+  page's HTML for every visitor (most of its 984 KB) to show at most eight to the few who had
+  viewed something.
+*/
+export function RecentlyViewed() {
   const [viewed, setViewed] = React.useState<ProductSummary[]>([]);
 
   React.useEffect(() => {
+    let ids: string[] = [];
     try {
       const stored = localStorage.getItem('mra-recently-viewed');
-      if (stored) {
-        const ids = JSON.parse(stored) as string[];
-        const products = ids
-          .slice(0, 8)
-          .map((id) => allProducts.find((p) => p.id === id))
-          .filter(Boolean) as ProductSummary[];
-        if (products.length > 0) {
-          setViewed(products);
-        }
-      }
+      if (stored) ids = (JSON.parse(stored) as string[]).filter((id) => typeof id === 'string').slice(0, 8);
     } catch {
-      // localStorage error - silently fail
+      /* Storage refused or malformed: nothing to continue. */
     }
-  }, [allProducts]);
+    if (ids.length === 0) return;
+
+    const controller = new AbortController();
+    fetch(`/api/catalogue?ids=${ids.map(encodeURIComponent).join(',')}`, { signal: controller.signal })
+      .then((r) => (r.ok ? (r.json() as Promise<{ items: ProductSummary[] }>) : { items: [] }))
+      .then((data) => setViewed(data.items))
+      .catch(() => {
+        /* Aborted or offline: the section simply does not appear. */
+      });
+    return () => controller.abort();
+  }, []);
 
   if (viewed.length === 0) return null;
 
