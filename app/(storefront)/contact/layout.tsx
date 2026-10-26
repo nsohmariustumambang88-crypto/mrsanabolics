@@ -8,7 +8,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Contact Us',
   description:
-    'Ask MrAnabolics about an order, a product or delivery. Support is staffed 24 hours a day, 7 days a week, and a person replies. Telegram and WhatsApp are also available.',
+    'Ask MrsAnabolics about an order, a product or delivery. Support is staffed 24 hours a day, 7 days a week, and a person replies. Telegram and WhatsApp are also available.',
   alternates: { canonical: '/contact' },
 };
 

@@ -131,7 +131,7 @@ export function AuthForm() {
           <Link href="/" className="inline-flex items-center gap-3">
             <BullMark className="w-20 shrink-0" />
             <span className="font-display text-lg font-semibold tracking-[-0.03em]">
-              MrAnabolics
+              MrsAnabolics
             </span>
           </Link>
 

@@ -9,7 +9,7 @@ export const revalidate = 3600;
 const PATH = '/legal/privacy';
 const TITLE = 'Privacy Policy: How We Handle Your Data';
 const DESCRIPTION =
-  'What information MrAnabolics collects, how it is used and protected, how cookies and third-party services are handled, and your rights over your data.';
+  'What information MrsAnabolics collects, how it is used and protected, how cookies and third-party services are handled, and your rights over your data.';
 
 export const metadata: Metadata = {
   title: TITLE,

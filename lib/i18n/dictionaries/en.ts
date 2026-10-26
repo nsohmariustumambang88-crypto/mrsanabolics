@@ -28,7 +28,7 @@ export const en = {
     substrate: 'Substrate',
     country: 'Country',
     search: 'Search the catalogue',
-    home: 'MrAnabolics — home',
+    home: 'MrsAnabolics — home',
     wishlist: (n: number) => `Wishlist, ${n} items`,
     cart: (n: number) => `Cart, ${n} items`,
   },

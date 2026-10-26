@@ -180,7 +180,7 @@ export function PromoPopup({ promo }: { promo: AdvertisedDiscount | null }) {
         </button>
 
         <div className="mb-6 flex justify-center">
-          <BullMark title="MrAnabolics" className="w-16" />
+          <BullMark title="MrsAnabolics" className="w-16" />
         </div>
 
         <h2 id="promo-popup-title" className="mb-2 text-center text-2xl font-bold">

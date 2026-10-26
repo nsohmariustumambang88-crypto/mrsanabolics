@@ -70,7 +70,7 @@ export default async function UnsubscribePage({
         <>
           <p className="mt-4 text-sm leading-relaxed text-ink-soft">
             Remove <span className="font-medium text-ink">{maskEmail(subscriber.email)}</span>{' '}
-            from the MrAnabolics mailing list?
+            from the MrsAnabolics mailing list?
           </p>
 
           <form method="post" action="/api/unsubscribe" className="mt-7 flex flex-wrap gap-3">

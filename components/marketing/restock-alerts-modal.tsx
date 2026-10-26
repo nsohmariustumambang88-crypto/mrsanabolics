@@ -63,7 +63,7 @@ export function RestockAlertsModal() {
         </button>
 
         <div className="mb-6 flex justify-center">
-          <BullMark title="MrAnabolics" className="w-16" />
+          <BullMark title="MrsAnabolics" className="w-16" />
         </div>
 
         <h2 className="mb-2 text-center text-2xl font-bold">Restock Alerts</h2>

@@ -8,7 +8,7 @@ export const testimonials: Testimonial[] = [
     location: 'London, UK',
     rating: 5,
     quote:
-      'I have ordered from four different suppliers over the years. MrAnabolics is the only one where every single batch tested exactly as labeled. The consistency is unreal.',
+      'I have ordered from four different suppliers over the years. MrsAnabolics is the only one where every single batch tested exactly as labeled. The consistency is unreal.',
   },
   {
     id: 't2',
@@ -17,7 +17,7 @@ export const testimonials: Testimonial[] = [
     location: 'Berlin, DE',
     rating: 5,
     quote:
-      'For our lab studies, purity and documentation matter more than anything. The certificates of analysis MrAnabolics provides are thorough and verifiable. My go-to supplier.',
+      'For our lab studies, purity and documentation matter more than anything. The certificates of analysis MrsAnabolics provides are thorough and verifiable. My go-to supplier.',
   },
   {
     id: 't3',
@@ -26,7 +26,7 @@ export const testimonials: Testimonial[] = [
     location: 'Austin, TX',
     rating: 5,
     quote:
-      'Discreet packaging, fast shipping, and products that actually do what they say. My athletes trust me, and I trust MrAnabolics. That chain of trust is everything.',
+      'Discreet packaging, fast shipping, and products that actually do what they say. My athletes trust me, and I trust MrsAnabolics. That chain of trust is everything.',
   },
   {
     id: 't4',

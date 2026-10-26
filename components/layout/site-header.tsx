@@ -89,7 +89,7 @@ function Wordmark({ compact }: { compact?: boolean }) {
           compact ? 'text-base' : 'text-base sm:text-lg'
         )}
       >
-        MrAnabolics
+        MrsAnabolics
       </span>
     </Link>
   );

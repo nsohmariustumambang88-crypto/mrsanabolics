@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { PaymentConfirmationClient } from '@/components/checkout/payment-confirmation-client';
 
 export const metadata = {
-  title: 'Payment Confirmation | MrAnabolics',
+  title: 'Payment Confirmation | MrsAnabolics',
   description: 'Complete your payment',
 };
 

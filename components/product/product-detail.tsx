@@ -595,7 +595,7 @@ export function ProductDetail({
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-soft">{r.body}</p>
                 {/* A moderation edit is disclosed, never silent: the words above are not
                     exactly what the reviewer typed. */}
-                {r.editedAt && <p className="mt-3 text-xs text-ink-faint">Edited by MrAnabolics</p>}
+                {r.editedAt && <p className="mt-3 text-xs text-ink-faint">Edited by MrsAnabolics</p>}
                 <p className="mt-5 border-t border-rule pt-3 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
                   {r.author} · <time dateTime={r.date}>{r.date}</time>
                 </p>

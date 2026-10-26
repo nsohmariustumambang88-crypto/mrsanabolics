@@ -128,7 +128,7 @@ export function renderOrderConfirmationHTML(
       </div>
 
       <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
-        <p style="margin: 0;">MrAnabolics</p>
+        <p style="margin: 0;">MrsAnabolics</p>
       </div>
     </div>
   </body>
@@ -178,7 +178,7 @@ export function renderAdminNotificationHTML(
       </div>
 
       <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
-        <p style="margin: 0;">MrAnabolics Admin Notification</p>
+        <p style="margin: 0;">MrsAnabolics Admin Notification</p>
       </div>
     </div>
   </body>
@@ -198,7 +198,7 @@ export function renderNewsletterHTML(
   <body style="font-family: Arial, sans-serif; background-color: #f9f9f9;">
     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background-color: #1d2327; color: #fff; padding: 20px; text-align: center; border-radius: 4px 4px 0 0;">
-        <h1 style="margin: 0; font-size: 20px;">MrAnabolics Newsletter</h1>
+        <h1 style="margin: 0; font-size: 20px;">MrsAnabolics Newsletter</h1>
       </div>
 
       <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 0 0 4px 4px;">
@@ -206,7 +206,7 @@ export function renderNewsletterHTML(
 
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
           <p style="margin: 0;"><a href="${unsubscribeLink}" style="color: #2271b1; text-decoration: none;">Unsubscribe from this newsletter</a></p>
-          <p style="margin: 10px 0 0 0;">MrAnabolics - Professional Supplements</p>
+          <p style="margin: 10px 0 0 0;">MrsAnabolics - Professional Supplements</p>
         </div>
       </div>
     </div>
@@ -233,7 +233,7 @@ function accountEmailHTML(heading: string, body: string): string {
       </div>
 
       <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
-        <p style="margin: 0;">MrAnabolics</p>
+        <p style="margin: 0;">MrsAnabolics</p>
       </div>
     </div>
   </body>
@@ -244,7 +244,7 @@ function accountEmailHTML(heading: string, body: string): string {
 export function renderPasswordResetHTML(resetLink: string, minutes: number): string {
   return accountEmailHTML(
     'Reset your password',
-    `<p style="margin: 0 0 16px 0;">We received a request to reset the password for your MrAnabolics account.</p>
+    `<p style="margin: 0 0 16px 0;">We received a request to reset the password for your MrsAnabolics account.</p>
         <p style="margin: 0 0 16px 0;">Press the button to choose a new one. The link works once and expires in <strong>${minutes} minutes</strong>.</p>
         <div style="text-align: center; margin: 28px 0;">
           <a href="${resetLink}" style="background-color: #2271b1; color: #fff; padding: 12px 28px; text-decoration: none; border-radius: 4px; display: inline-block; font-size: 16px; font-weight: bold;">Reset password</a>
@@ -287,7 +287,7 @@ export function renderReviewRequestHTML(
 export function renderPasswordChangedHTML(signInLink: string): string {
   return accountEmailHTML(
     'Your password was changed',
-    `<p style="margin: 0 0 16px 0;">The password for your MrAnabolics account was just changed using a reset link, and every other device signed in to your account has been signed out.</p>
+    `<p style="margin: 0 0 16px 0;">The password for your MrsAnabolics account was just changed using a reset link, and every other device signed in to your account has been signed out.</p>
         <p style="margin: 0 0 16px 0;">If this was you, there is nothing else to do. You can <a href="${signInLink}" style="color: #2271b1;">sign in here</a>.</p>
         <p style="margin: 0; padding-top: 16px; border-top: 1px solid #eee; color: #333;"><strong>Was it not you?</strong> Reply to this email straight away and our support team will lock the account and help you back in.</p>`
   );
@@ -298,12 +298,12 @@ export function renderWelcomeEmail1(unsubscribeLink: string): string {
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Welcome to MrAnabolics</title>
+    <title>Welcome to MrsAnabolics</title>
   </head>
   <body style="font-family: Arial, sans-serif; background-color: #f9f9f9;">
     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background-color: #1d2327; color: #fff; padding: 20px; text-align: center; border-radius: 4px 4px 0 0;">
-        <h1 style="margin: 0; font-size: 24px;">Welcome to MrAnabolics</h1>
+        <h1 style="margin: 0; font-size: 24px;">Welcome to MrsAnabolics</h1>
       </div>
 
       <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd;">
@@ -332,7 +332,7 @@ export function renderWelcomeEmail1(unsubscribeLink: string): string {
 
       <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
         <p style="margin: 0;"><a href="${unsubscribeLink}" style="color: #2271b1; text-decoration: none;">Unsubscribe</a></p>
-        <p style="margin: 10px 0 0 0;">MrAnabolics - Professional Supplements</p>
+        <p style="margin: 10px 0 0 0;">MrsAnabolics - Professional Supplements</p>
       </div>
     </div>
   </body>
@@ -379,7 +379,7 @@ export function renderWelcomeEmail2(unsubscribeLink: string): string {
 
       <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
         <p style="margin: 0;"><a href="${unsubscribeLink}" style="color: #2271b1; text-decoration: none;">Unsubscribe</a></p>
-        <p style="margin: 10px 0 0 0;">MrAnabolics - Professional Supplements</p>
+        <p style="margin: 10px 0 0 0;">MrsAnabolics - Professional Supplements</p>
       </div>
     </div>
   </body>
@@ -425,7 +425,7 @@ export function renderWelcomeEmail3(unsubscribeLink: string): string {
 
       <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
         <p style="margin: 0;"><a href="${unsubscribeLink}" style="color: #2271b1; text-decoration: none;">Unsubscribe</a></p>
-        <p style="margin: 10px 0 0 0;">MrAnabolics - Professional Supplements</p>
+        <p style="margin: 10px 0 0 0;">MrsAnabolics - Professional Supplements</p>
       </div>
     </div>
   </body>

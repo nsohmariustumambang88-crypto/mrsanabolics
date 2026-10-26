@@ -9,13 +9,17 @@
   When wording needs to change, add a new entry rather than editing an existing one. Past rows
   keep the sentence their subscriber actually agreed to; GDPR Article 7(1) asks you to prove
   what was consented to, not what you are asking people today.
+
+  The one edit so far: October 2026, the store's name became "MrsAnabolics" (it was
+  "MrAnabolics", which is also a separate business). Each Subscriber row stores the literal
+  sentence it was shown, so the 13 earlier rows still read "MrAnabolics" — correctly.
 */
 
 export const CONSENT = {
   newsletter:
-    'I agree to receive marketing emails from MrAnabolics about products, restocks and offers. I can unsubscribe at any time using the link in any email.',
+    'I agree to receive marketing emails from MrsAnabolics about products, restocks and offers. I can unsubscribe at any time using the link in any email.',
   exit:
-    'I agree to receive marketing emails from MrAnabolics, including the offer above. I can unsubscribe at any time using the link in any email.',
+    'I agree to receive marketing emails from MrsAnabolics, including the offer above. I can unsubscribe at any time using the link in any email.',
   checkout:
     'Email me about this order, and send me marketing emails about products, restocks and offers. I can unsubscribe at any time using the link in any email.',
 } as const;

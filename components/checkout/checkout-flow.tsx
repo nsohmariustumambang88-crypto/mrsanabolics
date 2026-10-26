@@ -246,7 +246,7 @@ export function CheckoutFlow({
   if (placed) {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 py-16 text-center">
-        <BullMark title="MrAnabolics" className="w-32" />
+        <BullMark title="MrsAnabolics" className="w-32" />
         <h1 className="mt-8 font-display text-3xl font-semibold tracking-[-0.035em]">
           Order placed
         </h1>

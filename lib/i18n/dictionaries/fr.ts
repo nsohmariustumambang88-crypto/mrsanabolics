@@ -19,7 +19,7 @@ export const fr: Dictionary = {
     substrate: 'Thème',
     country: 'Pays',
     search: 'Rechercher dans le catalogue',
-    home: 'MrAnabolics — accueil',
+    home: 'MrsAnabolics — accueil',
     wishlist: (n) => `Liste d’envies, ${n} articles`,
     cart: (n) => `Panier, ${n} articles`,
   },

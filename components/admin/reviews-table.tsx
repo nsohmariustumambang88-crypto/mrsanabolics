@@ -131,7 +131,7 @@ export function ReviewsTable({
         ok: true,
         text:
           row.status === 'APPROVED'
-            ? `Saved your edit to the review by ${row.author}. The product page now shows it marked “Edited by MrAnabolics”.`
+            ? `Saved your edit to the review by ${row.author}. The product page now shows it marked “Edited by MrsAnabolics”.`
             : `Saved your edit to the review by ${row.author}.`,
       });
       router.refresh();

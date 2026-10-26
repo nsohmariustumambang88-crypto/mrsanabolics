@@ -88,10 +88,10 @@ export async function sendNewsletterCampaign(
 */
 export async function sendPasswordResetEmail(to: string, resetLink: string, minutes: number) {
   const { error } = await getResend().emails.send({
-    from: `MrAnabolics <${FROM_EMAIL}>`,
+    from: `MrsAnabolics <${FROM_EMAIL}>`,
     replyTo: SUPPORT_EMAIL,
     to,
-    subject: 'Reset your MrAnabolics password',
+    subject: 'Reset your MrsAnabolics password',
     html: renderPasswordResetHTML(resetLink, minutes),
   });
   if (error) throw new Error(`Resend refused the reset email: ${error.message}`);
@@ -103,7 +103,7 @@ export async function sendReviewRequestEmail(
   items: Array<{ name: string; url: string }>
 ) {
   const { error } = await getResend().emails.send({
-    from: `MrAnabolics <${FROM_EMAIL}>`,
+    from: `MrsAnabolics <${FROM_EMAIL}>`,
     replyTo: SUPPORT_EMAIL,
     to,
     subject: `Your order ${orderRef} has arrived — how was it?`,
@@ -114,10 +114,10 @@ export async function sendReviewRequestEmail(
 
 export async function sendPasswordChangedEmail(to: string, signInLink: string) {
   const { error } = await getResend().emails.send({
-    from: `MrAnabolics <${FROM_EMAIL}>`,
+    from: `MrsAnabolics <${FROM_EMAIL}>`,
     replyTo: SUPPORT_EMAIL,
     to,
-    subject: 'Your MrAnabolics password was changed',
+    subject: 'Your MrsAnabolics password was changed',
     html: renderPasswordChangedHTML(signInLink),
   });
   if (error) throw new Error(`Resend refused the password-changed email: ${error.message}`);
@@ -159,11 +159,11 @@ export async function sendContactFormReply(to: string, subject: string, message:
 <html>
   <body style="font-family: Arial, sans-serif;">
     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-      <p style="margin: 0 0 20px 0;">Thanks for reaching out to MrAnabolics.</p>
+      <p style="margin: 0 0 20px 0;">Thanks for reaching out to MrsAnabolics.</p>
       <div style="background-color: #f9f9f9; padding: 20px; border-left: 4px solid #2271b1; margin: 20px 0;">
         ${message.split('\n').map((line) => `<p style="margin: 0 0 10px 0;">${line}</p>`).join('')}
       </div>
-      <p style="margin: 20px 0 0 0; color: #666;">Best regards,<br/>The MrAnabolics Team</p>
+      <p style="margin: 20px 0 0 0; color: #666;">Best regards,<br/>The MrsAnabolics Team</p>
     </div>
   </body>
 </html>`,

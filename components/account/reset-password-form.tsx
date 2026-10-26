@@ -63,7 +63,7 @@ export function ResetPasswordForm({ token, valid }: { token: string; valid: bool
         <div className="mx-auto w-full max-w-sm">
           <Link href="/" className="inline-flex items-center gap-3">
             <BullMark className="w-20 shrink-0" />
-            <span className="font-display text-lg font-semibold tracking-[-0.03em]">MrAnabolics</span>
+            <span className="font-display text-lg font-semibold tracking-[-0.03em]">MrsAnabolics</span>
           </Link>
 
           {expired ? (

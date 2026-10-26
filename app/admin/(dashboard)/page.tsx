@@ -230,7 +230,7 @@ export default async function AdminDashboard() {
 
       <WpNotice id="welcome" tone="info">
         <p>
-          <strong>Welcome to MrAnabolics.</strong> Add a product from the widget below, or open{' '}
+          <strong>Welcome to MrsAnabolics.</strong> Add a product from the widget below, or open{' '}
           <Link href="/admin/products">Products</Link> to edit stock, pricing and imagery in
           bulk. Changes go straight to the live database.
         </p>

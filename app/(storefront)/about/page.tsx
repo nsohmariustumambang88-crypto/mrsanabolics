@@ -136,7 +136,7 @@ export default function AboutPage() {
       </section>
 
       {/*
-        The editorial policy. Every article in the journal is bylined "MrAnabolics Editorial"
+        The editorial policy. Every article in the journal is bylined "MrsAnabolics Editorial"
         and that byline links here, because a byline that leads nowhere answers none of the
         questions a reader of this subject should be asking. It states the conflict of interest
         in the first line: this site sells what the journal writes about.

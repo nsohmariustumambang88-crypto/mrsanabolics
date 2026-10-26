@@ -194,7 +194,7 @@ export function WpChrome({
 
         <Link href="/" target="_blank" className="wp-adminbar-item" title="Visit site">
           <Home className="h-4 w-4" strokeWidth={1.9} />
-          <span className="hidden sm:inline">MrAnabolics</span>
+          <span className="hidden sm:inline">MrsAnabolics</span>
         </Link>
 
         <Link href="/admin/products" className="wp-adminbar-item" title="Search products">

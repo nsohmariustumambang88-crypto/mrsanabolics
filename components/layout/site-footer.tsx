@@ -160,7 +160,7 @@ export function SiteFooter() {
             <Link href={localizedHref(locale, '/')} className="flex items-center gap-3">
               <BullMark className="w-20 shrink-0" />
               <span className="font-display text-lg font-semibold tracking-[-0.03em]">
-                MrAnabolics
+                MrsAnabolics
               </span>
             </Link>
             <p className="measure-tight mt-5 text-sm leading-relaxed text-ink-soft">
@@ -215,7 +215,7 @@ export function SiteFooter() {
 
         <div className="flex flex-col gap-4 border-t border-rule py-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
-            © {new Date().getFullYear()} MrAnabolics
+            © {new Date().getFullYear()} MrsAnabolics
           </p>
           <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-2">
             {[

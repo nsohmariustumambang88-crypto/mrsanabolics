@@ -183,9 +183,29 @@ export default function RootLayout({
                 '@type': 'Organization',
                 '@id': `${SITE.url}/#organization`,
                 name: SITE.name,
+                /*
+                  The names people type for this shop. Deliberately NOT "MrAnabolics": that is a
+                  separate business (mranabolics.com), and Google already sends that search there.
+                */
+                alternateName: ['Mrs Anabolics', 'mrsanabolics.com'],
                 url: SITE.url,
+                logo: `${SITE.url}/apple-icon.png`,
                 description: SITE.description,
                 slogan: SITE.slogan,
+                email: 'support@mrsanabolics.com',
+                sameAs: ['https://t.me/mrsanabolics'],
+                contactPoint: {
+                  '@type': 'ContactPoint',
+                  contactType: 'customer support',
+                  email: 'support@mrsanabolics.com',
+                  url: `${SITE.url}/contact`,
+                  hoursAvailable: {
+                    '@type': 'OpeningHoursSpecification',
+                    dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+                    opens: '00:00',
+                    closes: '23:59',
+                  },
+                },
               },
               {
                 '@context': 'https://schema.org',

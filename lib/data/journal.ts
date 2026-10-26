@@ -42,7 +42,7 @@ export type JournalArticle = {
   sources: JournalSource[];
 };
 
-const BYLINE = 'MrAnabolics Editorial';
+const BYLINE = 'MrsAnabolics Editorial';
 const PUBLISHED = '2026-09-14';
 
 const pexels = (id: number) =>

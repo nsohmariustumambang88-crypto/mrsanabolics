@@ -50,7 +50,7 @@ export default function AdminLoginPage({
       <Link href="/" className="mb-6 inline-flex items-center gap-2.5 no-underline">
         <BullMark className="w-14" />
         <span className="text-[20px] font-semibold" style={{ color: 'var(--wp-text)' }}>
-          MrAnabolics
+          MrsAnabolics
         </span>
       </Link>
 
@@ -107,7 +107,7 @@ export default function AdminLoginPage({
       </form>
 
       <p className="mt-4 w-full max-w-[320px] text-[13px]">
-        <Link href="/">&larr; Go to MrAnabolics</Link>
+        <Link href="/">&larr; Go to MrsAnabolics</Link>
       </p>
 
       <p className="mt-6 w-full max-w-[320px] text-[12px] leading-relaxed wp-muted">

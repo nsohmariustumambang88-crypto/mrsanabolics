@@ -21,7 +21,7 @@ function siteUrl(): string {
 }
 
 export const SITE = {
-  name: 'MrAnabolics',
+  name: 'MrsAnabolics',
   url: siteUrl(),
   slogan: 'Every batch, floated and documented.',
   /** The default page title. It used to say "Lab-Tested", which nothing on the site backs. */

@@ -395,7 +395,7 @@ export const INTL_SEO: Record<IntlLocale, Seo> = {
   es: {
     and: 'y',
     more: (n) => `y ${n} más`,
-    homeTitle: 'MrAnabolics — Esteroides, péptidos y SARMs por compuesto',
+    homeTitle: 'MrsAnabolics — Esteroides, péptidos y SARMs por compuesto',
     homeDescription: (makers) =>
       `Esteroides inyectables y orales, post-ciclo, péptidos y SARMs de ${makers} fabricantes, agrupados por compuesto para comparar cada versión por concentración y precio.`,
     shopTitle: (n, from) => `Comprar esteroides, péptidos y SARMs: ${n} productos${from ? ` desde ${from}` : ''}`,
@@ -415,7 +415,7 @@ export const INTL_SEO: Record<IntlLocale, Seo> = {
   fr: {
     and: 'et',
     more: (n) => `et ${n} autres`,
-    homeTitle: 'MrAnabolics — Stéroïdes, peptides et SARMs par composé',
+    homeTitle: 'MrsAnabolics — Stéroïdes, peptides et SARMs par composé',
     homeDescription: (makers) =>
       `Stéroïdes injectables et oraux, post-cycle, peptides et SARMs de ${makers} fabricants, regroupés par composé pour comparer chaque version par dosage et prix.`,
     shopTitle: (n, from) => `Acheter stéroïdes, peptides et SARMs : ${n} produits${from ? ` dès ${from}` : ''}`,
@@ -435,7 +435,7 @@ export const INTL_SEO: Record<IntlLocale, Seo> = {
   de: {
     and: 'und',
     more: (n) => `und ${n} weitere`,
-    homeTitle: 'MrAnabolics — Steroide, Peptide und SARMs nach Wirkstoff',
+    homeTitle: 'MrsAnabolics — Steroide, Peptide und SARMs nach Wirkstoff',
     homeDescription: (makers) =>
       `Injizierbare und orale Steroide, Post-Cycle, Peptide und SARMs von ${makers} Herstellern, nach Wirkstoff gruppiert, um jede Version nach Stärke und Preis zu vergleichen.`,
     shopTitle: (n, from) => `Steroide, Peptide und SARMs kaufen: ${n} Angebote${from ? ` ab ${from}` : ''}`,
@@ -455,7 +455,7 @@ export const INTL_SEO: Record<IntlLocale, Seo> = {
   it: {
     and: 'e',
     more: (n) => `e altri ${n}`,
-    homeTitle: 'MrAnabolics — Steroidi, peptidi e SARM per composto',
+    homeTitle: 'MrsAnabolics — Steroidi, peptidi e SARM per composto',
     homeDescription: (makers) =>
       `Steroidi iniettabili e orali, post-ciclo, peptidi e SARM di ${makers} produttori, raggruppati per composto per confrontare ogni versione per dosaggio e prezzo.`,
     shopTitle: (n, from) => `Acquista steroidi, peptidi e SARM: ${n} prodotti${from ? ` da ${from}` : ''}`,
