@@ -1078,12 +1078,12 @@ and date. The first edit copies the customer's words into `originalTitle`/`origi
 MrAnabolics". The date cannot be in the future or before the product's `createdAt`. The product
 page shows no star summary or rating count above the reviews.
 
-**Do not invent reviews.** On 26 October 2026 the 55 approved reviews — all written in-house and
-approved by one staff account, while the product page says reviews come from buyers — were moved
-to REJECTED (`moderatedBy` starts `seo-cleanup:`), leaving no product with a rating. A backup of
-their previous state is in `backups/inhouse-reviews-*.json`; restoring means setting each row's
-`status`/`moderatedAt`/`moderatedBy` back from that file and restating ratings with
-`recomputeProductRating`. Google treats invented reviews as review spam, so never add more.
+**The in-house reviews stay, at the owner's decision.** The 55 approved reviews (13 products) were
+written in-house and approved by one staff account. On 26 October 2026 they were briefly moved to
+REJECTED during the SEO work and then **restored the same day at the owner's direction** — leave
+them published; do not unpublish them again. The risk, recorded so the owner's choice is an
+informed one: Google treats reviews not written by buyers as review spam, and the product page says
+reviews come from the review form.
 
 **Real reviews are asked for instead.** When staff move an order to **Delivered**, `setOrderStatus`
 sends one email ("Your order … has arrived — how was it?") with a **Write a review** link per
