@@ -139,6 +139,8 @@ export function ProductDetail({
   reviewsOpen = false,
   compound = null,
   summary,
+  faqs,
+  paymentMethods = [],
 }: {
   product: Product;
   related: Product[];
@@ -148,7 +150,12 @@ export function ProductDetail({
   compound?: ProductCompound | null;
   /** The short description under the price, computed on the server from the label facts. */
   summary?: string;
+  /** The admin's questions plus the ones answered from the data (lib/catalogue/buying-facts.ts). */
+  faqs?: { question: string; answer: string }[];
+  /** The payment methods checkout lists, by label. */
+  paymentMethods?: string[];
 }) {
+  const questions = faqs ?? product.faqs;
   const { addToCart, toggleWishlist, isWishlisted } = useStore();
   const [active, setActive] = React.useState(0);
   const [qty, setQty] = React.useState(1);
@@ -492,16 +499,57 @@ export function ProductDetail({
               Returns
             </h3>
             <p className="measure mt-3 text-sm leading-relaxed text-ink-soft">
-              {product.returns}
+              {product.returns}{' '}
+              <Link
+                href="/legal/returns"
+                className="text-pigment-indigo underline decoration-rule-strong underline-offset-[3px] transition-colors hover:decoration-pigment-indigo"
+              >
+                Returns policy
+              </Link>
             </p>
 
-            {product.faqs.length > 0 && (
+            {paymentMethods.length > 0 && (
+              <>
+                <h3 className="mt-8 font-display text-lg font-semibold tracking-[-0.025em]">
+                  Payment
+                </h3>
+                <p className="measure mt-3 text-sm leading-relaxed text-ink-soft">
+                  {paymentMethods.join(', ')}. Checkout charges in US dollars.
+                </p>
+              </>
+            )}
+
+            {/* Trust that a buyer can verify, not a badge: what to look at when the pack arrives. */}
+            <h3 className="mt-8 font-display text-lg font-semibold tracking-[-0.025em]">
+              Check your pack
+            </h3>
+            <p className="measure mt-3 text-sm leading-relaxed text-ink-soft">
+              The batch number and expiry date should be printed on the pack, and match on the box
+              and the {product.specifications.some((s) => /tablet/i.test(s.value)) ? 'blister' : 'vial'}.
+              Our guides explain{' '}
+              <Link
+                href="/blog/how-to-spot-counterfeit-steroids"
+                className="text-pigment-indigo underline decoration-rule-strong underline-offset-[3px] transition-colors hover:decoration-pigment-indigo"
+              >
+                how to spot a counterfeit
+              </Link>{' '}
+              and{' '}
+              <Link
+                href="/blog/how-to-read-a-certificate-of-analysis"
+                className="text-pigment-indigo underline decoration-rule-strong underline-offset-[3px] transition-colors hover:decoration-pigment-indigo"
+              >
+                how to check a certificate of analysis
+              </Link>
+              .
+            </p>
+
+            {questions.length > 0 && (
               <>
                 <h3 className="mt-10 font-display text-lg font-semibold tracking-[-0.025em]">
                   Common questions
                 </h3>
                 <Accordion type="single" collapsible className="mt-3">
-                  {product.faqs.map((faq, i) => (
+                  {questions.map((faq, i) => (
                     <AccordionItem key={i} value={`faq-${i}`} className="border-rule">
                       <AccordionTrigger className="text-left text-sm font-medium hover:no-underline">
                         {faq.question}

@@ -15,6 +15,7 @@ import type { Product } from '@/lib/types';
 import { fitDescription, getUsDelivery, shortStrength, usShippingLine } from '@/lib/catalogue/seo';
 import { formatPrice } from '@/lib/format';
 import { titleTestGroup } from '@/lib/catalogue/title-test';
+import { buyingFaqs, getListedPaymentMethods } from '@/lib/catalogue/buying-facts';
 import { getDeliverySummary, type ZoneSummary } from '@/lib/delivery/summary';
 import { COUNTRY_CODES } from '@/lib/countries';
 
@@ -274,7 +275,13 @@ export default async function ProductPage({ params }: Params) {
   const compound = await compoundFor(product);
   const { description, summary } = describe(product, compound, await getUsDelivery());
   const image = productImage(product);
-  const shipping = shippingDetails(await getDeliverySummary());
+  const [zones, paymentMethods] = await Promise.all([getDeliverySummary(), getListedPaymentMethods()]);
+  const shipping = shippingDetails(zones);
+  /* The admin's own questions first, then the ones answered from the data (lib/catalogue/buying-facts.ts). */
+  const faqs = [
+    ...product.faqs,
+    ...buyingFaqs(product, { zones, paymentMethods, compound }),
+  ];
 
   const schema = [
     {
@@ -377,12 +384,12 @@ export default async function ProductPage({ params }: Params) {
         },
       ],
     },
-    ...(product.faqs.length > 0
+    ...(faqs.length > 0
       ? [
           {
             '@context': 'https://schema.org',
             '@type': 'FAQPage',
-            mainEntity: product.faqs.map((f) => ({
+            mainEntity: faqs.map((f) => ({
               '@type': 'Question',
               name: f.question,
               acceptedAnswer: { '@type': 'Answer', text: f.answer },
@@ -404,6 +411,8 @@ export default async function ProductPage({ params }: Params) {
         reviewsOpen={reviewsOpen}
         compound={compound}
         summary={summary}
+        faqs={faqs}
+        paymentMethods={paymentMethods}
       />
     </>
   );

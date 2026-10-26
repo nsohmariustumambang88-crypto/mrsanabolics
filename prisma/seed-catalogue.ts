@@ -251,7 +251,8 @@ function build(entry: LibraryEntry, categoryName: string): Built | null {
     directions:
       'Follow the directions on the manufacturer’s label; this listing adds no dosing guidance.',
     shipping: 'Ships within 24 hours in discreet packaging. Tracked delivery available.',
-    returns: 'Unopened, sealed products may be returned within 14 days.',
+    /* Must match /legal/returns and the product JSON-LD's merchantReturnDays (30). */
+    returns: 'Unopened, sealed products may be returned within 30 days of delivery.',
     benefits,
     ingredients: [compound ?? `As labelled by ${brandName}`],
     images: [entry.publicId],
