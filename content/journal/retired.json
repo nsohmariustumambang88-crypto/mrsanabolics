@@ -1,5 +1,5 @@
 {
-  "_comment": "Journal addresses that no longer carry an article, and where each now points. next.config.js answers each with a permanent (308) redirect, and prisma/seed-journal.ts deletes the matching row. A retired address must never be reused for a different article. The original text of every retired post is kept, unchanged, in lib/data/blog.ts.",
+  "_comment": "Journal addresses that no longer carry an article, and where each now points. next.config.js answers each with a permanent (308) redirect, and prisma/seed-journal.ts deletes the matching row. A retired address must never be reused for a different article. The original text of the first six retired posts is kept, unchanged, in lib/data/blog.ts; the later ones are in git history (content/journal/<slug>.md before the commit that retired them).",
   "retired": [
     {
       "slug": "third-party-testing-matters",
@@ -30,6 +30,136 @@
       "slug": "peptide-storage-best-practices",
       "to": "/blog",
       "why": "Unsourced handling and preparation instructions."
+    },
+    {
+      "slug": "trenbolone-cycle-guide-dosage",
+      "to": "/shop/injectables/trenbolone",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "nandrolone-deca-durabolin-guide",
+      "to": "/shop/injectables/nandrolone",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "boldenone-eq-equipoise-guide",
+      "to": "/shop/injectables/boldenone",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "testosterone-enanthate-vs-propionate",
+      "to": "/shop/injectables/testosterone-enanthate",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "steroid-injection-guide-how-to-inject",
+      "to": "/blog/anabolic-steroid-health-risks",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "steroid-gynecomastia-prevention-treatment",
+      "to": "/blog/anabolic-steroid-health-risks",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "aromatase-inhibitor-guide-ai",
+      "to": "/blog/anabolic-steroid-health-risks",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "female-steroid-guide-women",
+      "to": "/blog/anabolic-steroid-health-risks",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "best-steroids-for-beginners",
+      "to": "/blog/what-are-anabolic-steroids",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "steroid-cycle-guide-beginners",
+      "to": "/blog/what-are-anabolic-steroids",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "oral-vs-injectable-steroids",
+      "to": "/blog/how-do-steroids-work",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "best-steroids-for-muscle-gain",
+      "to": "/shop/injectables",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "steroid-stacks-bulking-cycles",
+      "to": "/shop/injectables",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "best-steroids-for-fat-loss",
+      "to": "/shop/fat-burners",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "best-cutting-cycle-steroids",
+      "to": "/shop/orals",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "steroid-stacks-cutting-cycles",
+      "to": "/shop/orals",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "best-steroids-for-strength",
+      "to": "/shop",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "best-steroids-for-endurance",
+      "to": "/shop",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "steroid-prices-comparison-2026",
+      "to": "/blog/testosterone-enanthate-for-sale-buying-guide",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "testosterone-replacement-therapy-trt-guide",
+      "to": "/blog/anabolic-steroids-law-us-uk-canada-australia",
+      "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
+    },
+    {
+      "slug": "how-to-spot-fake-steroids-online",
+      "to": "/blog/how-to-spot-counterfeit-steroids",
+      "why": "Repeated a stronger sourced article without sources; merged into it (October 2026 journal audit)."
+    },
+    {
+      "slug": "how-to-test-steroids-authenticity",
+      "to": "/blog/hplc-mass-spectrometry-lab-testing-explained",
+      "why": "Repeated a stronger sourced article without sources; merged into it (October 2026 journal audit)."
+    },
+    {
+      "slug": "steroid-laws-by-country-2026",
+      "to": "/blog/anabolic-steroids-law-us-uk-canada-australia",
+      "why": "Repeated a stronger sourced article without sources; merged into it (October 2026 journal audit)."
+    },
+    {
+      "slug": "steroid-side-effects-complete-guide",
+      "to": "/blog/anabolic-steroid-health-risks",
+      "why": "Repeated a stronger sourced article without sources; merged into it (October 2026 journal audit)."
+    },
+    {
+      "slug": "pharma-grade-vs-underground-steroids",
+      "to": "/blog/best-underground-labs-vs-pharmaceutical",
+      "why": "Repeated a stronger sourced article without sources; merged into it (October 2026 journal audit)."
+    },
+    {
+      "slug": "best-pct-after-steroid-cycle",
+      "to": "/blog/post-cycle-therapy-complete-guide",
+      "why": "Repeated a stronger sourced article without sources; merged into it (October 2026 journal audit)."
     }
   ]
 }

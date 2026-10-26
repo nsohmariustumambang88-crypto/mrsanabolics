@@ -408,7 +408,7 @@ node --env-file=.env .impeccable/account-e2e.mjs   # needs the app running
 
 ## The journal
 
-The journal (`/blog`, and the section near the foot of the home page) started as six sourced articles written for search. It now holds about 40: a buying guide, `testosterone-enanthate-for-sale-buying-guide` (October 2026, 13 sources, 42 internal links), and some 30 SEO articles added by other sessions — several of them (cycle guides, dosing, "best steroids for…") break the editorial policy below and are slated to be removed and redirected, about 20 in all, with 6 to merge and 9 to rewrite. The six originals: reading a certificate of analysis (featured), spotting counterfeit steroids, what HPLC and mass spectrometry can prove, whether SARMs are legal, steroid law in the US/UK/Canada/Australia, and the health risks. The editorial policy they follow is on the About page (`/about#editorial-policy`) and is binding on any new article: **every factual claim cited to a primary source, no dosing or protocols, the byline is the organisation, dates are real.**
+The journal (`/blog`, and the section near the foot of the home page) started as six sourced articles written for search. Other sessions then added some 35 unsourced SEO articles; on 26 October 2026 the 20 built around doses, cycles and stacks were retired and the 6 that duplicated a sourced article were merged into it — all 26 redirect through `retired.json`. It now holds **16**: the six sourced originals, the sourced buying guide `testosterone-enanthate-for-sale-buying-guide` (13 sources, 42 internal links), and **9 unsourced articles awaiting a rewrite with sources and no dosing** — what-are-anabolic-steroids, how-do-steroids-work, how-to-buy-steroids-online-safely, best-place-to-buy-testosterone, steroid-suppliers-which-are-legit, wada-banned-list-explained, best-underground-labs-vs-pharmaceutical, sarms-vs-steroids-which-is-better, and post-cycle-therapy-complete-guide (which still carries doses and is first in line). `/llms.txt` lists only articles with sources. The six originals: reading a certificate of analysis (featured), spotting counterfeit steroids, what HPLC and mass spectrometry can prove, whether SARMs are legal, steroid law in the US/UK/Canada/Australia, and the health risks. The editorial policy they follow is on the About page (`/about#editorial-policy`) and is binding on any new article: **every factual claim cited to a primary source, no dosing or protocols, the byline is the organisation, dates are real.**
 
 **Where it lives.** Each body is Markdown at `content/journal/<slug>.md`; its title, search title and description, photograph, FAQs and numbered sources are in [lib/data/journal.ts](lib/data/journal.ts). `npm run db:seed-journal` writes them to Neon and **refuses the whole run** if a `[^n]` has no source, a source is never cited, a `[[figure:key]]` does not exist, more than one article is featured, or an excerpt exceeds 165 characters. Existing rows are skipped unless `--refresh`, because the admin can edit them; `--dry-run` writes nothing. The Markdown dialect and renderer are [components/journal/article-body.tsx](components/journal/article-body.tsx) — no HTML injection. Figures are drawn in [components/journal/figures.tsx](components/journal/figures.tsx) as live text, not images.
 
@@ -805,6 +805,28 @@ JSON-LD template, and that is not a customer search.
 
 The failed searches that drove this (October 2026): "Sistaplex like 5 minutes", "Tren entha",
 "Testoviron", "Ultima-Anomass 400 Mix", "return".
+
+## Being found: Bing, IndexNow and `/llms.txt`
+
+The October 2026 SEO review found Bing held almost none of the site — and Bing is the index behind
+ChatGPT search, Copilot and DuckDuckGo. [scripts/indexnow.mjs](scripts/indexnow.mjs) pushes URLs to
+IndexNow (Bing, Yandex, Seznam, Naver): no argument submits every sitemap URL, arguments submit
+just those paths. Ownership is the key file `public/66a4cbfef674424b4b2d013361099512.txt`, which
+must stay deployed; the key is public by design. Run it after a deploy that adds or retires pages.
+
+[app/llms.txt/route.ts](app/llms.txt/route.ts) serves `/llms.txt` (llmstxt.org): the store described
+for AI assistants, built hourly from the same reads as the pages — categories and compounds with
+listing counts and price ranges, manufacturers, the sourced guides only, delivery zones and rates,
+payment methods, the minimum order. It states the domain and that mranabolics.com is a different
+business, because a London shop trades under that near-identical name and Google sends brand
+searches for "mranabolics" to it.
+
+What the review also established, for whoever picks this up: Google shows an AI Overview warning
+against buying testosterone online above the shop results for "testosterone enanthate for sale"
+(US), "buy steroids uk", the Spanish query and the UAE query — not for the German one — which
+lowers clicks without any change in position; Perplexity answers buying questions with "avoid the
+steroid-sale sites". Assistants will not recommend a shop as a place to buy; the realistic aim is
+to be the cited source for informational questions.
 
 ## The CRM
 
