@@ -1,8 +1,10 @@
 'use server';
 
+import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { createOrder, type CreateOrderInput } from '@/lib/orders/orders';
 import { quoteDelivery } from '@/lib/delivery';
+import { markBasketOrdered } from '@/lib/basket';
 
 export type CheckoutSubmitInput = {
   email: string;
@@ -106,6 +108,9 @@ export async function submitCheckout(
     if (!result.ok) {
       return result;
     }
+
+    /* The basket this browser saved (lib/basket) became an order: never remind about it. */
+    await markBasketOrdered(cookies().get('mra_vid')?.value, result.reference).catch(() => {});
 
     return { ok: true, reference: result.reference };
   } catch (error) {

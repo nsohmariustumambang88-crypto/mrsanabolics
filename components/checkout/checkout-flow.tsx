@@ -108,6 +108,25 @@ export function CheckoutFlow({
     }
   }, [selectedCountry]);
 
+  /*
+    Note that this browser reached the checkout with these items (lib/basket), once per visit to
+    the page. It is what tells a basket reminder "they were one step away". Fire and forget.
+  */
+  const checkoutNoted = React.useRef(false);
+  React.useEffect(() => {
+    if (checkoutNoted.current || cart.length === 0) return;
+    checkoutNoted.current = true;
+    fetch('/api/basket', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        items: cart.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+        checkout: true,
+      }),
+      keepalive: true,
+    }).catch(() => {});
+  }, [cart]);
+
   const chosenRate =
     delivery.options.find((o) => o.rateId === delivery.selectedId) ?? delivery.options[0] ?? null;
 

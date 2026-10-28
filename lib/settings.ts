@@ -178,6 +178,14 @@ export const SETTINGS: SettingDef[] = [
     help: 'Appears under every campaign, above the postal address and the unsubscribe link.',
     group: 'email',
   },
+  {
+    key: 'basket_reminders_enabled',
+    label: 'Send basket reminders',
+    type: 'boolean',
+    default: 'false',
+    help: 'Once a day, emails a subscriber who left items in their basket for more than 24 hours: their items, a Restore my basket button, and WELCOME15 if they have never ordered. Once per basket, at most weekly per person, never after an order, never to anyone unsubscribed.',
+    group: 'email',
+  },
 
   {
     key: 'chat_enabled',

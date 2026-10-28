@@ -678,11 +678,49 @@ model Visitor {
 
   pageViews PageView[]
   searches  SearchQuery[]
+  basket    Basket?
 
   @@index([lastSeenAt])
   @@index([country])
   @@index([contactId])
   @@map("visitors")
+}
+
+/// The basket a browser is holding, saved server-side so it can be reminded about and restored
+/// on another device. The browser's localStorage is still the cart; this is a copy.
+///
+/// Keyed on the analytics visitor (one live basket per browser). Lines are priced from the
+/// database when saved, never from what the browser sent. An emptied basket deletes the row,
+/// so "a basket" always means items somebody still has. A reminder goes only to a visitor
+/// linked to a Contact whose Subscriber is SUBSCRIBED — holding a basket is not consent.
+/// See lib/basket/.
+model Basket {
+  id String @id @default(cuid())
+
+  visitorId String  @unique
+  visitor   Visitor @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+
+  /// [{ productId, slug, name, brand, image, price, quantity }], priced from the database.
+  items     Json
+  itemCount Int
+  subtotal  Decimal @db.Decimal(10, 2)
+
+  /// Last time this browser opened the checkout with these items.
+  checkoutAt DateTime?
+  /// Set when an order is placed from this browser; nothing is sent after that.
+  orderedAt      DateTime?
+  orderReference String?
+
+  /// The reminder, sent at most once per basket.
+  remindedAt       DateTime?
+  /// SHA-256 of the token in the reminder's "restore my basket" link.
+  restoreTokenHash String?   @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([updatedAt])
+  @@map("baskets")
 }
 
 /// One page view. Append-only, like every other timeline here.

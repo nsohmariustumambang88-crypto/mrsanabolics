@@ -808,6 +808,38 @@ JSON-LD template, and that is not a customer search.
 The failed searches that drove this (October 2026): "Sistaplex like 5 minutes", "Tren entha",
 "Testoviron", "Ultima-Anomass 400 Mix", "return".
 
+## Saved baskets and basket reminders
+
+The cart still lives in localStorage; since October 2026 the server also keeps a **copy** per
+browser, in the `Basket` table ([lib/basket/](lib/basket/)), keyed on the analytics visitor
+(`mra_vid`). It exists for two things the browser cannot do: remind a subscriber about a basket
+they left, and restore that exact basket on another device from a link.
+
+- **Saving.** `StoreProvider` posts the cart's ids and quantities to `/api/basket` 1.5s after it
+  changes (skipped when unchanged this session; a first visit with an empty cart sends nothing).
+  The checkout posts once more with `checkout: true`, stamping `checkoutAt`. The server prices
+  every line from the database — the browser's names and prices are never stored. An emptied
+  cart deletes the row. No `mra_vid` cookie, nothing saved. Always 204, never throws.
+- **Ordering.** `submitCheckout` calls `markBasketOrdered` with the visitor cookie, so a basket
+  that became an order is never reminded about.
+- **Reminding.** [lib/basket/reminders.ts](lib/basket/reminders.ts): once per basket, 24h after
+  its last change and within 14 days, only when the browser is linked to a Contact whose
+  Subscriber is SUBSCRIBED, never if they ordered since, at most once a week per person, in-stock
+  lines only. WELCOME15 is offered only to someone with no paid order who has not redeemed it.
+  The basket is claimed (`remindedAt`) before sending and released if the send fails. A
+  `MESSAGE_RECORDED` line goes on the contact's timeline. Template:
+  [lib/email/basket-reminder.ts](lib/email/basket-reminder.ts), sent with a List-Unsubscribe header.
+- **Restoring.** The email's button opens `/basket/restore?token=…` (32 random bytes; only the
+  SHA-256 is stored, valid 30 days). It replaces the cart with the saved lines at today's prices,
+  in stock only, and opens the checkout. `/basket` is disallowed in robots.ts.
+- **Switching it on.** Vercel Cron (`vercel.json`) calls `/api/cron/basket-reminders` daily at
+  15:00 UTC. The route **fails closed**: it refuses everything unless the `CRON_SECRET`
+  environment variable is set in Vercel, and it sends nothing while the `basket_reminders_enabled`
+  setting (Admin → Email) is off — which is the default.
+
+Holding a basket is not consent: a visitor who never subscribed is never mailed, whatever is in
+their basket.
+
 ## Being found: Bing, IndexNow and `/llms.txt`
 
 The October 2026 SEO review found Bing held almost none of the site — and Bing is the index behind

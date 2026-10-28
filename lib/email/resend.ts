@@ -112,6 +112,19 @@ export async function sendReviewRequestEmail(
   if (error) throw new Error(`Resend refused the review request email: ${error.message}`);
 }
 
+/* The basket reminder (lib/basket/reminders.ts). Marketing mail, so it carries List-Unsubscribe. */
+export async function sendBasketReminderEmail(to: string, subject: string, html: string, unsubscribeUrl: string) {
+  const { error } = await getResend().emails.send({
+    from: `MrsAnabolics <${FROM_EMAIL}>`,
+    replyTo: SUPPORT_EMAIL,
+    to,
+    subject,
+    html,
+    headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>` },
+  });
+  if (error) throw new Error(`Resend refused the basket reminder: ${error.message}`);
+}
+
 export async function sendPasswordChangedEmail(to: string, signInLink: string) {
   const { error } = await getResend().emails.send({
     from: `MrsAnabolics <${FROM_EMAIL}>`,
