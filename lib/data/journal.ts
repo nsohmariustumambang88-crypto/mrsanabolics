@@ -509,138 +509,609 @@ export const articles: JournalArticle[] = [
   },
   {
     slug: 'what-are-anabolic-steroids',
-    title: 'What Are Anabolic Steroids? Complete Explanation',
-    metaTitle: 'What Are Anabolic Steroids? Definition & How They Work',
-    excerpt: 'Synthetic compounds that mimic testosterone and promote muscle growth. What they are, types, legal status, and realistic effects.',
-    metaDescription: 'Complete guide to anabolic steroids: what they are, types, how they work, legal status, and realistic effects on muscle growth and performance.',
+    title: 'What are anabolic steroids, and how do they work?',
+    metaTitle: 'What Are Anabolic Steroids and How Do They Work?',
+    excerpt:
+      'What anabolic steroids are, how they act through the androgen receptor, what they are prescribed for, and how they differ from corticosteroids, with sources.',
+    metaDescription:
+      'Anabolic steroids explained with sources: what they are, how they work via the androgen receptor, approved medical uses, and how they differ from corticosteroids.',
     category: 'Health',
     author: BYLINE,
     date: '2026-10-03',
+    updated: '2026-10-30',
     image: pexels(8533016),
-    imageAlt: 'Laboratory equipment with chemical compounds and molecular diagrams.',
-    imageCredit: credit('Science Photo'),
-    faqs: [],
-    sources: [],
-  },
-  {
-    slug: 'how-do-steroids-work',
-    title: 'How Do Steroids Work? The Mechanism Behind Muscle Growth',
-    metaTitle: 'How Do Steroids Work? Mechanism of Muscle Growth',
-    excerpt: 'Understanding how anabolic steroids work requires knowing how your body naturally builds muscle and how steroids amplify protein synthesis and recovery.',
-    metaDescription: 'How steroids work: androgen receptors, protein synthesis amplification, recovery enhancement, and the biological mechanisms behind muscle growth.',
-    category: 'Health',
-    author: BYLINE,
-    date: '2026-10-03',
-    image: pexels(8533016),
-    imageAlt: 'Muscle tissue under microscope with cellular diagrams.',
-    imageCredit: credit('Medical Illustration'),
-    faqs: [],
-    sources: [],
+    imageAlt:
+      'A laboratory bench with a clipboard of printed notes and diagrams, a glass flask in front and a microscope to one side.',
+    imageCredit: credit('Artem Podrez'),
+    faqs: [
+      {
+        question: 'What are anabolic steroids?',
+        answer:
+          'Synthetic substances similar to the male sex hormone testosterone, in NIDA\'s definition. Their full name is anabolic-androgenic steroids: they promote muscle growth (anabolic effects) and male sexual characteristics (androgenic effects).',
+      },
+      {
+        question: 'How do anabolic steroids work?',
+        answer:
+          'They bind to and activate the androgen receptor. The activated receptor moves into the cell nucleus, attaches to DNA and switches on target genes. How a steroid is metabolised in each tissue helps explain why some act more on muscle than others, though none is purely anabolic.',
+      },
+      {
+        question: 'What are anabolic steroids used for medically?',
+        answer:
+          'In the US, the DEA lists approved uses including testosterone deficiency, delayed puberty, anaemia, breast cancer and AIDS-related tissue wasting. NIDA notes they are not approved for improving well-being or bone strength.',
+      },
+      {
+        question: 'What is the difference between anabolic steroids and corticosteroids?',
+        answer:
+          'Corticosteroids are anti-inflammatory medicines used for conditions such as asthma, eczema and rheumatoid arthritis. They work on inflammation and the immune system rather than the androgen receptor, and the NHS says they are not the same as anabolic steroids.',
+      },
+      {
+        question: 'Are anabolic steroids legal?',
+        answer:
+          'It depends on the country. In the US they are Schedule III controlled substances. In the UK the NHS describes them as class C medicines that pharmacists can issue only on prescription, and supplying them carries up to 14 years in prison.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Anabolic steroids and other appearance and performance enhancing drugs (APEDs)',
+        publisher: 'National Institute on Drug Abuse',
+        year: '2024',
+        url: 'https://nida.nih.gov/research-topics/anabolic-steroids',
+      },
+      {
+        title: 'Anabolic steroids (drug fact sheet)',
+        publisher: 'DEA Diversion Control Division',
+        year: '2025',
+        url: 'https://www.deadiversion.usdoj.gov/drug_chem_info/anabolic.pdf',
+      },
+      {
+        title: 'Pharmacology of anabolic steroids',
+        publisher: 'British Journal of Pharmacology (Kicman AT)',
+        year: '2008',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC2439524/',
+      },
+      {
+        title: 'Steroids',
+        publisher: 'NHS',
+        year: '2025',
+        url: 'https://www.nhs.uk/medicines/steroids/',
+      },
+      {
+        title: '21 U.S.C. 802: Definitions',
+        publisher: 'US Government Publishing Office',
+        year: '2024',
+        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapI-partA-sec802.htm',
+      },
+      {
+        title: 'Adverse health consequences of performance-enhancing drugs: an Endocrine Society scientific statement',
+        publisher: 'Endocrine Reviews (Pope HG Jr et al.)',
+        year: '2014',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC4026349/',
+      },
+      {
+        title: 'The global epidemiology of anabolic-androgenic steroid use: a meta-analysis and meta-regression analysis',
+        publisher: 'Annals of Epidemiology (Sagoe D et al.)',
+        year: '2014',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/24582699/',
+      },
+      {
+        title: 'The effects of supraphysiologic doses of testosterone on muscle size and strength in normal men',
+        publisher: 'New England Journal of Medicine (Bhasin S et al.)',
+        year: '1996',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/8637535/',
+      },
+      {
+        title: 'Testosterone enanthate injection, USP: prescribing information',
+        publisher: 'DailyMed, US National Library of Medicine',
+        year: '2026',
+        url: 'https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=e89d6458-428c-4256-97a3-f1fa851293c1',
+      },
+      {
+        title: 'Gemini Laboratories, LLC, et al.; Withdrawal of Approval of One New Drug Application for OXANDRIN (Oxandrolone) Tablets and Four Abbreviated New Drug Applications for Oxandrolone Tablets (88 FR 41970)',
+        publisher: 'Federal Register (US Food and Drug Administration)',
+        year: '2023',
+        url: 'https://www.govinfo.gov/content/pkg/FR-2023-06-28/html/2023-13733.htm',
+      },
+      {
+        title: 'International Standard: Prohibited List 2026',
+        publisher: 'World Anti-Doping Agency',
+        year: '2025',
+        url: 'https://www.wada-ama.org/sites/default/files/2025-09/2026list_en_final_clean_september_2025.pdf',
+      },
+      {
+        title: 'Anabolic steroid misuse',
+        publisher: 'NHS',
+        year: '2026',
+        url: 'https://www.nhs.uk/conditions/anabolic-steroid-misuse/',
+      },
+    ],
   },
   {
     slug: 'how-to-buy-steroids-online-safely',
-    title: 'How to Buy Steroids Online Safely: Essential Guide for Buyers',
-    metaTitle: 'How to Buy Steroids Online Safely: Verification Guide',
-    excerpt: 'Buying steroids online involves real risks. This guide covers how to verify suppliers, authenticate products, avoid counterfeits, and protect yourself.',
-    metaDescription: 'Safe steroid buying guide: verify suppliers, check product authenticity, spot counterfeits, understand legal status, and avoid scams when buying online.',
+    title: 'How to buy steroids online safely, and how to tell which suppliers are legit',
+    metaTitle: 'How to Buy Steroids Online Safely (and Spot Legit Sellers)',
+    excerpt:
+      'The law on buying steroids online, what tests of black-market products have found, and the checks to run on any seller, this shop included, before you pay.',
+    metaDescription:
+      'Is it legal to buy steroids online? What tests of seized products found, how rogue sellers and payment scams work, and how to check whether a supplier is legit.',
     category: 'Verification',
     author: BYLINE,
     date: '2026-10-03',
+    updated: '2026-10-30',
     image: pexels(8533016),
-    imageAlt: 'Secure online transaction and verification process.',
-    imageCredit: credit('Security Photo'),
-    faqs: [],
-    sources: [],
-  },
-  {
-    slug: 'best-place-to-buy-testosterone',
-    title: 'Best Place to Buy Testosterone: Where to Source Safely',
-    metaTitle: 'How to Buy Testosterone: Pharmaceutical vs UGL Sources',
-    excerpt: 'Pharmaceutical (prescription) safest. Reputable UGL with CoA cheaper. Verify supplier, get bloodwork at week 4, verify CoA independently.',
-    metaDescription: 'Buy testosterone safely: pharmaceutical TRT prescription vs underground labs. How to verify authenticity, avoid counterfeits, source responsibly.',
-    category: 'Verification',
-    author: BYLINE,
-    date: '2026-10-04',
-    image: pexels(8533016),
-    imageAlt: 'Pharmacy counter showing testosterone prescription bottles.',
-    imageCredit: credit('Pharmacy Photo'),
-    faqs: [],
-    sources: [],
-  },
-  {
-    slug: 'steroid-suppliers-which-are-legit',
-    title: 'Steroid Suppliers: Which Are Legit? Identification Guide',
-    metaTitle: 'How to Identify Legitimate Steroid Suppliers (Not Scams)',
-    excerpt: 'Check business registration (5+ years), verify CoA independently, read recent reviews, compare pricing. Use 10-point checklist before ordering.',
-    metaDescription: 'How to identify legit steroid suppliers: red flags (new domains, no CoA), green flags (business registration, verified reviews), 10-point verification checklist.',
-    category: 'Verification',
-    author: BYLINE,
-    date: '2026-10-04',
-    image: pexels(8533016),
-    imageAlt: 'Legitimate business storefront with professional branding.',
-    imageCredit: credit('Business Photo'),
-    faqs: [],
-    sources: [],
+    imageAlt:
+      'A laboratory bench with a clipboard of printed notes and diagrams, a glass flask in front and a microscope to one side.',
+    imageCredit: credit('Artem Podrez'),
+    faqs: [
+      {
+        question: 'Is it legal to buy steroids online?',
+        answer:
+          'It depends on where you live, and ordering by post is often treated more strictly than possession. In the US, anabolic steroids are Schedule III and a prescription controlled substance may not be supplied over the internet without a valid prescription. In the UK, the import exemption covers only steroids carried in person for your own use, not a parcel. Canada prohibits importing them unless authorised under the regulations, and Australia requires a written permission to import them.',
+      },
+      {
+        question: 'How can I tell if a steroid supplier is legit?',
+        answer:
+          'In law, the legitimate supplier is a licensed pharmacy dispensing on a valid prescription, and a shop selling without one is outside that system. Beyond that, check that the business is real and reachable, that it publishes returns and delivery terms, that packs carry batch numbers and any certificate can be verified with the laboratory, and how your payment is protected. None of these checks proves what is inside a product; only a laboratory test can.',
+      },
+      {
+        question: 'Is it safe to pay for steroids with cryptocurrency?',
+        answer:
+          'The US Federal Trade Commission says cryptocurrency payments do not come with legal protections and typically are not reversible, unlike credit and debit cards. The UK medicines regulator lists accepting payment in cryptocurrency as one of its signs of a dodgy medicines website. Know what recourse you have before you pay any seller this way.',
+      },
+      {
+        question: 'How common are fake steroids bought online?',
+        answer:
+          'A 2022 meta-analysis of 19 studies covering 5,413 samples found 36% were counterfeit, with contents that did not match the label, and 37% were substandard, with the right substance in the wrong amount. The authors say the figures must be interpreted with caution because the studies varied widely.',
+      },
+      {
+        question: 'Can you tell if steroids are fake by looking at them?',
+        answer:
+          'Not reliably. The two largest groups of counterfeits in the 2022 meta-analysis contained a different substance or no active ingredient at all, and a container like that can look exactly like the real product. Only a laboratory can tell what is inside.',
+      },
+    ],
+    sources: [
+      {
+        title: '21 CFR 1308.13: Schedule III',
+        publisher: 'eCFR',
+        year: '2026',
+        url: 'https://www.ecfr.gov/current/title-21/section-1308.13',
+      },
+      {
+        title: '21 U.S.C. 829: Prescriptions (Ryan Haight Online Pharmacy Consumer Protection Act)',
+        publisher: 'US Government Publishing Office',
+        year: '2024',
+        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapI-partC-sec829.htm',
+      },
+      {
+        title: '21 U.S.C. 952: Importation of controlled substances',
+        publisher: 'US Government Publishing Office',
+        year: '2024',
+        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapII-sec952.htm',
+      },
+      {
+        title: 'Misuse of Drugs Regulations 2001, regulation 4',
+        publisher: 'legislation.gov.uk',
+        url: 'https://www.legislation.gov.uk/uksi/2001/3998/regulation/4',
+      },
+      {
+        title: 'Controlled Drugs and Substances Act (S.C. 1996, c. 19)',
+        publisher: 'Justice Laws Website, Government of Canada',
+        year: '2026',
+        url: 'https://laws-lois.justice.gc.ca/eng/acts/C-38.8/FullText.html',
+      },
+      {
+        title: 'Customs (Prohibited Imports) Regulations 1956 (regulation 5G and Schedule 7A)',
+        publisher: 'Federal Register of Legislation (Australia)',
+        year: '2026',
+        url: 'https://www.legislation.gov.au/F1996B03651/latest/text',
+      },
+      {
+        title: 'Fake anabolic androgenic steroids on the black market: a systematic review and meta-analysis on qualitative and quantitative analytical results found within the literature',
+        publisher: 'BMC Public Health (Magnolini R et al.)',
+        year: '2022',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC9288681/',
+      },
+      {
+        title: 'Global crackdown on illicit pharmaceuticals sees USD 15.5 million in seizures (Operation Pangea XVIII)',
+        publisher: 'INTERPOL',
+        year: '2026',
+        url: 'https://www.interpol.int/en/News-and-Events/News/2026/Global-crackdown-on-illicit-pharmaceuticals-sees-USD-15.5-million-in-seizures',
+      },
+      {
+        title: 'Internet Drug Outlet Identification Program: Progress Report, September 2018',
+        publisher: 'National Association of Boards of Pharmacy',
+        year: '2018',
+        url: 'https://nabp.pharmacy/wp-content/uploads/2018/09/Internet-Drug-Outlet-Report-September-2018.pdf',
+      },
+      {
+        title: 'How to buy medicines safely from an online pharmacy',
+        publisher: 'US Food and Drug Administration',
+        year: '2025',
+        url: 'https://www.fda.gov/consumers/consumer-updates/how-buy-medicines-safely-online-pharmacy',
+      },
+      {
+        title: 'BeSafeRx: Considering an online pharmacy?',
+        publisher: 'US Food and Drug Administration',
+        url: 'https://www.fda.gov/drugs/besaferx-your-source-online-pharmacy-information/considering-online-pharmacy',
+      },
+      {
+        title: 'What to know about cryptocurrency and scams',
+        publisher: 'Federal Trade Commission',
+        year: '2022',
+        url: 'https://consumer.ftc.gov/articles/what-know-about-cryptocurrency-and-scams',
+      },
+      {
+        title: 'How to avoid a scam',
+        publisher: 'Federal Trade Commission',
+        year: '2023',
+        url: 'https://consumer.ftc.gov/articles/how-avoid-scam',
+      },
+      {
+        title: '#FakeMeds: Spot a fake',
+        publisher: 'Medicines and Healthcare products Regulatory Agency',
+        year: '2026',
+        url: 'https://fakemeds.campaign.gov.uk/spot-a-fake/',
+      },
+      {
+        title: 'Falsified medicines',
+        publisher: 'European Commission',
+        url: 'https://health.ec.europa.eu/medicinal-products/falsified-medicines_en',
+      },
+      {
+        title: 'Online shopping',
+        publisher: 'Federal Trade Commission',
+        year: '2023',
+        url: 'https://consumer.ftc.gov/articles/online-shopping',
+      },
+    ],
   },
   {
     slug: 'wada-banned-list-explained',
-    title: 'WADA Banned List Explained: What\'s Illegal in Sports',
-    metaTitle: 'WADA Prohibited Substances 2026: Banned Steroids & Testing',
-    excerpt: 'All anabolic steroids prohibited in competition and out-of-competition. Positive test = 4-year ban first offense. Only legal with Therapeutic Use Exemption.',
-    metaDescription: 'WADA banned list 2026: all anabolic steroids prohibited. Testing methods, detection windows, failed test consequences, TUE exemption process.',
+    title: 'The WADA banned list explained: anabolic agents, exemptions and sanctions for 2026 and 2027',
+    metaTitle: 'WADA Banned List 2026: Steroids, TUEs and Sanctions',
+    excerpt:
+      'What WADA\'s 2026 Prohibited List says about anabolic steroids, how it is updated, how medical exemptions work, and the sanctions, including the 2027 changes.',
+    metaDescription:
+      'WADA\'s banned list explained from the 2026 Prohibited List and the Code: section S1 anabolic agents, TUE criteria, four-year bans, and what changes in 2027.',
     category: 'Law',
     author: BYLINE,
     date: '2026-10-04',
+    updated: '2026-10-30',
     image: pexels(8533016),
-    imageAlt: 'WADA anti-doping testing laboratory with equipment.',
-    imageCredit: credit('Lab Photo'),
-    faqs: [],
-    sources: [],
+    imageAlt:
+      'A laboratory bench with a clipboard of printed notes and diagrams, a glass flask in front and a microscope to one side.',
+    imageCredit: credit('Artem Podrez'),
+    faqs: [
+      {
+        question: 'Are anabolic steroids banned by WADA?',
+        answer:
+          'Yes. Anabolic agents are section S1 of the Prohibited List, banned at all times, in and out of competition. S1.1 names dozens of steroids and also covers any with a similar chemical structure or biological effect, including their esters.',
+      },
+      {
+        question: 'How long is the ban for a positive steroid test?',
+        answer:
+          'Under the 2021 World Anti-Doping Code, in force until 31 December 2026, a violation involving a non-specified substance such as an anabolic steroid carries four years, or two if the athlete establishes it was not intentional. The 2027 Code keeps four years as the default and adds a three-year step.',
+      },
+      {
+        question: 'Can an athlete get a TUE for testosterone?',
+        answer:
+          'An athlete can apply for a Therapeutic Use Exemption for a prohibited substance, and the List notes that some S1 substances are found in medicines for male hypogonadism. A TUE is granted only if four criteria are met, including a diagnosed condition, no reasonable permitted alternative, and no enhancement beyond a return to normal health.',
+      },
+      {
+        question: 'When does the WADA Prohibited List change?',
+        answer:
+          'WADA must publish it at least once a year, and it publishes by 1 October after its Executive Committee approves it in September. The 2027 List was published on 21 September 2026, takes effect on 1 January 2027, and leaves section S1 unchanged.',
+      },
+      {
+        question: 'What is the Athlete Biological Passport?',
+        answer:
+          'A WADA programme that monitors selected biological markers over time against each athlete\'s own reference ranges, rather than testing only for a substance. Its steroidal module, launched in 2014, tracks steroid variables to uncover doping with testosterone or related compounds.',
+      },
+    ],
+    sources: [
+      {
+        title: 'International Standard: Prohibited List 2026',
+        publisher: 'World Anti-Doping Agency',
+        year: '2025',
+        url: 'https://www.wada-ama.org/sites/default/files/2025-09/2026list_en_final_clean_september_2025.pdf',
+      },
+      {
+        title: 'WADA publishes 2027 Prohibited List',
+        publisher: 'World Anti-Doping Agency',
+        year: '2026',
+        url: 'https://www.wada-ama.org/en/news/wada-publishes-2027-prohibited-list',
+      },
+      {
+        title: 'International Standard: Prohibited List 2027',
+        publisher: 'World Anti-Doping Agency',
+        year: '2026',
+        url: 'https://www.wada-ama.org/sites/default/files/2026-09/2027list_en_final_clean_26_august_2026_2.pdf',
+      },
+      {
+        title: 'World Anti-Doping Code 2021',
+        publisher: 'World Anti-Doping Agency',
+        year: '2021',
+        url: 'https://www.wada-ama.org/sites/default/files/resources/files/2021_wada_code.pdf',
+      },
+      {
+        title: 'World Anti-Doping Code 2027 (version 1.0)',
+        publisher: 'World Anti-Doping Agency',
+        year: '2026',
+        url: 'https://www.wada-ama.org/sites/default/files/2026-10/2027_world_anti-doping_code_code_october_final.pdf',
+      },
+      {
+        title: 'International Standard for Therapeutic Use Exemptions (ISTUE) 2023',
+        publisher: 'World Anti-Doping Agency',
+        year: '2022',
+        url: 'https://www.wada-ama.org/sites/default/files/2022-09/international_standard_for_therapeutic_use_exemptions_istue_2023.pdf',
+      },
+      {
+        title: 'International Standard for Therapeutic Use Exemptions (ISTUE) 2027',
+        publisher: 'World Anti-Doping Agency',
+        year: '2025',
+        url: 'https://www.wada-ama.org/sites/default/files/2025-12/2027_international_standard_for_therapeutic_use_exemptions_istue.pdf',
+      },
+      {
+        title: 'Athlete Biological Passport',
+        publisher: 'World Anti-Doping Agency',
+        year: '2026',
+        url: 'https://www.wada-ama.org/en/athlete-biological-passport',
+      },
+      {
+        title: 'Global DRO (Global Drug Reference Online)',
+        publisher: 'USADA, UK Anti-Doping, Sport Integrity Canada and Swiss Sport Integrity',
+        url: 'https://www.globaldro.com/Home',
+      },
+    ],
   },
   {
     slug: 'best-underground-labs-vs-pharmaceutical',
-    title: 'Underground Labs vs Pharmaceutical: Quality Comparison',
-    metaTitle: 'UGL vs Pharmaceutical Steroids: Which Is Better?',
-    excerpt: 'Pharmaceutical: 100% quality guaranteed, $150-300/month. UGL: 50% reliable, $50-150/month. Top UGL with verified CoA nearly matches pharma quality.',
-    metaDescription: 'Underground labs vs pharmaceutical steroids: quality comparison, cost analysis, counterfeit risk, how to reduce UGL risk through verification.',
+    title: 'Underground lab vs pharmaceutical-grade steroids: what lab tests have found',
+    metaTitle: 'Underground Lab vs Pharma Grade Steroids: What Tests Found',
+    excerpt:
+      'What pharmaceutical grade means in law, what an underground lab is, and what lab analyses of black-market steroids found about content, dose and contamination.',
+    metaDescription:
+      'Underground lab vs pharmaceutical-grade steroids: what GMP licensing means, and what studies of seized products found on dose accuracy, fakes and contamination.',
     category: 'Verification',
     author: BYLINE,
     date: '2026-10-04',
+    updated: '2026-10-30',
     image: pexels(8533016),
-    imageAlt: 'Pharmaceutical manufacturing facility with quality control.',
-    imageCredit: credit('Manufacturing Photo'),
-    faqs: [],
-    sources: [],
+    imageAlt:
+      'A laboratory bench with a clipboard of printed notes and diagrams, a glass flask in front and a microscope to one side.',
+    imageCredit: credit('Artem Podrez'),
+    faqs: [
+      {
+        question: 'What is the difference between underground lab and pharmaceutical grade steroids?',
+        answer:
+          'Pharmaceutical grade means made by a licensed manufacturer under good manufacturing practice: the site is inspected, each batch is tested for identity and strength before release, and sterile products must be made under validated sterilisation processes. An underground lab has no manufacturing licence, no inspection and no regulator checking its batches.',
+      },
+      {
+        question: 'Does a pharma grade label mean a steroid is genuine?',
+        answer:
+          'No. A label is the easiest part of a product to fake. In a Danish study of 764 police-seized products, most looked professional and met most EU packaging requirements, yet 25 to 34% did not contain the active ingredient they claimed. Check whether the named manufacturer holds a licence on a regulator\'s register, and verify the batch number and any certificate.',
+      },
+      {
+        question: 'How accurate are the doses in underground lab steroids?',
+        answer:
+          'A 2022 meta-analysis of 19 studies found 37% of samples were substandard, with the right substance in an amount outside the accepted range, and two thirds of those were under strength. A small Australian study found 4 of 21 samples with a clearly defined labelled dose were within 5% of the expected purity. The meta-analysis authors say its figures must be interpreted with caution, and the Australian sample was small.',
+      },
+      {
+        question: 'Can underground lab steroids be contaminated with bacteria?',
+        answer:
+          'Yes. A 2009 UK study prompted by abscesses needing surgery found skin bacteria in black-market injectables. A 2025 Dutch study found bacteria in 3 of 63 products (5%): 2 of 22 used multidose vials and 1 of 41 unused ones. Its authors say the sample is too small to estimate the true rate.',
+      },
+      {
+        question: 'Are injectable steroids faked more often than tablets?',
+        answer:
+          'The studies that compared them suggest so. A 2009 UK study found 53% of injectable samples and 21% of tablets were counterfeit, and the 2022 meta-analysis reports counterfeit proportions of 43 to 65% for oil-based solutions against 29 to 37% for tablets in the studies it drew on.',
+      },
+    ],
+    sources: [
+      {
+        title: '21 CFR 210.1: Status of current good manufacturing practice regulations',
+        publisher: 'eCFR',
+        year: '2026',
+        url: 'https://www.ecfr.gov/current/title-21/section-210.1',
+      },
+      {
+        title: '21 CFR Part 211: Current good manufacturing practice for finished pharmaceuticals (§211.113 and §211.165)',
+        publisher: 'eCFR',
+        year: '2026',
+        url: 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-C/part-211',
+      },
+      {
+        title: 'Facts about the current good manufacturing practice (CGMP)',
+        publisher: 'US Food and Drug Administration',
+        year: '2025',
+        url: 'https://www.fda.gov/drugs/pharmaceutical-quality-resources/facts-about-current-good-manufacturing-practice-cgmp',
+      },
+      {
+        title: 'EudraLex Volume 4: Good manufacturing practice (GMP) guidelines',
+        publisher: 'European Commission',
+        url: 'https://health.ec.europa.eu/medicinal-products/eudralex/eudralex-volume-4_en',
+      },
+      {
+        title: 'Apply for manufacturer or wholesaler of medicines licences',
+        publisher: 'Medicines and Healthcare products Regulatory Agency (GOV.UK)',
+        year: '2025',
+        url: 'https://www.gov.uk/guidance/apply-for-manufacturer-or-wholesaler-of-medicines-licences',
+      },
+      {
+        title: 'Fake anabolic androgenic steroids on the black market: a systematic review and meta-analysis on qualitative and quantitative analytical results found within the literature',
+        publisher: 'BMC Public Health (Magnolini R et al.)',
+        year: '2022',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC9288681/',
+      },
+      {
+        title: 'Substandard and falsified medical products (fact sheet)',
+        publisher: 'World Health Organization',
+        year: '2024',
+        url: 'https://www.who.int/news-room/fact-sheets/detail/substandard-and-falsified-medical-products',
+      },
+      {
+        title: 'Do you get what you see? The illicit doping market in Denmark: an analysis of performance and image enhancing drugs seized by the police over a 1-year period',
+        publisher: 'Drug Testing and Analysis (Heinsvig PJ et al.)',
+        year: '2023',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/36932906/',
+      },
+      {
+        title: 'Lead astray? The hidden contaminants in Australian anabolic-androgenic steroid market and their potential health impact',
+        publisher: 'Drug and Alcohol Review (Craven A et al.)',
+        year: '2025',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/40898878/',
+      },
+      {
+        title: 'Counterfeiting in performance- and image-enhancing drugs',
+        publisher: 'Drug Testing and Analysis (Graham MR et al.)',
+        year: '2009',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/20355187/',
+      },
+      {
+        title: 'Microbiological contamination in androgens from the black market',
+        publisher: 'Harm Reduction Journal (Verdegaal TJ et al.)',
+        year: '2025',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC12797776/',
+      },
+      {
+        title: 'Falsified medicines',
+        publisher: 'European Commission',
+        url: 'https://health.ec.europa.eu/medicinal-products/falsified-medicines_en',
+      },
+    ],
   },
   {
     slug: 'post-cycle-therapy-complete-guide',
-    title: 'Post-Cycle Therapy (PCT): Complete Recovery Guide',
-    metaTitle: 'PCT Guide: Clomid, Nolvadex, Recovery Timelines',
-    excerpt: 'Clomid 50mg/day for 4 weeks post-cycle. Starts 14-21 days after last injection. Recovery: 4-8 weeks. Blood work to verify.',
-    metaDescription: 'PCT guide: Clomid and Nolvadex protocols, timing, HCG use, recovery timeline, blood work verification, and common mistakes.',
+    title: 'Post-cycle therapy (PCT): what the research says about recovery after steroids',
+    metaTitle: 'Post-Cycle Therapy (PCT): What Research Says on Recovery',
+    excerpt:
+      'What PCT is, how steroids shut down natural testosterone, what studies found about recovery, and what clomiphene, tamoxifen and hCG are licensed for.',
+    metaDescription:
+      'Post-cycle therapy explained with sources: how steroids suppress LH, FSH and testosterone, how recovery went in studies, and whether PCT medicines help.',
     category: 'Health',
     author: BYLINE,
     date: '2026-10-05',
+    updated: '2026-10-30',
     image: pexels(8533016),
-    imageAlt: 'Recovery protocol with bloodwork monitoring.',
-    imageCredit: credit('Recovery Science Photo'),
-    faqs: [],
-    sources: [],
-  },
-  {
-    slug: 'sarms-vs-steroids-which-is-better',
-    title: 'SARMs vs Steroids: Which Is Better?',
-    metaTitle: 'SARMs vs Anabolic Steroids: Comparison and Reality',
-    excerpt: 'SARMs marketed as "safer" but: experimental, unknown effects, poor black-market quality. Steroids: proven, documented risks, reliable. Steroids safer.',
-    metaDescription: 'SARMs vs steroids comparison: efficacy, safety, testing, cost, long-term effects, black-market quality, and why steroids are more proven.',
-    category: 'Verification',
-    author: BYLINE,
-    date: '2026-10-05',
-    image: pexels(8533016),
-    imageAlt: 'Research comparing experimental compounds.',
-    imageCredit: credit('Research Lab Photo'),
-    faqs: [],
-    sources: [],
+    imageAlt:
+      'A laboratory bench with a clipboard of printed notes and diagrams, a glass flask in front and a microscope to one side.',
+    imageCredit: credit('Artem Podrez'),
+    faqs: [
+      {
+        question: 'What is post-cycle therapy (PCT)?',
+        answer:
+          'A term from steroid-using communities, not a medical treatment, for medicines taken after a course of steroids to try to restart natural testosterone production. A 2020 review in Endocrine Connections calls it an unproven strategy.',
+      },
+      {
+        question: 'Do you need PCT after a steroid cycle?',
+        answer:
+          'No study has shown that it helps. The Endocrine Society knew of no systematic treatment studies, and in the HAARLEM study, where 80 of 100 men used PCT, it was not associated with testosterone or sperm recovery. A doctor can test hormone levels and treat a diagnosed problem.',
+      },
+      {
+        question: 'How long does it take to recover after steroids?',
+        answer:
+          'It varies, and not everyone recovers fully. In the HAARLEM study testosterone recovered sooner than sperm production, and at the end of follow-up 11% of men still had low testosterone and 34% a low sperm count. Another study found low testosterone in 27.2% of former users long after they stopped.',
+      },
+      {
+        question: 'What are Clomid and Nolvadex used for?',
+        answer:
+          'Clomiphene (Clomid) is licensed for ovulatory dysfunction in women who want to become pregnant, and its label says there are no adequate or well-controlled studies showing it works for male infertility. Tamoxifen (Nolvadex) is licensed for breast cancer. Both are prescription medicines, and neither is licensed for recovery after steroid use.',
+      },
+      {
+        question: 'What is hCG used for?',
+        answer:
+          'hCG acts almost identically to the pituitary hormone LH. It is licensed for undescended testes in boys, selected cases of hypogonadism caused by a pituitary deficiency in men, and inducing ovulation. A 2020 review warns that it may delay recovery of the body\'s own LH and FSH production.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Anabolic androgenic steroid abuse in young males',
+        publisher: 'Endocrine Connections (de Ronde W, Smit DL)',
+        year: '2020',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC7219134/',
+      },
+      {
+        title: 'Adverse health consequences of performance-enhancing drugs: an Endocrine Society scientific statement',
+        publisher: 'Endocrine Reviews (Pope HG Jr et al.)',
+        year: '2014',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC4026349/',
+      },
+      {
+        title: 'Diagnosis and management of anabolic androgenic steroid use',
+        publisher: 'Journal of Clinical Endocrinology & Metabolism (Anawalt BD)',
+        year: '2019',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC6517163/',
+      },
+      {
+        title: 'Disruption and recovery of testicular function during and after androgen abuse: the HAARLEM study',
+        publisher: 'Human Reproduction (Smit DL et al.)',
+        year: '2021',
+        url: 'https://academic.oup.com/humrep/article/36/4/880/6128773',
+      },
+      {
+        title: 'Rate and extent of recovery from reproductive and cardiac dysfunction due to androgen abuse in men',
+        publisher: 'Journal of Clinical Endocrinology & Metabolism (Shankara-Narayana N et al.)',
+        year: '2020',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/32030409/',
+      },
+      {
+        title: 'Former abusers of anabolic androgenic steroids exhibit decreased testosterone levels and hypogonadal symptoms years after cessation: a case-control study',
+        publisher: 'PLoS One (Rasmussen JJ et al.)',
+        year: '2016',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC4988681/',
+      },
+      {
+        title: 'Prolonged hypogonadism in males following withdrawal from anabolic-androgenic steroids: an under-recognized problem',
+        publisher: 'Addiction (Kanayama G et al.)',
+        year: '2015',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/25598171/',
+      },
+      {
+        title: 'Anabolic steroid-induced hypogonadism: diagnosis and treatment',
+        publisher: 'Fertility and Sterility (Rahnema CD et al.)',
+        year: '2014',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/24636400/',
+      },
+      {
+        title: 'CLOMID (clomiphene citrate) tablets: prescribing information',
+        publisher: 'DailyMed, US National Library of Medicine',
+        year: '2023',
+        url: 'https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2ca373c1-4dba-4126-8616-5c533d606fe5',
+      },
+      {
+        title: 'Tamoxifen citrate tablets: prescribing information',
+        publisher: 'DailyMed, US National Library of Medicine',
+        year: '2021',
+        url: 'https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=7ee3d3d2-85d1-4018-8e70-5ed8a64ae1f0',
+      },
+      {
+        title: 'Chorionic gonadotropin for injection: prescribing information',
+        publisher: 'DailyMed, US National Library of Medicine',
+        year: '2025',
+        url: 'https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=f93b2baa-03ac-4650-b35a-20b818d712d6',
+      },
+      {
+        title: 'ARIMIDEX (anastrozole) tablets: prescribing information',
+        publisher: 'DailyMed, US National Library of Medicine',
+        year: '2025',
+        url: 'https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=acbfaaa9-503c-4691-9828-76a7146ed6de',
+      },
+      {
+        title: 'Anabolic steroid misuse',
+        publisher: 'NHS',
+        year: '2026',
+        url: 'https://www.nhs.uk/conditions/anabolic-steroid-misuse/',
+      },
+      {
+        title: 'Image and performance enhancing drugs',
+        publisher: 'FRANK',
+        url: 'https://www.talktofrank.com/drug/image-and-performance-enhancing-drug',
+      },
+      {
+        title: 'National Helpline',
+        publisher: 'Substance Abuse and Mental Health Services Administration',
+        url: 'https://www.samhsa.gov/find-help/helplines/national-helpline',
+      },
+    ],
   },
 
   {

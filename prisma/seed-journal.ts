@@ -4,6 +4,9 @@
     npm run db:seed-journal              write new articles, leave existing rows alone
     npm run db:seed-journal -- --refresh rewrite existing rows from the files
     npm run db:seed-journal -- --dry-run check everything, write nothing
+    npm run db:seed-journal -- --refresh --only=a,b
+                                         rewrite only the named articles; every other row,
+                                         and any admin edit to it, is left alone
 
   The articles live as Markdown under content/journal/, with their metadata in
   lib/data/journal.ts. Long-form prose does not belong inside a TypeScript string literal: it
@@ -36,6 +39,12 @@ const prisma = new PrismaClient();
 
 const REFRESH = process.argv.includes('--refresh');
 const DRY_RUN = process.argv.includes('--dry-run');
+/** Slugs `--refresh` is limited to. Unset, it rewrites every existing row. */
+const ONLY = process.argv
+  .find((arg) => arg.startsWith('--only='))
+  ?.slice('--only='.length)
+  .split(',')
+  .filter(Boolean);
 
 /** Longest an excerpt or meta description may be before Google truncates it in a result. */
 const DESCRIPTION_LIMIT = 165;
@@ -56,6 +65,9 @@ function check(): { slug: string; body: string }[] {
 
   /* A retired address redirects away, so an article published at one could never be read. */
   const live = new Set(articles.map((a) => a.slug));
+  for (const slug of ONLY ?? []) {
+    if (!live.has(slug)) problems.push(`--only names ${slug}, which is not an article`);
+  }
   for (const r of retired) {
     if (live.has(r.slug)) problems.push(`${r.slug}: is retired in content/journal/retired.json`);
     const target = r.to.match(/^\/blog\/(.+)$/)?.[1];
@@ -136,13 +148,14 @@ async function main() {
       select: { id: true },
     });
 
+    const refresh = REFRESH && (!ONLY || ONLY.includes(article.slug));
     const words = content.split(/\s+/).filter(Boolean).length;
-    const action = existing ? (REFRESH ? 'rewrite' : 'skip (exists)') : 'create';
+    const action = existing ? (refresh ? 'rewrite' : 'skip (exists)') : 'create';
     console.log(
       `  ${article.slug.padEnd(34)} ${action.padEnd(14)} ${String(words).padStart(5)} words  ${article.sources.length} sources`
     );
 
-    if (DRY_RUN || (existing && !REFRESH)) continue;
+    if (DRY_RUN || (existing && !refresh)) continue;
 
     await prisma.blogPost.upsert({
       where: { slug: article.slug },

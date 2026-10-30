@@ -31,6 +31,8 @@ export function renderBasketReminderHTML(input: {
   unsubscribeUrl: string;
   offer: boolean;
   reachedCheckout: boolean;
+  /** The `postal_address` setting. CAN-SPAM wants one in every marketing email; blank omits the line. */
+  postalAddress?: string;
 }): string {
   const { lines, offer } = input;
   const subtotal = lines.reduce((s, l) => s + l.price * l.quantity, 0);
@@ -98,7 +100,9 @@ export function renderBasketReminderHTML(input: {
   </td></tr>
   <tr><td align="center" style="padding:20px 20px 10px 20px; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:1.6; color:#8a877e;">
     You're receiving this because you subscribed at <a href="${SITE}" style="color:#8a877e;">mrsanabolics.com</a> and left items in your basket. We send this once.<br>
-    <a href="${input.unsubscribeUrl}" style="color:#8a877e;">Unsubscribe</a> · MrsAnabolics · www.mrsanabolics.com
+    <a href="${input.unsubscribeUrl}" style="color:#8a877e;">Unsubscribe</a> · MrsAnabolics · www.mrsanabolics.com${
+      input.postalAddress?.trim() ? `<br>${esc(input.postalAddress.trim()).replace(/\r?\n/g, ', ')}` : ''
+    }
   </td></tr>
 </table></td></tr></table></body></html>`;
 }

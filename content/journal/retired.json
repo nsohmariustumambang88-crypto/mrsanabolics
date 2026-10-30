@@ -83,7 +83,7 @@
     },
     {
       "slug": "oral-vs-injectable-steroids",
-      "to": "/blog/how-do-steroids-work",
+      "to": "/blog/what-are-anabolic-steroids",
       "why": "Built around doses, cycles or stacks with no sources, which the editorial policy rules out (October 2026 journal audit)."
     },
     {
@@ -160,6 +160,26 @@
       "slug": "best-pct-after-steroid-cycle",
       "to": "/blog/post-cycle-therapy-complete-guide",
       "why": "Repeated a stronger sourced article without sources; merged into it (October 2026 journal audit)."
+    },
+    {
+      "slug": "how-do-steroids-work",
+      "to": "/blog/what-are-anabolic-steroids",
+      "why": "Unsourced, and answered the same question as the explainer; merged into the sourced rewrite of what-are-anabolic-steroids (30 October 2026)."
+    },
+    {
+      "slug": "steroid-suppliers-which-are-legit",
+      "to": "/blog/how-to-buy-steroids-online-safely",
+      "why": "Unsourced, with invented checks (\"5+ years in business\"); merged into the sourced rewrite of how-to-buy-steroids-online-safely (30 October 2026)."
+    },
+    {
+      "slug": "best-place-to-buy-testosterone",
+      "to": "/blog/testosterone-enanthate-for-sale-buying-guide",
+      "why": "Unsourced, and gave bloodwork timing; the sourced testosterone enanthate buying guide answers the same search (30 October 2026)."
+    },
+    {
+      "slug": "sarms-vs-steroids-which-is-better",
+      "to": "/blog/are-sarms-legal-fda-wada-tga",
+      "why": "Unsourced comparison of effects, the same reason sarms-vs-steroids-research was retired; the sourced SARMs article replaces it (30 October 2026)."
     }
   ]
 }

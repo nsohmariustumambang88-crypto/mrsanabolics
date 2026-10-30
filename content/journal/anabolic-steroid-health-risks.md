@@ -1,4 +1,4 @@
-Anabolic steroid use is more common than most people assume, and its risks are better studied than the internet suggests. This article sets out what health authorities and the strongest published studies say about those risks, in plain terms and with every figure linked to its source. It is not a guide to using steroids, and it contains nothing about doses or cycles. If you are using or thinking about using them, the most useful thing in it is the last section. [Read our complete side effects guide](/blog/steroid-side-effects-complete-guide). [See beginner recommendations](/blog/best-steroids-for-beginners).
+Anabolic steroid use is more common than most people assume, and its risks are better studied than the internet suggests. This article sets out what health authorities and the strongest published studies say about those risks, in plain terms and with every figure linked to its source. It is not a guide to using steroids, and it contains nothing about doses or cycles. If you are using or thinking about using them, the most useful thing in it is the last section.
 
 ## How many people use them
 

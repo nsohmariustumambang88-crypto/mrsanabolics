@@ -68,6 +68,7 @@ export async function sendDueBasketReminders(opts: { onlyEmail?: string; ignoreS
   });
 
   const offerLive = Boolean(await advertisedDiscount(OFFER_CODE).catch(() => null));
+  const postalAddress = await getSetting('postal_address');
 
   for (const basket of baskets) {
     run.considered += 1;
@@ -125,6 +126,7 @@ export async function sendDueBasketReminders(opts: { onlyEmail?: string; ignoreS
       unsubscribeUrl,
       offer,
       reachedCheckout: Boolean(basket.checkoutAt),
+      postalAddress,
     });
 
     /* Claim the basket before sending, so two overlapping runs cannot both mail it. */
