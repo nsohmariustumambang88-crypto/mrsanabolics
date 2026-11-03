@@ -34,8 +34,8 @@ const principles = [
 const milestones = [
   { year: '2019', title: 'First catalogue', body: 'Twelve compounds, one manufacturer, and a spreadsheet of batch numbers.' },
   { year: '2021', title: 'Independent assay', body: 'Testing moved outside the house. We stopped running the test that cleared our own product.' },
-  { year: '2023', title: 'Certificates published', body: 'Every batch record became readable on the product page rather than available on request.' },
-  { year: '2025', title: 'Eleven categories', body: 'The catalogue reached its current shape, with one pigment per category across the whole site.' },
+  { year: '2023', title: 'Certificates with every order', body: 'The certificate for each batch started going out with the order it belongs to, rather than only on request.' },
+  { year: '2025', title: 'Nine categories', body: 'The catalogue reached its current shape, with one pigment per category across the whole site.' },
 ];
 
 export default function AboutPage() {

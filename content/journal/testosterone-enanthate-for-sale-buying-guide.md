@@ -68,7 +68,7 @@ That is why the cheapest milligram on paper is only the cheapest milligram if th
 
 A genuine pack carries a printed batch or lot number and an expiry date, and they match on the box and the vial. Words such as "USP" or "Rx only" are text on a label; they are not evidence that a product is licensed where you live. For the full checklist, read [how to spot counterfeit steroids and falsified medicines](/blog/how-to-spot-counterfeit-steroids).
 
-We do not publish certificates of analysis for these products. If any seller offers you one, [how to read a certificate of analysis](/blog/how-to-read-a-certificate-of-analysis) explains how to check that the laboratory is real, that the test is on its accredited scope, and that the batch number matches your pack.
+Every batch we sell is tested by an independent laboratory, and the certificate of analysis for your batch comes with your order. Check ours the same way you would check anyone's: [how to read a certificate of analysis](/blog/how-to-read-a-certificate-of-analysis) explains how to confirm that the laboratory is real, that the test is on its accredited scope, and that the batch number matches your pack.
 
 ## The law where you live
 

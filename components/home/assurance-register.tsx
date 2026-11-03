@@ -7,12 +7,16 @@
   rhythm pass left standing, and one the craft floor refuses outright. It is now a single ruled
   line: four assurances set as register entries, divided by hairlines, with no icons and no
   cells. It states the four facts and takes up the height of a caption.
+
+  Testing and delivery as the owner stated them on 3 November 2026: an independent laboratory
+  tests every batch, the certificate goes out with every order, and parcels are tracked and
+  insured.
 */
 
 const assurances = [
-  ['Assay', 'Third-party, every batch'],
-  ['Certificate', 'Published with the batch'],
-  ['Packaging', 'Unmarked outer carton'],
+  ['Assay', 'Independent lab, every batch'],
+  ['Certificate', 'With every order'],
+  ['Packaging', 'Plain and unmarked'],
   ['Delivery', 'Tracked and insured'],
 ];
 

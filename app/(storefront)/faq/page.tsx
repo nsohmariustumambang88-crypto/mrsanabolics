@@ -6,20 +6,28 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from '@/components/ui/accordion';
+import { getListedPaymentMethodRows, storeFaqs } from '@/lib/catalogue/buying-facts';
 import { getFaqs } from '@/lib/db/catalogue';
+import { getDeliverySummary } from '@/lib/delivery/summary';
 import { SITE } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Questions',
   description:
-    'How testing works, how orders ship, what the certificates cover, and what to do when something is wrong.',
+    'How testing works, how to pay, what delivery costs and how long it takes, returns, and what to do if a parcel does not arrive.',
   alternates: { canonical: '/faq' },
 };
 
 export const revalidate = 3600;
 
 export default async function FaqPage() {
-  const faqs = await getFaqs();
+  const [written, zones, paymentMethods] = await Promise.all([
+    getFaqs(),
+    getDeliverySummary(),
+    getListedPaymentMethodRows(),
+  ]);
+  /* Payment, delivery and the minimum are read from what checkout uses; the rest is written. */
+  const faqs = [...storeFaqs({ zones, paymentMethods }), ...written];
 
   const schema = {
     '@context': 'https://schema.org',
@@ -45,8 +53,8 @@ export default async function FaqPage() {
             Questions
           </h1>
           <p className="measure mt-4 text-sm leading-relaxed text-ink-soft sm:text-base">
-            How testing works, how orders ship, and what to do when something is wrong. If the
-            answer is not here,{' '}
+            How testing works, how to pay, how orders ship, and what to do when something is
+            wrong. If the answer is not here,{' '}
             <Link
               href="/contact"
               className="underline decoration-rule-strong underline-offset-4 transition-colors hover:decoration-pigment-indigo hover:text-pigment-indigo"

@@ -22,19 +22,25 @@ import type { Product } from '@/lib/types';
 
 export type BuyingFaq = { question: string; answer: string };
 
-/** The payment methods checkout lists, by label. Empty when the database cannot be read. */
-export const getListedPaymentMethods = cache(async (): Promise<string[]> => {
+export type ListedPaymentMethod = { key: string; label: string };
+
+/** The payment methods checkout lists, in its order. Empty when the database cannot be read. */
+export const getListedPaymentMethodRows = cache(async (): Promise<ListedPaymentMethod[]> => {
   try {
-    const rows = await prisma.paymentMethod.findMany({
+    return await prisma.paymentMethod.findMany({
       where: { enabled: true },
       orderBy: { position: 'asc' },
-      select: { label: true },
+      select: { key: true, label: true },
     });
-    return rows.map((r) => r.label);
   } catch {
     return [];
   }
 });
+
+/** The payment methods checkout lists, by label. */
+export const getListedPaymentMethods = cache(async (): Promise<string[]> =>
+  (await getListedPaymentMethodRows()).map((r) => r.label)
+);
 
 function spec(product: Product, label: string): string | undefined {
   return product.specifications.find((s) => s.label === label)?.value?.trim() || undefined;
@@ -99,6 +105,52 @@ export function buyingFaqs(
   faqs.push({
     question: `Can I return ${name}?`,
     answer: 'Yes. Unopened, sealed products can be returned within 30 days of delivery. The returns policy explains how.',
+  });
+
+  return faqs;
+}
+
+/*
+  The /faq page's payment, delivery and minimum-order answers, from the same reads.
+
+  They were typed into lib/data/faqs.ts and drifted until the page offered cards, PayPal, USDT
+  and Litecoin, none of which checkout takes. The questions that only a person can answer stay
+  in that file; anything the till decides is computed here.
+*/
+export function storeFaqs(opts: { zones: ZoneSummary[]; paymentMethods: ListedPaymentMethod[] }): BuyingFaq[] {
+  const faqs: BuyingFaq[] = [];
+
+  if (opts.paymentMethods.length) {
+    const crypto = opts.paymentMethods.some((m) => m.key === 'crypto');
+    const manual = opts.paymentMethods.filter((m) => m.key === 'bank_transfer' || m.key === 'cashapp');
+    faqs.push({
+      question: 'What payment methods do you accept?',
+      answer: [
+        `Checkout accepts ${list(opts.paymentMethods.map((m) => m.label))}, and charges in US dollars.`,
+        crypto
+          ? 'Cryptocurrency means Bitcoin or Ethereum, paid on our own payment page; the order is confirmed as soon as the payment arrives.'
+          : '',
+        manual.length
+          ? `For ${list(manual.map((m) => m.label))}, we email you the payment details after you place the order.`
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
+    });
+  }
+
+  const zones = opts.zones.map(zoneSentence).filter((s): s is string => Boolean(s));
+  if (zones.length) {
+    const worldwide = opts.zones.some((z) => z.countries.length === 0 && z.rates.length > 0);
+    faqs.push({
+      question: 'How much does delivery cost, and how long does it take?',
+      answer: `${worldwide ? 'We deliver worldwide, and every' : 'Every'} order ships tracked and insured. ${zones.join(' ')} Orders are processed within 1–2 business days before they ship, and delivery times are estimates in working days, not guarantees.`,
+    });
+  }
+
+  faqs.push({
+    question: 'Is there a minimum order?',
+    answer: `Yes, ${formatPriceShort(MINIMUM_ORDER)}. It is counted on the total you pay, including delivery and after any discount code.`,
   });
 
   return faqs;

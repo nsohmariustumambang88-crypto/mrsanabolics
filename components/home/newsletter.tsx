@@ -11,6 +11,10 @@ import { CONSENT } from '@/lib/marketing/consent';
   The close. The page ends anchored: one full-bleed bath, one claim, one action — and the
   action is to read a certificate, because that is the thing this catalogue actually offers
   that a competitor cannot copy-paste.
+
+  The signup box used to promise "batch release notes" and "no campaigns, no restock spam".
+  Subscribers are sent offers and restock news, which is what the consent sentence under it
+  asks them to agree to, so the box now describes that.
 */
 
 export function Newsletter() {
@@ -61,17 +65,17 @@ export function Newsletter() {
         <div className="lg:justify-self-end lg:pt-4">
           <div className="w-full max-w-md border border-field-foreground/20 bg-pigment-lampblack/20 p-7">
             <h3 className="font-display text-lg font-semibold tracking-[-0.025em]">
-              Batch release notes
+              Offers and new stock
             </h3>
             <p className="mt-2.5 text-sm leading-relaxed text-field-foreground/75">
-              One message when a batch clears testing, with its certificate attached. No
-              campaigns, no restock spam.
+              An email when there is a new product, a restock or a discount code. Unsubscribe in
+              one click.
             </p>
 
             {sent ? (
               <p className="mt-6 flex items-center gap-2 text-sm">
                 <Check className="h-4 w-4" strokeWidth={2} />
-                Added — watch for the next release note.
+                Subscribed — check your inbox.
               </p>
             ) : (
               <form onSubmit={submit} className="mt-6" noValidate>

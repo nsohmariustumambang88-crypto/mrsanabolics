@@ -17,12 +17,12 @@ export function TrustBadges() {
     {
       icon: Lock,
       title: 'Secure Payments',
-      description: 'Encrypted & discrete transactions',
+      description: 'Encrypted & discreet transactions',
     },
     {
       icon: Award,
       title: 'Expert Sourced',
-      description: '10+ years experience in steroid supply',
+      description: 'Supplying since 2019',
     },
   ];
 

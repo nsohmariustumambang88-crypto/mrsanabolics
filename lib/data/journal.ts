@@ -1146,9 +1146,9 @@ export const articles: JournalArticle[] = [
           'It depends on where you live. In the US it is Schedule III and cannot be delivered over the internet without a valid prescription. In the UK the import exemption covers only importation in person. Canada prohibits import unless authorised, and Australia requires written permission to import.',
       },
       {
-        question: 'Do you publish certificates of analysis?',
+        question: 'Do your products come with a certificate of analysis?',
         answer:
-          'No. If a seller offers one, check the laboratory through its accreditation body, confirm the test is on its accredited scope, and check the batch number matches your pack.',
+          'Yes. Every batch is tested by an independent laboratory, and the certificate for your batch comes with your order. Check the laboratory through its accreditation body, confirm the test is on its accredited scope, and check the batch number matches your pack.',
       },
       {
         question: 'What does shipping cost?',

@@ -756,8 +756,8 @@ export function CheckoutFlow({
             </form>
 
             <p className="mt-6 text-xs leading-relaxed text-ink-faint">
-              Ships unmarked and tracked. Certificates of analysis for each batch are attached
-              to the confirmation.
+              Ships unmarked and tracked. The certificate of analysis for your batch comes with
+              every order.
             </p>
           </aside>
         </div>

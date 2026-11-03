@@ -35,7 +35,7 @@ export const testimonials: Testimonial[] = [
     location: 'Milan, IT',
     rating: 5,
     quote:
-      'The Mass Stack Pro bundle saved me real money and the protocol guide made it idiot-proof. Placed top 3 in my last show using their products. Lifetime customer.',
+      'Mass-Stack 500 saved me real money. Placed top 3 in my last show using their products. Lifetime customer.',
   },
   {
     id: 't5',
