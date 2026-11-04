@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { verifyNowpaymentsWebhook } from '@/lib/crypto/webhook-verify';
 import { sendOrderConfirmation } from '@/lib/email/resend';
 import { WebhookPayload } from '@/lib/crypto/nowpayments';
+import { parseCryptoNote } from '@/lib/checkout/order-notes';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
       The notification must be about THIS order's payment, for THIS order's amount. A valid
       signature proves NOWPayments sent it, not that it describes the invoice we created.
     */
-    const storedPaymentId = order.notes?.match(/Payment ID: (\d+)/)?.[1];
+    const storedPaymentId = parseCryptoNote(order.notes)?.paymentId;
     if (storedPaymentId && String(payload.payment_id) !== storedPaymentId) {
       console.error(`[Webhook] Payment ${payload.payment_id} does not match ${storedPaymentId} on ${order_id}`);
       return NextResponse.json({ success: true });

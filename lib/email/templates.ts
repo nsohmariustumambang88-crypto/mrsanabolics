@@ -52,12 +52,34 @@ export type OrderEmailTotals = {
   total: number;
 };
 
+/** How the customer chose to pay, for the "what happens next" line. Storefront orders only. */
+export type OrderEmailPayment = {
+  label: string;
+  /** The crypto payment page. Null for methods paid by hand. */
+  payLink?: string | null;
+};
+
+/* The sentence under the intro of an unpaid order, so the customer knows how to pay. */
+function paymentNextStepHTML(payment: OrderEmailPayment): string {
+  const p = (html: string) =>
+    `<p style="margin: 0 0 20px 0; padding: 12px 15px; background-color: #f0f0f1; border-left: 4px solid #2271b1; color: #333;">${html}</p>`;
+  if (payment.payLink) {
+    return p(
+      `You chose to pay with cryptocurrency. Your payment page shows the exact amount and the address to send it to: <a href="${payment.payLink}" style="color: #2271b1;">open your payment page</a>.`
+    );
+  }
+  return p(
+    `You chose to pay by <strong>${payment.label}</strong>. We'll email you the payment details separately, and your order is sent once your payment arrives.`
+  );
+}
+
 /* `paid` switches the wording: an order is "received" when placed and "confirmed" once paid. */
 export function renderOrderConfirmationHTML(
   orderRef: string,
   items: Array<{ name: string; quantity: number; price: number }>,
   totals: OrderEmailTotals,
-  paid = false
+  paid = false,
+  payment?: OrderEmailPayment
 ): string {
   const money = (n: number) => `$${n.toFixed(2)}`;
   const row = (label: string, value: string, strong = false) =>
@@ -103,6 +125,7 @@ export function renderOrderConfirmationHTML(
 
       <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd;">
         <p style="margin: 0 0 20px 0; color: #333;">${intro}</p>
+        ${!paid && payment ? paymentNextStepHTML(payment) : ''}
 
         <h2 style="font-size: 16px; margin: 20px 0 10px 0; color: #1d2327;">Order Items</h2>
         <table style="width: 100%; border-collapse: collapse;">
@@ -139,7 +162,8 @@ export function renderAdminNotificationHTML(
   orderRef: string,
   customerEmail: string,
   items: Array<{ name: string; quantity: number }>,
-  dashboardLink: string
+  dashboardLink: string,
+  paymentLabel?: string | null
 ): string {
   const itemsHTML = items
     .map((item) => `<li style="padding: 5px 0;">${item.name} x${item.quantity}</li>`)
@@ -163,6 +187,7 @@ export function renderAdminNotificationHTML(
         <div style="background-color: #f0f0f1; padding: 15px; border-radius: 4px; margin: 20px 0;">
           <p style="margin: 0 0 10px 0;"><strong>Order ID:</strong> ${orderRef}</p>
           <p style="margin: 0;"><strong>Customer:</strong> ${customerEmail}</p>
+          ${paymentLabel ? `<p style="margin: 10px 0 0 0;"><strong>Pays by:</strong> ${paymentLabel}${/crypto/i.test(paymentLabel) ? '' : ' (send the customer the payment details)'}</p>` : ''}
         </div>
 
         <h2 style="font-size: 16px; margin: 20px 0 10px 0; color: #1d2327;">Items Ordered</h2>

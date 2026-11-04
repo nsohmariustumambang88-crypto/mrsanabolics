@@ -120,6 +120,15 @@ export type CreateOrderInput = {
   requireDiscount?: boolean;
   notes?: string | null;
   actorEmail?: string | null;
+  /**
+   * Storefront checkout only: how the customer chose to pay, so the "Order Received" email can
+   * say what happens next and staff can see the method in their notification. `payLink` is the
+   * page a crypto customer pays on; it needs the reference, which is only known in here.
+   */
+  payment?: {
+    label: string;
+    payLink?: (reference: string) => string | null;
+  };
 };
 
 export type CreateOrderResult =
@@ -300,7 +309,11 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       shippingMethod: input.shippingMethod ?? null,
       shipping: shippingCost,
       total,
-    }
+    },
+    false,
+    input.payment
+      ? { label: input.payment.label, payLink: input.payment.payLink?.(reference) ?? null }
+      : undefined
   ).catch(() => {
     /* Order is already created; email failure must not undo it */
   });
@@ -311,7 +324,10 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     items.map((i) => ({
       name: i.name,
       quantity: i.quantity,
-    }))
+    })),
+    /* The admin order screen is addressed by id, not by reference. */
+    `${SITE.url}/admin/orders/${created.id}`,
+    input.payment?.label ?? null
   ).catch(() => {
     /* Admin notification failure doesn't affect the customer */
   });

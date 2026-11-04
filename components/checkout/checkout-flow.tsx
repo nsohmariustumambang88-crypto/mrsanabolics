@@ -60,6 +60,8 @@ export function CheckoutFlow({
   const [step, setStep] = React.useState(0);
   const [placed, setPlaced] = React.useState(false);
   const [orderReference, setOrderReference] = React.useState('');
+  /* The label of the method paid by hand (bank transfer, Cash App) the order was placed with. */
+  const [placedMethodLabel, setPlacedMethodLabel] = React.useState('');
   /* Pre-select whichever method the admin lists first. */
   const [method, setMethod] = React.useState<PaymentMethod>(
     () => (paymentMethods[0]?.key as PaymentMethod | undefined) ?? 'crypto'
@@ -227,6 +229,7 @@ export function CheckoutFlow({
 
       if (result.ok) {
         setOrderReference(result.reference);
+        setPlacedMethodLabel(paymentMethods.find((m) => m.key === method)?.label ?? '');
         setPlaced(true);
         clearCart();
         setStep(STEPS.length - 1);
@@ -274,7 +277,28 @@ export function CheckoutFlow({
           <p className="font-mono text-xl font-semibold text-ink">{orderReference}</p>
         </div>
         <p className="measure-tight mt-6 text-sm leading-relaxed text-ink-soft">
-          A confirmation email has been sent with your order details and tracking information.
+          {placedMethodLabel
+            ? `You chose to pay by ${placedMethodLabel}. We'll email the payment details to ${marketing.email}, and your order is sent once your payment arrives.`
+            : `Your order summary is on its way to ${marketing.email}.`}
+        </p>
+        <p className="measure-tight mt-3 text-xs leading-relaxed text-ink-faint">
+          Questions? Email{' '}
+          <a
+            href={`mailto:support@mrsanabolics.com?subject=${encodeURIComponent(`Order ${orderReference}`)}`}
+            className="underline underline-offset-4 hover:text-pigment-indigo"
+          >
+            support@mrsanabolics.com
+          </a>{' '}
+          or message us on{' '}
+          <a
+            href="https://t.me/mrsanabolics"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-4 hover:text-pigment-indigo"
+          >
+            Telegram
+          </a>{' '}
+          or WhatsApp (+1 914 313 7729), quoting {orderReference}.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link
@@ -587,7 +611,17 @@ export function CheckoutFlow({
                 Back
               </button>
 
-              {step < 2 ? (
+              {step === 2 && method === 'crypto' ? (
+                /*
+                  Crypto is placed by the Pay with BTC / Pay with ETH buttons, which create the
+                  payment address too. This button used to place a crypto order with no address,
+                  and the customer had no way to pay it.
+                */
+                <p className="text-right text-sm text-ink-soft">
+                  Choose <strong className="font-medium text-ink">Pay with BTC</strong> or{' '}
+                  <strong className="font-medium text-ink">Pay with ETH</strong> above to place your order.
+                </p>
+              ) : step < 2 ? (
                 <button
                   type="button"
                   onClick={next}

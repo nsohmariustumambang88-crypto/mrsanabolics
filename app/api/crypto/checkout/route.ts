@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createPayment } from '@/lib/crypto/nowpayments';
 import { SITE } from '@/lib/site';
-import { submitCheckout, type CheckoutSubmitInput } from '@/app/checkout/checkout-actions';
+import { placeCheckoutOrder, type CheckoutSubmitInput } from '@/lib/checkout/place-order';
+import { formatCryptoNote } from '@/lib/checkout/order-notes';
 
 const SUPPORTED = ['btc', 'eth'];
 
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const placed = await submitCheckout({
+    const placed = await placeCheckoutOrder({
       ...body,
       paymentMethod: 'crypto',
       cryptoAsset: payCurrency.toUpperCase(),
@@ -76,10 +77,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'The payment could not be started.' }, { status: 500 });
     }
 
-    // The confirmation page reads this exact format to find the payment and the asset.
+    /*
+      The payment page, the payment-status route and the webhook all read this note through
+      lib/checkout/order-notes. The amount and address are stored so the page can show them
+      without asking NOWPayments again, which can take most of a minute to answer.
+    */
     await prisma.order.update({
       where: { id: order.id },
-      data: { notes: `Crypto payment - ${payCurrency.toUpperCase()} | Payment ID: ${paymentId}` },
+      data: {
+        notes: formatCryptoNote({
+          asset: payCurrency,
+          paymentId: String(paymentId),
+          payAmount: payment.pay_amount != null ? String(payment.pay_amount) : undefined,
+          payAddress: payment.pay_address,
+        }),
+      },
     });
 
     return NextResponse.json({

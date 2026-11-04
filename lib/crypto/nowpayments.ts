@@ -30,6 +30,8 @@ export interface PaymentResponse {
   price_currency: string;
   pay_currency: string;
   pay_amount: number;
+  /** Where the customer sends the coin. Returned by payment creation and by status. */
+  pay_address?: string;
   created_at: string;
   updated_at: string;
   purchase_id: string;
@@ -89,8 +91,11 @@ export async function getPaymentStatus(paymentId: string): Promise<PaymentRespon
     'x-api-key': getApiKey(),
   };
 
+  /* NOWPayments has been seen taking close to a minute to answer this; give up well before. */
   const response = await fetch(`${API_URL}/payment/${paymentId}`, {
     headers,
+    cache: 'no-store',
+    signal: AbortSignal.timeout(20_000),
   });
 
   if (!response.ok) {

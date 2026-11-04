@@ -9,6 +9,7 @@ import {
   renderWelcomeEmail1,
   renderWelcomeEmail2,
   renderWelcomeEmail3,
+  type OrderEmailPayment,
   type OrderEmailTotals,
 } from './templates';
 
@@ -28,7 +29,8 @@ export async function sendOrderConfirmation(
   orderRef: string,
   items: Array<{ name: string; quantity: number; price: number }>,
   totals: OrderEmailTotals,
-  paid = false
+  paid = false,
+  payment?: OrderEmailPayment
 ) {
   const resend = getResend();
 
@@ -37,24 +39,25 @@ export async function sendOrderConfirmation(
     replyTo: SUPPORT_EMAIL,
     to,
     subject: `${paid ? 'Order Confirmed' : 'Order Received'} - ${orderRef}`,
-    html: renderOrderConfirmationHTML(orderRef, items, totals, paid),
+    html: renderOrderConfirmationHTML(orderRef, items, totals, paid, payment),
   });
 }
 
 export async function sendAdminOrderNotification(
   orderRef: string,
   customerEmail: string,
-  items: Array<{ name: string; quantity: number }>
+  items: Array<{ name: string; quantity: number }>,
+  dashboardLink: string,
+  paymentLabel?: string | null
 ) {
   const resend = getResend();
-  const dashboardLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://mrsanabolics.com'}/admin/orders/${orderRef}`;
 
   return resend.emails.send({
     from: FROM_EMAIL,
     replyTo: SUPPORT_EMAIL,
     to: ADMIN_EMAIL,
-    subject: `New Order - ${orderRef}`,
-    html: renderAdminNotificationHTML(orderRef, customerEmail, items, dashboardLink),
+    subject: `New Order - ${orderRef}${paymentLabel ? ` - ${paymentLabel}` : ''}`,
+    html: renderAdminNotificationHTML(orderRef, customerEmail, items, dashboardLink, paymentLabel),
   });
 }
 

@@ -1,4 +1,5 @@
 import { getPaymentStatus } from '@/lib/crypto/nowpayments';
+import { parseCryptoNote } from '@/lib/checkout/order-notes';
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -25,14 +26,14 @@ export async function GET(
       where: { reference },
       select: { notes: true },
     });
-    if (order?.notes?.match(/Payment ID: (\d+)/)?.[1] !== paymentId) return notFound;
+    if (parseCryptoNote(order?.notes)?.paymentId !== paymentId) return notFound;
 
     const payment = await getPaymentStatus(paymentId);
     return NextResponse.json(
       {
         pay_amount: payment.pay_amount,
         pay_currency: payment.pay_currency,
-        pay_address: (payment as { pay_address?: string }).pay_address ?? '',
+        pay_address: payment.pay_address ?? '',
         payment_status: payment.payment_status,
       },
       { headers: { 'cache-control': 'private, no-store' } }
