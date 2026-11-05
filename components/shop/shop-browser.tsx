@@ -289,7 +289,8 @@ export function ShopBrowser() {
           </h1>
           <p className="measure mt-3 text-sm leading-relaxed text-ink-soft sm:text-base">
             {loading ? t.loadingCatalogue : t.products(total)}
-            {!loading && activeCount > 0 ? t.matchFilters : '.'}
+            {/* Every language's loading sentence already ends in an ellipsis. */}
+            {loading ? '' : activeCount > 0 ? t.matchFilters : '.'}
             {t.eachListing}
           </p>
         </div>
