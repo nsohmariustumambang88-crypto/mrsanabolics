@@ -40,15 +40,23 @@ export function Hero() {
         replaced, at the same size and with the same transparency. `unoptimized` because the
         Cloudinary loader treats any non-http src as a public ID.
       */}
-      <Image
-        src="/hero-bg.webp"
-        alt=""
-        fill
-        priority
-        unoptimized
-        sizes="100vw"
-        className="pointer-events-none object-cover object-center opacity-55"
-      />
+      {/*
+        Below lg the photograph is its own band ABOVE the copy, at full strength: behind the
+        text on a phone, the paragraph ran across the arm and torso and was hard to read, and a
+        photograph sits above copy, never behind it. From lg it is the faded ground behind the
+        headline, as the owner set it. Same image, same aspect (665 x 375), no scrim.
+      */}
+      <div className="relative aspect-[665/375] w-full border-b border-rule lg:absolute lg:inset-0 lg:aspect-auto lg:border-0">
+        <Image
+          src="/hero-bg.webp"
+          alt=""
+          fill
+          priority
+          unoptimized
+          sizes="100vw"
+          className="pointer-events-none object-cover object-center lg:opacity-55"
+        />
+      </div>
       <div className="mx-auto max-w-[86rem] relative z-10">
         {/* Black on the sheet, as chosen. On the bath black disappeared into the ground, so the
             dark theme sets the same words in its own ink and lifted indigo. */}
