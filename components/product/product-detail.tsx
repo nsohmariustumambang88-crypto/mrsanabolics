@@ -206,6 +206,17 @@ export function ProductDetail({
     return () => observer.disconnect();
   }, []);
   const showBuyBar = actionsOutOfView && product.inStock;
+  /* The page keeps room for the bar for as long as it can appear, not only while it shows:
+     tied to the bar, the padding arrived after a jump straight to the foot of the page and the
+     footer's last line sat under it until the next scroll. */
+  React.useEffect(() => {
+    if (!product.inStock) return;
+    const root = document.documentElement;
+    root.dataset.buybarSpace = '';
+    return () => {
+      delete root.dataset.buybarSpace;
+    };
+  }, [product.inStock]);
   React.useEffect(() => {
     const root = document.documentElement;
     const narrow = window.matchMedia('(max-width: 1023px)').matches;
