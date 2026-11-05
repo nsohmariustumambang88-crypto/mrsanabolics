@@ -867,6 +867,10 @@ function LineItems({
                 alt=""
                 fill
                 sizes={compact ? '48px' : '56px'}
+                /* The summary starts closed on a phone, and a lazy image inside a hidden box is
+                   not fetched until the box opens; on a slow line the picture then arrived a
+                   moment after the tap. These are a few KB each, so fetch them up front. */
+                loading={compact ? 'eager' : undefined}
                 className="object-contain mix-blend-multiply dark:mix-blend-normal"
               />
             ) : null}
