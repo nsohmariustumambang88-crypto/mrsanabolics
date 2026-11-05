@@ -21,7 +21,7 @@ colors:
   plate-band: "hsl(42 38% 97%)"
   ink: "hsl(220 28% 13%)"
   ink-soft: "hsl(218 14% 38%)"
-  ink-faint: "hsl(216 12% 52%)"
+  ink-faint: "hsl(216 12% 42%)"
   rule: "hsl(38 18% 82%)"
   rule-strong: "hsl(38 16% 72%)"
 typography:

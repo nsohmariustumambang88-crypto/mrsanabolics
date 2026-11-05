@@ -54,7 +54,10 @@
     /* --- Ink on paper --- */
     --ink: 220 28% 13%;
     --ink-soft: 218 14% 38%;
-    --ink-faint: 216 12% 52%;
+    /* 42%, not 52%: at 52% it measured 3.2-3.7:1 on the three paper tones and failed WCAG AA
+       for the small mono labels, breadcrumbs and captions it sets. 42% clears 4.5:1 on all
+       three (4.55 on paper-sunk). Same hue; the dark theme's value already passed. */
+    --ink-faint: 216 12% 42%;
     --rule: 38 18% 82%;
     --rule-strong: 38 16% 72%;
 
@@ -180,6 +183,7 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
+
 
   @media (prefers-reduced-motion: reduce) {
     html {
