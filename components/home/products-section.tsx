@@ -10,6 +10,7 @@ export function ProductsSection({
   href,
   products,
   limit = 8,
+  phoneLimit = 4,
 }: {
   title: string;
   description?: string;
@@ -25,6 +26,12 @@ export function ProductsSection({
    * always closes and `GridFillers` has nothing to patch.
    */
   limit?: number;
+  /**
+   * How many of those a phone shows (below md). Eight cards in two columns were four rows and
+   * about 1,700px, a tenth of the home page, twice over. Four is two full rows; the link in the
+   * heading carries the rest, as it does on wider screens.
+   */
+  phoneLimit?: number;
 }) {
   if (products.length === 0) return null;
 
@@ -34,7 +41,12 @@ export function ProductsSection({
     <section className="border-b border-rule">
       <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
         <SectionHeading title={title} description={description} href={href} />
-        <ProductGrid products={shown} columns={4} className="mt-8 sm:mt-10" />
+        <ProductGrid
+          products={shown}
+          columns={4}
+          phoneLimit={phoneLimit}
+          className="mt-8 sm:mt-10"
+        />
       </div>
     </section>
   );

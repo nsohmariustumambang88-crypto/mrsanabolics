@@ -18,9 +18,23 @@ export function Testimonials({ testimonials }: { testimonials: Testimonial[] }) 
           description="Feedback from customers who ordered, tested, and came back."
         />
 
-        <div className="mt-8 sm:mt-10 grid gap-px bg-rule md:grid-cols-2 lg:grid-cols-3">
+        {/*
+          On a phone the six quotes stacked into about 1,600px, a tenth of the home page. Below
+          md they now sit in one row the reader swipes through, each sheet 85% of the screen wide
+          so the next one shows at the edge; all six are still there. From md, the grid as before.
+          The row is focusable and labelled so a keyboard can scroll it. No animation.
+        */}
+        <div
+          role="region"
+          aria-label="What buyers report back"
+          tabIndex={0}
+          className="mt-8 flex snap-x snap-mandatory gap-px overflow-x-auto bg-rule sm:mt-10 md:grid md:snap-none md:grid-cols-2 md:overflow-visible lg:grid-cols-3"
+        >
           {testimonials.map((t) => (
-            <figure key={t.id} className="flex flex-col bg-card p-5 sm:p-6 lg:p-7">
+            <figure
+              key={t.id}
+              className="flex w-[85%] shrink-0 snap-start flex-col bg-card p-5 sm:p-6 md:w-auto lg:p-7"
+            >
               <div
                 className="flex gap-0.5"
                 role="img"

@@ -6,6 +6,7 @@ import { SectionHeading } from '@/components/product/section-heading';
 import { journalDate } from '@/components/journal/journal-date';
 import type { JournalCard } from '@/lib/types';
 import { useDictionary } from '@/components/i18n/use-locale';
+import { cn } from '@/lib/utils';
 
 /*
   The journal on the home page: the lead article beside the three that follow it.
@@ -58,8 +59,17 @@ export function BlogTeaser({ posts }: { posts: JournalCard[] }) {
           </Link>
 
           <ul className="flex flex-col bg-card">
-            {rest.map((post) => (
-              <li key={post.id} className="flex-1 border-b border-rule last:border-0">
+            {/* Two of the three on a phone, where the list stacks under the lead; "All articles"
+                in the heading carries the rest. */}
+            {rest.map((post, i) => (
+              <li
+                key={post.id}
+                className={cn(
+                  'flex-1 border-b border-rule last:border-0',
+                  i >= 2 && 'max-md:hidden',
+                  i === 1 && 'max-md:border-0'
+                )}
+              >
                 <Link
                   href={`/blog/${post.slug}`}
                   className="group flex h-full items-start gap-5 p-6 transition-colors hover:bg-paper-raised lg:p-7"

@@ -16,6 +16,7 @@ import { dictionary } from '@/lib/i18n/dictionaries';
   for, and "All manufacturers" carries the rest.
 */
 const SHOWN = 8;
+const PHONE_SHOWN = 4;
 
 export function PopularBrands() {
   const brands = useBrands();
@@ -24,15 +25,19 @@ export function PopularBrands() {
   const locale = useLocale();
   const t = dictionary(locale).home;
   const more = t.brandsMore(remaining);
+  const phoneRemaining = brands.length - Math.min(shown.length, PHONE_SHOWN);
+  const morePhone = t.brandsMore(phoneRemaining);
 
   return (
     <section className="border-b border-rule">
       <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
         <SectionHeading title={t.brandsTitle} description={t.brandsBody} href="/brands" hrefLabel={t.brandsLink} />
 
+        {/* Four rows on a phone, where each manufacturer and its description stack into a
+            150px row; eight from md. The "more" line below counts what each width leaves out. */}
         <ul className="mt-8 sm:mt-10 border-t border-rule">
-          {shown.map((brand) => (
-            <li key={brand.slug}>
+          {shown.map((brand, i) => (
+            <li key={brand.slug} className={i >= PHONE_SHOWN ? 'max-md:hidden' : undefined}>
               <Link
                 href={`/brands/${brand.slug}`}
                 /* One gap per breakpoint: this carried both sm:gap-2 and sm:gap-8, which are the
@@ -59,8 +64,19 @@ export function PopularBrands() {
           ))}
         </ul>
 
+        {phoneRemaining > 0 && (
+          <p className="mt-5 text-sm text-ink-soft md:hidden">
+            <Link
+              href="/brands"
+              className="underline decoration-rule-strong underline-offset-4 transition-colors hover:text-pigment-indigo hover:decoration-pigment-indigo"
+            >
+              {morePhone[0]}
+            </Link>
+            {morePhone[1]}
+          </p>
+        )}
         {remaining > 0 && (
-          <p className="mt-5 text-sm text-ink-soft">
+          <p className="mt-5 text-sm text-ink-soft max-md:hidden">
             <Link
               href="/brands"
               className="underline decoration-rule-strong underline-offset-4 transition-colors hover:text-pigment-indigo hover:decoration-pigment-indigo"

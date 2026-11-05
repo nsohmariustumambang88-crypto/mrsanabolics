@@ -36,7 +36,13 @@ export function stockState(product: ProductSummary, lowStockThreshold = 5) {
   return { label: 'In stock', token: 'hsl(var(--pig-verdigris))', tone: 'text-success' };
 }
 
-export function ProductCard({ product }: { product: ProductSummary }) {
+export function ProductCard({
+  product,
+  className,
+}: {
+  product: ProductSummary;
+  className?: string;
+}) {
   const { addToCart, toggleWishlist, isWishlisted } = useStore();
   const [added, setAdded] = React.useState(false);
   const wished = isWishlisted(product.id);
@@ -72,7 +78,12 @@ export function ProductCard({ product }: { product: ProductSummary }) {
   };
 
   return (
-    <article className="group relative flex h-full flex-col border border-rule bg-card shadow-lift transition-[box-shadow,border-color] duration-300 ease-lift hover:border-rule-strong hover:shadow-lift-strong focus-within:border-pigment-indigo">
+    <article
+      className={cn(
+        'group relative flex h-full flex-col border border-rule bg-card shadow-lift transition-[box-shadow,border-color] duration-300 ease-lift hover:border-rule-strong hover:shadow-lift-strong focus-within:border-pigment-indigo',
+        className
+      )}
+    >
       {/* The plate rule: the category's pigment, one hairline, nothing thicker. */}
       <span
         className="block h-px w-full"

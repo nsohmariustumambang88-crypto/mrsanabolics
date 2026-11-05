@@ -24,21 +24,31 @@ export function ProductGrid({
   products,
   columns = 4,
   className,
+  phoneLimit,
 }: {
   products: ProductSummary[];
   columns?: 3 | 4;
   className?: string;
+  /** Show only this many below md (768px); the rest appear from md. The fillers count it. */
+  phoneLimit?: number;
 }) {
   const shape = SHAPE[columns];
+  const phoneShown =
+    phoneLimit === undefined ? products.length : Math.min(products.length, phoneLimit);
 
   return (
     <div className={cn('grid gap-px bg-rule', shape.cls, className)}>
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+      {products.map((product, i) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          className={i >= phoneShown ? 'max-md:hidden' : undefined}
+        />
       ))}
 
       <GridFillers
         len={products.length}
+        narrowLen={phoneShown}
         mid={shape.mid}
         midPrefix={shape.midPrefix}
         wide={columns}

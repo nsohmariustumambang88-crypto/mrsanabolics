@@ -11,6 +11,7 @@ import { useSiteSettings } from '@/components/providers/settings-provider';
 import { formatPrice } from '@/lib/format';
 import type { ProductSummary } from '@/lib/types';
 import { referencePrice } from '@/lib/pricing';
+import { cn } from '@/lib/utils';
 
 /*
   The bath drains on a clock. A real countdown to the end of the week, computed from the
@@ -89,6 +90,7 @@ export function WeeklyDeals({ products }: { products: ProductSummary[] }) {
     are, show a few, link to all of them.
   */
   const REGISTER_ROWS = 6;
+  const PHONE_ROWS = 3;
   const [lead, ...others] = products;
   const rest = others.slice(0, REGISTER_ROWS);
 
@@ -167,11 +169,20 @@ export function WeeklyDeals({ products }: { products: ProductSummary[] }) {
                 <ProductCard product={lead} />
               </div>
             ) : (
+              /* Three rows on a phone, where the register stacks under the lead instead of
+                 sitting beside it; the heading's count stays the true total. */
               <ul>
-                {rest.map((p) => {
+                {rest.map((p, i) => {
                   const state = stockState(p, lowStockThreshold);
                   return (
-                    <li key={p.id} className="border-b border-rule last:border-0">
+                    <li
+                      key={p.id}
+                      className={cn(
+                        'border-b border-rule last:border-0',
+                        i >= PHONE_ROWS && 'max-md:hidden',
+                        i === PHONE_ROWS - 1 && 'max-md:border-0'
+                      )}
+                    >
                       <Link
                         href={`/product/${p.slug}`}
                         className="group flex items-center gap-4 p-5 transition-colors hover:bg-paper-sunk sm:p-6"

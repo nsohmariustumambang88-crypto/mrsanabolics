@@ -25,6 +25,7 @@ type Prefix = keyof typeof TIER;
 
 export function GridFillers({
   len,
+  narrowLen,
   narrow = 2,
   mid,
   midPrefix = 'md',
@@ -33,6 +34,9 @@ export function GridFillers({
   ground = 'bg-paper',
 }: {
   len: number;
+  /** How many cells show at the narrow tier, when the grid hides some there (ProductGrid's
+      `phoneLimit`). Defaults to `len`. */
+  narrowLen?: number;
   narrow?: number;
   mid?: number;
   midPrefix?: Prefix;
@@ -40,9 +44,9 @@ export function GridFillers({
   widePrefix?: Prefix;
   ground?: string;
 }) {
-  const gapFor = (cols: number) => (cols - (len % cols)) % cols;
+  const gapFor = (cols: number, n = len) => (cols - (n % cols)) % cols;
 
-  const base = gapFor(narrow);
+  const base = gapFor(narrow, narrowLen ?? len);
   const tiers: { prefix: Prefix; gap: number }[] = [
     ...(mid ? [{ prefix: midPrefix, gap: gapFor(mid) }] : []),
     { prefix: widePrefix, gap: gapFor(wide) },
