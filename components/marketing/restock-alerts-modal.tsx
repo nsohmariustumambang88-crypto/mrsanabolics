@@ -7,6 +7,7 @@ import { useSubscribe } from './use-subscribe';
 import { CONSENT } from '@/lib/marketing/consent';
 import { BullMark } from '@/components/brand/bull-mark';
 import { claimPopupSlot } from './popup-slot';
+import { cn } from '@/lib/utils';
 
 /*
   The restock sign-up.
@@ -91,7 +92,7 @@ export function RestockAlertsModal() {
   const { email, setEmail, consent, setConsent, submit, done, error } = useSubscribe('newsletter');
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  /* Subscribed: quiet for a week on this browser. The card shows "Subscribed!" briefly first. */
+  /* Subscribed: quiet for a week on this browser. The card shows "Subscribed" briefly first. */
   React.useEffect(() => {
     if (!done) return;
     write('sessionStorage', SUBSCRIBED_SESSION_KEY, 'true');
@@ -184,78 +185,97 @@ export function RestockAlertsModal() {
         if (event.target === event.currentTarget) handleClose();
       }}
     >
+      {/*
+        A sheet of the house paper: opaque card, hairline rule, the lift shadow, square corners,
+        an indigo hairline along the top as on the product cards, an underline input and the
+        indigo pill. No blur, no emoji. The consent sentence is CONSENT.newsletter, unchanged:
+        past subscribers agreed to exactly those words.
+      */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="restock-alerts-title"
-        className="relative w-full max-w-md rounded-lg bg-white p-8"
+        className="relative w-full max-w-md border border-rule bg-card px-6 pb-6 pt-8 text-ink shadow-lift-strong sm:px-8 sm:pb-8"
       >
+        <span className="absolute inset-x-0 top-0 h-px bg-pigment-indigo" aria-hidden="true" />
+
         <button
           type="button"
           onClick={handleClose}
           aria-label="Close"
-          className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center text-gray-500 hover:text-gray-700"
+          className="absolute right-2 top-2 flex h-10 w-10 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-paper-sunk hover:text-ink"
         >
-          <X className="h-6 w-6" aria-hidden="true" />
+          <X className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
         </button>
 
-        <div className="mb-6 flex justify-center">
-          <BullMark title="MrsAnabolics" className="w-16" />
+        <div className="flex justify-center">
+          <BullMark title="MrsAnabolics" className="w-14" />
         </div>
 
-        <h2 id="restock-alerts-title" className="mb-2 text-center text-2xl font-bold">
-          Restock Alerts
+        <h2
+          id="restock-alerts-title"
+          className="mt-4 text-center font-display text-2xl font-semibold tracking-[-0.03em]"
+        >
+          Restock alerts
         </h2>
-        <p className="mb-4 text-center text-sm text-gray-600">
-          Be first to hear when something is back in stock, and when new flavours and drops land. One email, only when there&apos;s something worth saying.
+        <p className="measure-tight mx-auto mt-2 text-center text-sm leading-relaxed text-ink-soft">
+          Get an email when a product is back in stock or a new one arrives. We only write when
+          there is something to tell you.
         </p>
-        <div className="mb-6 rounded-lg bg-blue-50 p-3">
-          <p className="flex items-center justify-center gap-2 text-center text-sm font-medium text-blue-900">
-            <Tag className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
-            <span>
-              Get <span className="font-bold">15% off</span> your first order when you subscribe
-            </span>
-          </p>
-        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label htmlFor="restock-email" className="sr-only">
-            Email address
-          </label>
-          <input
-            ref={inputRef}
-            id="restock-email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full rounded border border-gray-300 px-4 py-3 text-sm placeholder-gray-500 focus:border-black focus:outline-none"
-          />
+        <p className="mt-5 flex items-center justify-center gap-2 border-y border-rule py-3 text-center text-sm">
+          <Tag className="h-4 w-4 shrink-0 text-pigment-indigo" strokeWidth={1.75} aria-hidden="true" />
+          <span>
+            <span className="font-semibold text-pigment-indigo">15% off</span> your first order
+            when you subscribe
+          </span>
+        </p>
 
-          <label className="flex items-start gap-3">
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <div className="border-b border-rule-strong transition-colors focus-within:border-pigment-indigo">
+            <label htmlFor="restock-email" className="sr-only">
+              Email address
+            </label>
+            <input
+              ref={inputRef}
+              id="restock-email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full bg-transparent py-2.5 text-sm outline-none placeholder:text-ink-faint"
+            />
+          </div>
+
+          <label className="flex cursor-pointer items-start gap-3">
             <input
               type="checkbox"
               checked={consent}
               onChange={(e) => setConsent(e.target.checked)}
-              className="mt-1 h-4 w-4 cursor-pointer"
+              className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-pigment-indigo"
             />
-            <span className="text-sm text-gray-600">{CONSENT.newsletter}</span>
+            <span className="text-xs leading-relaxed text-ink-soft">{CONSENT.newsletter}</span>
           </label>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-xs text-pigment-madder">{error}</p>}
 
           <button
             type="submit"
             disabled={!consent || !email || done}
-            className="w-full rounded-full bg-black py-3 font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            className={cn(
+              'w-full rounded-full px-6 py-3 text-sm font-medium text-primary-foreground transition-colors disabled:cursor-not-allowed',
+              done
+                ? 'bg-pigment-verdigris'
+                : 'bg-pigment-indigo hover:bg-pigment-indigo-lift disabled:opacity-50'
+            )}
           >
-            {done ? 'Subscribed!' : 'Subscribe'}
+            {done ? 'Subscribed' : 'Subscribe'}
           </button>
         </form>
 
-        <p className="mt-4 text-center text-xs text-gray-600">
+        <p className="mt-4 text-center text-xs text-ink-faint">
           For adults 21 and over. We never sell your information.
         </p>
       </div>
