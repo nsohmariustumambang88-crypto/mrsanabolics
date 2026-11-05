@@ -186,6 +186,36 @@ export function ProductDetail({
     setTimeout(() => setAdded(false), 1800);
   };
 
+  /*
+    The buy bar for phones. On a 390px screen the Add to cart button sat about one and a half
+    screens down, under the photograph, the price and the specification chain. While that button
+    is out of view a bar holds the price and the same action at the foot of the screen; it goes
+    the moment the real button is visible. No slide, no fade: the site has no motion.
+
+    `data-buybar` on <html> lifts the WhatsApp and Telegram buttons above it and pads the page so
+    the footer's last line is not hidden. Below `lg` only; from `lg` the button is in the first
+    screen beside the photograph.
+  */
+  const actionsRef = React.useRef<HTMLDivElement>(null);
+  const [actionsOutOfView, setActionsOutOfView] = React.useState(false);
+  React.useEffect(() => {
+    const el = actionsRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(([entry]) => setActionsOutOfView(!entry.isIntersecting));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  const showBuyBar = actionsOutOfView && product.inStock;
+  React.useEffect(() => {
+    const root = document.documentElement;
+    const narrow = window.matchMedia('(max-width: 1023px)').matches;
+    if (showBuyBar && narrow) root.dataset.buybar = '';
+    else delete root.dataset.buybar;
+    return () => {
+      delete root.dataset.buybar;
+    };
+  }, [showBuyBar]);
+
   return (
     <>
       <nav
@@ -302,7 +332,7 @@ export function ProductDetail({
             <ProtocolChain product={product} />
 
             {/* Actions */}
-            <div className="mt-8 flex flex-wrap items-stretch gap-3">
+            <div ref={actionsRef} className="mt-8 flex flex-wrap items-stretch gap-3">
               <div className="flex items-center border border-rule-strong">
                 <button
                   type="button"
@@ -343,7 +373,7 @@ export function ProductDetail({
                 )}
               >
                 {!product.inStock ? (
-                  'Out of bath'
+                  'Out of stock'
                 ) : added ? (
                   <>
                     <Check className="h-4 w-4" strokeWidth={2} />
@@ -617,6 +647,36 @@ export function ProductDetail({
           )}
         </div>
       </section>
+      )}
+
+      {showBuyBar && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-rule-strong bg-card shadow-lift lg:hidden">
+          <div className="mx-auto flex max-w-[86rem] items-center gap-3 px-4 pb-[max(0.625rem,env(safe-area-inset-bottom))] pt-2.5 sm:px-6">
+            <p className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium leading-snug">{product.name}</span>
+              <span className="block font-mono text-xs text-ink-soft tabular">
+                {qty > 1 ? `${qty} × ${formatPrice(product.price)}` : formatPrice(product.price)}
+              </span>
+            </p>
+            <button
+              type="button"
+              onClick={handleAdd}
+              className={cn(
+                'flex h-11 shrink-0 items-center justify-center gap-2 rounded-full px-5 text-sm font-medium text-primary-foreground transition-colors duration-300',
+                added ? 'bg-pigment-verdigris' : 'bg-pigment-indigo hover:bg-pigment-indigo-lift'
+              )}
+            >
+              {added ? (
+                <>
+                  <Check className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                  Added
+                </>
+              ) : (
+                `Add to cart · ${formatPrice(product.price * qty)}`
+              )}
+            </button>
+          </div>
+        </div>
       )}
 
       {related.length > 0 && (

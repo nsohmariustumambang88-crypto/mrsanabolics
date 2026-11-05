@@ -24,7 +24,7 @@ import { ApproxPrice } from '@/components/currency/approx-price';
 
 export function stockState(product: ProductSummary, lowStockThreshold = 5) {
   if (!product.inStock) {
-    return { label: 'Out of bath', token: 'hsl(var(--pig-madder))', tone: 'text-destructive' };
+    return { label: 'Out of stock', token: 'hsl(var(--pig-madder))', tone: 'text-destructive' };
   }
   if (product.stockCount <= lowStockThreshold) {
     return {
