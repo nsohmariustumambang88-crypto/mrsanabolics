@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+/* `useSearchParams` is called by ShopBrowser alone; ShopBrowserStatic must not call it. */
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { ProductGrid } from '@/components/product/product-grid';
 import {
@@ -11,7 +12,8 @@ import {
 import { formatPrice } from '@/lib/format';
 import { categoryPigment } from '@/lib/site';
 import { useSearchLog } from '@/components/analytics/use-search-log';
-import { useCatalogueSearch } from '@/components/shop/use-catalogue-search';
+import { useCatalogueSearch, type CataloguePage } from '@/components/shop/use-catalogue-search';
+import { SHOP_PAGE_SIZE } from '@/lib/catalogue/browse';
 import { useLocale } from '@/components/i18n/use-locale';
 import { categoryName, dictionary } from '@/lib/i18n/dictionaries';
 import { cn } from '@/lib/utils';
@@ -30,7 +32,7 @@ const SORTS: Sort[] = ['featured', 'price-asc', 'price-desc', 'rating', 'newest'
 const NAMED_FILTERS: string[] = ['best-sellers', 'new', 'trending', 'deals'];
 
 /** How many products arrive per request. The rest come on "Show more". */
-const PAGE_SIZE = 24;
+const PAGE_SIZE = SHOP_PAGE_SIZE;
 
 /**
  * The slider's top before the first reply lands. The real ceiling comes from the catalogue with
@@ -38,9 +40,44 @@ const PAGE_SIZE = 24;
  */
 const FALLBACK_CEILING = 500;
 
-export function ShopBrowser() {
-  const router = useRouter();
+type ShopParams = Pick<URLSearchParams, 'get' | 'entries'>;
+
+/*
+  Two ways in, one view.
+
+  ShopBrowser reads the query string, so Next renders it in the browser and puts the Suspense
+  fallback in the page's HTML. That fallback used to be a heading alone: no product reached the
+  HTML, and on a slow line the grid appeared only after the script and a request to
+  /api/catalogue (about 16 seconds on the owner's connection). The /shop pages now pass the
+  unfiltered first page, read on the server from the same memoised catalogue, and render it
+  twice: ShopBrowserStatic in the fallback (no query string: the products, linked, in the HTML
+  for people and crawlers) and ShopBrowser once the script runs. With no filters in the address
+  the two draw the same thing, so nothing moves and nothing is fetched; with filters, ShopBrowser
+  asks the server for them exactly as before.
+*/
+export function ShopBrowser({ initial, heading }: { initial?: CataloguePage; heading?: string }) {
   const params = useSearchParams();
+  return <ShopBrowserView params={params} initial={initial} defaultHeading={heading} />;
+}
+
+const NO_PARAMS: ShopParams = new URLSearchParams();
+
+/** The unfiltered view for the server HTML (the Suspense fallback). Reads no query string. */
+export function ShopBrowserStatic({ initial, heading }: { initial: CataloguePage; heading?: string }) {
+  return <ShopBrowserView params={NO_PARAMS} initial={initial} defaultHeading={heading} />;
+}
+
+function ShopBrowserView({
+  params,
+  initial,
+  defaultHeading,
+}: {
+  params: ShopParams;
+  initial?: CataloguePage;
+  /** The heading with no filters set; the page's own h1 ("Shop all products"). */
+  defaultHeading?: string;
+}) {
+  const router = useRouter();
   /* /shop or /es/shop: filters stay on the page they were set on, in its language. */
   const base = usePathname() ?? '/shop';
   const locale = useLocale();
@@ -97,7 +134,10 @@ export function ShopBrowser() {
     loadMore,
   } = useCatalogueSearch(
     { q: query, category, group, brand, filter, sort, max: maxParam ? Number(maxParam) : undefined },
-    PAGE_SIZE
+    PAGE_SIZE,
+    true,
+    /* The server's first page fits only the unfiltered view. */
+    !query && !category && !brand && !filter && sort === 'featured' && !maxParam ? initial : undefined
   );
 
   /* Until the first reply lands, the slider has no ceiling to draw; fall back to a sane top. */
@@ -133,7 +173,7 @@ export function ShopBrowser() {
     catName(category) ??
     brands.find((b) => b.slug === brand)?.name ??
     t.filters[filter] ??
-    t.catalogue;
+    (activeCount === 0 && defaultHeading ? defaultHeading : t.catalogue);
 
   const Filters = (
     <div className="space-y-8">

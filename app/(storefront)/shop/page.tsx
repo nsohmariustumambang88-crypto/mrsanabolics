@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { ShopBrowser } from '@/components/shop/shop-browser';
+import { ShopBrowser, ShopBrowserStatic } from '@/components/shop/shop-browser';
+import { SHOP_PAGE_SIZE, priceCeiling } from '@/lib/catalogue/browse';
 import { CatalogueDirectory, SectionTitle } from '@/components/shop/collection-sections';
-import { getProducts } from '@/lib/db/catalogue';
+import { getProducts, toSummary } from '@/lib/db/catalogue';
 import { getCategoryCollections } from '@/lib/db/collections';
 import { SITE } from '@/lib/site';
 import { factsFor } from '@/lib/db/collections';
@@ -38,6 +39,13 @@ export const revalidate = 3600;
 export default async function ShopPage() {
   const [products, categories] = await Promise.all([getProducts(), getCategoryCollections()]);
 
+  /* The unfiltered first page, exactly as /api/catalogue would answer it. */
+  const firstPage = {
+    items: products.slice(0, SHOP_PAGE_SIZE).map(toSummary),
+    total: products.length,
+    ceiling: priceCeiling(products),
+  };
+
   const itemList = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
@@ -54,21 +62,10 @@ export default async function ShopPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }} />
-      <Suspense
-        fallback={
-          <section className="min-h-screen border-b border-rule">
-            <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
-              <h1 className="font-display text-[clamp(2rem,4vw,3.25rem)] font-semibold leading-[1.02] tracking-[-0.04em]">
-                Shop all products
-              </h1>
-              <p className="measure mt-4 text-sm leading-relaxed text-ink-soft sm:text-base">
-                {products.length} products across {categories.length} categories.
-              </p>
-            </div>
-          </section>
-        }
-      >
-        <ShopBrowser />
+      {/* The fallback is what the HTML carries: the same view, unfiltered, with its first page
+          of products. See ShopBrowserStatic. */}
+      <Suspense fallback={<ShopBrowserStatic initial={firstPage} heading="Shop all products" />}>
+        <ShopBrowser initial={firstPage} heading="Shop all products" />
       </Suspense>
 
       <section aria-labelledby="directory" className="border-t border-rule">

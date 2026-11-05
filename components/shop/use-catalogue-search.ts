@@ -59,20 +59,47 @@ function toSearch(query: CatalogueQuery, page: number, limit: number): string {
   return params.toString();
 }
 
-export function useCatalogueSearch(query: CatalogueQuery, limit = 24, enabled = true): Result {
+/** A first page the server already rendered: the hook starts from it instead of asking. */
+export type CataloguePage = { items: ProductSummary[]; total: number; ceiling: number };
+
+export function useCatalogueSearch(
+  query: CatalogueQuery,
+  limit = 24,
+  enabled = true,
+  /*
+    The first page of THIS query, when the page carried it (the unfiltered /shop, rendered on the
+    server from the same read /api/catalogue uses). Read once, at mount: changing the filters and
+    coming back asks the server again, as before. "Show more" asks for page two as usual.
+  */
+  initial?: CataloguePage
+): Result {
   /* The query as a string, so an object rebuilt on every render does not refetch. */
   const key = JSON.stringify(query);
   const [page, setPage] = React.useState(0);
-  const [state, setState] = React.useState<Omit<Result, 'loadMore' | 'hasMore'>>({
-    items: [],
-    total: 0,
-    ceiling: 0,
-    groups: [],
-    similar: false,
-    loading: true,
-    loadingMore: false,
-    error: false,
-  });
+  const seeded = React.useRef<string | null>(initial ? key : null);
+  const [state, setState] = React.useState<Omit<Result, 'loadMore' | 'hasMore'>>(() =>
+    initial
+      ? {
+          items: initial.items,
+          total: initial.total,
+          ceiling: initial.ceiling,
+          groups: [],
+          similar: false,
+          loading: false,
+          loadingMore: false,
+          error: false,
+        }
+      : {
+          items: [],
+          total: 0,
+          ceiling: 0,
+          groups: [],
+          similar: false,
+          loading: true,
+          loadingMore: false,
+          error: false,
+        }
+  );
 
   /* A new query starts again at the first page. */
   React.useEffect(() => {
@@ -85,6 +112,10 @@ export function useCatalogueSearch(query: CatalogueQuery, limit = 24, enabled = 
       setState({ items: [], total: 0, ceiling: 0, groups: [], similar: false, loading: false, loadingMore: false, error: false });
       return;
     }
+
+    /* The first page of this exact query came with the page: nothing to ask yet. */
+    if (page === 0 && seeded.current === key) return;
+    seeded.current = null;
 
     const parsed: CatalogueQuery = JSON.parse(key);
     const controller = new AbortController();

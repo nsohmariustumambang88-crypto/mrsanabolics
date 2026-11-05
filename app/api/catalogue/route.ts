@@ -3,6 +3,7 @@ import { getProducts, toSummary } from '@/lib/db/catalogue';
 import { foldText } from '@/lib/search/fold';
 import { matchCount, matchesQuery } from '@/lib/search/match';
 import type { Product, ProductSummary } from '@/lib/types';
+import { SHOP_PAGE_SIZE, priceCeiling } from '@/lib/catalogue/browse';
 
 /*
   Search and browse the catalogue, one page of results at a time.
@@ -23,17 +24,13 @@ import type { Product, ProductSummary } from '@/lib/types';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const DEFAULT_LIMIT = 24;
+const DEFAULT_LIMIT = SHOP_PAGE_SIZE;
 const MAX_LIMIT = 48;
 /** A wishlist of hundreds is not a page; it is a scrape. */
 const MAX_IDS = 60;
 
 type Sort = 'featured' | 'price-asc' | 'price-desc' | 'rating' | 'newest';
 
-/** The ceiling follows the catalogue, so a price change in the database moves the slider. */
-function priceCeiling(list: { price: number }[]): number {
-  return Math.ceil(list.reduce((max, p) => Math.max(max, p.price), 0) / 10) * 10;
-}
 
 function matches(p: Product, q: string, loose: boolean): boolean {
   if (matchesQuery([p.name, p.brand, p.category, p.subcategoryName ?? ''], q, loose)) return true;

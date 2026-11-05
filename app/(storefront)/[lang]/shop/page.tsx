@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { ShopBrowser } from '@/components/shop/shop-browser';
+import { ShopBrowser, ShopBrowserStatic } from '@/components/shop/shop-browser';
 import { CatalogueDirectory, SectionTitle } from '@/components/shop/collection-sections';
-import { getProducts } from '@/lib/db/catalogue';
+import { getProducts, toSummary } from '@/lib/db/catalogue';
+import { SHOP_PAGE_SIZE, priceCeiling } from '@/lib/catalogue/browse';
 import { factsFor, getCategoryCollections, type GroupCollection } from '@/lib/db/collections';
 import { fitDescription, shortRange } from '@/lib/catalogue/seo';
 import { formatPriceShort } from '@/lib/format';
@@ -46,6 +47,13 @@ export default async function TranslatedShop({ params }: Params) {
   const t = dictionary(locale).shop;
   const [products, categories] = await Promise.all([getProducts(), getCategoryCollections()]);
 
+  /* The unfiltered first page, exactly as /api/catalogue would answer it. */
+  const firstPage = {
+    items: products.slice(0, SHOP_PAGE_SIZE).map(toSummary),
+    total: products.length,
+    ceiling: priceCeiling(products),
+  };
+
   const itemList = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
@@ -64,21 +72,10 @@ export default async function TranslatedShop({ params }: Params) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }} />
-      <Suspense
-        fallback={
-          <section className="min-h-screen border-b border-rule">
-            <div className="mx-auto max-w-[86rem] px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
-              <h1 className="font-display text-[clamp(2rem,4vw,3.25rem)] font-semibold leading-[1.02] tracking-[-0.04em]">
-                {t.heading}
-              </h1>
-              <p className="measure mt-4 text-sm leading-relaxed text-ink-soft sm:text-base">
-                {t.count(products.length, categories.length)}
-              </p>
-            </div>
-          </section>
-        }
-      >
-        <ShopBrowser />
+      {/* The fallback is what the HTML carries: the same view, unfiltered, with its first page
+          of products. See ShopBrowserStatic. */}
+      <Suspense fallback={<ShopBrowserStatic initial={firstPage} heading={t.heading} />}>
+        <ShopBrowser initial={firstPage} heading={t.heading} />
       </Suspense>
 
       <section aria-labelledby="directory" className="border-t border-rule">
