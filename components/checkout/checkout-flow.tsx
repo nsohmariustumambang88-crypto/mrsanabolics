@@ -2,7 +2,17 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Check, ArrowLeft, ArrowRight, Lock, Info, ShoppingBag, Loader2 } from 'lucide-react';
+import {
+  Check,
+  ArrowLeft,
+  ArrowRight,
+  Lock,
+  Info,
+  ShoppingBag,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import { useStore } from '@/components/providers/store-provider';
 import { useCountry } from '@/components/providers/country-provider';
 import { BullMark } from '@/components/brand/bull-mark';
@@ -22,7 +32,7 @@ import {
 } from '@/components/checkout/use-checkout-quotes';
 import { CONSENT } from '@/lib/marketing/consent';
 import { cn } from '@/lib/utils';
-import type { AdvertisedDiscount } from '@/lib/types';
+import type { AdvertisedDiscount, CartItem } from '@/lib/types';
 import { MINIMUM_ORDER } from '@/lib/orders/minimum';
 import { submitCheckout, type CheckoutSubmitInput } from '@/app/checkout/checkout-actions';
 
@@ -68,6 +78,8 @@ export function CheckoutFlow({
   );
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState('');
+  /* The order summary on phones (below lg) starts closed; from lg it is always open. */
+  const [summaryOpen, setSummaryOpen] = React.useState(false);
 
   /* Form state */
   const [firstName, setFirstName] = React.useState('');
@@ -364,7 +376,7 @@ export function CheckoutFlow({
 
           {/* On a phone the summary, and the minimum-order line in it, sit below the whole form.
               Say it here too, before anyone fills in an address for an order that cannot go. */}
-          {cartCount > 0 && total < MINIMUM_ORDER && (
+          {cartCount > 0 && total < MINIMUM_ORDER && !summaryOpen && (
             <p className="mt-5 text-xs leading-relaxed text-pigment-madder lg:hidden">
               The minimum order is {formatPrice(MINIMUM_ORDER)}, including shipping and after any
               discount. Add {formatPrice(MINIMUM_ORDER - total)} more to place this order.
@@ -560,33 +572,7 @@ export function CheckoutFlow({
                 <h2 className="font-display text-lg font-semibold tracking-[-0.025em]">
                   Check the order
                 </h2>
-                <ul className="mt-5 border-t border-rule">
-                  {cart.map((item) => (
-                    <li
-                      key={item.productId}
-                      className="flex items-center gap-4 border-b border-rule py-4"
-                    >
-                      <span className="relative h-14 w-14 shrink-0 overflow-hidden border border-rule bg-paper-sunk">
-                        {item.image ? (
-                          /* The cart's own snapshot: no catalogue lookup, so none is shipped. */
-                          <Image src={item.image} alt="" fill sizes="56px" className="object-contain mix-blend-multiply dark:mix-blend-normal" />
-                        ) : null}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
-                          {item.brand}
-                        </span>
-                        <span className="mt-0.5 block text-sm font-medium">{item.name}</span>
-                      </span>
-                      <span className="font-mono text-xs text-ink-faint tabular">
-                        ×{item.quantity}
-                      </span>
-                      <span className="text-sm font-medium tabular">
-                        {formatPrice(item.price * item.quantity)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <LineItems items={cart} className="mt-5" />
               </div>
             )}
 
@@ -666,15 +652,52 @@ export function CheckoutFlow({
             </div>
           </div>
 
-          <aside className="bg-card p-6 sm:p-8">
-            <h2 className="font-mono text-2xs uppercase tracking-[0.16em] text-ink-faint">
+          {/*
+            The summary. From lg it is the side column, always open. Below lg it comes FIRST and
+            starts closed behind one bar that carries the total, the way most checkouts do on a
+            phone: the total is in view without pushing the form a screen down, and one tap shows
+            every line. It used to sit below the whole form and list no products at all.
+            No animation; the chevron swaps.
+          */}
+          <aside aria-label="Order summary" className="order-first bg-card lg:order-none">
+            <button
+              type="button"
+              onClick={() => setSummaryOpen((open) => !open)}
+              aria-expanded={summaryOpen}
+              aria-controls="order-summary-body"
+              className="flex min-h-[3.5rem] w-full items-center justify-between gap-3 px-6 py-3 text-left text-sm sm:px-8 lg:hidden"
+            >
+              <span className="flex items-center gap-2 font-medium text-pigment-indigo">
+                <ShoppingBag className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                {summaryOpen ? 'Hide order summary' : 'Show order summary'}
+                {summaryOpen ? (
+                  <ChevronUp className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                )}
+              </span>
+              <span className="font-display text-base font-semibold tabular">
+                {formatPrice(total)}
+              </span>
+            </button>
+
+            <div
+              id="order-summary-body"
+              className={cn(
+                'px-6 pb-6 sm:px-8 sm:pb-8 lg:block lg:border-t-0 lg:p-8',
+                summaryOpen ? 'block border-t border-rule pt-5' : 'hidden'
+              )}
+            >
+            <h2 className="hidden font-mono text-2xs uppercase tracking-[0.16em] text-ink-faint lg:block">
               Order summary
             </h2>
-            <p className="mt-2 text-sm text-ink-soft tabular">
+            <p className="text-sm text-ink-soft tabular lg:mt-2">
               {cartCount} {cartCount === 1 ? 'item' : 'items'}
             </p>
 
-            <dl className="mt-6 space-y-3 border-t border-rule pt-5 text-sm">
+            <LineItems items={cart} compact className="mt-4" />
+
+            <dl className="mt-5 space-y-3 text-sm">
               <div className="flex justify-between">
                 <dt className="text-ink-soft">Subtotal</dt>
                 <dd className="tabular">{formatPrice(cartSubtotal)}</dd>
@@ -802,10 +825,69 @@ export function CheckoutFlow({
               Ships unmarked and tracked. The certificate of analysis for your batch comes with
               every order.
             </p>
+            </div>
           </aside>
         </div>
       </div>
     </>
+  );
+}
+
+/*
+  The lines of the order, from the cart's own snapshot: picture, maker, name, quantity and line
+  price. No catalogue lookup, so none is shipped to the browser. Used by the Review step and the
+  order summary. The server prices every line again when the order is placed.
+*/
+function LineItems({
+  items,
+  compact = false,
+  className,
+}: {
+  items: CartItem[];
+  compact?: boolean;
+  className?: string;
+}) {
+  return (
+    <ul className={cn('border-t border-rule', className)}>
+      {items.map((item) => (
+        <li
+          key={item.productId}
+          data-summary-line=""
+          className={cn('flex items-center border-b border-rule', compact ? 'gap-3 py-3' : 'gap-4 py-4')}
+        >
+          <span
+            className={cn(
+              'relative shrink-0 overflow-hidden border border-rule bg-paper-sunk',
+              compact ? 'h-12 w-12' : 'h-14 w-14'
+            )}
+          >
+            {item.image ? (
+              <Image
+                src={item.image}
+                alt=""
+                fill
+                sizes={compact ? '48px' : '56px'}
+                className="object-contain mix-blend-multiply dark:mix-blend-normal"
+              />
+            ) : null}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
+              {item.brand}
+            </span>
+            <span className={cn('mt-0.5 block font-medium', compact ? 'text-xs leading-snug' : 'text-sm')}>
+              {item.name}
+            </span>
+          </span>
+          <span className="font-mono text-xs text-ink-faint tabular">
+            <span className="sr-only">Quantity </span>×{item.quantity}
+          </span>
+          <span className="text-sm font-medium tabular">
+            {formatPrice(item.price * item.quantity)}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
