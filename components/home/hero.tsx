@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { useBrands } from '@/components/providers/catalogue-provider';
@@ -31,22 +32,36 @@ export function Hero() {
 
   return (
     <section className="relative border-b border-rule overflow-hidden">
-      <div
-        className="absolute inset-0 opacity-55 bg-cover bg-center pointer-events-none"
-        style={{ backgroundImage: 'url(/hero-bg-no-bg.png)' }}
+      {/*
+        The photograph is the page's largest paint, so it is an <img> in the server HTML with
+        high fetch priority rather than a CSS background: a background is only discovered once
+        the stylesheet has arrived and the box has been laid out, and on a slow line that put
+        the first full paint at 10-20 seconds. It is a 28 KB WebP made from the 261 KB PNG it
+        replaced, at the same size and with the same transparency. `unoptimized` because the
+        Cloudinary loader treats any non-http src as a public ID.
+      */}
+      <Image
+        src="/hero-bg.webp"
+        alt=""
+        fill
+        priority
+        unoptimized
+        sizes="100vw"
+        className="pointer-events-none object-cover object-center opacity-55"
       />
       <div className="mx-auto max-w-[86rem] relative z-10">
-        {/* The sheet with text shadow for contrast */}
+        {/* Black on the sheet, as chosen. On the bath black disappeared into the ground, so the
+            dark theme sets the same words in its own ink and lifted indigo. */}
         <div className="flex flex-col justify-center px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-24">
-          <h1 className="font-display text-[clamp(2.75rem,6vw,5rem)] font-semibold leading-[0.95] tracking-[-0.04em] text-black">
+          <h1 className="font-display text-[clamp(2.75rem,6vw,5rem)] font-semibold leading-[0.95] tracking-[-0.04em] text-black dark:text-ink">
             {t.heroLines[0]}
             <br />
             {t.heroLines[1]}
             <br />
-            <span className="text-blue-900">{t.heroAccent}</span>
+            <span className="text-blue-900 dark:text-pigment-indigo">{t.heroAccent}</span>
           </h1>
 
-          <p className="measure-tight mt-8 text-base leading-relaxed sm:text-lg text-black">
+          <p className="measure-tight mt-8 text-base leading-relaxed sm:text-lg text-black dark:text-ink">
             {t.heroBody(makers)}
           </p>
 
