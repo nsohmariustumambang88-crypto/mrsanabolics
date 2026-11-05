@@ -418,10 +418,33 @@ export function ShopBrowser() {
             )}
 
             {loading ? (
-              /* Not an empty state: "nothing matches" while the answer is in flight is a lie. */
-              <p className="mt-6 border border-rule bg-card px-6 py-20 text-center text-sm text-ink-soft">
-                {t.loading}
-              </p>
+              /*
+                Not an empty state: "nothing matches" while the answer is in flight is a lie.
+
+                A placeholder grid the same shape as the page of results it is waiting for, so
+                the directory below does not jump down a whole screen when the products arrive
+                (the old 20rem box measured a layout shift of 0.79 on a 360px phone). Static, no
+                shimmer: the site has no motion.
+              */
+              <div role="status" className="mt-6">
+                <span className="sr-only">{t.loading}</span>
+                <div className="grid grid-cols-2 gap-px bg-rule lg:grid-cols-3" aria-hidden="true">
+                  {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                    <div key={i} className="flex flex-col border border-rule bg-card">
+                      <span className="block h-px w-full bg-rule" />
+                      <span className="block aspect-square bg-paper-sunk" />
+                      <span className="flex flex-1 flex-col p-3 sm:p-4">
+                        <span className="block h-4 w-4/5 bg-paper-sunk sm:h-5" />
+                        <span className="mt-1.5 block h-4 w-3/5 bg-paper-sunk sm:h-5" />
+                        <span className="mt-1.5 block h-3 w-1/2 bg-paper-sunk" />
+                        <span className="mt-3 block h-5 w-16 bg-paper-sunk sm:mt-4" />
+                        <span className="mt-1.5 block h-3 w-14 bg-paper-sunk" />
+                      </span>
+                      <span className="block h-[41px] border-t border-rule sm:h-[45px]" />
+                    </div>
+                  ))}
+                </div>
+              </div>
             ) : error ? (
               <div className="mt-6 border border-rule bg-card px-6 py-20 text-center">
                 <h2 className="font-display text-xl font-semibold tracking-[-0.025em]">
