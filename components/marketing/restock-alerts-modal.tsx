@@ -6,20 +6,83 @@ import { X, Tag } from 'lucide-react';
 import { useSubscribe } from './use-subscribe';
 import { CONSENT } from '@/lib/marketing/consent';
 import { BullMark } from '@/components/brand/bull-mark';
-import { claimPopupSlot, popupSlotFree } from './popup-slot';
+import { claimPopupSlot } from './popup-slot';
 
 /*
-  The restock sign-up. Its timing (one second after landing, back ten seconds after a close until
-  the visitor subscribes) is the owner's choice and is unchanged.
+  The restock sign-up.
 
-  Two things are not timing:
-  - It never opens on the screens where someone is paying or signing in. It used to open on
-    /checkout and come back every ten seconds over the payment form. Same list as ExitCapture.
-  - It is a real dialog: announced as one, labelled by its heading, focus moves into it, Escape
-    and a click outside close it the same way the X does, and the X has a name.
+  When it asks (the owner's decision of 5 November 2026, replacing "one second after landing,
+  and again ten seconds after every close"):
+  - at most once a visit. Closing it is an answer; it does not come back until the next visit.
+  - only once the visitor has shown some interest: scrolled a fair way down a page (two screens,
+    or half the page if that is shorter) or spent 30 seconds on the site, whichever comes first.
+    The 30 seconds run across pages, from the first page of the visit.
+  - never on the screens where someone is paying or signing in (the same list as ExitCapture),
+    never on top of another open dialog (the cart, search, the menu), and never in a visit that
+    another popup already claimed (popup-slot.ts).
+  - after a sign-up, not again for 7 days on this browser.
+
+  It is a real dialog: announced as one, labelled by its heading, focus moves into it, and
+  Escape and a click outside close it the same way the X does.
+
+  Every storage access is wrapped: private windows throw on storage, and a popup that cannot
+  remember is better than a component that throws during render.
 */
 
 const SILENT_PATHS = ['/checkout', '/auth', '/account', '/basket', '/unsubscribe', '/admin'];
+
+/** sessionStorage: it has opened this visit (and so stays closed once closed). */
+const SHOWN_KEY = 'restock-alerts-shown';
+/** sessionStorage: when this visit began, so the 30 seconds carry across pages. */
+const VISIT_START_KEY = 'restock-alerts-visit-start';
+/** sessionStorage: subscribed this visit (the key the earlier version wrote; still honoured). */
+const SUBSCRIBED_SESSION_KEY = 'restock-alerts-subscribed';
+/** localStorage: subscribed; quiet until this time (ms). */
+const SUBSCRIBED_UNTIL_KEY = 'restock-alerts-subscribed-until';
+
+const DWELL_MS = 30_000;
+const SUBSCRIBED_QUIET_MS = 7 * 24 * 60 * 60 * 1000;
+/** Never open the instant a page lands, even when the 30 seconds are already used up. */
+const LANDING_GRACE_MS = 1500;
+/** How long to wait before looking again when another dialog is open. */
+const OVERLAY_RETRY_MS = 3000;
+
+type Store = 'localStorage' | 'sessionStorage';
+
+function read(store: Store, key: string): string | null {
+  try {
+    return window[store].getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function write(store: Store, key: string, value: string): void {
+  try {
+    window[store].setItem(key, value);
+  } catch {
+    /* Cannot remember; the in-page state still keeps it closed for this page. */
+  }
+}
+
+function suppressed(): boolean {
+  if (read('sessionStorage', SHOWN_KEY) || read('sessionStorage', SUBSCRIBED_SESSION_KEY)) return true;
+  const until = Number(read('localStorage', SUBSCRIBED_UNTIL_KEY));
+  return Number.isFinite(until) && until > Date.now();
+}
+
+function visitStart(): number {
+  const stored = Number(read('sessionStorage', VISIT_START_KEY));
+  if (Number.isFinite(stored) && stored > 0) return stored;
+  const now = Date.now();
+  write('sessionStorage', VISIT_START_KEY, String(now));
+  return now;
+}
+
+/** The cart, search, the menu or another popup is open: wait rather than stack on it. */
+function overlayOpen(): boolean {
+  return document.querySelector('[role="dialog"], [role="alertdialog"]') !== null;
+}
 
 export function RestockAlertsModal() {
   const pathname = usePathname() ?? '';
@@ -27,58 +90,71 @@ export function RestockAlertsModal() {
   const [isOpen, setIsOpen] = React.useState(false);
   const { email, setEmail, consent, setConsent, submit, done, error } = useSubscribe('newsletter');
   const inputRef = React.useRef<HTMLInputElement>(null);
-  const reopenTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const silentRef = React.useRef(silent);
-  silentRef.current = silent;
 
+  /* Subscribed: quiet for a week on this browser. The card shows "Subscribed!" briefly first. */
   React.useEffect(() => {
-    /* If already subscribed, never show again */
-    if (done) {
-      sessionStorage.setItem('restock-alerts-subscribed', 'true');
-      setIsOpen(false);
-      return;
-    }
+    if (!done) return;
+    write('sessionStorage', SUBSCRIBED_SESSION_KEY, 'true');
+    write('localStorage', SUBSCRIBED_UNTIL_KEY, String(Date.now() + SUBSCRIBED_QUIET_MS));
+    const timer = window.setTimeout(() => setIsOpen(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [done]);
 
-    /* Check if user already subscribed this session */
-    if (sessionStorage.getItem('restock-alerts-subscribed')) {
-      return;
-    }
-
-    if (silent) return;
-
-    /* Show modal initially after 1 second */
-    /* Stand down when another popup (the promotion) already has this visit. */
-    const initialTimer = setTimeout(() => {
-      if (claimPopupSlot('restock')) setIsOpen(true);
-    }, 1000);
-
-    return () => clearTimeout(initialTimer);
-  }, [done, silent]);
-
-  /* Moving on to checkout closes it and cancels a pending re-show. */
+  /* Wait for interest on each page of the visit until it has opened once. */
   React.useEffect(() => {
-    if (!silent) return;
-    setIsOpen(false);
-    if (reopenTimer.current) clearTimeout(reopenTimer.current);
+    if (done || silent || suppressed()) return;
+
+    const start = visitStart();
+    let fired = false;
+    let retry: number | undefined;
+
+    const open = () => {
+      if (fired || retry !== undefined) return;
+      if (suppressed()) {
+        fired = true;
+        return;
+      }
+      if (overlayOpen()) {
+        retry = window.setTimeout(() => {
+          retry = undefined;
+          open();
+        }, OVERLAY_RETRY_MS);
+        return;
+      }
+      fired = true;
+      /* Stand down when another popup (the promotion, the exit card) already has this visit. */
+      if (!claimPopupSlot('restock')) return;
+      write('sessionStorage', SHOWN_KEY, '1');
+      setIsOpen(true);
+    };
+
+    const onScroll = () => {
+      const fairWay = Math.min(
+        2 * window.innerHeight,
+        0.5 * document.documentElement.scrollHeight
+      );
+      if (window.scrollY >= fairWay) open();
+    };
+
+    const dwellLeft = Math.max(LANDING_GRACE_MS, DWELL_MS - (Date.now() - start));
+    const timer = window.setTimeout(open, dwellLeft);
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => {
+      window.clearTimeout(timer);
+      if (retry !== undefined) window.clearTimeout(retry);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, [done, silent, pathname]);
+
+  /* Moving on to checkout closes it. */
+  React.useEffect(() => {
+    if (silent) setIsOpen(false);
   }, [silent]);
 
-  React.useEffect(() => () => {
-    if (reopenTimer.current) clearTimeout(reopenTimer.current);
-  }, []);
-
+  /* Closed is closed for the rest of the visit: SHOWN_KEY was written when it opened. */
   const handleClose = React.useCallback(() => {
     setIsOpen(false);
-    /* Show again in 10 seconds if not subscribed */
-    if (reopenTimer.current) clearTimeout(reopenTimer.current);
-    reopenTimer.current = setTimeout(() => {
-      if (
-        !silentRef.current &&
-        !sessionStorage.getItem('restock-alerts-subscribed') &&
-        popupSlotFree('restock')
-      ) {
-        setIsOpen(true);
-      }
-    }, 10000);
   }, []);
 
   /* Escape closes it; focus goes to the address field when it opens. */
