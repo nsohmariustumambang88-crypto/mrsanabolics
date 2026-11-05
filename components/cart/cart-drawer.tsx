@@ -17,6 +17,7 @@ import { useCountry } from '@/components/providers/country-provider';
 import { useDictionary } from '@/components/i18n/use-locale';
 import { ApproxPrice, CurrencyNote } from '@/components/currency/approx-price';
 import { matchZone } from '@/lib/delivery/match';
+import { MINIMUM_ORDER } from '@/lib/orders/minimum';
 
 /*
   The free-delivery line follows the visitor's country.
@@ -188,7 +189,7 @@ export function CartDrawer() {
                             updateQuantity(item.productId, item.quantity - 1)
                           }
                           disabled={item.quantity <= 1}
-                          className="flex h-7 w-7 items-center justify-center text-ink-soft transition-colors hover:bg-paper-sunk disabled:opacity-40"
+                          className="flex h-9 w-9 items-center justify-center text-ink-soft transition-colors hover:bg-paper-sunk disabled:opacity-40"
                           aria-label={t.cart.decrease(item.name)}
                         >
                           <Minus className="h-3 w-3" strokeWidth={2} />
@@ -201,7 +202,7 @@ export function CartDrawer() {
                           onClick={() =>
                             updateQuantity(item.productId, item.quantity + 1)
                           }
-                          className="flex h-7 w-7 items-center justify-center text-ink-soft transition-colors hover:bg-paper-sunk"
+                          className="flex h-9 w-9 items-center justify-center text-ink-soft transition-colors hover:bg-paper-sunk"
                           aria-label={t.cart.increase(item.name)}
                         >
                           <Plus className="h-3 w-3" strokeWidth={2} />
@@ -217,7 +218,7 @@ export function CartDrawer() {
                   <button
                     type="button"
                     onClick={() => removeFromCart(item.productId)}
-                    className="h-fit text-ink-faint transition-colors hover:text-pigment-madder"
+                    className="-m-2 h-fit p-2 text-ink-faint transition-colors hover:text-pigment-madder"
                     aria-label={t.cart.remove(item.name)}
                   >
                     <X className="h-4 w-4" strokeWidth={1.75} />
@@ -239,6 +240,16 @@ export function CartDrawer() {
               <p className="mt-1.5 text-xs text-ink-faint">
                 {t.cart.shippingNote}
               </p>
+              {/*
+                The minimum, said before checkout rather than only at the foot of it. Checkout
+                measures it on the total with shipping, which is not known here; so it shows only
+                while the products alone are under it, when the order certainly is too.
+              */}
+              {cartSubtotal < MINIMUM_ORDER && (
+                <p role="status" className="mt-2 text-xs leading-relaxed text-pigment-madder">
+                  {t.cart.belowMinimum(formatPrice(MINIMUM_ORDER))}
+                </p>
+              )}
               <CurrencyNote className="mt-1" />
 
               <Link

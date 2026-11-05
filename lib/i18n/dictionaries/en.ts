@@ -128,6 +128,9 @@ export const en = {
     deliveryFrom: (country: string, price: string) => `Delivery to ${country} from ${price}, chosen at checkout.`,
     subtotal: 'Subtotal',
     shippingNote: 'Shipping and duties calculated at checkout.',
+    /** Shown while the subtotal alone is under the minimum, which checkout measures with shipping. */
+    belowMinimum: (minimum: string) =>
+      `The minimum order is ${minimum}, including shipping and after any discount.`,
     checkout: 'Checkout',
     keepBrowsing: 'Keep browsing',
     decrease: (name: string) => `Decrease quantity of ${name}`,

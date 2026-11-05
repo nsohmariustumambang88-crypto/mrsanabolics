@@ -361,6 +361,15 @@ export function CheckoutFlow({
               </li>
             ))}
           </ol>
+
+          {/* On a phone the summary, and the minimum-order line in it, sit below the whole form.
+              Say it here too, before anyone fills in an address for an order that cannot go. */}
+          {cartCount > 0 && total < MINIMUM_ORDER && (
+            <p className="mt-5 text-xs leading-relaxed text-pigment-madder lg:hidden">
+              The minimum order is {formatPrice(MINIMUM_ORDER)}, including shipping and after any
+              discount. Add {formatPrice(MINIMUM_ORDER - total)} more to place this order.
+            </p>
+          )}
         </div>
       </section>
 

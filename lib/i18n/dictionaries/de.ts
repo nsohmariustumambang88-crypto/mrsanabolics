@@ -121,6 +121,8 @@ export const de: Dictionary = {
     deliveryFrom: (country, price) => `Versand nach ${country} ab ${price}; die Auswahl erfolgt an der Kasse.`,
     subtotal: 'Zwischensumme',
     shippingNote: 'Versand und Zölle werden an der Kasse berechnet.',
+    belowMinimum: (minimum) =>
+      `Der Mindestbestellwert beträgt ${minimum}, inklusive Versand und nach Abzug eines Rabatts.`,
     checkout: 'Zur Kasse',
     keepBrowsing: 'Weiter einkaufen',
     decrease: (name) => `Menge von ${name} verringern`,

@@ -121,6 +121,8 @@ export const es: Dictionary = {
     deliveryFrom: (country, price) => `Envío a ${country} desde ${price}; se elige al pagar.`,
     subtotal: 'Subtotal',
     shippingNote: 'El envío y los aranceles se calculan al pagar.',
+    belowMinimum: (minimum) =>
+      `El pedido mínimo es de ${minimum}, con el envío incluido y después de cualquier descuento.`,
     checkout: 'Pagar',
     keepBrowsing: 'Seguir comprando',
     decrease: (name) => `Reducir la cantidad de ${name}`,
