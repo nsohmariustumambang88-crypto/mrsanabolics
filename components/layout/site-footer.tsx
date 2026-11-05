@@ -213,7 +213,9 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 border-t border-rule py-6 sm:flex-row sm:items-center sm:justify-between">
+        {/* pb-24: the WhatsApp and Telegram buttons are fixed in the bottom corners, and at the
+            foot of the page they sat on the copyright line and the legal links. */}
+        <div className="flex flex-col gap-4 border-t border-rule pb-24 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
             © {new Date().getFullYear()} MrsAnabolics
           </p>
