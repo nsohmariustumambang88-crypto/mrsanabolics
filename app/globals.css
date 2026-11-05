@@ -184,14 +184,6 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* A product page's phone buy bar is showing (product-detail.tsx): keep the foot of the page,
-     the footer's last line, clear of it. */
-  @media (max-width: 1023px) {
-    html[data-buybar] body {
-      padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
-    }
-  }
-
 
   @media (prefers-reduced-motion: reduce) {
     html {
@@ -346,5 +338,16 @@
 
   .measure-tight {
     max-width: 54ch;
+  }
+}
+
+/*
+  A product page's phone buy bar is showing (product-detail.tsx): keep the foot of the page, the
+  footer's last line, clear of it. Outside every @layer on purpose: Tailwind drops a layered rule
+  it cannot match to a class in the markup, and this one is keyed on an attribute set at runtime.
+*/
+@media (max-width: 1023px) {
+  html[data-buybar] body {
+    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
   }
 }

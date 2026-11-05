@@ -434,9 +434,9 @@ export function ShopBrowser() {
                       <span className="block h-px w-full bg-rule" />
                       <span className="block aspect-square bg-paper-sunk" />
                       <span className="flex flex-1 flex-col p-3 sm:p-4">
-                        <span className="block h-4 w-4/5 bg-paper-sunk sm:h-5" />
-                        <span className="mt-1.5 block h-4 w-3/5 bg-paper-sunk sm:h-5" />
-                        <span className="mt-1.5 block h-3 w-1/2 bg-paper-sunk" />
+                        <span className="block h-5 w-4/5 bg-paper-sunk sm:h-6" />
+                        <span className="mt-1.5 block h-5 w-3/5 bg-paper-sunk sm:h-6" />
+                        <span className="mt-1.5 block h-4 w-1/2 bg-paper-sunk" />
                         <span className="mt-3 block h-5 w-16 bg-paper-sunk sm:mt-4" />
                         <span className="mt-1.5 block h-3 w-14 bg-paper-sunk" />
                       </span>
