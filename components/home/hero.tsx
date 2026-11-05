@@ -43,8 +43,10 @@ export function Hero() {
       {/*
         Below lg the photograph is its own band ABOVE the copy, at full strength: behind the
         text on a phone, the paragraph ran across the arm and torso and was hard to read, and a
-        photograph sits above copy, never behind it. From lg it is the faded ground behind the
+        photograph sits above copy, never behind it. From lg it is the ground behind the
         headline, as the owner set it. Same image, same aspect (665 x 375), no scrim.
+        (The old background carried `opacity-55`, which Tailwind 3.3 does not define, so the
+        photograph has always shown at full strength; that is kept.)
       */}
       <div className="relative aspect-[665/375] w-full border-b border-rule lg:absolute lg:inset-0 lg:aspect-auto lg:border-0">
         <Image
@@ -54,7 +56,7 @@ export function Hero() {
           priority
           unoptimized
           sizes="100vw"
-          className="pointer-events-none object-cover object-center lg:opacity-55"
+          className="pointer-events-none object-cover object-center"
         />
       </div>
       <div className="mx-auto max-w-[86rem] relative z-10">
