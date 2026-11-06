@@ -1217,4 +1217,122 @@ export const articles: JournalArticle[] = [
       },
     ],
   },
+
+  {
+    slug: 'hgh-kits-vials-pens-iu-explained',
+    title: 'HGH kits, vials and pens: what IU and mg mean, and what is in the box',
+    metaTitle: 'HGH Kits, Vials and Pens: IU, mg and What Is in the Box',
+    excerpt:
+      'How somatropin IU and milligrams convert, how powder vials, kits and pens differ, how licensed labels say to store it, and what the Beligas packs state.',
+    metaDescription:
+      'HGH IU to mg from licensed labels (3 IU per mg), kits vs vials vs pens, storage rules, and the Beligas 75 IU kit, Beltropin 100 IU kit and 36 IU pen compared.',
+    category: 'Verification',
+    author: BYLINE,
+    date: '2026-11-06',
+    image: pexels(9259963),
+    imageAlt:
+      'A row of clear glass vials with silver crimp caps standing in the round tray of a laboratory sample changer.',
+    imageCredit: credit('Jess Loiterton'),
+    faqs: [
+      {
+        question: 'How many IU are in 1 mg of HGH?',
+        answer:
+          'Licensed somatropin labels use 3 IU per milligram. Omnitrope’s product information, for example, describes a 5 mg cartridge as 15 IU, so 12 mg is 36 IU and 100 IU is about 33.3 mg.',
+      },
+      {
+        question: 'What is the difference between an HGH kit and an HGH pen?',
+        answer:
+          'A kit is a box of vials of freeze-dried powder, sometimes with vials of bacteriostatic water. A pen is a device built around a cartridge: licensed Genotropin cartridges hold the powder in one chamber and the diluent in the other, and Omnitrope cartridges hold a ready-made solution.',
+      },
+      {
+        question: 'How do licensed labels say growth hormone should be stored?',
+        answer:
+          'Refrigerated at 2 °C to 8 °C, not frozen, and in the package to protect it from light, according to the Genotropin label and Omnitrope’s product information. Follow the storage instructions printed on your own pack.',
+      },
+      {
+        question: 'What is in the Beligas and Beltropin packs?',
+        answer:
+          'As their packaging states: the Beligas 75 IU kit holds 10 vials of 2.5 mg and 10 vials of 5 mL bacteriostatic water, the Beltropin 100 IU kit holds 10 vials of 10 IU, and the Beltropin EZuse pen is one ready-to-use pen labelled 36 IU (12 mg) per mL.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Genotropin (somatropin) for injection, prescribing information',
+        publisher: 'DailyMed, US National Library of Medicine',
+        year: '2026',
+        url: 'https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=ffebf88b-d257-4542-9808-74d9b7167765',
+      },
+      {
+        title: 'Omnitrope (somatropin): EPAR product information',
+        publisher: 'European Medicines Agency',
+        url: 'https://www.ema.europa.eu/en/documents/product-information/omnitrope-epar-product-information_en.pdf',
+      },
+    ],
+  },
+
+  {
+    slug: 'is-hgh-legal-us-uk-canada',
+    title: 'Is HGH legal? Somatropin and the law in the US, UK and Canada',
+    metaTitle: 'Is HGH Legal? Somatropin Law in the US, UK and Canada',
+    excerpt:
+      'What US, UK and Canadian law says about growth hormone, quoted from the legislation: the US distribution offence, UK Class C rules and Canada’s prescription list.',
+    metaDescription:
+      'Is HGH legal? 21 U.S.C. 333(e) in the US, Class C and the in-person import rule in the UK, and Canada’s Prescription Drug List, quoted from the legislation.',
+    category: 'Law',
+    author: BYLINE,
+    date: '2026-11-06',
+    image: pexels(5668473),
+    imageAlt: 'A dark wooden gavel with a brass band resting on its sound block, beside black binders on a desk.',
+    imageCredit: credit('Sora Shimazaki'),
+    faqs: [
+      {
+        question: 'Is HGH a controlled substance?',
+        answer:
+          'In the UK, yes: somatropin is a Class C drug under the Misuse of Drugs Act 1971. In Canada, no: it is on Health Canada’s Prescription Drug List and does not appear in Schedule IV of the Controlled Drugs and Substances Act. In the US it has its own subsection of the Food, Drug, and Cosmetic Act, 21 U.S.C. 333(e).',
+      },
+      {
+        question: 'Is it legal to possess HGH in the UK?',
+        answer:
+          'In England, Wales and Scotland, possessing somatropin is not an offence: regulation 4(3) of the Misuse of Drugs Regulations 2001 disapplies the possession offence for the drugs in Part II of Schedule 4. Importing it is exempt only when you carry it in person for your own use, so a posted parcel is not covered.',
+      },
+      {
+        question: 'What is the penalty for distributing HGH in the US?',
+        answer:
+          'Up to 5 years in prison, a fine, or both, under 21 U.S.C. 333(e), for distributing it or possessing it with intent to distribute for any use other than an authorised treatment of a disease or recognised medical condition. The maximum is 10 years where the offence involves someone under 18.',
+      },
+      {
+        question: 'Is HGH prescription-only in Canada?',
+        answer:
+          'Yes. Somatropin is on Health Canada’s Prescription Drug List for human use, with an effective date of 19 December 2013.',
+      },
+    ],
+    sources: [
+      {
+        title: '21 U.S.C. 333: Penalties',
+        publisher: 'US Government Publishing Office',
+        year: '2024',
+        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap9-subchapIII-sec333.htm',
+      },
+      {
+        title: 'Genotropin (somatropin) for injection, prescribing information',
+        publisher: 'DailyMed, US National Library of Medicine',
+        year: '2026',
+        url: 'https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=ffebf88b-d257-4542-9808-74d9b7167765',
+      },
+      { title: 'Misuse of Drugs Act 1971, Schedule 2', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/ukpga/1971/38/schedule/2' },
+      { title: 'Misuse of Drugs Regulations 2001, Schedule 4', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/uksi/2001/3998/schedule/4' },
+      { title: 'Misuse of Drugs Regulations 2001, regulation 4', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/uksi/2001/3998/regulation/4' },
+      {
+        title: 'Prescription Drug List: human use',
+        publisher: 'Health Canada, Drug and Health Product Register',
+        url: 'https://hpr-rps.hres.ca/pdl-phu.php?lang=en',
+      },
+      {
+        title: 'Controlled Drugs and Substances Act (S.C. 1996, c. 19), Schedule IV',
+        publisher: 'Justice Laws Website, Government of Canada',
+        year: '2026',
+        url: 'https://laws-lois.justice.gc.ca/eng/acts/C-38.8/page-12.html',
+      },
+    ],
+  },
 ];
