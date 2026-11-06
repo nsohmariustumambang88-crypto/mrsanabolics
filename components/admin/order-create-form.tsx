@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createOrderAction } from '@/app/admin/order-actions';
 import { formatPrice } from '@/lib/format';
 import { runAction } from '@/components/admin/run-action';
+import { PHONE_PLACEHOLDER } from '@/lib/checkout/phone';
 
 /*
   Recording an order that was placed off-system.
@@ -298,6 +299,21 @@ export function OrderCreateForm({
             Country <span style={{ color: 'var(--wp-error)' }}>*</span>
           </label>
           <input id="shipCountry" name="shipCountry" className="wp-input" required />
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="wp-label" htmlFor="shipPhone">
+            Phone
+          </label>
+          <input
+            id="shipPhone"
+            name="shipPhone"
+            type="tel"
+            autoComplete="off"
+            className="wp-input"
+            placeholder={PHONE_PLACEHOLDER}
+          />
+          <p className="wp-help">For the courier. Optional here; the storefront checkout requires one.</p>
         </div>
       </div>
 

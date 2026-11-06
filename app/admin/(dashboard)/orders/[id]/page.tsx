@@ -188,7 +188,16 @@ export default async function AdminOrderPage({ params }: { params: { id: string 
               {order.shipPostcode}
               <br />
               {order.shipCountry}
+              {order.shipPhone && (
+                <>
+                  <br />
+                  <a href={`tel:${order.shipPhone.replace(/[^\d+]/g, '')}`}>{order.shipPhone}</a>
+                </>
+              )}
             </address>
+            {!order.shipPhone && (
+              <p className="wp-muted m-0 mt-1 text-[12px]">No delivery phone on this order.</p>
+            )}
 
             <p className="wp-muted mt-3 text-[12px]">
               Captured when the order was placed. Editing the contact&rsquo;s details does not

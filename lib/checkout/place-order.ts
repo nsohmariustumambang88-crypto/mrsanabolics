@@ -7,11 +7,14 @@ import { quoteDelivery } from '@/lib/delivery';
 import { markBasketOrdered } from '@/lib/basket';
 import { SITE } from '@/lib/site';
 import { formatCheckoutNote, PAYMENT_METHOD_LABEL } from '@/lib/checkout/order-notes';
+import { checkPhone } from '@/lib/checkout/phone';
 
 export type CheckoutSubmitInput = {
   email: string;
   firstName: string;
   lastName: string;
+  /** For the courier. Required, and checked again here with the form's own rule. */
+  phone: string;
   country: string;
   cart: Array<{ productId: string; quantity: number }>;
   shipping: {
@@ -55,6 +58,13 @@ export async function placeCheckoutOrder(input: CheckoutSubmitInput): Promise<Ch
     return { ok: false, error: 'Complete address required' };
   }
 
+  /* The browser checked this already; a request posted straight to the server has not been. */
+  const phoneCheck = checkPhone(input.phone);
+  if (!phoneCheck.ok) {
+    return { ok: false, error: phoneCheck.error };
+  }
+  const phone = phoneCheck.phone;
+
   if (!Array.isArray(input.cart) || input.cart.length === 0) {
     return { ok: false, error: 'Cart is empty' };
   }
@@ -96,9 +106,10 @@ export async function placeCheckoutOrder(input: CheckoutSubmitInput): Promise<Ch
       create: {
         email: input.email,
         name: `${input.firstName} ${input.lastName}`,
+        phone,
         firstSource: 'checkout',
       },
-      select: { id: true },
+      select: { id: true, phone: true },
     });
 
     const result = await createOrder({
@@ -111,6 +122,7 @@ export async function placeCheckoutOrder(input: CheckoutSubmitInput): Promise<Ch
         city: input.shipping.city,
         postcode: input.shipping.postcode,
         country: input.country,
+        phone,
       },
       shippingCost: rate.price,
       shippingMethod: rate.name,
@@ -129,6 +141,22 @@ export async function placeCheckoutOrder(input: CheckoutSubmitInput): Promise<Ch
 
     if (!result.ok) {
       return result;
+    }
+
+    /*
+      Give the contact this number only if it has none. A number staff typed in, or one from an
+      earlier order, is left as it is: the order keeps its own copy (shipPhone) either way. The
+      condition is in the WHERE, so a number saved in the meantime is not overwritten either.
+    */
+    if (!contact.phone?.trim()) {
+      await prisma.contact
+        .updateMany({
+          where: { id: contact.id, OR: [{ phone: null }, { phone: '' }] },
+          data: { phone },
+        })
+        .catch(() => {
+          /* The order carries the number; a contact detail that did not save must not undo it. */
+        });
     }
 
     /* The basket this browser saved (lib/basket) became an order: never remind about it. */

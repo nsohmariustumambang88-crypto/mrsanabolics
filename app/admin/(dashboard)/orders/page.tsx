@@ -57,6 +57,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
     where.OR = [
       { reference: { contains: q, mode: 'insensitive' } },
       { shipName: { contains: q, mode: 'insensitive' } },
+      { shipPhone: { contains: q } },
       { contact: { email: { contains: q, mode: 'insensitive' } } },
       { contact: { name: { contains: q, mode: 'insensitive' } } },
     ];

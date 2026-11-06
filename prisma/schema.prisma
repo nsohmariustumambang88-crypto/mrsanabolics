@@ -551,6 +551,10 @@ model Order {
   shipCity     String
   shipPostcode String
   shipCountry  String
+  /// A number the carrier can call about this parcel, captured the same way as the address.
+  /// Nullable because orders placed before checkout asked for one have none, and an order staff
+  /// record by hand may not have one either. Contact.phone is filled from it only when empty.
+  shipPhone    String?
 
   /// Stored, never recomputed from the catalogue. A price change must not restate the value of
   /// an order somebody already placed.

@@ -11,6 +11,7 @@ import {
   STATUS_LABEL,
   type CreateOrderInput,
 } from '@/lib/orders/orders';
+import { checkPhone } from '@/lib/checkout/phone';
 
 /*
   Order mutations.
@@ -99,6 +100,15 @@ export async function createOrderAction(form: FormData): Promise<CreateOrderForm
     return { ok: false, error: 'Shipping must be a number with up to two decimal places.' };
   }
 
+  /* Optional here (an order taken by email may come without one), but checked if given. */
+  const phoneRaw = text('shipPhone');
+  let shipPhone: string | null = null;
+  if (phoneRaw) {
+    const phoneCheck = checkPhone(phoneRaw);
+    if (!phoneCheck.ok) return { ok: false, error: phoneCheck.error };
+    shipPhone = phoneCheck.phone;
+  }
+
   const input: CreateOrderInput = {
     contactId,
     lines,
@@ -109,6 +119,7 @@ export async function createOrderAction(form: FormData): Promise<CreateOrderForm
       city: text('shipCity')!,
       postcode: text('shipPostcode')!,
       country: text('shipCountry')!,
+      phone: shipPhone,
     },
     shippingCost: shippingRaw ? Number(shippingRaw) : 0,
     shippingMethod: text('shippingMethod'),

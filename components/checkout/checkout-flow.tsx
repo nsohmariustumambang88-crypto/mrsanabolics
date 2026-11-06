@@ -34,6 +34,7 @@ import { CONSENT } from '@/lib/marketing/consent';
 import { cn } from '@/lib/utils';
 import type { AdvertisedDiscount, CartItem } from '@/lib/types';
 import { MINIMUM_ORDER } from '@/lib/orders/minimum';
+import { checkPhone, PHONE_PLACEHOLDER } from '@/lib/checkout/phone';
 import { submitCheckout, type CheckoutSubmitInput } from '@/app/checkout/checkout-actions';
 
 /*
@@ -88,6 +89,17 @@ export function CheckoutFlow({
   const [shippingAddr2, setShippingAddr2] = React.useState('');
   const [shippingCity, setShippingCity] = React.useState('');
   const [shippingPost, setShippingPost] = React.useState('');
+
+  /*
+    The delivery phone. Required, checked with the same rule the server applies (lib/checkout/
+    phone). The error waits until the field is left or Continue is pressed, so nobody is told
+    their number is wrong while they are still typing it.
+  */
+  const [phone, setPhone] = React.useState('');
+  const [phoneTouched, setPhoneTouched] = React.useState(false);
+  const phoneRef = React.useRef<HTMLInputElement>(null);
+  const phoneCheck = checkPhone(phone);
+  const phoneError = phoneTouched && !phoneCheck.ok ? phoneCheck.error : '';
 
   /*
     Abandoned-cart capture.
@@ -183,6 +195,12 @@ export function CheckoutFlow({
   }, [promoTicked, promo, discount.code, discount.checking]);
 
   const next = () => {
+    /* The courier needs a number; do not move on without one that could be real. */
+    if (step === 0 && !phoneCheck.ok) {
+      setPhoneTouched(true);
+      phoneRef.current?.focus();
+      return;
+    }
     /*
       Record the sign-up on the way out of the shipping step, not on the confirmation screen.
       Someone who abandons at payment is exactly the person a recovery email is for, and by
@@ -198,6 +216,7 @@ export function CheckoutFlow({
     email: marketing.email,
     firstName,
     lastName,
+    phone,
     country,
     cart: cart.map((item) => ({
       productId: item.productId,
@@ -481,6 +500,40 @@ export function CheckoutFlow({
                     onChange={setShippingPost}
                   />
                 </Row>
+                <div>
+                  <label htmlFor="checkout-phone" className="block text-sm font-medium">
+                    Phone number
+                  </label>
+                  <input
+                    ref={phoneRef}
+                    id="checkout-phone"
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    required
+                    aria-invalid={phoneError ? true : undefined}
+                    aria-describedby={phoneError ? 'checkout-phone-hint checkout-phone-error' : 'checkout-phone-hint'}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    onBlur={() => {
+                      if (phone.trim()) setPhoneTouched(true);
+                    }}
+                    placeholder={PHONE_PLACEHOLDER}
+                    className={cn(
+                      'mt-2 w-full border-b bg-transparent py-2.5 text-sm outline-none placeholder:text-ink-faint focus:border-pigment-indigo',
+                      phoneError ? 'border-destructive' : 'border-rule-strong'
+                    )}
+                  />
+                  <p id="checkout-phone-hint" className="mt-1.5 text-xs text-ink-faint">
+                    For the courier, if they need to reach you about the delivery. Include the
+                    country code.
+                  </p>
+                  {phoneError && (
+                    <p id="checkout-phone-error" role="alert" className="mt-1.5 text-xs text-destructive">
+                      {phoneError}
+                    </p>
+                  )}
+                </div>
                 <div>
                   <label htmlFor="country" className="block text-sm font-medium">
                     Country

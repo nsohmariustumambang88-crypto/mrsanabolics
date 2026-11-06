@@ -103,6 +103,8 @@ export type CreateOrderInput = {
     city: string;
     postcode: string;
     country: string;
+    /** For the courier. Snapshotted with the address; the checkout requires it, staff may not have one. */
+    phone?: string | null;
   };
   shippingCost?: number;
   /** The delivery option chosen, by name. Snapshotted like the line prices. */
@@ -239,6 +241,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       shipCity: input.shipping.city,
       shipPostcode: input.shipping.postcode,
       shipCountry: input.shipping.country,
+      shipPhone: input.shipping.phone ?? null,
       subtotal: subtotal.toFixed(2),
       shipping: shippingCost.toFixed(2),
       shippingMethod: input.shippingMethod ?? null,
