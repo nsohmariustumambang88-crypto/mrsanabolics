@@ -47,5 +47,8 @@ project-tree.txt
 # ...but the tracked template must stay tracked: it holds no real values.
 !.env.example
 
+# env files made for importing into Vercel (real secrets; this repo is public)
+*.env
+
 # local database backups (contain personal data)
 /backups/

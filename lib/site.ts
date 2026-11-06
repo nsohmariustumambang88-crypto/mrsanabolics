@@ -11,12 +11,23 @@
   In order: NEXT_PUBLIC_SITE_URL when the owner sets it (do this once a custom domain exists);
   otherwise the production domain Vercel exposes to every build; otherwise local development.
   NEXT_PUBLIC_ so the value is identical in server and client code.
+
+  The bare domain is never the answer, whichever source names it. It answers every request with
+  a 308 to www, so a canonical link to it points at a redirect, and NOWPayments, which does not
+  follow redirects, never delivers a payment notification sent there. Both sources do name it:
+  VERCEL_PROJECT_PRODUCTION_URL is the SHORTEST custom domain, and on 6 November 2026 the project
+  moved to another Vercel account with NEXT_PUBLIC_SITE_URL set to the bare domain, which turned
+  every canonical on the site into mrsanabolics.com within the hour.
 */
+function preferWww(url: string): string {
+  return url.replace(/^https?:\/\/mrsanabolics\.com(?=[/:?#]|$)/i, 'https://www.mrsanabolics.com');
+}
+
 function siteUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (explicit) return explicit.replace(/\/+$/, '');
+  if (explicit) return preferWww(explicit.replace(/\/+$/, ''));
   const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
-  if (vercel) return `https://${vercel.replace(/\/+$/, '')}`;
+  if (vercel) return preferWww(`https://${vercel.replace(/\/+$/, '')}`);
   return 'http://localhost:3000';
 }
 

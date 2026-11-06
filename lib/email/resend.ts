@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { SITE } from '@/lib/site';
 import {
   renderOrderConfirmationHTML,
   renderAdminNotificationHTML,
@@ -68,7 +69,7 @@ export async function sendNewsletterCampaign(
   unsubscribeToken: string
 ) {
   const resend = getResend();
-  const unsubscribeLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://mrsanabolics.com'}/unsubscribe?token=${unsubscribeToken}`;
+  const unsubscribeLink = `${SITE.url}/unsubscribe?token=${unsubscribeToken}`;
 
   const recipients = Array.isArray(to) ? to : [to];
 
@@ -209,7 +210,7 @@ export async function sendCustomerNotification(to: string, subject: string, mess
 
 export async function sendWelcomeEmail1(to: string, unsubscribeToken: string) {
   const resend = getResend();
-  const unsubscribeLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://mrsanabolics.com'}/unsubscribe?token=${unsubscribeToken}`;
+  const unsubscribeLink = `${SITE.url}/unsubscribe?token=${unsubscribeToken}`;
 
   return resend.emails.send({
     from: FROM_EMAIL,
@@ -222,7 +223,7 @@ export async function sendWelcomeEmail1(to: string, unsubscribeToken: string) {
 
 export async function sendWelcomeEmail2(to: string, unsubscribeToken: string) {
   const resend = getResend();
-  const unsubscribeLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://mrsanabolics.com'}/unsubscribe?token=${unsubscribeToken}`;
+  const unsubscribeLink = `${SITE.url}/unsubscribe?token=${unsubscribeToken}`;
 
   return resend.emails.send({
     from: FROM_EMAIL,
@@ -235,7 +236,7 @@ export async function sendWelcomeEmail2(to: string, unsubscribeToken: string) {
 
 export async function sendWelcomeEmail3(to: string, unsubscribeToken: string) {
   const resend = getResend();
-  const unsubscribeLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://mrsanabolics.com'}/unsubscribe?token=${unsubscribeToken}`;
+  const unsubscribeLink = `${SITE.url}/unsubscribe?token=${unsubscribeToken}`;
 
   return resend.emails.send({
     from: FROM_EMAIL,

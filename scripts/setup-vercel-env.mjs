@@ -7,7 +7,8 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const SITE_URL = 'https://mrsanabolics.com';
+// www, never the bare domain: the bare one redirects, and NOWPayments does not follow redirects.
+const SITE_URL = 'https://www.mrsanabolics.com';
 
 function run(cmd) {
   try {
