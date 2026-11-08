@@ -56,6 +56,7 @@ export default async function AdminEnquiriesPage({ searchParams }: { searchParam
   if (q) {
     where.OR = [
       { email: { contains: q, mode: 'insensitive' } },
+      { phone: { contains: q } },
       { name: { contains: q, mode: 'insensitive' } },
       { message: { contains: q, mode: 'insensitive' } },
       { subject: { contains: q, mode: 'insensitive' } },
@@ -76,6 +77,7 @@ export default async function AdminEnquiriesPage({ searchParams }: { searchParam
     id: e.id,
     name: e.name,
     email: e.email,
+    phone: e.phone,
     subject: e.subject,
     message: e.message,
     status: e.status,
@@ -146,7 +148,7 @@ export default async function AdminEnquiriesPage({ searchParams }: { searchParam
             id="enquiry-search"
             name="q"
             defaultValue={searchParams.q ?? ''}
-            placeholder="Name, address or words"
+            placeholder="Name, address, phone or words"
             className="wp-input wp-input-search"
           />
           <button type="submit" className="wp-button">

@@ -1,5 +1,5 @@
 /*
-  The delivery phone number: one rule, read by the checkout form and by the server.
+  The phone number rule, read by the checkout form, the contact form, and the server behind each.
 
   A plain module, not server-only, for the same reason as lib/orders/minimum.ts: the browser
   checks it so the shopper hears about a typo before Continue, and the server checks it again
@@ -21,11 +21,15 @@ const PHONE_MAX_LENGTH = 32;
 
 export type PhoneCheck = { ok: true; phone: string } | { ok: false; error: string };
 
-export function checkPhone(raw: unknown): PhoneCheck {
+/* `missing` is the sentence for an empty field, because why the number is needed depends on the form. */
+export function checkPhone(
+  raw: unknown,
+  missing = 'Enter a phone number so the courier can reach you about the delivery.'
+): PhoneCheck {
   const phone = typeof raw === 'string' ? raw.trim().replace(/\s+/g, ' ') : '';
 
   if (!phone) {
-    return { ok: false, error: 'Enter a phone number so the courier can reach you about the delivery.' };
+    return { ok: false, error: missing };
   }
   if (phone.length > PHONE_MAX_LENGTH || !/^\+?[0-9 ()-]+$/.test(phone)) {
     return {

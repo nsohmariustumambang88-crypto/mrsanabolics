@@ -4,7 +4,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Mail, MessageSquare, Clock, Check, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ENQUIRY_SUBJECTS, MIN_MESSAGE_LENGTH } from '@/lib/crm/subjects';
+import { ENQUIRY_PHONE_MISSING, ENQUIRY_SUBJECTS, MIN_MESSAGE_LENGTH } from '@/lib/crm/subjects';
+import { checkPhone, PHONE_PLACEHOLDER } from '@/lib/checkout/phone';
 import { useSiteSettings } from '@/components/providers/settings-provider';
 
 /*
@@ -52,15 +53,12 @@ const channelsFor = (supportEmail: string, supportPhone: string) => [
   },
 ];
 
-type Errors = Partial<Record<'name' | 'email' | 'message', string>>;
+type Errors = Partial<Record<'name' | 'email' | 'phone' | 'message', string>>;
+
+const EMPTY = { name: '', email: '', phone: '', subject: SUBJECTS[0] as string, message: '' };
 
 export default function ContactPage() {
-  const [values, setValues] = React.useState({
-    name: '',
-    email: '',
-    subject: SUBJECTS[0],
-    message: '',
-  });
+  const [values, setValues] = React.useState(EMPTY);
   const { supportEmail, supportPhone } = useSiteSettings();
   const channels = React.useMemo(
     () => channelsFor(supportEmail, supportPhone),
@@ -83,6 +81,9 @@ export default function ContactPage() {
     if (!values.name.trim()) next.name = 'Tell us who to reply to.';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email))
       next.email = 'That address is missing an @ or a domain.';
+    /* The same rule the server applies (lib/checkout/phone.ts), so the two never disagree. */
+    const phone = checkPhone(values.phone, ENQUIRY_PHONE_MISSING);
+    if (!phone.ok) next.phone = phone.error;
     if (values.message.trim().length < MIN_MESSAGE_LENGTH)
       next.message = 'A little more detail helps us answer in one reply.';
 
@@ -162,7 +163,7 @@ export default function ContactPage() {
                     onClick={() => {
                       setSent(false);
                       setFailure(null);
-                      setValues({ name: '', email: '', subject: SUBJECTS[0], message: '' });
+                      setValues(EMPTY);
                     }}
                     className="mt-6 text-sm text-pigment-indigo underline underline-offset-4"
                   >
@@ -179,6 +180,7 @@ export default function ContactPage() {
                       onChange={set('name')}
                       error={errors.name}
                       placeholder="Alex Rivera"
+                      autoComplete="name"
                     />
                     <Field
                       id="email"
@@ -188,25 +190,39 @@ export default function ContactPage() {
                       onChange={set('email')}
                       error={errors.email}
                       placeholder="you@domain.com"
+                      autoComplete="email"
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="subject" className="block text-sm font-medium">
-                      What is this about
-                    </label>
-                    <select
-                      id="subject"
-                      value={values.subject}
-                      onChange={set('subject')}
-                      className="mt-2 w-full border-b border-rule-strong bg-transparent py-2.5 text-sm outline-none focus:border-pigment-indigo"
-                    >
-                      {SUBJECTS.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <Field
+                      id="phone"
+                      label="Phone number"
+                      type="tel"
+                      value={values.phone}
+                      onChange={set('phone')}
+                      error={errors.phone}
+                      placeholder={PHONE_PLACEHOLDER}
+                      autoComplete="tel"
+                      hint="Include the country code."
+                    />
+                    <div>
+                      <label htmlFor="subject" className="block text-sm font-medium">
+                        What is this about
+                      </label>
+                      <select
+                        id="subject"
+                        value={values.subject}
+                        onChange={set('subject')}
+                        className="mt-2 w-full border-b border-rule-strong bg-transparent py-2.5 text-sm outline-none focus:border-pigment-indigo"
+                      >
+                        {SUBJECTS.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
                   <div>
@@ -299,6 +315,8 @@ function Field({
   onChange,
   error,
   placeholder,
+  autoComplete,
+  hint,
 }: {
   id: string;
   label: string;
@@ -307,7 +325,10 @@ function Field({
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
   placeholder?: string;
+  autoComplete?: string;
+  hint?: string;
 }) {
+  const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(' ');
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium">
@@ -319,13 +340,19 @@ function Field({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        autoComplete={autoComplete}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-error` : undefined}
+        aria-describedby={describedBy || undefined}
         className={cn(
           'mt-2 w-full border-b border-rule-strong bg-transparent py-2.5 text-sm outline-none placeholder:text-ink-faint focus:border-pigment-indigo',
           error && 'border-destructive'
         )}
       />
+      {hint && (
+        <p id={`${id}-hint`} className="mt-1.5 text-xs text-ink-faint">
+          {hint}
+        </p>
+      )}
       {error && (
         <p id={`${id}-error`} className="mt-2 text-xs text-destructive">
           {error}

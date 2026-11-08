@@ -919,6 +919,11 @@ is how timelines end up saying "status changed" and nothing else.
   a bot it was caught is telling it how to pass.
 - It never reveals whether an address is already known, for the same membership-oracle reason
   `/api/subscribe` does not.
+- **A phone number is required** (since 8 November 2026), checked in the form and again in the
+  route by the checkout's rule, `checkPhone` in [lib/checkout/phone.ts](lib/checkout/phone.ts).
+  It is kept on `Enquiry.phone`, as typed, and copied to `Contact.phone` only when the contact has
+  none. Messages from before then have no phone. `/admin/enquiries` shows it as a tap-to-call
+  link and its search matches it.
 
 `handledAt` is stamped once, when an enquiry first leaves the open states, and reopening never
 clears it — how long somebody waited for an answer is a fact.

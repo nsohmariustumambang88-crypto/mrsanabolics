@@ -8,7 +8,8 @@ import { PrismaClient } from '@prisma/client';
   who uses it to a mailing list. That is the mistake that costs a sending domain its reputation
   and breaks GDPR/PECR at the same time, so it is asserted directly rather than assumed.
 
-  Also asserted: the refusals (unknown subject, too-short message, bad address), the honeypot
+  Also asserted: the refusals (unknown subject, too-short message, bad address, missing or
+  malformed phone number), the honeypot
   answering exactly like a success, and the rate limiter.
 
   Cleans up after itself — every row it creates is removed at the end.
@@ -42,6 +43,7 @@ const post = (body, ip) =>
 const valid = (over = {}) => ({
   name: 'Probe Person',
   email: EMAIL,
+  phone: '+1 555 123 4567',
   subject: 'A batch certificate',
   message: 'This is a probe message long enough to pass the minimum length rule.',
   path: '/contact',
@@ -72,6 +74,12 @@ try {
 
   const noName = await post(valid({ name: '   ' }));
   ok('missing name is refused', noName.status === 400, `got ${noName.status}`);
+
+  const noPhone = await post(valid({ phone: '' }));
+  ok('missing phone number is refused', noPhone.status === 400, `got ${noPhone.status}`);
+
+  const badPhone = await post(valid({ phone: 'call me maybe' }));
+  ok('phone number with letters is refused', badPhone.status === 400, `got ${badPhone.status}`);
 
   /* ------------------------------------------------------------- the honeypot */
 

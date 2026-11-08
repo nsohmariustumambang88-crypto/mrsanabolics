@@ -3,7 +3,9 @@ import 'server-only';
 import { prisma } from '@/lib/prisma';
 import { looksLikeEmail, normaliseEmail } from '@/lib/marketing/consent';
 import { hashIp } from '@/lib/ip-hash';
+import { checkPhone } from '@/lib/checkout/phone';
 import {
+  ENQUIRY_PHONE_MISSING,
   MAX_MESSAGE_LENGTH,
   MAX_NAME_LENGTH,
   MIN_MESSAGE_LENGTH,
@@ -25,6 +27,7 @@ import {
 export type EnquiryInput = {
   name: string;
   email: string;
+  phone: string;
   subject: string;
   message: string;
   path?: string | null;
@@ -46,6 +49,12 @@ export async function submitEnquiry(input: EnquiryInput): Promise<EnquiryResult>
   if (!looksLikeEmail(email)) {
     return { ok: false, error: 'That address is missing an @ or a domain.' };
   }
+
+  const phoneCheck = checkPhone(input.phone, ENQUIRY_PHONE_MISSING);
+  if (!phoneCheck.ok) {
+    return { ok: false, error: phoneCheck.error };
+  }
+  const phone = phoneCheck.phone;
 
   if (!isEnquirySubject(subject)) {
     return { ok: false, error: 'Pick one of the listed subjects.' };
@@ -70,12 +79,13 @@ export async function submitEnquiry(input: EnquiryInput): Promise<EnquiryResult>
   */
   const existing = await prisma.contact.findUnique({
     where: { email },
-    select: { id: true, name: true },
+    select: { id: true, name: true, phone: true },
   });
 
   const enquiry = {
     name,
     email,
+    phone,
     subject,
     message,
     path: input.path ?? null,
@@ -93,6 +103,7 @@ export async function submitEnquiry(input: EnquiryInput): Promise<EnquiryResult>
       data: {
         email,
         name,
+        phone,
         firstSource: 'contact form',
         enquiries: { create: enquiry },
         activities: {
@@ -110,8 +121,9 @@ export async function submitEnquiry(input: EnquiryInput): Promise<EnquiryResult>
   await prisma.contact.update({
     where: { id: existing.id },
     data: {
-      /* Fill a missing name, never blank one someone already gave. */
+      /* Fill a missing name or phone, never replace one already on the record. */
       ...(existing.name ? {} : { name }),
+      ...(existing.phone?.trim() ? {} : { phone }),
       lastActivityAt: new Date(),
       enquiries: { create: enquiry },
       activities: { create: received },

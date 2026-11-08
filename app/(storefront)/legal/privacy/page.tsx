@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { LegalPage } from '@/components/legal/legal-page';
 import { getSettingsSafe } from '@/lib/settings';
 
-/* The policy text is the original, plus the phone number checkout asks for (November 2026); the frame around it, the metadata and the contact address are new. */
+/* The policy text is the original, plus the phone number checkout and the contact form ask for (November 2026); the frame around it, the metadata and the contact address are new. */
 
 export const revalidate = 3600;
 
@@ -28,12 +28,12 @@ export default async function PrivacyPage() {
       description={DESCRIPTION}
       heading="Privacy Policy"
       intro="This policy explains what personal information we collect when you shop or get in touch, what we use it for, how it is protected, and how to access, correct or delete it."
-      updated="2026-11-06"
+      updated="2026-11-08"
     >
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold text-ink">1. Information We Collect</h2>
         <p className="text-sm leading-relaxed text-ink-soft">
-          We collect information you provide directly to us when you create an account, make a purchase, or contact us. This includes your name, email address, shipping address, phone number, and payment information. We ask for a phone number at checkout so the courier can reach you about your delivery.
+          We collect information you provide directly to us when you create an account, make a purchase, or contact us. This includes your name, email address, shipping address, phone number, and payment information. We ask for a phone number at checkout so the courier can reach you about your delivery, and on the contact form so we can reach you about your message.
         </p>
       </section>
 

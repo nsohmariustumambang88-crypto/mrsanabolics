@@ -431,6 +431,9 @@ model Enquiry {
   /// later; this preserves what the message itself actually said.
   name    String
   email   String
+  /// As typed on the contact form (required since November 2026; older messages have none).
+  /// Contact.phone is filled from it only when the contact has none.
+  phone   String?
   subject String
   message String @db.Text
 

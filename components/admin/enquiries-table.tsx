@@ -28,6 +28,8 @@ export type EnquiryRow = {
   id: string;
   name: string;
   email: string;
+  /** Messages sent before the form asked for a phone number have none. */
+  phone: string | null;
   subject: string;
   message: string;
   status: EnquiryStatus;
@@ -206,6 +208,11 @@ export function EnquiriesTable({ rows, emptyHint }: { rows: EnquiryRow[]; emptyH
                     <Link href={`/admin/contacts/${row.contactId}`}>{row.name}</Link>
                   </strong>
                   <div className="wp-muted text-[12px]">{row.email}</div>
+                  {row.phone && (
+                    <div className="text-[12px]">
+                      <a href={`tel:${row.phone.replace(/[^\d+]/g, '')}`}>{row.phone}</a>
+                    </div>
+                  )}
                   <div className="row-actions">
                     <span>
                       <a

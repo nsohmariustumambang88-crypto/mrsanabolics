@@ -54,6 +54,7 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as {
     name?: string;
     email?: string;
+    phone?: string;
     subject?: string;
     message?: string;
     path?: string;
@@ -77,6 +78,7 @@ export async function POST(request: Request) {
   const result = await submitEnquiry({
     name: body.name ?? '',
     email: body.email ?? '',
+    phone: body.phone ?? '',
     subject: body.subject ?? '',
     message: body.message ?? '',
     path: body.path ?? null,

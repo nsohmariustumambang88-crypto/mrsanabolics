@@ -24,3 +24,9 @@ export function isEnquirySubject(value: string): value is EnquirySubject {
 export const MIN_MESSAGE_LENGTH = 10;
 export const MAX_MESSAGE_LENGTH = 5000;
 export const MAX_NAME_LENGTH = 120;
+
+/*
+  The phone number is required, checked by lib/checkout/phone.ts (the checkout's rule). This is
+  only the sentence for an empty field, since the checkout's speaks of the courier.
+*/
+export const ENQUIRY_PHONE_MISSING = 'Enter a phone number so we can reach you about your message.';
