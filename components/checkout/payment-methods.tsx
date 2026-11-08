@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Bitcoin, Lock, Info, Landmark } from 'lucide-react';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { CashtagRow } from '@/components/checkout/cash-app-payment';
 
 /*
   Three payment methods: Zelle, CashApp, and Crypto (BTC/USDT).
@@ -21,11 +22,14 @@ export type PaymentMethodOption = {
   key: string;
   label: string;
   notice: string;
+  /** Cash App: the $Cashtag customers send to. */
   walletAddress?: string | null;
+  /** Cash App: the name the account shows in the app. */
+  accountName?: string | null;
 };
 
 const PRESENTATION: Record<string, { hint: string; icon: typeof Landmark }> = {
-  cashapp: { hint: 'Pay with CashApp', icon: Landmark },
+  cashapp: { hint: 'Send to our $Cashtag', icon: Landmark },
   bank_transfer: { hint: 'Bank transfer', icon: Landmark },
   crypto: { hint: 'Bitcoin or Ethereum', icon: Bitcoin },
 };
@@ -60,7 +64,8 @@ export function PaymentMethods({
 }) {
 
   /* The notice for whichever method is showing, so each panel states its own position. */
-  const notice = methods.find((m) => m.key === method)?.notice ?? '';
+  const current = methods.find((m) => m.key === method);
+  const notice = current?.notice ?? '';
 
   return (
     <div>
@@ -106,7 +111,14 @@ export function PaymentMethods({
       </fieldset>
 
       <div className="mt-6">
-        {method === 'cashapp' && <CashAppPanel notice={notice} />}
+        {method === 'cashapp' && (
+          <CashAppPanel
+            notice={notice}
+            total={total}
+            tag={current?.walletAddress?.trim() || null}
+            name={current?.accountName?.trim() || null}
+          />
+        )}
         {method === 'bank_transfer' && <BankTransferPanel notice={notice} />}
         {method === 'crypto' && (
           <CryptoPanel total={total} notice={notice} onPay={onCryptoPay} />
@@ -132,11 +144,54 @@ function BankTransferPanel({ notice }: { notice: string }) {
 
 /* ---------------------------------------------------------------- cashapp */
 
-function CashAppPanel({ notice }: { notice: string }) {
+/*
+  The $Cashtag is shown here, before the order exists, so the customer knows where the money goes
+  before committing. Paying waits for the next screen: that is where the order number for the
+  note is, and the box for the screenshot (components/checkout/cash-app-payment.tsx).
+*/
+function CashAppPanel({
+  notice,
+  total,
+  tag,
+  name,
+}: {
+  notice: string;
+  total: number;
+  tag: string | null;
+  name: string | null;
+}) {
+  if (!tag) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm leading-relaxed text-ink-soft">
+          Send payment directly through Cash App. Payment details will be provided via email.
+        </p>
+        <NotConnected>{notice}</NotConnected>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
+      <div className="border border-rule bg-paper-sunk p-4">
+        <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
+          Our Cash App
+        </p>
+        <CashtagRow tag={tag} />
+        {name && (
+          <p className="mt-2 text-xs leading-relaxed text-ink-soft">
+            The account shows as <strong className="font-medium text-ink">{name}</strong> in Cash App.
+          </p>
+        )}
+        <p className="mt-4 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
+          Amount
+        </p>
+        <p className="mt-1 font-display text-2xl font-semibold tabular">{formatPrice(total)}</p>
+      </div>
+
       <p className="text-sm leading-relaxed text-ink-soft">
-        Send payment directly through CashApp. Payment details will be provided via email.
+        Place your order first. The next screen gives you your order number to write in the
+        Cash App note, and a box to upload a screenshot of the payment once you have sent it.
       </p>
 
       <NotConnected>{notice}</NotConnected>

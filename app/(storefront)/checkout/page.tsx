@@ -42,7 +42,13 @@ export default async function CheckoutPage() {
     .catch(() => []);
 
   const paymentMethods = methods.length
-    ? methods.map((m) => ({ key: m.key, label: m.label, notice: m.notice, walletAddress: m.walletAddress }))
+    ? methods.map((m) => ({
+        key: m.key,
+        label: m.label,
+        notice: m.notice,
+        walletAddress: m.walletAddress,
+        accountName: m.accountName,
+      }))
     : [
         {
           key: 'card',

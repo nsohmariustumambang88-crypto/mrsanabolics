@@ -130,11 +130,13 @@ export type CreateOrderInput = {
   payment?: {
     label: string;
     payLink?: (reference: string) => string | null;
+    /** Cash App: where to send the money, for the email's instructions. */
+    cashApp?: { tag: string; name: string | null } | null;
   };
 };
 
 export type CreateOrderResult =
-  | { ok: true; id: string; reference: string }
+  | { ok: true; id: string; reference: string; total: number }
   | { ok: false; error: string };
 
 export { MINIMUM_ORDER };
@@ -315,7 +317,11 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     },
     false,
     input.payment
-      ? { label: input.payment.label, payLink: input.payment.payLink?.(reference) ?? null }
+      ? {
+          label: input.payment.label,
+          payLink: input.payment.payLink?.(reference) ?? null,
+          cashApp: input.payment.cashApp ?? null,
+        }
       : undefined
   ).catch(() => {
     /* Order is already created; email failure must not undo it */
@@ -335,7 +341,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     /* Admin notification failure doesn't affect the customer */
   });
 
-  return { ok: true, id: created.id, reference: created.reference };
+  return { ok: true, id: created.id, reference: created.reference, total };
 }
 
 /*

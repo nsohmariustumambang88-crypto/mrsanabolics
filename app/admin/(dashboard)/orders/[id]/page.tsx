@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { formatPrice } from '@/lib/format';
 import { WpPostbox, WpStaticNotice } from '@/components/admin/wp-ui';
+import { paymentMethodFromNotes } from '@/lib/checkout/order-notes';
+import { signedImageUrl, uploadsConfigured } from '@/lib/cloudinary-server';
 import {
   DeleteOrder,
   OrderNoteForm,
@@ -33,10 +35,25 @@ export default async function AdminOrderPage({ params }: { params: { id: string 
       contact: { select: { id: true, name: true, email: true, phone: true } },
       items: { orderBy: { createdAt: 'asc' } },
       events: { orderBy: { occurredAt: 'desc' }, take: 200 },
+      paymentProofs: { orderBy: { createdAt: 'asc' } },
     },
   });
 
   if (!order) notFound();
+
+  /*
+    Cash App screenshots. The images are authenticated Cloudinary assets: these signed URLs are
+    the only way to open them, and they are built here, behind requireAdmin().
+  */
+  const isCashApp = paymentMethodFromNotes(order.notes) === 'cashapp';
+  const proofs = uploadsConfigured
+    ? order.paymentProofs.map((proof) => ({
+        id: proof.id,
+        at: proof.createdAt,
+        thumb: signedImageUrl(proof.publicId, 480),
+        full: signedImageUrl(proof.publicId, 1600),
+      }))
+    : [];
 
   return (
     <>
@@ -67,6 +84,49 @@ export default async function AdminOrderPage({ params }: { params: { id: string 
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <div className="grid gap-4">
+          {(isCashApp || order.paymentProofs.length > 0) && (
+            <WpPostbox title={`Cash App payment screenshots (${order.paymentProofs.length})`}>
+              {order.paymentProofs.length === 0 ? (
+                <p className="wp-muted m-0 text-[13px]">
+                  The customer has not uploaded a screenshot yet. They can from the payment screen
+                  after checkout, or from the link in their &ldquo;Order Received&rdquo; email.
+                </p>
+              ) : (
+                <>
+                  <p className="m-0 text-[13px]">
+                    A screenshot is the customer&rsquo;s claim, not proof of payment. Check that{' '}
+                    <strong>{formatPrice(Number(order.total))}</strong> with{' '}
+                    <strong>{order.reference}</strong> in the note reached the Cash App account,
+                    then set the order to <strong>Confirmed</strong>.
+                  </p>
+                  {proofs.length === 0 ? (
+                    <p className="wp-muted m-0 mt-2 text-[12px]">
+                      Cloudinary is not configured on this server, so the images cannot be shown.
+                    </p>
+                  ) : (
+                    <ul className="m-0 mt-3 flex list-none flex-wrap gap-3 p-0">
+                      {proofs.map((proof, i) => (
+                        <li key={proof.id} className="m-0">
+                          <a href={proof.full} target="_blank" rel="noopener noreferrer">
+                            {/* eslint-disable-next-line @next/next/no-img-element -- a signed Cloudinary URL, already sized */}
+                            <img
+                              src={proof.thumb}
+                              alt={`Payment screenshot ${i + 1} for ${order.reference}`}
+                              className="block max-h-64 w-auto border border-[#c3c4c7]"
+                            />
+                          </a>
+                          <span className="wp-muted wp-num mt-1 block text-[11px]">
+                            {stamp(proof.at)} · open full size
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </WpPostbox>
+          )}
+
           <WpPostbox title={`Items (${order.items.length})`}>
             <div className="overflow-x-auto">
               <table className="wp-list-table min-w-[34rem]">

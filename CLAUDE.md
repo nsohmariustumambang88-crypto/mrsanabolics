@@ -613,8 +613,30 @@ and refuses a method the zone does not offer, re-evaluates the code, and stores 
 - **There is no tax line.** The 8% placeholder was removed.
 - **Methods** come from the PaymentMethod table, ordered crypto (0), bank transfer (1), Cash App
   (2); checkout preselects the first listed.
-- **Bank transfer and Cash App are manual.** The order is recorded and staff email the payment
-  details; nothing is collected online.
+- **Bank transfer is manual.** The order is recorded and staff email the payment details;
+  nothing is collected online.
+- **Cash App is paid to a $Cashtag, with a screenshot as evidence** (owner's direction,
+  8 November 2026). The tag and the name the account shows are the `cashapp` row's
+  `walletAddress`/`accountName`, set in the database — deliberately not editable in the admin.
+  Checkout's Cash App panel shows the tag (Copy button) and the amount; after **Place order** the
+  "Order placed" screen shows the tag, the exact total and the reference for the "For" note, and
+  an upload box ([cash-app-payment.tsx](components/checkout/cash-app-payment.tsx)). The "Order
+  Received" email carries the same instructions and a link to
+  `/checkout/payment-confirmation?order=<ref>&t=<token>`, where the box appears again.
+  - The token is an HMAC of the reference with `AUTH_SECRET` ([lib/checkout/cashapp.ts](lib/checkout/cashapp.ts)),
+    stored nowhere; the reference alone cannot upload. Rotating `AUTH_SECRET` breaks every
+    outstanding upload link (and signs everyone out).
+  - [app/api/orders/[reference]/payment-proof/route.ts](app/api/orders/[reference]/payment-proof/route.ts)
+    takes images only (≤ 4 MB — Vercel refuses bodies over 4.5 MB, so the browser shrinks bigger
+    ones to a 2000px JPEG), Cash App orders only, at most 5 per order, rate limited per IP. It
+    uploads to Cloudinary as an **authenticated** asset under `mranabolics/payment-proofs/`, which
+    has no public URL: only `signedImageUrl()` opens it, and only the admin order screen builds
+    one. It writes a `PaymentProof` row (its own table, so `orders` still has no payment column)
+    and an order event, and emails `ADMIN_EMAIL` "Cash App screenshot - <ref>".
+  - Nothing marks the order paid. The admin order screen shows the screenshots first, with the
+    sentence that a screenshot is the customer's claim; staff check Cash App and set Confirmed.
+    The orders list marks rows that have one. With no tag on the row, Cash App falls back to the
+    old "details by email" behaviour.
 
 **Crypto is connected through NOWPayments** (BTC and ETH only — USDT was removed because a coin on
 the wrong network is lost). The flow:

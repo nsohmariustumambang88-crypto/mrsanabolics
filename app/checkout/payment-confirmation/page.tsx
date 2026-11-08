@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { PaymentConfirmationClient } from '@/components/checkout/payment-confirmation-client';
 import { PaymentHelp } from '@/components/checkout/payment-help';
+import { CashAppPayment } from '@/components/checkout/cash-app-payment';
+import { cashAppDetails, proofTokenMatches } from '@/lib/checkout/cashapp';
 import {
   PAYMENT_METHOD_LABEL,
   parseCryptoNote,
@@ -20,14 +22,20 @@ async function getOrderDetails(orderReference: string) {
   /* Only what the page shows. The contact's name, email and address never reach the browser. */
   return prisma.order.findUnique({
     where: { reference: orderReference },
-    select: { status: true, total: true, notes: true },
+    select: {
+      status: true,
+      total: true,
+      notes: true,
+      _count: { select: { paymentProofs: true } },
+    },
   });
 }
 
 export default async function PaymentConfirmationPage({
   searchParams,
 }: {
-  searchParams: { order?: string };
+  /** `t` is the Cash App screenshot token, from the checkout or the "Order Received" email. */
+  searchParams: { order?: string; t?: string };
 }) {
   const orderReference = searchParams.order;
   if (!orderReference) notFound();
@@ -47,6 +55,47 @@ export default async function PaymentConfirmationPage({
     const label = method ? PAYMENT_METHOD_LABEL[method] ?? method : null;
     const manual = method === 'bank_transfer' || method === 'cashapp';
     const cancelled = order.status === 'CANCELLED';
+
+    /*
+      Cash App with a $Cashtag on file: the tag, the amount and, with a valid token, the
+      screenshot upload. Once staff have confirmed it, say so instead.
+    */
+    const cashApp = method === 'cashapp' && !cancelled ? await cashAppDetails() : null;
+    if (cashApp) {
+      const confirmed = ['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(order.status);
+      return (
+        <main className="min-h-screen bg-paper px-4 py-12 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-xl space-y-8">
+            <div>
+              <h1 className="font-display text-3xl font-semibold tracking-[-0.03em] text-ink">
+                {confirmed ? 'Payment received' : 'Pay with Cash App'}
+              </h1>
+              <p className="mt-2 text-sm text-ink-soft">
+                Order <span className="font-mono">{orderReference}</span> · ${total.toFixed(2)}
+              </p>
+            </div>
+            {confirmed ? (
+              <p className="text-sm leading-relaxed text-ink-soft">
+                We have checked your payment and your order is confirmed. We&rsquo;ll email you the
+                tracking number when it ships.
+              </p>
+            ) : (
+              <CashAppPayment
+                reference={orderReference}
+                token={
+                  proofTokenMatches(orderReference, searchParams.t) ? searchParams.t ?? null : null
+                }
+                total={total}
+                tag={cashApp.tag}
+                name={cashApp.name}
+                initialCount={order._count.paymentProofs}
+              />
+            )}
+            <PaymentHelp reference={orderReference} intro="Questions about paying? Contact us:" />
+          </div>
+        </main>
+      );
+    }
 
     return (
       <OrderNotice

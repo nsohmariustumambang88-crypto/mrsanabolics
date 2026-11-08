@@ -29,6 +29,8 @@ export type OrderRow = {
   contactName: string;
   contactEmail: string;
   itemCount: number;
+  /** Cash App screenshots the customer uploaded. */
+  proofCount: number;
   total: string;
   shipCity: string;
   shipCountry: string;
@@ -245,6 +247,11 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
                   <strong>
                     <Link href={`/admin/orders/${row.id}`}>{row.reference}</Link>
                   </strong>
+                  {row.proofCount > 0 && (
+                    <div className="text-[12px]" style={{ color: 'var(--wp-success)' }}>
+                      Cash App screenshot uploaded
+                    </div>
+                  )}
                   <div className="row-actions">
                     <span>
                       <Link href={`/admin/orders/${row.id}`}>View</Link>

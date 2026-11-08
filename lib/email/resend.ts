@@ -62,6 +62,37 @@ export async function sendAdminOrderNotification(
   });
 }
 
+/* To the shop, when a customer uploads a Cash App payment screenshot. Throws on a refusal. */
+export async function sendPaymentProofNotification(
+  orderRef: string,
+  customerEmail: string,
+  total: number,
+  adminLink: string
+) {
+  const { error } = await getResend().emails.send({
+    from: FROM_EMAIL,
+    replyTo: SUPPORT_EMAIL,
+    to: ADMIN_EMAIL,
+    subject: `Cash App screenshot - ${orderRef}`,
+    html: `<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; background-color: #f9f9f9;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #1d2327; color: #fff; padding: 20px; border-radius: 4px 4px 0 0;">
+        <h1 style="margin: 0; font-size: 20px;">Cash App screenshot uploaded</h1>
+      </div>
+      <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd; color: #333;">
+        <p style="margin: 0 0 12px 0;">The customer on order <strong>${orderRef}</strong> (${customerEmail}) uploaded a screenshot of their Cash App payment. The order total is <strong>$${total.toFixed(2)}</strong>.</p>
+        <p style="margin: 0 0 20px 0;">Check that the money is in the Cash App account, then set the order to <strong>Confirmed</strong>.</p>
+        <p style="margin: 0;"><a href="${adminLink}" style="display: inline-block; background-color: #2271b1; color: #fff; padding: 10px 18px; text-decoration: none; border-radius: 3px;">Open the order and the screenshot</a></p>
+      </div>
+    </div>
+  </body>
+</html>`,
+  });
+  if (error) throw new Error(`Resend refused the screenshot notification: ${error.message}`);
+}
+
 export async function sendNewsletterCampaign(
   to: string | string[],
   subject: string,

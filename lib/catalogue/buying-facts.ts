@@ -122,7 +122,9 @@ export function storeFaqs(opts: { zones: ZoneSummary[]; paymentMethods: ListedPa
 
   if (opts.paymentMethods.length) {
     const crypto = opts.paymentMethods.some((m) => m.key === 'crypto');
-    const manual = opts.paymentMethods.filter((m) => m.key === 'bank_transfer' || m.key === 'cashapp');
+    const manual = opts.paymentMethods.filter((m) => m.key === 'bank_transfer');
+    /* Paid to the $Cashtag shown at checkout since November 2026 (lib/checkout/cashapp.ts). */
+    const cashApp = opts.paymentMethods.find((m) => m.key === 'cashapp');
     faqs.push({
       question: 'What payment methods do you accept?',
       answer: [
@@ -132,6 +134,9 @@ export function storeFaqs(opts: { zones: ZoneSummary[]; paymentMethods: ListedPa
           : '',
         manual.length
           ? `For ${list(manual.map((m) => m.label))}, we email you the payment details after you place the order.`
+          : '',
+        cashApp
+          ? `For ${cashApp.label}, checkout shows our $Cashtag: you send the total in Cash App, upload a screenshot of the payment, and we confirm the order once we have checked it.`
           : '',
       ]
         .filter(Boolean)

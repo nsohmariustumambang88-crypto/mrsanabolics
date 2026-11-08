@@ -55,14 +55,31 @@ export type OrderEmailTotals = {
 /** How the customer chose to pay, for the "what happens next" line. Storefront orders only. */
 export type OrderEmailPayment = {
   label: string;
-  /** The crypto payment page. Null for methods paid by hand. */
+  /** The crypto payment page, or the Cash App screenshot page. Null for bank transfer. */
   payLink?: string | null;
+  /** Cash App: where to send the money. */
+  cashApp?: { tag: string; name: string | null } | null;
 };
 
+const escapeHTML = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 /* The sentence under the intro of an unpaid order, so the customer knows how to pay. */
-function paymentNextStepHTML(payment: OrderEmailPayment): string {
+function paymentNextStepHTML(payment: OrderEmailPayment, orderRef: string, total: number): string {
   const p = (html: string) =>
     `<p style="margin: 0 0 20px 0; padding: 12px 15px; background-color: #f0f0f1; border-left: 4px solid #2271b1; color: #333;">${html}</p>`;
+  if (payment.cashApp) {
+    const { tag, name } = payment.cashApp;
+    return p(
+      `<strong>To pay by Cash App:</strong> send exactly <strong>$${total.toFixed(2)}</strong> to <strong>${escapeHTML(tag)}</strong>` +
+        (name ? ` (the account shows as <strong>${escapeHTML(name)}</strong>)` : '') +
+        `, with <strong>${orderRef}</strong> in the note.` +
+        (payment.payLink
+          ? ` Then <a href="${payment.payLink}" style="color: #2271b1;">upload a screenshot of the payment</a> so we can match it to your order.`
+          : ' Then reply to this email with a screenshot of the payment.') +
+        ' We confirm your order as soon as we have checked it.'
+    );
+  }
   if (payment.payLink) {
     return p(
       `You chose to pay with cryptocurrency. Your payment page shows the exact amount and the address to send it to: <a href="${payment.payLink}" style="color: #2271b1;">open your payment page</a>.`
@@ -125,7 +142,7 @@ export function renderOrderConfirmationHTML(
 
       <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd;">
         <p style="margin: 0 0 20px 0; color: #333;">${intro}</p>
-        ${!paid && payment ? paymentNextStepHTML(payment) : ''}
+        ${!paid && payment ? paymentNextStepHTML(payment, orderRef, totals.total) : ''}
 
         <h2 style="font-size: 16px; margin: 20px 0 10px 0; color: #1d2327;">Order Items</h2>
         <table style="width: 100%; border-collapse: collapse;">

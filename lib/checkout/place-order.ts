@@ -8,6 +8,7 @@ import { markBasketOrdered } from '@/lib/basket';
 import { SITE } from '@/lib/site';
 import { formatCheckoutNote, PAYMENT_METHOD_LABEL } from '@/lib/checkout/order-notes';
 import { checkPhone } from '@/lib/checkout/phone';
+import { cashAppDetails, cashAppPayUrl, proofToken, type CashAppDetails } from '@/lib/checkout/cashapp';
 
 export type CheckoutSubmitInput = {
   email: string;
@@ -29,7 +30,17 @@ export type CheckoutSubmitInput = {
   cryptoAsset?: string;
 };
 
-export type CheckoutResult = { ok: true; reference: string } | { ok: false; error: string };
+/**
+ * `cashApp` is set for a Cash App order: what the "Order placed" screen needs to show the
+ * $Cashtag and take the screenshot. The total is the server's, not the basket's.
+ */
+export type CheckoutResult =
+  | {
+      ok: true;
+      reference: string;
+      cashApp?: CashAppDetails & { token: string; total: number };
+    }
+  | { ok: false; error: string };
 
 /*
   The one path a storefront order takes into the database, whichever way it is paid.
@@ -112,6 +123,9 @@ export async function placeCheckoutOrder(input: CheckoutSubmitInput): Promise<Ch
       select: { id: true, phone: true },
     });
 
+    /* Cash App is paid to the $Cashtag on the method's row; no tag means details by email, as before. */
+    const cashApp = method.key === 'cashapp' ? await cashAppDetails() : null;
+
     const result = await createOrder({
       contactId: contact.id,
       lines: input.cart,
@@ -135,7 +149,10 @@ export async function placeCheckoutOrder(input: CheckoutSubmitInput): Promise<Ch
         payLink: (reference) =>
           method.key === 'crypto'
             ? `${SITE.url}/checkout/payment-confirmation?order=${reference}`
-            : null,
+            : cashApp
+              ? cashAppPayUrl(reference)
+              : null,
+        cashApp,
       },
     });
 
@@ -162,7 +179,13 @@ export async function placeCheckoutOrder(input: CheckoutSubmitInput): Promise<Ch
     /* The basket this browser saved (lib/basket) became an order: never remind about it. */
     await markBasketOrdered(cookies().get('mra_vid')?.value, result.reference).catch(() => {});
 
-    return { ok: true, reference: result.reference };
+    return {
+      ok: true,
+      reference: result.reference,
+      ...(cashApp
+        ? { cashApp: { ...cashApp, token: proofToken(result.reference), total: result.total } }
+        : {}),
+    };
   } catch (error) {
     console.error('Checkout error:', error);
     return { ok: false, error: 'Failed to place order. Please try again.' };

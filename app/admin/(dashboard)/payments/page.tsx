@@ -16,11 +16,10 @@ import {
   administrator could believe about this screen that would cost real money is that turning a
   method on turned payment on.
 
-  Crypto payment methods now carry wallet addresses in the database. Triple-check these before
-  saving — an address that is wrong or belongs to someone else will result in customer funds
-  being sent to an unrecoverable destination. Fiat payment methods (card, Cash App) still have
-  no storage for addresses, merchant ids or API keys, which is deliberate: those belong in the
-  environment, not in the database.
+  The Cash App row carries the $Cashtag customers pay (walletAddress) and the name that account
+  shows (accountName), set in the database at the owner's direction in November 2026. Neither can
+  be edited on this screen: a tag that is wrong or somebody else's sends customers' money to an
+  unrecoverable destination, so it is changed deliberately, never through a text box.
 */
 
 export const dynamic = 'force-dynamic';
@@ -38,6 +37,7 @@ export default async function AdminPaymentsPage() {
     label: m.label,
     notice: m.notice,
     walletAddress: m.walletAddress,
+    accountName: m.accountName,
     enabled: m.enabled,
     connected: m.connected,
   }));
@@ -60,11 +60,10 @@ export default async function AdminPaymentsPage() {
               afterwards. It cannot be left empty.
             </p>
             <p className="mb-0">
-              <strong>Why there is no address field.</strong> A wallet address or handle stored
-              here would be shown to customers as somewhere to send money. If it were wrong, or
-              stale, or somebody else&rsquo;s, the money would be gone and irreversible. Adding
-              one is a deliberate engineering change with a real destination behind it, never a
-              text box on a settings screen.
+              <strong>Why the $Cashtag cannot be typed here.</strong> It is shown to customers as
+              where to send money. If it were wrong, or stale, or somebody else&rsquo;s, the money
+              would be gone and irreversible, so it is changed deliberately in the database, never
+              in a text box on a settings screen.
             </p>
           </div>
         }
@@ -88,10 +87,15 @@ export default async function AdminPaymentsPage() {
         </div>
 
         <div className="space-y-5">
-          <WpPostbox title="Why there is no address field">
+          <WpPostbox title="Where Cash App money goes">
             <p className="mt-0 text-[13px]">
-              You will not find a box here for a wallet address, a $Cashtag, a merchant id or an
-              API key, and nothing in the database can hold one.
+              Cash App orders are paid to the $Cashtag shown under Cash App in the table, and the
+              customer sees the name beside it in their app. After paying they upload a
+              screenshot, which appears on the order. Check the money arrived before confirming.
+            </p>
+            <p className="text-[13px]">
+              There is no box here to change the $Cashtag. It is changed in the database, on
+              purpose, by someone who has checked it.
             </p>
             <p className="text-[13px]">
               A payment destination shown to a customer is money leaving their hands and not

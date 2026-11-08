@@ -580,6 +580,9 @@ model Order {
 
   items  OrderItem[]
   events OrderEvent[]
+  /// Screenshots the customer uploaded after paying by Cash App. Their claim, not a payment
+  /// record: staff check the Cash App account before confirming the order.
+  paymentProofs PaymentProof[]
 
   /// Stamped once, the first time the order reaches each milestone. Moving backwards does not
   /// clear them — how long something took is a fact, and reopening does not undo it.
@@ -653,6 +656,34 @@ model OrderEvent {
 
   @@index([orderId, occurredAt])
   @@map("order_events")
+}
+
+/// A screenshot of a payment, uploaded by the customer from the Cash App payment screen.
+///
+/// A separate table rather than columns on Order: this is evidence a person looks at, not a
+/// payment state, and Order still has no payment fields (orders-e2e asserts it). The image is in
+/// Cloudinary as an "authenticated" asset, so it can only be opened through a signed URL, which
+/// only the admin order screen builds.
+model PaymentProof {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  /// Cloudinary public ID (under mranabolics/payment-proofs/) and the stored format.
+  publicId String
+  format   String
+  bytes    Int
+  width    Int?
+  height   Int?
+
+  /// SHA-256 of the uploader's IP with the server-side salt, like the other public forms.
+  ipHash String?
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@map("payment_proofs")
 }
 
 /// A returning visitor, identified ONLY by a random first-party token in a cookie.
@@ -976,11 +1007,11 @@ enum MessageChannel {
 
 /// A payment method offered at checkout.
 ///
-/// connected exists and is false for every row. For crypto methods, walletAddress may be set.
-/// This build collects no money; a wallet address stored here that is nobody's — or
-/// somebody else's — is the most expensive mistake this table could hold, so triple-check
-/// any address before saving. Turning a method on controls whether it is LISTED, never
-/// whether it can take payment.
+/// connected exists and is false for every row. walletAddress holds where the customer sends
+/// money: the Cash App $Cashtag (since November 2026, at the owner's direction), or a crypto
+/// address. An address stored here that is nobody's — or somebody else's — is the most
+/// expensive mistake this table could hold, so triple-check any address before saving.
+/// Turning a method on controls whether it is LISTED, never whether it can take payment.
 model PaymentMethod {
   id  String @id @default(cuid())
   key String @unique
@@ -989,8 +1020,11 @@ model PaymentMethod {
   /// The sentence shown in that method's panel at the point of entry.
   notice String @db.Text
 
-  /// Wallet address for crypto payments. Display only, no processing.
+  /// Where to send the money: the $Cashtag for Cash App, an address for crypto. Display only.
   walletAddress String?
+  /// The name the customer sees on the receiving account in their app (Cash App shows it), so
+  /// a name that is not the shop's does not stop them paying. Null where there is none.
+  accountName String?
 
   /// Whether the method appears at checkout at all.
   enabled   Boolean @default(true)

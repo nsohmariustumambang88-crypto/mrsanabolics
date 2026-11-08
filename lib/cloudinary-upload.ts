@@ -129,6 +129,65 @@ export function signUpload(params: Record<string, string | number>): {
   };
 }
 
+/** Customers' payment screenshots. Never public: see uploadPrivateImage. */
+export const PAYMENT_PROOF_FOLDER = `${ASSET_FOLDER}/payment-proofs`;
+
+/**
+ * Upload an image as an "authenticated" asset: it has no public delivery URL, only signed ones
+ * (signedImageUrl), so a payment screenshot cannot be opened by anyone who guesses its name.
+ * The source format is kept, and nothing is overwritten: each upload gets its own random id.
+ */
+export async function uploadPrivateImage(
+  buffer: Buffer,
+  publicId: string,
+  folder: string = PAYMENT_PROOF_FOLDER
+): Promise<UploadResult> {
+  assertConfigured();
+
+  return new Promise<UploadResult>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        public_id: publicId,
+        folder,
+        type: 'authenticated',
+        overwrite: false,
+        resource_type: 'image',
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        if (!result) return reject(new Error('Cloudinary returned no result'));
+        resolve({
+          publicId: result.public_id,
+          url: result.secure_url,
+          width: result.width,
+          height: result.height,
+          bytes: result.bytes,
+          format: result.format,
+          version: result.version,
+        });
+      }
+    );
+
+    stream.end(buffer);
+  });
+}
+
+/**
+ * A signed delivery URL for an image uploaded by uploadPrivateImage, scaled to `width` at most.
+ * The signature covers the transformation, so the URL opens exactly this rendition and no other.
+ * Build these only on screens behind requireAdmin().
+ */
+export function signedImageUrl(publicId: string, width: number): string {
+  assertConfigured();
+  return cloudinary.url(publicId, {
+    type: 'authenticated',
+    resource_type: 'image',
+    sign_url: true,
+    secure: true,
+    transformation: [{ width, crop: 'limit', fetch_format: 'auto', quality: 'auto' }],
+  });
+}
+
 /** Remove an asset. Used when a round abandons a raster it produced. */
 export async function destroyAsset(publicId: string): Promise<void> {
   assertConfigured();

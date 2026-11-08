@@ -13,8 +13,8 @@ import { cn } from '@/lib/utils';
   The payment methods list.
 
   Two controls per row and no others: whether the method is LISTED at checkout, and the
-  sentence shown inside its panel. There is no field for a wallet address, a $Cashtag, a
-  merchant id or an API key, and the model has no column for one — see the notice on the page.
+  sentence shown inside its panel. The Cash App $Cashtag and account name are SHOWN, read-only:
+  they are changed in the database on purpose, never typed here — see the page's side box.
 
   The toggle writes immediately, because a checkbox that needs a separate Save is the control
   people forget to press. The notice does not: it is a sentence somebody is drafting, and
@@ -30,6 +30,7 @@ export type PaymentMethodRow = {
   label: string;
   notice: string;
   walletAddress?: string | null;
+  accountName?: string | null;
   enabled: boolean;
   connected: boolean;
 };
@@ -138,6 +139,12 @@ export function PaymentMethodsTable({ rows }: { rows: PaymentMethodRow[] }) {
                         <>
                           <br />
                           <span className="break-all font-mono text-[11px]">{row.walletAddress}</span>
+                        </>
+                      )}
+                      {row.accountName && (
+                        <>
+                          <br />
+                          <span className="text-[11px]">Shows as {row.accountName}</span>
                         </>
                       )}
                     </div>

@@ -70,7 +70,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
       take: 300,
       include: {
         contact: { select: { id: true, name: true, email: true } },
-        _count: { select: { items: true } },
+        _count: { select: { items: true, paymentProofs: true } },
       },
     }),
     Promise.all(TABS.map((t) => prisma.order.count({ where: filterWhere(t.key) }))),
@@ -84,6 +84,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
     contactName: o.contact.name ?? o.contact.email,
     contactEmail: o.contact.email,
     itemCount: o._count.items,
+    proofCount: o._count.paymentProofs,
     total: o.total.toString(),
     shipCity: o.shipCity,
     shipCountry: o.shipCountry,

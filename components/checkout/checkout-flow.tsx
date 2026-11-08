@@ -36,6 +36,9 @@ import type { AdvertisedDiscount, CartItem } from '@/lib/types';
 import { MINIMUM_ORDER } from '@/lib/orders/minimum';
 import { checkPhone, PHONE_PLACEHOLDER } from '@/lib/checkout/phone';
 import { submitCheckout, type CheckoutSubmitInput } from '@/app/checkout/checkout-actions';
+import { CashAppPayment } from '@/components/checkout/cash-app-payment';
+
+type CashAppPlaced = { tag: string; name: string | null; token: string; total: number };
 
 /*
   The lift: one contact, and the sheet is committed. The wizard mirrors that — each step is a
@@ -55,6 +58,9 @@ export type CheckoutPaymentMethod = {
   key: string;
   label: string;
   notice: string;
+  /** Cash App: the $Cashtag and the name on the account. */
+  walletAddress?: string | null;
+  accountName?: string | null;
 };
 
 export function CheckoutFlow({
@@ -73,6 +79,8 @@ export function CheckoutFlow({
   const [orderReference, setOrderReference] = React.useState('');
   /* The label of the method paid by hand (bank transfer, Cash App) the order was placed with. */
   const [placedMethodLabel, setPlacedMethodLabel] = React.useState('');
+  /* A Cash App order: where to pay and the screenshot token, from the server's answer. */
+  const [placedCashApp, setPlacedCashApp] = React.useState<CashAppPlaced | null>(null);
   /* Pre-select whichever method the admin lists first. */
   const [method, setMethod] = React.useState<PaymentMethod>(
     () => (paymentMethods[0]?.key as PaymentMethod | undefined) ?? 'crypto'
@@ -261,6 +269,7 @@ export function CheckoutFlow({
       if (result.ok) {
         setOrderReference(result.reference);
         setPlacedMethodLabel(paymentMethods.find((m) => m.key === method)?.label ?? '');
+        setPlacedCashApp(result.cashApp ?? null);
         setPlaced(true);
         clearCart();
         setStep(STEPS.length - 1);
@@ -307,11 +316,29 @@ export function CheckoutFlow({
           <p className="text-xs font-medium uppercase tracking-wider text-ink-faint">Order reference</p>
           <p className="font-mono text-xl font-semibold text-ink">{orderReference}</p>
         </div>
-        <p className="measure-tight mt-6 text-sm leading-relaxed text-ink-soft">
-          {placedMethodLabel
-            ? `You chose to pay by ${placedMethodLabel}. We'll email the payment details to ${marketing.email}, and your order is sent once your payment arrives.`
-            : `Your order summary is on its way to ${marketing.email}.`}
-        </p>
+        {placedCashApp ? (
+          <>
+            <p className="measure-tight mt-6 text-sm leading-relaxed text-ink-soft">
+              Pay now in Cash App, then send us the screenshot below. These details are also in
+              the email we sent to {marketing.email}, with a link back to this upload box.
+            </p>
+            <div className="mt-6 w-full">
+              <CashAppPayment
+                reference={orderReference}
+                token={placedCashApp.token}
+                total={placedCashApp.total}
+                tag={placedCashApp.tag}
+                name={placedCashApp.name}
+              />
+            </div>
+          </>
+        ) : (
+          <p className="measure-tight mt-6 text-sm leading-relaxed text-ink-soft">
+            {placedMethodLabel
+              ? `You chose to pay by ${placedMethodLabel}. We'll email the payment details to ${marketing.email}, and your order is sent once your payment arrives.`
+              : `Your order summary is on its way to ${marketing.email}.`}
+          </p>
+        )}
         <p className="measure-tight mt-3 text-xs leading-relaxed text-ink-faint">
           Questions? Email{' '}
           <a
