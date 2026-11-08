@@ -19,6 +19,8 @@ export type Product = {
   isBestSeller?: boolean;
   isTrending?: boolean;
   isDeal?: boolean;
+  /** When the row was created, as an ISO string. Orders "new arrivals" newest first. */
+  createdAt?: string;
   description: string;
   longDescription: string;
   specifications: { label: string; value: string }[];

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getProducts, toSummary } from '@/lib/db/catalogue';
+import { getProducts, newestFirst, toSummary } from '@/lib/db/catalogue';
 import { foldText } from '@/lib/search/fold';
 import { matchCount, matchesQuery } from '@/lib/search/match';
 import type { Product, ProductSummary } from '@/lib/types';
@@ -64,7 +64,8 @@ function sorted(list: Product[], sort: Sort): Product[] {
     case 'rating':
       return list.sort((a, b) => b.rating - a.rating);
     case 'newest':
-      return list.sort((a, b) => Number(b.isNew ?? 0) - Number(a.isNew ?? 0));
+      /* Most recently added first; among rows added together, the ones flagged new lead. */
+      return list.sort((a, b) => newestFirst(a, b) || Number(b.isNew ?? 0) - Number(a.isNew ?? 0));
     default:
       return list;
   }
@@ -103,7 +104,8 @@ export async function GET(request: Request) {
   if (group) list = list.filter((p) => p.subcategory === group);
   if (brand) list = list.filter((p) => p.brandSlug === brand);
   if (filter === 'best-sellers') list = list.filter((p) => p.isBestSeller);
-  if (filter === 'new') list = list.filter((p) => p.isNew);
+  /* "New" lists the flagged products with the latest additions first, as the home page does. */
+  if (filter === 'new') list = list.filter((p) => p.isNew).sort(newestFirst);
   if (filter === 'trending') list = list.filter((p) => p.isTrending);
   if (filter === 'deals') list = list.filter((p) => p.isDeal);
   if (Number.isFinite(max) && max < ceiling) list = list.filter((p) => p.price <= max);

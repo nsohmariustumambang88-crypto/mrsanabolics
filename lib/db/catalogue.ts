@@ -220,6 +220,7 @@ function toProduct(row: ProductRow): Product {
     isBestSeller: row.isBestSeller,
     isTrending: row.isTrending,
     isDeal: row.isDeal,
+    createdAt: row.createdAt.toISOString(),
     description: row.description,
     longDescription: row.longDescription,
     specifications: row.specifications.map((s) => ({ label: s.label, value: s.value })),
@@ -240,6 +241,14 @@ function toProduct(row: ProductRow): Product {
       editedAt: r.editedAt ? r.editedAt.toISOString() : null,
     })),
   };
+}
+
+/**
+ * Newest first, for "new arrivals". Rows created at the same moment (the first catalogue load
+ * wrote them a hundred at a time) compare equal, and `sort` is stable, so they keep catalogue order.
+ */
+export function newestFirst(a: Product, b: Product): number {
+  return (b.createdAt ?? '').localeCompare(a.createdAt ?? '');
 }
 
 /* ------------------------------------------------------------ base reads */

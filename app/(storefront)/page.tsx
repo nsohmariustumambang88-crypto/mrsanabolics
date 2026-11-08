@@ -16,7 +16,7 @@ import { BlogTeaser } from '@/components/home/blog-teaser';
 import { toJournalCard } from '@/lib/journal/fields';
 import { Newsletter } from '@/components/home/newsletter';
 import { InstagramGallery } from '@/components/home/instagram-gallery';
-import { getProducts, getCategories, getBlogPosts, getTestimonials, toSummary } from '@/lib/db/catalogue';
+import { getProducts, getCategories, getBlogPosts, getTestimonials, newestFirst, toSummary } from '@/lib/db/catalogue';
 import { advertisedDiscount } from '@/lib/discounts';
 import { getSettingsSafe } from '@/lib/settings';
 import { SITE } from '@/lib/site';
@@ -47,6 +47,9 @@ export const metadata: Metadata = {
 /* Re-read at most once a minute; see the note in app/layout.tsx. */
 export const revalidate = 3600;
 
+/** How long a listing counts as a new arrival on the home page. */
+const NEW_ARRIVAL_DAYS = 30;
+
 export default async function Home() {
   const [products, categories, posts, testimonials] = await Promise.all([
     getProducts(),
@@ -74,6 +77,18 @@ export default async function Home() {
 
   const bestSellers = products.filter((p) => p.isBestSeller);
   const deals = products.filter((p) => p.isDeal);
+  /*
+    New arrivals: flagged new AND added in the last NEW_ARRIVAL_DAYS, newest first. The flag alone
+    is not enough: the first catalogue load flagged one listing per group as new in September 2026,
+    and a row padded with those would call seven-week-old listings new and put prescription
+    medicines on the home page that nobody chose to feature. With nothing recent the row is
+    simply not shown (ProductsSection renders nothing for an empty list); /shop?filter=new still
+    lists every flagged product, newest first.
+  */
+  const arrivedSince = new Date(Date.now() - NEW_ARRIVAL_DAYS * 864e5).toISOString();
+  const newArrivals = products
+    .filter((p) => p.isNew && (p.createdAt ?? '') >= arrivedSince)
+    .sort(newestFirst);
 
   /* Top-rated products with most reviews for SEO boost */
   const topRated = [...products]
@@ -167,6 +182,13 @@ export default async function Home() {
         description="The compounds that move fastest, with the specification and batch record attached to each one."
         href="/shop?filter=best-sellers"
         products={bestSellers.slice(0, 8).map(toSummary)}
+      />
+
+      <ProductsSection
+        title="New arrivals"
+        description={`Added to the catalogue in the last ${NEW_ARRIVAL_DAYS} days, newest first.`}
+        href="/shop?filter=new"
+        products={newArrivals.slice(0, 8).map(toSummary)}
       />
 
       <FeaturedCategories />
