@@ -8,7 +8,7 @@ import {
   pricesByStrength,
 } from '@/lib/db/collections';
 import { commonStrengths, fitDescription, getUsDelivery, shortRange, titleFor, usShippingLine } from '@/lib/catalogue/seo';
-import { CATEGORY_COPY, GROUP_COPY, type CategoryCopy } from '@/lib/catalogue/collection-copy';
+import { CATEGORY_COPY, GROUP_COPY, groupArticles, type CategoryCopy } from '@/lib/catalogue/collection-copy';
 import { groupFaq } from '@/lib/catalogue/collection-faq';
 import { formatPriceShort } from '@/lib/format';
 import { SITE } from '@/lib/site';
@@ -99,7 +99,7 @@ export default async function GroupPage({ params }: Params) {
     getCategoryCollections(),
     getUsDelivery(),
   ]);
-  const articles = copy.articles
+  const articles = groupArticles(category.slug, group.slug)
     .map((slug) => posts.find((p) => p.slug === slug))
     .filter((p): p is NonNullable<typeof p> => !!p)
     .map((p) => ({ slug: p.slug, title: p.title, excerpt: p.excerpt }));

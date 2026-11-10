@@ -88,7 +88,7 @@ Testosterone is regulated in all four countries below, and in each of them order
 - **United States:** standard tracked shipping is $9.00 (3 to 6 working days), and free when the goods in your basket come to $150.00 or more. Express tracked is $24.00 (1 to 2 working days).
 - **Europe** (the UK, Ireland, France, Germany, Spain, Italy, the Netherlands, Belgium, Portugal, Austria, Sweden, Denmark and Poland): standard tracked is $14.00 (5 to 9 working days), free from $200.00 of goods. Express tracked is $32.00 (2 to 4 working days).
 - **Everywhere else:** international tracked is $22.00 (7 to 16 working days).
-- **Payment:** checkout lists cryptocurrency (Bitcoin or Ethereum), bank transfer and Cash App. For bank transfer and Cash App, the payment details are sent to you by email after you order.
+- **Payment:** checkout lists cryptocurrency (Bitcoin or Ethereum), bank transfer and Cash App. For bank transfer, the payment details are emailed to you after you order. For Cash App, checkout shows our $Cashtag; once you have placed the order, you send the total in Cash App and upload a screenshot of the payment.
 
 The working-day estimates are the rates' stated ranges, not a guarantee. Our [shipping policy](/legal/shipping) lists every delivery zone and rate, and the [frequently asked questions](/faq) cover packaging, payment, returns and how to reach us.
 
@@ -96,4 +96,4 @@ The working-day estimates are the rates' stated ranges, not a guarantee. Our [sh
 
 Every listing in the table, with its photograph and label, is on one page: [testosterone enanthate](/shop/injectables/testosterone-enanthate). Compare them by price per 100 mg, read the label in each photograph, and check the law where you live before you order.
 
-That page sits in our [injectable steroids category](/shop/injectables), and [the shop](/shop) lists every category and compound we carry.
+If you are comparing nandrolone as well, [our nandrolone decanoate and NPP guide](/blog/nandrolone-decanoate-deca-npp-guide) does the same for every Deca and NPP listing. Both sit in our [injectable steroids category](/shop/injectables), and [the shop](/shop) lists every category and compound we carry.

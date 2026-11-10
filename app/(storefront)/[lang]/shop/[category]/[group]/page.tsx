@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getBlogPosts, toSummary } from '@/lib/db/catalogue';
 import { getCategoryCollections, getGroupCollection, pricesByStrength } from '@/lib/db/collections';
-import { CATEGORY_COPY } from '@/lib/catalogue/collection-copy';
+import { groupArticles } from '@/lib/catalogue/collection-copy';
 import { commonStrengths, fitDescription, shortRange } from '@/lib/catalogue/seo';
 import { formatPriceShort } from '@/lib/format';
 import { SITE } from '@/lib/site';
@@ -110,7 +110,7 @@ export default async function TranslatedGroupPage({ params }: Params) {
   const words = { heading: categoryCopy.heading, label: categoryCopy.label };
 
   const [posts, allCategories, delivery] = await Promise.all([getBlogPosts(), getCategoryCollections(), homeDelivery(locale)]);
-  const articles = (CATEGORY_COPY[category.slug]?.articles ?? [])
+  const articles = groupArticles(category.slug, group.slug)
     .map((slug) => posts.find((p) => p.slug === slug))
     .filter((p): p is NonNullable<typeof p> => !!p)
     .map((p) => ({ slug: p.slug, title: p.title, excerpt: p.excerpt }));

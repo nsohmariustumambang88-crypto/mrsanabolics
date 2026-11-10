@@ -1125,6 +1125,7 @@ export const articles: JournalArticle[] = [
     category: 'Verification',
     author: BYLINE,
     date: '2026-10-20',
+    updated: '2026-11-10',
     image: pexels(9259963),
     imageAlt:
       'A row of clear glass vials with silver crimp caps standing in the round tray of a laboratory sample changer.',
@@ -1214,6 +1215,125 @@ export const articles: JournalArticle[] = [
         publisher: 'Federal Register of Legislation (Australia)',
         year: '2026',
         url: 'https://www.legislation.gov.au/F1996B03651/latest/text',
+      },
+    ],
+  },
+
+  {
+    slug: 'nandrolone-decanoate-deca-npp-guide',
+    title: 'Nandrolone decanoate (Deca) and NPP: what they are, the law, and how to compare brands and prices',
+    metaTitle: 'Nandrolone Decanoate (Deca) and NPP: Brands, Prices, Law',
+    excerpt:
+      'Deca and NPP explained from the licensed product information, its peanut-oil warning, the law, and every nandrolone listing we stock compared by strength and price.',
+    metaDescription:
+      'Nandrolone decanoate (Deca) vs NPP: esters, the peanut-oil warning in the Deca-Durabolin label, the law in the US and UK, and 22 listings compared by price.',
+    category: 'Verification',
+    author: BYLINE,
+    date: '2026-11-10',
+    image: pexels(10514991),
+    imageAlt:
+      'A laboratory autosampler, its robotic arm poised over a circular tray of blue-capped sample vials.',
+    imageCredit: credit('Yuri Shkoda'),
+    faqs: [
+      {
+        question: 'What is the difference between Deca and NPP?',
+        answer:
+          'Both are nandrolone with an ester attached: Deca is nandrolone decanoate and NPP is nandrolone phenylpropionate. In a study in healthy men the phenylpropionate gave higher and earlier peaks in the blood, and the licensed product information gives the decanoate a release half-life of 6 days.',
+      },
+      {
+        question: 'Does Deca-Durabolin contain peanut oil?',
+        answer:
+          'The licensed Deca-Durabolin in the Irish product information is made in refined arachis (peanut) oil with benzyl alcohol, and must not be used by anyone allergic to peanuts or soya. Other products may use other oils, so check the label.',
+      },
+      {
+        question: 'Is nandrolone legal?',
+        answer:
+          'In the US it is a Schedule III controlled substance, esters included, and cannot be dispensed over the internet without a valid prescription. In the UK it is a Class C drug and the import exemption covers importation in person only. Canada prohibits import unless authorised, and Australia requires written permission to import.',
+      },
+      {
+        question: 'How much does nandrolone decanoate cost?',
+        answer:
+          'Across the 22 nandrolone listings in this guide a vial costs $55.00 to $75.00 (prices on 10 November 2026). Decanoate listings are labelled at 200 to 500 mg and NPP listings at 100 mg per mL, so compare price per milligram rather than per vial.',
+      },
+      {
+        question: 'Is nandrolone banned in sport?',
+        answer:
+          'Yes. WADA’s 2026 Prohibited List names nandrolone among the anabolic androgenic steroids prohibited at all times, in and out of competition.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Deca Durabolin 100mg/ml, Solution for Injection (ampoule): Summary of Product Characteristics',
+        publisher: 'Irish Medicines Board (Organon Laboratories Limited)',
+        year: '2006',
+        url: 'https://assets.hpra.ie/products/Human/16168/LicenseSPC_PA0261-003-001_12062007024524.pdf',
+      },
+      { title: 'Nandrolone (CID 9904)', publisher: 'PubChem, US National Library of Medicine', url: 'https://pubchem.ncbi.nlm.nih.gov/compound/9904' },
+      { title: 'Nandrolone decanoate (CID 9677)', publisher: 'PubChem, US National Library of Medicine', url: 'https://pubchem.ncbi.nlm.nih.gov/compound/9677' },
+      { title: 'Nandrolone phenylpropionate (CID 229455)', publisher: 'PubChem, US National Library of Medicine', url: 'https://pubchem.ncbi.nlm.nih.gov/compound/229455' },
+      {
+        title: 'Pharmacokinetics and pharmacodynamics of nandrolone esters in oil vehicle: effects of ester, injection site and injection volume',
+        publisher: 'Journal of Pharmacology and Experimental Therapeutics (Minto CF et al.)',
+        year: '1997',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/9103484/',
+      },
+      { title: 'Anabolic steroids (drug fact sheet)', publisher: 'DEA Diversion Control Division', year: '2025', url: 'https://www.deadiversion.usdoj.gov/drug_chem_info/anabolic.pdf' },
+      {
+        title: 'Fake anabolic androgenic steroids on the black market: a systematic review and meta-analysis on qualitative and quantitative analytical results found within the literature',
+        publisher: 'BMC Public Health (Magnolini R et al.)',
+        year: '2022',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC9288681/',
+      },
+      { title: '21 CFR 1308.13: Schedule III', publisher: 'eCFR', year: '2026', url: 'https://www.ecfr.gov/current/title-21/section-1308.13' },
+      {
+        title: '21 U.S.C. 844: Penalty for simple possession',
+        publisher: 'US Government Publishing Office',
+        year: '2024',
+        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapI-partD-sec844.htm',
+      },
+      {
+        title: '21 U.S.C. 829: Prescriptions (Ryan Haight Online Pharmacy Consumer Protection Act)',
+        publisher: 'US Government Publishing Office',
+        year: '2024',
+        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapI-partC-sec829.htm',
+      },
+      {
+        title: '21 U.S.C. 952: Importation of controlled substances',
+        publisher: 'US Government Publishing Office',
+        year: '2024',
+        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapII-sec952.htm',
+      },
+      { title: 'Misuse of Drugs Act 1971, Schedule 2', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/ukpga/1971/38/schedule/2' },
+      { title: 'Misuse of Drugs Regulations 2001, regulation 4', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/uksi/2001/3998/regulation/4' },
+      {
+        title: 'The Misuse of Drugs (Amendment No. 2) (England, Wales and Scotland) Regulations 2012: Explanatory Note',
+        publisher: 'legislation.gov.uk',
+        year: '2012',
+        url: 'https://www.legislation.gov.uk/uksi/2012/973/note/made',
+      },
+      {
+        title: 'Controlled Drugs and Substances Act (S.C. 1996, c. 19)',
+        publisher: 'Justice Laws Website, Government of Canada',
+        year: '2026',
+        url: 'https://laws-lois.justice.gc.ca/eng/acts/C-38.8/FullText.html',
+      },
+      {
+        title: 'Therapeutic Goods (Poisons Standard—June 2026) Instrument 2026',
+        publisher: 'Federal Register of Legislation (Australia)',
+        year: '2026',
+        url: 'https://www.legislation.gov.au/F2026L00633/asmade',
+      },
+      {
+        title: 'Customs (Prohibited Imports) Regulations 1956',
+        publisher: 'Federal Register of Legislation (Australia)',
+        year: '2026',
+        url: 'https://www.legislation.gov.au/F1996B03651/latest/text',
+      },
+      {
+        title: 'International Standard: Prohibited List 2026',
+        publisher: 'World Anti-Doping Agency',
+        year: '2025',
+        url: 'https://www.wada-ama.org/sites/default/files/2025-09/2026list_en_final_clean_september_2025.pdf',
       },
     ],
   },

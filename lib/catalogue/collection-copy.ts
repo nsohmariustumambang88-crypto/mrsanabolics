@@ -20,7 +20,11 @@ export type ArticleSlug =
   | 'hplc-mass-spectrometry-lab-testing-explained'
   | 'are-sarms-legal-fda-wada-tga'
   | 'anabolic-steroids-law-us-uk-canada-australia'
-  | 'anabolic-steroid-health-risks';
+  | 'anabolic-steroid-health-risks'
+  | 'testosterone-enanthate-for-sale-buying-guide'
+  | 'nandrolone-decanoate-deca-npp-guide'
+  | 'hgh-kits-vials-pens-iu-explained'
+  | 'is-hgh-legal-us-uk-canada';
 
 export type CategoryCopy = {
   /** The heading and the start of the <title>: the phrase a person would search. */
@@ -105,6 +109,24 @@ export const CATEGORY_COPY: Record<string, CategoryCopy> = {
     articles: [],
   },
 };
+
+/*
+  The journal's guides to one compound, keyed like GROUP_COPY. A compound page lists its own guide
+  first under "Before you buy", then the category's articles. Without this the guides written for
+  a compound were linked from no shop page at all, only from the journal.
+*/
+export const GROUP_ARTICLES: Record<string, ArticleSlug[]> = {
+  'injectables/nandrolone': ['nandrolone-decanoate-deca-npp-guide'],
+  'injectables/testosterone-enanthate': ['testosterone-enanthate-for-sale-buying-guide'],
+  'peptides/growth-hormone': ['hgh-kits-vials-pens-iu-explained', 'is-hgh-legal-us-uk-canada'],
+};
+
+/** The articles a compound page shows: its own guides, then its category's, four at most. */
+export function groupArticles(categorySlug: string, groupSlug: string): ArticleSlug[] {
+  const own = GROUP_ARTICLES[`${categorySlug}/${groupSlug}`] ?? [];
+  const general = (CATEGORY_COPY[categorySlug]?.articles ?? []).filter((slug) => !own.includes(slug));
+  return [...own, ...general].slice(0, 4);
+}
 
 /** What each compound is. Keyed `<category>/<group segment>`. */
 export const GROUP_COPY: Record<string, string> = {
