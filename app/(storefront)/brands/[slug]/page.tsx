@@ -12,6 +12,8 @@ import { SITE, UNDER_HEADER_INSET } from '@/lib/site';
 import { factsFor } from '@/lib/db/collections';
 import { andList, fitDescription, getUsDelivery, shortRange, usShippingLine } from '@/lib/catalogue/seo';
 import { formatPriceShort } from '@/lib/format';
+import { BRAND_INTROS, stripLinks } from '@/lib/catalogue/collection-copy';
+import { LinkedText } from '@/components/shop/linked-text';
 import type { Product } from '@/lib/types';
 
 /** The compound groups a manufacturer's listings fall under, most listings first. */
@@ -90,13 +92,15 @@ export default async function BrandPage({ params }: Params) {
   const list = await getProductsByBrand(brand.slug);
   const { sentence } = brandFacts(brand.name, list);
   const url = `${SITE.url}/brands/${brand.slug}`;
+  /* An introduction with links, where one is written (BRAND_INTROS); else the row's description. */
+  const intro = BRAND_INTROS[brand.slug];
 
   const schema = [
     {
       '@context': 'https://schema.org',
       '@type': 'Brand',
       name: brand.name,
-      description: brand.description,
+      description: intro ? stripLinks(intro) : brand.description,
       url: `${SITE.url}/brands/${brand.slug}`,
     },
     ...(list.length > 0
@@ -169,7 +173,7 @@ export default async function BrandPage({ params }: Params) {
             {list.length > 0 ? `${brand.name} products` : brand.name}
           </h1>
           <p className="measure mt-4 text-sm leading-relaxed text-ink-soft sm:text-base">
-            {brand.description}
+            {intro ? <LinkedText text={intro} /> : brand.description}
           </p>
           {sentence && (
             <p className="measure mt-4 text-sm leading-relaxed text-ink-soft sm:text-base">{sentence}</p>

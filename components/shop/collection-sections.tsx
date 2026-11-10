@@ -71,12 +71,15 @@ export function priceRange(facts: CollectionFacts): string | null {
 export function CollectionHeader({
   heading,
   intro,
+  note,
   facts,
   compounds,
   locale = 'en',
 }: {
   heading: string;
   intro: string[];
+  /** One more paragraph after the intro, for copy that carries links (GROUP_NOTES). */
+  note?: ReactNode;
   facts: CollectionFacts;
   compounds?: number;
   locale?: Locale;
@@ -102,6 +105,7 @@ export function CollectionHeader({
             {p}
           </p>
         ))}
+        {note && <p className="measure mt-4 text-sm leading-relaxed text-ink-soft sm:text-base">{note}</p>}
         <p className="mt-6 flex flex-wrap gap-x-3 gap-y-1 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint tabular">
           {items.map((item, i) => (
             <span key={i} className="flex gap-3">

@@ -189,3 +189,32 @@ export const GROUP_COPY: Record<string, string> = {
   'fat-burners/levothyroxine-t4': 'Levothyroxine (T4), a thyroid hormone prescribed for an underactive thyroid.',
   'fat-burners/sibutramine': 'Sibutramine, a weight-loss drug withdrawn from the US and EU markets in 2010.',
 };
+
+/*
+  A short passage with links, shown on ONE page only. GROUP_COPY cannot carry these: every product
+  page in a group reads it for "About this compound", so a line about one brand there would appear
+  on every other brand's listing. Links are written [label](/path), internal paths only, and
+  rendered by components/shop/linked-text.tsx. Facts are as printed on the boxes in the listing
+  photographs; the policy for GROUP_COPY applies (no dosing, no effect claims).
+*/
+export const GROUP_NOTES: Record<string, string> = {
+  'peptides/growth-hormone':
+    'Beltropin is a somatropin brand whose cartons carry the Beligas Pharmaceuticals name. As printed on the boxes in our photographs, the [Beltropin 100iu HGH Injection Kit](/product/beltropin-100iu-hgh-injection-kit-beligas-pharmaceuticals) holds ten 10 IU vials, the [Beltropin 36iu HGH EZuse Injection Pen](/product/beltropin-36iu-hgh-ezuse-injection-pen-beligas-pharmaceuticals) is one ready-to-use pen labelled 36 IU (12 mg) per mL, and the [Beligas 75iu HGH Injection Kit](/product/beligas-75iu-hgh-injection-kit-beligas-pharmaceuticals) holds ten 2.5 mg vials with ten vials of bacteriostatic water.',
+};
+
+/*
+  A brand page's introduction, in place of the Brand row's plain-text description, where it needs
+  links. The row's description stays as it is: the Manufacturers page, the home page's brands row
+  and the header menu (first sentence) still read it, and none of them renders links.
+*/
+export const BRAND_INTROS: Record<string, string> = {
+  'beligas-pharmaceuticals':
+    'Products carrying the Beligas Pharmaceuticals label, as photographed for this catalogue. They include Beltropin, a somatropin (growth hormone) brand: the [Beltropin 100iu HGH Injection Kit](/product/beltropin-100iu-hgh-injection-kit-beligas-pharmaceuticals) and the [Beltropin 36iu HGH EZuse Injection Pen](/product/beltropin-36iu-hgh-ezuse-injection-pen-beligas-pharmaceuticals), alongside the [Beligas 75iu HGH Injection Kit](/product/beligas-75iu-hgh-injection-kit-beligas-pharmaceuticals).',
+};
+
+const LINK = /\[([^\]]+)\]\((\/[^)\s]*)\)/g;
+
+/** The same text with the link markup removed, for structured data and meta descriptions. */
+export function stripLinks(text: string): string {
+  return text.replace(LINK, (_match, label: string) => label);
+}

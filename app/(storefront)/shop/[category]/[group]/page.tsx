@@ -8,7 +8,8 @@ import {
   pricesByStrength,
 } from '@/lib/db/collections';
 import { commonStrengths, fitDescription, getUsDelivery, shortRange, titleFor, usShippingLine } from '@/lib/catalogue/seo';
-import { CATEGORY_COPY, GROUP_COPY, groupArticles, type CategoryCopy } from '@/lib/catalogue/collection-copy';
+import { CATEGORY_COPY, GROUP_COPY, GROUP_NOTES, groupArticles, type CategoryCopy } from '@/lib/catalogue/collection-copy';
+import { LinkedText } from '@/components/shop/linked-text';
 import { groupFaq } from '@/lib/catalogue/collection-faq';
 import { formatPriceShort } from '@/lib/format';
 import { SITE } from '@/lib/site';
@@ -92,6 +93,8 @@ export default async function GroupPage({ params }: Params) {
   const { category, group } = found;
   const copy = copyFor(category.slug, category.name);
   const identity = GROUP_COPY[`${category.slug}/${group.slug}`];
+  /* A passage with links for this page only; see GROUP_NOTES. */
+  const note = GROUP_NOTES[`${category.slug}/${group.slug}`];
   const heading = titleFor(group.name, category.slug);
 
   const [posts, allCategories, usDelivery] = await Promise.all([
@@ -183,7 +186,12 @@ export default async function GroupPage({ params }: Params) {
         ]}
       />
 
-      <CollectionHeader heading={`${heading} for sale`} intro={intro} facts={group.facts} />
+      <CollectionHeader
+        heading={`${heading} for sale`}
+        intro={intro}
+        note={note ? <LinkedText text={note} /> : undefined}
+        facts={group.facts}
+      />
 
       <div className="mx-auto max-w-[86rem] space-y-16 px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
         {(byStrength.length > 1 || alternate) && (
