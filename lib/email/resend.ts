@@ -15,7 +15,12 @@ import {
 } from './templates';
 
 export const FROM_EMAIL = 'orders@mrsanabolics.com';
-export const ADMIN_EMAIL = 'shoponlinesteriod@gmail.com';
+/*
+  Where the shop's own alerts go: "New Order" and "Cash App screenshot". Not the ADMIN_EMAIL
+  environment variable, which is the admin sign-in. Resend suppressed the Gmail address that was
+  here, so no alert reached anyone; support@ was proven to receive a send on 10 November 2026.
+*/
+export const ADMIN_EMAIL = 'support@mrsanabolics.com';
 export const SUPPORT_EMAIL = 'support@mrsanabolics.com'; // Routes to /contact form
 
 function getResend() {
