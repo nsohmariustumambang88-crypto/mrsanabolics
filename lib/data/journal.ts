@@ -1339,6 +1339,122 @@ export const articles: JournalArticle[] = [
   },
 
   {
+    slug: 'trenbolone-acetate-enanthate-parabolan-guide',
+    title: 'Trenbolone acetate, enanthate and Parabolan: what they are, the law, and how to compare brands and prices',
+    metaTitle: 'Trenbolone Acetate, Enanthate and Parabolan: Prices and Law',
+    excerpt:
+      'Trenbolone’s three esters explained from PubChem, why its only FDA approvals are cattle implants, the law, and every trenbolone listing we stock compared by price.',
+    metaDescription:
+      'Trenbolone acetate vs enanthate vs Parabolan: how much of each is trenbolone, its cattle-only FDA approvals, the law in the US and UK, and 10 listings by price.',
+    category: 'Verification',
+    author: BYLINE,
+    date: '2026-11-10',
+    image: pexels(2253557),
+    imageAlt: 'Two white Charolais cattle in a green pasture, each with a numbered plastic tag in its ear.',
+    imageCredit: credit('Mark Stebnicki'),
+    faqs: [
+      {
+        question: 'What is the difference between trenbolone acetate, enanthate and Parabolan?',
+        answer:
+          'All three are trenbolone with an ester attached. By molecular weight, trenbolone is about 87% of the acetate, 71% of the enanthate and 66% of the hexahydrobenzylcarbonate, the ester known as Parabolan, so the same milligrams on a label hold different amounts of trenbolone.',
+      },
+      {
+        question: 'Is trenbolone approved for human use?',
+        answer:
+          'In the United States the DEA says trenbolone is used only in veterinary medicine, and the FDA approvals for it are trenbolone acetate implants for beef cattle. We found no licensed human product information for any trenbolone ester.',
+      },
+      {
+        question: 'Is trenbolone legal?',
+        answer:
+          'In the US it is a Schedule III controlled substance, esters included. In the UK it is a Class C drug and the import exemption covers importation in person only. Canada prohibits import unless authorised, and Australia lists it in Schedule 4 and requires written permission to import.',
+      },
+      {
+        question: 'How much does trenbolone cost?',
+        answer:
+          'Across the 10 trenbolone listings in this guide, prices run from $75.00 to $109.99 (prices on 10 November 2026). Strengths run from 75 to 200 mg per mL, and packs hold different volumes, so compare price per milligram rather than per pack.',
+      },
+      {
+        question: 'Is MTren the same as trenbolone?',
+        answer:
+          'No. The MTren products we list are labelled metribolone, also called methyltrienolone: trenbolone’s structure with a methyl group added at position 17. US and UK law list it separately, and WADA prohibits both.',
+      },
+    ],
+    sources: [
+      { title: '21 CFR 1308.13: Schedule III', publisher: 'eCFR', year: '2026', url: 'https://www.ecfr.gov/current/title-21/section-1308.13' },
+      {
+        title: 'International Standard: Prohibited List 2026',
+        publisher: 'World Anti-Doping Agency',
+        year: '2025',
+        url: 'https://www.wada-ama.org/sites/default/files/2025-09/2026list_en_final_clean_september_2025.pdf',
+      },
+      { title: 'Trenbolone (CID 25015)', publisher: 'PubChem, US National Library of Medicine', url: 'https://pubchem.ncbi.nlm.nih.gov/compound/25015' },
+      { title: 'Anabolic steroids (drug fact sheet)', publisher: 'DEA Diversion Control Division', year: '2025', url: 'https://www.deadiversion.usdoj.gov/drug_chem_info/anabolic.pdf' },
+      { title: 'Trenbolone acetate (CID 66359)', publisher: 'PubChem, US National Library of Medicine', url: 'https://pubchem.ncbi.nlm.nih.gov/compound/66359' },
+      { title: '21 CFR 522.2476: Trenbolone acetate', publisher: 'eCFR', year: '2026', url: 'https://www.ecfr.gov/current/title-21/section-522.2476' },
+      { title: 'Trenbolone enanthate (CID 20112041)', publisher: 'PubChem, US National Library of Medicine', url: 'https://pubchem.ncbi.nlm.nih.gov/compound/20112041' },
+      {
+        title: 'Trenbolone hexahydrobenzylcarbonate (CID 20055297)',
+        publisher: 'PubChem, US National Library of Medicine',
+        url: 'https://pubchem.ncbi.nlm.nih.gov/compound/20055297',
+      },
+      { title: '21 CFR 522.2477: Trenbolone acetate and estradiol', publisher: 'eCFR', year: '2026', url: 'https://www.ecfr.gov/current/title-21/section-522.2477' },
+      {
+        title: '21 CFR 522.2478: Trenbolone acetate and estradiol benzoate',
+        publisher: 'eCFR',
+        year: '2026',
+        url: 'https://www.ecfr.gov/current/title-21/section-522.2478',
+      },
+      {
+        title: 'Therapeutic Goods (Poisons Standard—June 2026) Instrument 2026',
+        publisher: 'Federal Register of Legislation (Australia)',
+        year: '2026',
+        url: 'https://www.legislation.gov.au/F2026L00633/asmade',
+      },
+      {
+        title:
+          'Council Directive 96/22/EC concerning the prohibition on the use in stockfarming of certain substances having a hormonal or thyrostatic action and of beta-agonists (consolidated text)',
+        publisher: 'EUR-Lex, Publications Office of the European Union',
+        year: '2008',
+        url: 'https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:01996L0022-20081218',
+      },
+      { title: 'Misuse of Drugs Act 1971, Schedule 2', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/ukpga/1971/38/schedule/2' },
+      {
+        title:
+          'Fake anabolic androgenic steroids on the black market: a systematic review and meta-analysis on qualitative and quantitative analytical results found within the literature',
+        publisher: 'BMC Public Health (Magnolini R et al.)',
+        year: '2022',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC9288681/',
+      },
+      {
+        title: '21 U.S.C. 844: Penalty for simple possession',
+        publisher: 'US Government Publishing Office',
+        year: '2024',
+        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapI-partD-sec844.htm',
+      },
+      {
+        title: '21 U.S.C. 952: Importation of controlled substances',
+        publisher: 'US Government Publishing Office',
+        year: '2024',
+        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapII-sec952.htm',
+      },
+      { title: 'Misuse of Drugs Regulations 2001, regulation 4', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/uksi/2001/3998/regulation/4' },
+      { title: 'Misuse of Drugs Regulations 2001, Schedule 4', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/uksi/2001/3998/schedule/4' },
+      {
+        title: 'Controlled Drugs and Substances Act (S.C. 1996, c. 19)',
+        publisher: 'Justice Laws Website, Government of Canada',
+        year: '2026',
+        url: 'https://laws-lois.justice.gc.ca/eng/acts/C-38.8/FullText.html',
+      },
+      {
+        title: 'Customs (Prohibited Imports) Regulations 1956',
+        publisher: 'Federal Register of Legislation (Australia)',
+        year: '2026',
+        url: 'https://www.legislation.gov.au/F1996B03651/latest/text',
+      },
+    ],
+  },
+
+  {
     slug: 'hgh-kits-vials-pens-iu-explained',
     title: 'HGH kits, vials and pens: what IU and mg mean, and what is in the box',
     metaTitle: 'HGH Kits, Vials and Pens: IU, mg and What Is in the Box',

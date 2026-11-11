@@ -34,7 +34,7 @@ Every substance in S1 is prohibited at all times and is a "non-Specified Substan
 
 S1.1 prohibits anabolic androgenic steroids "when administered exogenously", that is, from outside the body. It lists dozens of examples, "including but not limited to":[^1]
 
-- testosterone, nandrolone, trenbolone, boldenone and drostanolone
+- testosterone, [nandrolone](/blog/nandrolone-decanoate-deca-npp-guide), [trenbolone](/blog/trenbolone-acetate-enanthate-parabolan-guide), boldenone and drostanolone
 - stanozolol, oxandrolone, oxymetholone, metandienone and methyltestosterone
 - metenolone, mesterolone, fluoxymesterone and trestolone (MENT)
 - related compounds such as androstenedione and prasterone (DHEA)

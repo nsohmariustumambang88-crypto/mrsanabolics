@@ -23,6 +23,7 @@ export type ArticleSlug =
   | 'anabolic-steroid-health-risks'
   | 'testosterone-enanthate-for-sale-buying-guide'
   | 'nandrolone-decanoate-deca-npp-guide'
+  | 'trenbolone-acetate-enanthate-parabolan-guide'
   | 'hgh-kits-vials-pens-iu-explained'
   | 'is-hgh-legal-us-uk-canada';
 
@@ -117,6 +118,7 @@ export const CATEGORY_COPY: Record<string, CategoryCopy> = {
 */
 export const GROUP_ARTICLES: Record<string, ArticleSlug[]> = {
   'injectables/nandrolone': ['nandrolone-decanoate-deca-npp-guide'],
+  'injectables/trenbolone': ['trenbolone-acetate-enanthate-parabolan-guide'],
   'injectables/testosterone-enanthate': ['testosterone-enanthate-for-sale-buying-guide'],
   'peptides/growth-hormone': ['hgh-kits-vials-pens-iu-explained', 'is-hgh-legal-us-uk-canada'],
 };

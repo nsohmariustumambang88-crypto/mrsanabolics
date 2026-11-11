@@ -128,4 +128,4 @@ The working-day estimates are the rates' stated ranges, not a guarantee. Our [sh
 
 Every listing in the tables, with its photograph and label, is on one page: [nandrolone](/shop/injectables/nandrolone). Check the ester and the oil on each label, compare by price per milligram, and check the law where you live before you order.
 
-If you are comparing testosterone as well, [our testosterone enanthate guide](/blog/testosterone-enanthate-for-sale-buying-guide) does the same for every enanthate listing. Both sit in our [injectable steroids category](/shop/injectables), and [the shop](/shop) lists every category and compound we carry.
+If you are comparing testosterone or trenbolone as well, [our testosterone enanthate guide](/blog/testosterone-enanthate-for-sale-buying-guide) and [our trenbolone guide](/blog/trenbolone-acetate-enanthate-parabolan-guide) do the same for their listings. All three sit in our [injectable steroids category](/shop/injectables), and [the shop](/shop) lists every category and compound we carry.
