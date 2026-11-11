@@ -239,6 +239,29 @@ the unique slug and the second one dies mid-batch.
 
 Category pigments: the `--cat-*` tokens in globals.css and `vesselFor()` in plate-svg.ts are
 keyed to the nine real slugs; a category added to the taxonomy needs both.
+
+## Product notes ("From the shop")
+
+**50 product pages carry a note written for that one listing** (11 November 2026), because the
+rest of a product page is template text shared by ~790 products and search engines treat such
+pages as near-duplicates. The notes are in [lib/catalogue/product-notes.ts](lib/catalogue/product-notes.ts),
+keyed by slug, rendered server-side by [components/product/product-note.tsx](components/product/product-note.tsx)
+under the photo and buy panel, and used as the Product JSON-LD `description`. The 50 were the
+product pages Google had sent the most visitors to.
+
+- Every fact comes from the pack in the product's photograph, the listing, or arithmetic on the
+  two. Where a photograph cannot be read, the note says so. No dosing, effects, benefits or
+  purity claims, and nothing in a customer's voice: the heading says the shop wrote it.
+- **Prices are never written into the prose.** `{price}`, `{perMg}` and `{perIu}` are filled in
+  from the live price at render time; `packMg`/`packIu` are set only when the label shows both
+  strength and pack size. A note using a figure it lacks is not shown at all.
+- Reading the photographs turned up listing errors (ampoules listed as vials, Genotropin pens as
+  powder vials, MTren 5 as trenbolone, a boldenone blend named without boldenone, two strengths
+  missing); those 12 rows were corrected in the database the same day. If a listing a note
+  describes is refiled or re-photographed, re-read the note. Still unresolved: both Roid Plus
+  "1250" listings have an unreadable stock photograph, and their notes call the strength
+  unconfirmed.
+
 ## The design system: ebru
 
 The visual world is **ebru** (Turkish paper marbling), chosen by the user. Read the direction contract in `app/layout.tsx` before making visual decisions; `DESIGN.md` records the system as built.
@@ -413,7 +436,7 @@ node --env-file=.env .impeccable/account-e2e.mjs   # needs the app running
 
 ## The journal
 
-The journal (`/blog`, and the section near the foot of the home page) started as six sourced articles written for search. Other sessions then added some 35 unsourced SEO articles; on 26 October 2026 the 20 built around doses, cycles and stacks were retired and the 6 that duplicated a sourced article were merged into it — all 26 redirect through `retired.json`. On 30 October 2026 the last 9 unsourced articles were dealt with: 5 rewritten with verified sources and no dosing (what-are-anabolic-steroids, how-to-buy-steroids-online-safely, wada-banned-list-explained, best-underground-labs-vs-pharmaceutical, post-cycle-therapy-complete-guide — `updated` 2026-10-30, original `date` kept) and 4 folded into them or into a sourced original (how-do-steroids-work, steroid-suppliers-which-are-legit, best-place-to-buy-testosterone, sarms-vs-steroids-which-is-better), redirecting through `retired.json`. None of the 9 had search traffic worth keeping (48 views since tracking began, 4 from search). It now holds **15, every one sourced**: the six originals, the testosterone enanthate buying guide, the five rewrites, two growth hormone articles (6 November 2026) and the nandrolone decanoate and NPP guide (10 November 2026). That last one was chosen from the site's own data: the retired `nandrolone-deca-durabolin-guide` was the article Google sent most visitors to, so its redirect in `retired.json` now points at the new guide instead of the shop page. Compound shop pages list their own guide first under "Before you buy" — `GROUP_ARTICLES` and `groupArticles()` in [lib/catalogue/collection-copy.ts](lib/catalogue/collection-copy.ts), used by the English and translated group pages; a new compound guide should be added there too. The buying-safely guide says plainly that this shop sells without a prescription and that its payment methods are a warning sign by regulators' checklists; if the checkout's methods change, its "Read this honestly" callout must change with them. The WADA article names the 2026 List and the 2021 Code "until 31 December 2026" and the 2027 instruments after — revise it in January 2027. `/llms.txt` lists only articles with sources. The six originals: reading a certificate of analysis (featured), spotting counterfeit steroids, what HPLC and mass spectrometry can prove, whether SARMs are legal, steroid law in the US/UK/Canada/Australia, and the health risks. The editorial policy they follow is on the About page (`/about#editorial-policy`) and is binding on any new article: **every factual claim cited to a primary source, no dosing or protocols, the byline is the organisation, dates are real.**
+The journal (`/blog`, and the section near the foot of the home page) started as six sourced articles written for search. Other sessions then added some 35 unsourced SEO articles; on 26 October 2026 the 20 built around doses, cycles and stacks were retired and the 6 that duplicated a sourced article were merged into it — all 26 redirect through `retired.json`. On 30 October 2026 the last 9 unsourced articles were dealt with: 5 rewritten with verified sources and no dosing (what-are-anabolic-steroids, how-to-buy-steroids-online-safely, wada-banned-list-explained, best-underground-labs-vs-pharmaceutical, post-cycle-therapy-complete-guide — `updated` 2026-10-30, original `date` kept) and 4 folded into them or into a sourced original (how-do-steroids-work, steroid-suppliers-which-are-legit, best-place-to-buy-testosterone, sarms-vs-steroids-which-is-better), redirecting through `retired.json`. None of the 9 had search traffic worth keeping (48 views since tracking began, 4 from search). It now holds **16, every one sourced**: the six originals, the testosterone enanthate buying guide, the five rewrites, two growth hormone articles (6 November 2026), the nandrolone decanoate and NPP guide and the trenbolone guide (both 10 November 2026). Those last two were chosen from the site's own data: the retired `nandrolone-deca-durabolin-guide` was the article Google sent most visitors to, and `trenbolone-cycle-guide-dosage` still drew Google visitors while "tren" was the most-typed on-site search, so each redirect in `retired.json` now points at its new guide instead of the shop page. The trenbolone guide (`trenbolone-acetate-enanthate-parabolan-guide`) has no human label to quote, because the only approvals it found are cattle implants (21 CFR 522.2476–2478); it lists the trenbolone page's two MTren 5 products separately, because their packs say metribolone (methyltrienolone), not trenbolone. Its listing table is dated 10 November 2026; if the catalogue is refiled, its counts need a revision. Compound shop pages list their own guide first under "Before you buy" — `GROUP_ARTICLES` and `groupArticles()` in [lib/catalogue/collection-copy.ts](lib/catalogue/collection-copy.ts), used by the English and translated group pages; a new compound guide should be added there too. The buying-safely guide says plainly that this shop sells without a prescription and that its payment methods are a warning sign by regulators' checklists; if the checkout's methods change, its "Read this honestly" callout must change with them. The WADA article names the 2026 List and the 2021 Code "until 31 December 2026" and the 2027 instruments after — revise it in January 2027. `/llms.txt` lists only articles with sources. The six originals: reading a certificate of analysis (featured), spotting counterfeit steroids, what HPLC and mass spectrometry can prove, whether SARMs are legal, steroid law in the US/UK/Canada/Australia, and the health risks. The editorial policy they follow is on the About page (`/about#editorial-policy`) and is binding on any new article: **every factual claim cited to a primary source, no dosing or protocols, the byline is the organisation, dates are real.**
 
 **Where it lives.** Each body is Markdown at `content/journal/<slug>.md`; its title, search title and description, photograph, FAQs and numbered sources are in [lib/data/journal.ts](lib/data/journal.ts). `npm run db:seed-journal` writes them to Neon and **refuses the whole run** if a `[^n]` has no source, a source is never cited, a `[[figure:key]]` does not exist, more than one article is featured, or an excerpt exceeds 165 characters. Existing rows are skipped unless `--refresh`, because the admin can edit them; `--refresh --only=a,b` rewrites just the named articles and leaves every other row (and its admin edits) alone; `--dry-run` writes nothing. The Markdown dialect and renderer are [components/journal/article-body.tsx](components/journal/article-body.tsx) — no HTML injection. Figures are drawn in [components/journal/figures.tsx](components/journal/figures.tsx) as live text, not images.
 
@@ -632,7 +655,8 @@ and refuses a method the zone does not offer, re-evaluates the code, and stores 
     uploads to Cloudinary as an **authenticated** asset under `mranabolics/payment-proofs/`, which
     has no public URL: only `signedImageUrl()` opens it, and only the admin order screen builds
     one. It writes a `PaymentProof` row (its own table, so `orders` still has no payment column)
-    and an order event, and emails `ADMIN_EMAIL` "Cash App screenshot - <ref>".
+    and an order event, and emails the shop's alert address (support@mrsanabolics.com; see
+    "Email, as built") "Cash App screenshot - <ref>".
   - Nothing marks the order paid. The admin order screen shows the screenshots first, with the
     sentence that a screenshot is the customer's claim; staff check Cash App and set Confirmed.
     The orders list marks rows that have one. With no tag on the row, Cash App falls back to the
@@ -680,6 +704,14 @@ renders one template ([lib/email/templates.ts](lib/email/templates.ts)) with Sub
 Shipping and Total rows — "Order Received" when placed, "Order Confirmed" when paid — and is the
 only order email; an older duplicate template in the webhook was deleted. Campaigns and newsletters
 have been sent by script through the same API, test to the owner first.
+
+**The shop's own alerts go to support@mrsanabolics.com** (since 10 November 2026): "New Order -
+<ref>" and "Cash App screenshot - <ref>". The address is the `ADMIN_EMAIL` **constant** in
+[lib/email/resend.ts](lib/email/resend.ts), which is not the `ADMIN_EMAIL` environment variable
+(the admin sign-in the harnesses use). It used to be a Gmail address that Resend suppressed, so
+every alert showed `last_event: suppressed` and nobody received one. support@ is a Hostinger
+mailbox (MX `mx1`/`mx2.hostinger.com`); a test from `orders@` showed `delivered`. If alerts stop
+arriving, check `GET https://api.resend.com/emails/<id>` for `suppressed` or `bounced` first.
 
 **Known bug, not yet fixed:** `lib/email/campaigns.ts` builds every recipient's unsubscribe link
 from `subscribers[0].unsubscribeToken`. Each subscriber must get their own token.
