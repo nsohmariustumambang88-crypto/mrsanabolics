@@ -141,6 +141,7 @@ export function ProductDetail({
   summary,
   faqs,
   paymentMethods = [],
+  note = null,
 }: {
   product: Product;
   related: Product[];
@@ -154,6 +155,11 @@ export function ProductDetail({
   faqs?: { question: string; answer: string }[];
   /** The payment methods checkout lists, by label. */
   paymentMethods?: string[];
+  /**
+   * "From the shop": the note written for this product, rendered on the server
+   * (components/product/product-note.tsx). Most products have none, and render as before.
+   */
+  note?: React.ReactNode;
 }) {
   const questions = faqs ?? product.faqs;
   const { addToCart, toggleWishlist, isWishlisted } = useStore();
@@ -440,6 +446,8 @@ export function ProductDetail({
           </div>
         </div>
       </section>
+
+      {note}
 
       {/* The record */}
       <section className="border-b border-rule">

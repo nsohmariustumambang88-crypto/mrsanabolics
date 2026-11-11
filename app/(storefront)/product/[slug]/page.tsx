@@ -18,6 +18,8 @@ import { titleTestGroup } from '@/lib/catalogue/title-test';
 import { buyingFaqs, getListedPaymentMethods } from '@/lib/catalogue/buying-facts';
 import { getDeliverySummary, type ZoneSummary } from '@/lib/delivery/summary';
 import { COUNTRY_CODES } from '@/lib/countries';
+import { productNote } from '@/lib/catalogue/product-notes';
+import { ProductNote } from '@/components/product/product-note';
 
 /*
   Server component.
@@ -274,6 +276,10 @@ export default async function ProductPage({ params }: Params) {
   const url = `${SITE.url}/product/${product.slug}`;
   const compound = await compoundFor(product);
   const { description, summary } = describe(product, compound, await getUsDelivery());
+  /* The shop's own note for this product, where one is written (lib/catalogue/product-notes.ts),
+     priced from the live row. It replaces the computed description in the Product JSON-LD only;
+     the meta description stays the short computed one. */
+  const note = productNote(product.slug, product.price);
   const image = productImage(product);
   const [zones, paymentMethods] = await Promise.all([getDeliverySummary(), getListedPaymentMethods()]);
   const shipping = shippingDetails(zones);
@@ -289,7 +295,7 @@ export default async function ProductPage({ params }: Params) {
       '@type': 'Product',
       '@id': `${url}#product`,
       name: product.name,
-      description,
+      description: note?.text ?? description,
       url,
       /*
         The photograph. Google asks for an image on every product, and without one a product is
@@ -413,6 +419,7 @@ export default async function ProductPage({ params }: Params) {
         summary={summary}
         faqs={faqs}
         paymentMethods={paymentMethods}
+        note={note ? <ProductNote note={note} /> : null}
       />
     </>
   );
