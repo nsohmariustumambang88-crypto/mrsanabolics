@@ -19,6 +19,7 @@ import { buyingFaqs, getListedPaymentMethods } from '@/lib/catalogue/buying-fact
 import { getDeliverySummary, type ZoneSummary } from '@/lib/delivery/summary';
 import { COUNTRY_CODES } from '@/lib/countries';
 import { productNote } from '@/lib/catalogue/product-notes';
+import { productSku } from '@/lib/catalogue/sku';
 import { ProductNote } from '@/components/product/product-note';
 
 /*
@@ -302,8 +303,9 @@ export default async function ProductPage({ params }: Params) {
         not eligible for product results in search at all — this markup shipped without it.
       */
       ...(image && { image: [image] }),
-      /* The slug, not the database id: a readable, stable code rather than a random string. */
-      sku: product.slug,
+      /* The slug, not the database id: a readable, stable code rather than a random string.
+         Shortened past Google's 50-character limit (lib/catalogue/sku.ts). */
+      sku: productSku(product.slug),
       category: product.category,
       brand: { '@type': 'Brand', name: product.brand },
       additionalProperty: product.specifications.map((s) => ({
