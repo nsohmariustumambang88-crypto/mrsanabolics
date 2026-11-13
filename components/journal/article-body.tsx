@@ -14,6 +14,8 @@ import { JournalFigure } from '@/components/journal/figures';
   The dialect, which the admin screen's hint repeats:
 
     ## Heading            a section, listed in the table of contents
+    ## Heading {fold}     the same, but the section starts closed under its heading and opens on
+                          a click (a native <details>, so no script; the text stays in the page)
     ### Subheading
     - item / 1. item      lists
     > text                a callout; a first line of **Bold** becomes its label
@@ -24,7 +26,7 @@ import { JournalFigure } from '@/components/journal/figures';
 */
 
 type Block =
-  | { kind: 'h2' | 'h3'; text: string; id: string }
+  | { kind: 'h2' | 'h3'; text: string; id: string; fold?: boolean }
   | { kind: 'p'; text: string }
   | { kind: 'ul' | 'ol'; items: string[] }
   | { kind: 'quote'; lines: string[] }
@@ -78,8 +80,11 @@ export function parseArticle(markdown: string): Block[] {
 
     const heading = trimmed.match(/^(#{2,3})\s+(.*)$/);
     if (heading) {
-      const text = heading[2];
-      blocks.push({ kind: heading[1].length === 2 ? 'h2' : 'h3', text, id: headingId(text) });
+      const level = heading[1].length === 2 ? 'h2' : 'h3';
+      /* `{fold}` only means something on a section heading; on a subheading it is dropped. */
+      const fold = /\s*\{fold\}\s*$/.test(heading[2]);
+      const text = heading[2].replace(/\s*\{fold\}\s*$/, '');
+      blocks.push({ kind: level, text, id: headingId(text), ...(fold && level === 'h2' && { fold: true }) });
       i++;
       continue;
     }
@@ -203,12 +208,7 @@ function Inline({ text }: { text: string }) {
   return <>{out}</>;
 }
 
-export function ArticleBody({ markdown }: { markdown: string }) {
-  const blocks = parseArticle(markdown);
-
-  return (
-    <div className="text-base leading-[1.75] text-ink-soft">
-      {blocks.map((block, index) => {
+function renderBlock(block: Block, index: number): React.ReactNode {
         switch (block.kind) {
           case 'h2':
             return (
@@ -326,7 +326,63 @@ export function ArticleBody({ markdown }: { markdown: string }) {
           case 'figure':
             return <JournalFigure key={index} figureKey={block.key} />;
         }
-      })}
-    </div>
+}
+
+/*
+  A `## Heading {fold}` section: closed under its heading until the reader opens it. The owner
+  asked (November 2026) for the country-by-country law in the buying guides to stay on the page
+  but out of the way. It is a native <details>, not hidden text: the heading always shows, one
+  click opens it, it works without script, and search engines read what is inside. The heading
+  keeps its id, so the table of contents still lands on it.
+*/
+function FoldedSection({
+  heading,
+  blocks,
+  offset,
+}: {
+  heading: { text: string; id: string };
+  blocks: Block[];
+  offset: number;
+}) {
+  return (
+    <details className="group mb-5 mt-14 border-y border-rule first:mt-0">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 [&::-webkit-details-marker]:hidden">
+        <h2
+          id={heading.id}
+          className="scroll-mt-40 font-display text-2xl font-semibold leading-tight tracking-[-0.03em] text-ink"
+        >
+          <Inline text={heading.text} />
+        </h2>
+        {/* The summary itself announces open and closed; this label is for the eye. */}
+        <span
+          aria-hidden="true"
+          className="shrink-0 font-mono text-2xs uppercase tracking-[0.16em] text-pigment-indigo"
+        >
+          <span className="group-open:hidden">Open</span>
+          <span className="hidden group-open:inline">Close</span>
+        </span>
+      </summary>
+      <div className="pb-4 pt-1">{blocks.map((block, j) => renderBlock(block, offset + j))}</div>
+    </details>
   );
+}
+
+export function ArticleBody({ markdown }: { markdown: string }) {
+  const blocks = parseArticle(markdown);
+  const out: React.ReactNode[] = [];
+
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i];
+    if (block.kind === 'h2' && block.fold) {
+      const start = i;
+      const inner: Block[] = [];
+      /* The section runs to the next section heading. */
+      while (i + 1 < blocks.length && blocks[i + 1].kind !== 'h2') inner.push(blocks[++i]);
+      out.push(<FoldedSection key={start} heading={block} blocks={inner} offset={start + 1} />);
+      continue;
+    }
+    out.push(renderBlock(block, i));
+  }
+
+  return <div className="text-base leading-[1.75] text-ink-soft">{out}</div>;
 }

@@ -46,7 +46,7 @@ export default async function AdminBlogPage() {
                 type: 'textarea',
                 rows: 16,
                 required: true,
-                hint: 'Markdown: ## heading, ### subheading, - list, 1. list, > callout, | tables |, **bold**, [link](/shop), [^2] cites source 2, [[figure:key]] places a drawn figure.',
+                hint: 'Markdown: ## heading (## heading {fold} starts the section closed), ### subheading, - list, 1. list, > callout, | tables |, **bold**, [link](/shop), [^2] cites source 2, [[figure:key]] places a drawn figure.',
               },
               { name: 'category', label: 'Topic', value: post.category },
               { name: 'author', label: 'Byline', value: post.author },

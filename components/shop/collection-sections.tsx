@@ -297,31 +297,69 @@ export function ManufacturerList({ facts }: { facts: CollectionFacts }) {
   );
 }
 
-export type FaqItem = { question: string; answer: string; link?: { href: string; label: string } };
+export type FaqItem = {
+  question: string;
+  answer: string;
+  link?: { href: string; label: string };
+  /**
+   * Shown with its answer closed until the reader opens it: the country-by-country law, which
+   * the owner asked (November 2026) to keep on the page but out of the way. A native <details>,
+   * so the question always shows and the answer is one click away, not hidden text.
+   */
+  folded?: boolean;
+};
+
+const FAQ_LINK =
+  'text-pigment-indigo underline decoration-rule-strong underline-offset-[3px] transition-colors hover:decoration-pigment-indigo';
+
+function FaqAnswer({ f }: { f: FaqItem }) {
+  return (
+    <>
+      {f.answer}
+      {f.link && (
+        <>
+          {' '}
+          <Link href={f.link.href} className={FAQ_LINK}>
+            {f.link.label}
+          </Link>
+        </>
+      )}
+    </>
+  );
+}
 
 export function CollectionFaq({ items }: { items: FaqItem[] }) {
+  const open = items.filter((f) => !f.folded);
+  const folded = items.filter((f) => f.folded);
   return (
-    <dl className="divide-y divide-rule border-y border-rule">
-      {items.map((f) => (
-        <div key={f.question} className="py-5">
-          <dt className="font-display text-base font-semibold tracking-[-0.015em] text-ink">{f.question}</dt>
-          <dd className="measure mt-2 text-sm leading-relaxed text-ink-soft">
-            {f.answer}
-            {f.link && (
-              <>
-                {' '}
-                <Link
-                  href={f.link.href}
-                  className="text-pigment-indigo underline decoration-rule-strong underline-offset-[3px] transition-colors hover:decoration-pigment-indigo"
-                >
-                  {f.link.label}
-                </Link>
-              </>
-            )}
-          </dd>
-        </div>
+    <div className="border-y border-rule">
+      <dl className="divide-y divide-rule">
+        {open.map((f) => (
+          <div key={f.question} className="py-5">
+            <dt className="font-display text-base font-semibold tracking-[-0.015em] text-ink">{f.question}</dt>
+            <dd className="measure mt-2 text-sm leading-relaxed text-ink-soft">
+              <FaqAnswer f={f} />
+            </dd>
+          </div>
+        ))}
+      </dl>
+      {/* After the open answers, so the questions a shopper asks first stay first. */}
+      {folded.map((f) => (
+        <details key={f.question} className="group border-t border-rule py-5">
+          <summary className="flex cursor-pointer list-none items-baseline justify-between gap-4 [&::-webkit-details-marker]:hidden">
+            <span className="font-display text-base font-semibold tracking-[-0.015em] text-ink">{f.question}</span>
+            {/* A sign rather than a word: these pages are also served in four other languages. */}
+            <span aria-hidden="true" className="shrink-0 font-mono text-base leading-none text-pigment-indigo">
+              <span className="group-open:hidden">+</span>
+              <span className="hidden group-open:inline">−</span>
+            </span>
+          </summary>
+          <p className="measure mt-2 text-sm leading-relaxed text-ink-soft">
+            <FaqAnswer f={f} />
+          </p>
+        </details>
       ))}
-    </dl>
+    </div>
   );
 }
 
