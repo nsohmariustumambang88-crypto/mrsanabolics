@@ -634,6 +634,20 @@ and refuses a method the zone does not offer, re-evaluates the code, and stores 
 - **Minimum order: $100**, from [lib/orders/minimum.ts](lib/orders/minimum.ts), measured on the
   **total paid** — goods − discount + shipping. Checked in `createOrder`.
 - **There is no tax line.** The 8% placeholder was removed.
+- **No apartment line and no postal code** since 13 November 2026 (the owner's decision): one
+  `street-address` field and the city. The columns stay; new orders store `shipLine2` null and
+  `shipPostcode` '' (NOT NULL), and every address display goes through `addressLines()` in
+  [lib/orders/address.ts](lib/orders/address.ts) so empty parts drop out. The admin's Record
+  Order form still asks for a postcode.
+- **Autofill and the saved draft.** Every customer form carries real `autocomplete` tokens, and
+  the checkout's address step is a real `<form>` so browsers offer to save the address. The
+  country field accepts a name from autofill and turns it into the code
+  ([lib/checkout/country-input.ts](lib/checkout/country-input.ts)); it used to be `maxLength=2`,
+  which cut "United Kingdom" to "UN". What a shopper typed is kept in localStorage under
+  `mranabolics-checkout` ([lib/checkout/draft.ts](lib/checkout/draft.ts)): contact, address,
+  delivery and payment choice, never prices, codes or the marketing box. It survives an order
+  and is cleared on sign-out. Honeypots are named `website`, never `company`, because browsers
+  autofill a Company field from a saved address and would trip the trap.
 - **Methods** come from the PaymentMethod table, ordered crypto (0), bank transfer (1), Cash App
   (2); checkout preselects the first listed.
 - **Bank transfer is manual.** The order is recorded and staff email the payment details;
