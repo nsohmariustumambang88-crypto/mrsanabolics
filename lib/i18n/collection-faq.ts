@@ -80,7 +80,7 @@ const STRINGS: Record<IntlLocale, Strings> = {
     rangeTo: (a, b) => `${a} a ${b}`,
     whereQ: (t) => `¿Dónde comprar ${t}?`,
     whereA: (s, n) =>
-      `Todos los productos de esta página se pueden pedir aquí: abra el producto, añádalo a la cesta y finalice la compra. ${s} de ${n} ${n === 1 ? 'producto está' : 'productos están'} en stock. El proceso de pago está en inglés y se cobra en dólares estadounidenses. Si tiene alguna pregunta antes de pedir, escríbanos por Telegram o WhatsApp con los botones de la parte inferior de la página.`,
+      `Todos los productos de esta página se pueden pedir aquí: abra el producto, añádalo a la cesta y finalice la compra. ${s} de ${n} ${n === 1 ? 'producto está' : 'productos están'} en stock. El proceso de pago está en inglés y se cobra en dólares estadounidenses. Una vez hecho el pedido, lo preparamos en un embalaje discreto y sin marcas y lo enviamos con seguimiento y asegurado, como todos los pedidos; le enviamos el número de seguimiento por correo electrónico cuando sale. Si tiene alguna pregunta antes de pedir, escríbanos por Telegram o WhatsApp con los botones de la parte inferior de la página.`,
     shipQ: (l, c) => `¿Envían ${l} a ${c}?`,
     shipA: (c, o) => `Sí. Los pedidos a ${c} se envían por ${o}.`,
     or: 'o',
@@ -122,7 +122,7 @@ const STRINGS: Record<IntlLocale, Strings> = {
     rangeTo: (a, b) => `${a} à ${b}`,
     whereQ: (t) => `Où acheter ${t} ?`,
     whereA: (s, n) =>
-      `Chaque produit de cette page peut être commandé ici : ouvrez le produit, ajoutez-le au panier et passez commande. ${s} ${n === 1 ? 'produit' : 'produits'} sur ${n} ${s === 1 ? 'est' : 'sont'} en stock. Le paiement se fait en anglais et est débité en dollars américains. Pour toute question avant de commander, écrivez-nous sur Telegram ou WhatsApp avec les boutons en bas de la page.`,
+      `Chaque produit de cette page peut être commandé ici : ouvrez le produit, ajoutez-le au panier et passez commande. ${s} ${n === 1 ? 'produit' : 'produits'} sur ${n} ${s === 1 ? 'est' : 'sont'} en stock. Le paiement se fait en anglais et est débité en dollars américains. Une fois votre commande passée, nous l’emballons dans un colis neutre et sans inscription et l’expédions avec suivi et assurance, comme toutes nos commandes ; le numéro de suivi vous est envoyé par e-mail à l’expédition. Pour toute question avant de commander, écrivez-nous sur Telegram ou WhatsApp avec les boutons en bas de la page.`,
     shipQ: (l, c) => `${cap(l)} : livrez-vous en ${c} ?`,
     shipA: (c, o) => `Oui. Les commandes vers la ${c} partent en ${o}.`,
     or: 'ou',
@@ -164,7 +164,7 @@ const STRINGS: Record<IntlLocale, Strings> = {
     rangeTo: (a, b) => `${a} bis ${b}`,
     whereQ: (t) => `Wo kann man ${t} kaufen?`,
     whereA: (s, n) =>
-      `Jedes Angebot auf dieser Seite kann hier bestellt werden: Produkt öffnen, in den Warenkorb legen und zur Kasse gehen. ${s} von ${n} ${n === 1 ? 'Angebot ist' : 'Angeboten sind'} auf Lager. Die Kasse ist auf Englisch, bezahlt wird in US-Dollar. Wenn Sie vor der Bestellung eine Frage haben, schreiben Sie uns über Telegram oder WhatsApp mit den Schaltflächen unten auf der Seite.`,
+      `Jedes Angebot auf dieser Seite kann hier bestellt werden: Produkt öffnen, in den Warenkorb legen und zur Kasse gehen. ${s} von ${n} ${n === 1 ? 'Angebot ist' : 'Angeboten sind'} auf Lager. Die Kasse ist auf Englisch, bezahlt wird in US-Dollar. Sobald Sie bestellt haben, verpacken wir die Sendung neutral und ohne Aufdruck und verschicken sie versichert und mit Sendungsverfolgung, wie jede Bestellung; die Sendungsnummer erhalten Sie per E-Mail, sobald das Paket unterwegs ist. Wenn Sie vor der Bestellung eine Frage haben, schreiben Sie uns über Telegram oder WhatsApp mit den Schaltflächen unten auf der Seite.`,
     shipQ: (l, c) => `Versenden Sie ${l} nach ${c}?`,
     shipA: (c, o) => `Ja. Bestellungen nach ${c} gehen per ${o}.`,
     or: 'oder',
@@ -206,7 +206,7 @@ const STRINGS: Record<IntlLocale, Strings> = {
     rangeTo: (a, b) => `${a} a ${b}`,
     whereQ: (t) => `Dove acquistare ${t}?`,
     whereA: (s, n) =>
-      `Ogni prodotto di questa pagina si può ordinare qui: apra il prodotto, lo aggiunga al carrello e completi l’acquisto. ${s} ${n === 1 ? 'prodotto' : 'prodotti'} su ${n} ${s === 1 ? 'è disponibile' : 'sono disponibili'}. La cassa è in inglese e il pagamento è addebitato in dollari statunitensi. Se ha domande prima di ordinare, ci scriva su Telegram o WhatsApp con i pulsanti in fondo alla pagina.`,
+      `Ogni prodotto di questa pagina si può ordinare qui: apra il prodotto, lo aggiunga al carrello e completi l’acquisto. ${s} ${n === 1 ? 'prodotto' : 'prodotti'} su ${n} ${s === 1 ? 'è disponibile' : 'sono disponibili'}. La cassa è in inglese e il pagamento è addebitato in dollari statunitensi. Una volta effettuato l’ordine, lo imballiamo in una confezione anonima e senza scritte e lo spediamo tracciato e assicurato, come ogni ordine; il numero di tracciamento le arriva via email alla spedizione. Se ha domande prima di ordinare, ci scriva su Telegram o WhatsApp con i pulsanti in fondo alla pagina.`,
     shipQ: (l, c) => `${cap(l)}: spedite in ${c}?`,
     shipA: (c, o) => `Sì. Gli ordini verso l’${c} partono con ${o}.`,
     or: 'o',
@@ -260,7 +260,8 @@ function genuine(s: Strings, label: string): FaqItem {
 }
 
 function legal(s: Strings, label: string): FaqItem {
-  return { question: s.legalQ(label), answer: s.legalA, link: { href: LAW, label: s.legalLink } };
+  /* Folded, as on the English pages: the law stays on the page, one click away. */
+  return { question: s.legalQ(label), answer: s.legalA, link: { href: LAW, label: s.legalLink }, folded: true };
 }
 
 export type IntlGroupFaqContext = {

@@ -34,7 +34,11 @@ export type CategoryCopy = {
   intro: string[];
   /** Journal articles that bear on everything in the category, most relevant first. */
   articles: ArticleSlug[];
-  /** Prescription-only in the US, UK, Canada and Australia — adds that question to the FAQ. */
+  /**
+   * Controlled in the US, UK, Canada and Australia. On the steroid categories this adds the
+   * legal-position question, folded, to the FAQ; elsewhere it no longer adds anything (the
+   * "Do you need a prescription?" question came off the shop pages in November 2026).
+   */
   prescription?: boolean;
   /**
    * The route of administration, put in front of a compound's name in its page title and heading
@@ -69,7 +73,7 @@ export const CATEGORY_COPY: Record<string, CategoryCopy> = {
     heading: 'Post-cycle and estrogen control',
     intro: [
       'Aromatase inhibitors (anastrozole, letrozole, exemestane), selective estrogen receptor modulators (clomiphene, tamoxifen), mesterolone, cabergoline, hCG, and 5-alpha-reductase inhibitors.',
-      'All of them are prescription medicines. They are listed by active ingredient, so different manufacturers’ versions of the same drug can be compared directly.',
+      'They are listed by active ingredient, so different manufacturers’ versions of the same drug can be compared directly.',
     ],
     articles: ['how-to-spot-counterfeit-steroids', 'how-to-read-a-certificate-of-analysis', 'anabolic-steroids-law-us-uk-canada-australia'],
     prescription: true,
@@ -135,7 +139,7 @@ export const GROUP_COPY: Record<string, string> = {
   'injectables/blends':
     'Pre-mixed injectables that combine two or more compounds or esters in one vial. Each label lists its components and the amount of each.',
   'injectables/testosterone-enanthate':
-    'Testosterone with an enanthate ester attached, supplied as an oil-based solution for injection. It is a prescription medicine for male hypogonadism in most countries.',
+    'Testosterone with an enanthate ester attached, supplied as an oil-based solution for injection.',
   'injectables/testosterone-propionate':
     'Testosterone with the shorter propionate ester, supplied as an oil-based solution for injection.',
   'injectables/testosterone-cypionate':
@@ -184,7 +188,7 @@ export const GROUP_COPY: Record<string, string> = {
 
   'peptides/peptides': 'Research peptides such as BPC-157, TB-500 and growth-hormone secretagogues. Most are not approved medicines anywhere.',
   'peptides/sarms': 'Selective androgen receptor modulators such as ostarine, ligandrol and RAD-140. No SARM is an approved medicine in any country.',
-  'peptides/growth-hormone': 'Somatropin, the recombinant form of human growth hormone: a prescription medicine supplied as a powder or in pens for injection.',
+  'peptides/growth-hormone': 'Somatropin, the recombinant form of human growth hormone, supplied as a powder or in pens for injection.',
 
   'fat-burners/clenbuterol': 'Clenbuterol hydrochloride, a beta-2 agonist that is not approved for human use in the United States.',
   'fat-burners/liothyronine-t3': 'Liothyronine (T3), a thyroid hormone prescribed for an underactive thyroid.',

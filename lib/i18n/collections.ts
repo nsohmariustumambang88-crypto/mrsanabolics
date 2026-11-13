@@ -120,7 +120,7 @@ export const INTL_GROUP: Record<IntlLocale, Record<TranslatedGroup, IntlGroupCop
       name: 'Enantato de testosterona',
       title: 'Enantato de testosterona inyectable',
       identity:
-        'Testosterona con un éster enantato, suministrada como solución oleosa para inyección. En la mayoría de los países es un medicamento con receta para el hipogonadismo masculino.',
+        'Testosterona con un éster enantato, suministrada como solución oleosa para inyección.',
     },
     'injectables/testosterone-cypionate': {
       name: 'Cipionato de testosterona',
@@ -179,7 +179,7 @@ export const INTL_GROUP: Record<IntlLocale, Record<TranslatedGroup, IntlGroupCop
       name: 'Énanthate de testostérone',
       title: 'Énanthate de testostérone injectable',
       identity:
-        'Testostérone liée à un ester énanthate, fournie sous forme de solution huileuse injectable. Dans la plupart des pays, c’est un médicament sur ordonnance indiqué dans l’hypogonadisme masculin.',
+        'Testostérone liée à un ester énanthate, fournie sous forme de solution huileuse injectable.',
     },
     'injectables/testosterone-cypionate': {
       name: 'Cypionate de testostérone',
@@ -238,7 +238,7 @@ export const INTL_GROUP: Record<IntlLocale, Record<TranslatedGroup, IntlGroupCop
       name: 'Testosteron-Enantat',
       title: 'Testosteron-Enantat (Injektion)',
       identity:
-        'Testosteron mit Enantat-Ester, als ölige Injektionslösung. In den meisten Ländern ist es ein verschreibungspflichtiges Arzneimittel gegen männlichen Hypogonadismus.',
+        'Testosteron mit Enantat-Ester, als ölige Injektionslösung.',
     },
     'injectables/testosterone-cypionate': {
       name: 'Testosteron-Cypionat',
@@ -297,7 +297,7 @@ export const INTL_GROUP: Record<IntlLocale, Record<TranslatedGroup, IntlGroupCop
       name: 'Testosterone enantato',
       title: 'Testosterone enantato iniettabile',
       identity:
-        'Testosterone legato a un estere enantato, fornito come soluzione oleosa iniettabile. Nella maggior parte dei paesi è un medicinale soggetto a prescrizione per l’ipogonadismo maschile.',
+        'Testosterone legato a un estere enantato, fornito come soluzione oleosa iniettabile.',
     },
     'injectables/testosterone-cypionate': {
       name: 'Testosterone cipionato',

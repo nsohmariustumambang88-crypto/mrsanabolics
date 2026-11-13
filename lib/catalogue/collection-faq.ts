@@ -53,9 +53,7 @@ function legalAnswer(
   label: string,
   copy: CategoryCopy,
   categorySlug: string,
-  groupSlug?: string,
-  /** A whole category speaks of "these products"; a group names its compound. */
-  wholeCategory = false
+  groupSlug?: string
 ): FaqItem | null {
   if (groupSlug === 'sarms' || groupSlug === 'peptides') {
     return {
@@ -65,29 +63,28 @@ function legalAnswer(
           ? 'No SARM is an approved medicine in any country, and regulators treat them differently: the FDA regards them as unapproved drugs, WADA prohibits them in sport, and in Australia they are prescription-only.'
           : 'Most research peptides are not approved medicines, and their legal position differs by country and by peptide.',
       link: { href: SARMS, label: 'Our guide sets out where each regulator stands.' },
+      folded: true,
     };
   }
-  const prescription = copy.prescription || groupSlug === 'growth-hormone';
-  if (!prescription) return null;
+  /*
+    The other categories used to answer "Do you need a prescription for …? Yes." The owner had it
+    taken off the shop pages in November 2026; the country-by-country law stays, folded, on the
+    steroid pages and in the law article.
+  */
   const steroid = categorySlug === 'injectables' || categorySlug === 'orals';
+  if (!copy.prescription || !steroid) return null;
   /*
     Steroid answers state each country's control status, as the law article does, rather than
     "prescription-only medicine": trenbolone, boldenone and MENT are not licensed human medicines
     anywhere, so that phrase would be false for half the injectables.
   */
-  return steroid
-    ? {
-        question: `What is the legal position on ${label}?`,
-        answer:
-          'Anabolic steroids are controlled in the United States (Schedule III), the United Kingdom (Class C), Canada (Schedule IV) and Australia (prescription-only, where possession without authority is an offence). The rules on possession, supply and import differ from one country to the next.',
-        link: { href: LAW, label: 'Our guide to steroid law quotes each country’s legislation.' },
-      }
-    : {
-        question: wholeCategory ? 'Do these medicines need a prescription?' : `Do you need a prescription for ${label}?`,
-        answer: wholeCategory
-          ? 'Yes. Where they are licensed as medicines, they are prescription-only.'
-          : `Yes. Where ${label} is licensed as a medicine, it is prescription-only.`,
-      };
+  return {
+    question: `What is the legal position on ${label}?`,
+    answer:
+      'Anabolic steroids are controlled in the United States (Schedule III), the United Kingdom (Class C), Canada (Schedule IV) and Australia (prescription-only, where possession without authority is an offence). The rules on possession, supply and import differ from one country to the next.',
+    link: { href: LAW, label: 'Our guide to steroid law quotes each country’s legislation.' },
+    folded: true,
+  };
 }
 
 /** A delivery option to the United States, as the delivery zones define it. */
@@ -117,33 +114,38 @@ function deliveryOption(o: UsDeliveryOption): string {
   return `${o.name.toLowerCase()} (${details.join(', ')})`;
 }
 
-/** The US delivery answer, from the zones. Steroid pages add the federal position from the law article. */
-function usShippingAnswer(label: string, options: UsDeliveryOption[], steroid: boolean): FaqItem {
+/*
+  How every order travels, as the FAQ page states it (lib/data/faqs.ts) and the owner confirmed:
+  plain, unmarked packaging, tracked and insured. The owner asked (November 2026) for the shop
+  pages to say plainly that an order is delivered as usual.
+*/
+export const DELIVERY_PROMISE =
+  'Once you place your order, we pack it in plain, unmarked packaging and send it tracked and insured, as we do every order; the tracking number is emailed to you when it is dispatched.';
+
+/*
+  The US delivery answer, from the zones. It used to add the federal position on steroids; that
+  now sits, folded, in the legal-position answer on the same page.
+*/
+function usShippingAnswer(label: string, options: UsDeliveryOption[]): FaqItem {
   const parts = options.map(deliveryOption);
   return {
     question: `Do you ship ${label} to the USA?`,
-    answer:
-      `Yes. Orders to the United States go by ${
-        parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} or ${parts[parts.length - 1]}`
-      }.` +
-      (steroid
-        ? ' Anabolic steroids are Schedule III controlled substances under US federal law, which prohibits importing them without authorisation and buying them online without a valid prescription.'
-        : ''),
-    link: steroid ? { href: LAW, label: 'Our guide to steroid law quotes the legislation.' } : undefined,
+    answer: `Yes. Orders to the United States go by ${
+      parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} or ${parts[parts.length - 1]}`
+    }.`,
   };
 }
 
 function whereToBuy(label: string, inStock: number, listings: number): FaqItem {
   return {
     question: `Where can I buy ${label}?`,
-    answer: `Every listing on this page can be ordered here: open the product, add it to your basket and check out. ${inStock} of ${listings} ${listings === 1 ? 'listing is' : 'listings are'} in stock now. If you have a question before ordering, message us on Telegram or WhatsApp using the buttons at the bottom of the page.`,
+    answer: `Every listing on this page can be ordered here: open the product, add it to your basket and check out. ${inStock} of ${listings} ${listings === 1 ? 'listing is' : 'listings are'} in stock now. ${DELIVERY_PROMISE} If you have a question before ordering, message us on Telegram or WhatsApp using the buttons at the bottom of the page.`,
   };
 }
 
 export function groupFaq(group: GroupCollection, copy: CategoryCopy, ctx: GroupFaqContext): FaqItem[] {
   const f = group.facts;
   const label = group.name;
-  const steroid = group.categorySlug === 'injectables' || group.categorySlug === 'orals';
   const items: FaqItem[] = [];
 
   if (f.priceFrom !== null && f.priceTo !== null) {
@@ -165,7 +167,7 @@ export function groupFaq(group: GroupCollection, copy: CategoryCopy, ctx: GroupF
   }
 
   items.push(whereToBuy(ctx.title, f.inStock, f.listings));
-  if (ctx.usDelivery && ctx.usDelivery.length > 0) items.push(usShippingAnswer(label, ctx.usDelivery, steroid));
+  if (ctx.usDelivery && ctx.usDelivery.length > 0) items.push(usShippingAnswer(label, ctx.usDelivery));
 
   if (ctx.alternate) {
     items.push({
@@ -201,7 +203,6 @@ export function categoryFaq(
 ): FaqItem[] {
   const f = category.facts;
   const label = copy.heading.toLowerCase();
-  const steroid = category.slug === 'injectables' || category.slug === 'orals';
   const items: FaqItem[] = [
     {
       question: `What is in the ${label} range?`,
@@ -229,9 +230,9 @@ export function categoryFaq(
     });
   }
   items.push(whereToBuy(label, f.inStock, f.listings));
-  if (ctx.usDelivery && ctx.usDelivery.length > 0) items.push(usShippingAnswer(label, ctx.usDelivery, steroid));
+  if (ctx.usDelivery && ctx.usDelivery.length > 0) items.push(usShippingAnswer(label, ctx.usDelivery));
   if (category.slug !== 'syringes-needles') items.push(genuineAnswer(label, category.slug));
-  const legal = legalAnswer(label, copy, category.slug, undefined, true);
+  const legal = legalAnswer(label, copy, category.slug);
   if (legal) items.push(legal);
   return items;
 }
