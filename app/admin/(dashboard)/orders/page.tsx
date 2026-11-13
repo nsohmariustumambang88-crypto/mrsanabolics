@@ -1,24 +1,34 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { WpSubsubsub } from '@/components/admin/wp-ui';
 import { WpScreenMeta } from '@/components/admin/wp-notice';
-import { OrdersTable, type OrderRow } from '@/components/admin/orders-table';
+import { OrdersTable, type OrderRow, type OrdersPager } from '@/components/admin/orders-table';
+import { addressLines } from '@/lib/orders/address';
+import { PAYMENT_METHOD_LABEL, paymentMethodFromNotes } from '@/lib/checkout/order-notes';
 
 /*
-  The order queue.
+  The order queue, with everything about each order on the first screen.
 
   Defaults to the work rather than the archive: "Open" first, meaning anything that still needs
   somebody to act. That is the same choice the enquiries screen makes, for the same reason.
 
-  Nothing on this screen concerns payment. See the note on the Order model — this build does not
-  collect money, so there is no paid/unpaid state to show and no total-received figure to sum.
+  Each row carries the whole order — customer, delivery address, every line, the money, how it is
+  being paid, whether a Cash App screenshot came in, and the notes — so a day's orders can be read
+  and packed from this one screen (the owner's request, November 2026). The order screen is still
+  one click away for the history, the screenshots themselves and the status picker.
+
+  It stays one read: a page of orders with their lines, contact and screenshot count included,
+  plus the counts. No query per row. Fifty to a page, because every row is now tall.
 */
 
 export const dynamic = 'force-dynamic';
 
-type Params = { q?: string; filter?: string };
+const PAGE_SIZE = 50;
+
+type Params = { q?: string; filter?: string; page?: string };
 
 const TABS = [
   { key: 'open', label: 'Open' },
@@ -46,11 +56,18 @@ function filterWhere(filter?: string): Prisma.OrderWhereInput {
   }
 }
 
+/* The stamp the order screen uses, so the two read the same. */
+function stamp(date: Date): string {
+  const iso = date.toISOString();
+  return `${iso.slice(0, 10)} ${iso.slice(11, 16)}`;
+}
+
 export default async function AdminOrdersPage({ searchParams }: { searchParams: Params }) {
   await requireAdmin();
 
   const activeTab = searchParams.filter ?? 'open';
   const q = searchParams.q?.trim();
+  const requestedPage = Math.max(1, Number.parseInt(searchParams.page ?? '1', 10) || 1);
 
   const where: Prisma.OrderWhereInput = { ...filterWhere(activeTab) };
   if (q) {
@@ -58,38 +75,66 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
       { reference: { contains: q, mode: 'insensitive' } },
       { shipName: { contains: q, mode: 'insensitive' } },
       { shipPhone: { contains: q } },
+      { shipLine1: { contains: q, mode: 'insensitive' } },
+      { shipCity: { contains: q, mode: 'insensitive' } },
       { contact: { email: { contains: q, mode: 'insensitive' } } },
       { contact: { name: { contains: q, mode: 'insensitive' } } },
     ];
   }
 
-  const [rows, counts] = await Promise.all([
+  const [rows, matching, counts] = await Promise.all([
     prisma.order.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      take: 300,
+      skip: (requestedPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
       include: {
-        contact: { select: { id: true, name: true, email: true } },
-        _count: { select: { items: true, paymentProofs: true } },
+        contact: { select: { id: true, name: true, email: true, phone: true } },
+        items: {
+          orderBy: { createdAt: 'asc' },
+          select: { id: true, name: true, quantity: true, unitPrice: true, lineTotal: true },
+        },
+        _count: { select: { paymentProofs: true } },
       },
     }),
+    prisma.order.count({ where }),
     Promise.all(TABS.map((t) => prisma.order.count({ where: filterWhere(t.key) }))),
   ]);
 
-  const data: OrderRow[] = rows.map((o) => ({
-    id: o.id,
-    reference: o.reference,
-    status: o.status,
-    contactId: o.contact.id,
-    contactName: o.contact.name ?? o.contact.email,
-    contactEmail: o.contact.email,
-    itemCount: o._count.items,
-    proofCount: o._count.paymentProofs,
-    total: o.total.toString(),
-    shipCity: o.shipCity,
-    shipCountry: o.shipCountry,
-    createdAt: o.createdAt.toISOString(),
-  }));
+  const data: OrderRow[] = rows.map((o) => {
+    const method = paymentMethodFromNotes(o.notes);
+    return {
+      id: o.id,
+      reference: o.reference,
+      status: o.status,
+      placedAt: stamp(o.createdAt),
+      contactId: o.contact.id,
+      contactName: o.contact.name?.trim() || o.shipName.trim() || o.contact.email,
+      contactEmail: o.contact.email,
+      /* The number given for this delivery first; the contact's own number otherwise. */
+      phone: o.shipPhone?.trim() || o.contact.phone?.trim() || null,
+      /* Name and street lines; the country is shown on its own below them. */
+      addressLines: addressLines({ ...o, shipCountry: null }),
+      country: o.shipCountry,
+      items: o.items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice.toString(),
+        lineTotal: item.lineTotal.toString(),
+      })),
+      subtotal: o.subtotal.toString(),
+      discountCode: o.discountCode,
+      discountTotal: o.discountTotal.toString(),
+      shippingMethod: o.shippingMethod,
+      shipping: o.shipping.toString(),
+      total: o.total.toString(),
+      paymentMethod: method ? (PAYMENT_METHOD_LABEL[method] ?? method) : null,
+      isCashApp: method === 'cashapp',
+      proofCount: o._count.paymentProofs,
+      notes: o.notes,
+    };
+  });
 
   const href = (patch: Partial<Params>) => {
     const next = new URLSearchParams();
@@ -100,19 +145,38 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
     return qs ? `/admin/orders?${qs}` : '/admin/orders';
   };
 
+  const pages = Math.max(1, Math.ceil(matching / PAGE_SIZE));
+  /* Page 1 is the bare address, so the tabs and the search box never carry a stale page. */
+  const pageHref = (n: number) => href({ page: n > 1 ? String(n) : undefined });
+  /* A page past the end (orders deleted, an old link): go to the last real one, not "no orders". */
+  if (requestedPage > pages) redirect(pageHref(pages));
+  const page = requestedPage;
+  const pager: OrdersPager = {
+    page,
+    pages,
+    total: matching,
+    first: page > 1 ? pageHref(1) : null,
+    prev: page > 1 ? pageHref(page - 1) : null,
+    next: page < pages ? pageHref(page + 1) : null,
+    last: page < pages ? pageHref(pages) : null,
+  };
+
   return (
     <>
       <WpScreenMeta
         help={
           <div>
             <p className="mt-0">
-              <strong>Orders are recorded here, not taken on the storefront.</strong> The public
-              checkout cannot place one, because this build collects no payment. Add New records an
-              order somebody placed another way — by phone, by email, in person.
+              <strong>Every order is shown in full here.</strong> Orders placed at the storefront
+              checkout land in this list; Add New records one placed another way — by phone, by
+              email, in person. Open an order for its history, the Cash App screenshots and the
+              status picker.
             </p>
             <p>
-              <strong>There is no paid/unpaid state anywhere in this system,</strong> deliberately.
-              Nothing here observes money moving, so nothing here should claim it did.
+              <strong>There is no paid/unpaid column.</strong> A crypto order moves to Confirmed
+              when the payment processor reports it finished. Bank transfer and Cash App orders are
+              confirmed by staff once the money has been seen; a Cash App screenshot is the
+              customer&rsquo;s claim, not proof.
             </p>
             <p className="mb-0">
               <strong>Confirmed, Shipped and Cancelled are stamped once,</strong> the first time an
@@ -132,7 +196,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
 
       <WpSubsubsub
         items={TABS.map((t, i) => ({
-          href: href({ filter: t.key }),
+          href: href({ filter: t.key, page: undefined }),
           label: t.label,
           count: counts[i],
           current: activeTab === t.key,
@@ -140,10 +204,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
       />
 
       <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-        <p className="wp-subtitle m-0">
-          Showing {data.length}
-          {data.length === 300 && ' (capped)'} — newest first.
-        </p>
+        <p className="wp-subtitle m-0">Newest first. Times are UTC.</p>
 
         <form method="get" action="/admin/orders" className="flex items-center gap-2">
           <input type="hidden" name="filter" value={activeTab} />
@@ -153,22 +214,23 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
           <input
             id="order-search"
             name="q"
+            type="search"
             defaultValue={searchParams.q ?? ''}
-            placeholder="Reference, name or address"
+            placeholder="Reference, name, email, phone or address"
             className="wp-input wp-input-search"
           />
           <button type="submit" className="wp-button">
             Search
           </button>
           {q && (
-            <Link href={href({ q: undefined })} className="wp-button">
+            <Link href={href({ q: undefined, page: undefined })} className="wp-button">
               Clear
             </Link>
           )}
         </form>
       </div>
 
-      <OrdersTable rows={data} />
+      <OrdersTable rows={data} pager={pager} />
     </>
   );
 }

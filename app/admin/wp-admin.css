@@ -849,3 +849,215 @@ tr:focus-within .row-actions {
   white-space: nowrap;
   border: 0;
 }
+
+/* ------------------------------------------------------- pagination
+
+   wp-admin's "« ‹ 2 of 5 › »" beside the item count. A page that does not exist is a greyed
+   button rather than a missing one, so the row does not shift as you page. */
+
+.wp-admin .wp-pagination {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.wp-admin .wp-pagination-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wp-admin .wp-page-button {
+  justify-content: center;
+  min-width: 30px;
+  padding: 0 6px;
+  font-size: 16px;
+}
+
+.wp-admin .wp-page-button[data-disabled="true"],
+.wp-admin .wp-page-button[data-disabled="true"]:hover {
+  border-color: var(--wp-border-soft);
+  background: #f6f7f7;
+  color: #a7aaad;
+  cursor: default;
+}
+
+/* ------------------------------------------------------- orders: every detail at a glance
+
+   The All Orders list shows each whole order in its row. From 783px it is a fixed-layout table,
+   so long emails, addresses and crypto notes wrap inside their column instead of pushing the
+   table wider; below 783px each row becomes a card with its column names as labels, the way
+   wp-admin's own list tables collapse at that width. */
+
+.wp-admin .wp-orders-scroll {
+  overflow-x: auto;
+}
+
+.wp-admin .wp-orders-table {
+  min-width: 60rem;
+  table-layout: fixed;
+}
+
+.wp-admin .wp-orders-table td {
+  overflow-wrap: anywhere;
+}
+
+/* Table widths only: on a phone the cells are full-width card rows, and these would outrank it. */
+@media (min-width: 783px) {
+  .wp-admin .wp-orders-table .wp-col-order { width: 11%; }
+  .wp-admin .wp-orders-table .wp-col-customer { width: 18%; }
+  .wp-admin .wp-orders-table .wp-col-address { width: 14%; }
+  .wp-admin .wp-orders-table .wp-col-items { width: 22%; }
+  .wp-admin .wp-orders-table .wp-col-money { width: 15%; }
+  .wp-admin .wp-orders-table .wp-col-payment { width: 18%; }
+}
+
+.wp-admin .wp-order-ref {
+  font-size: 14px;
+}
+
+.wp-admin .wp-order-status {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.wp-admin .wp-order-country {
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+.wp-admin .wp-order-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wp-admin .wp-order-lines li + li {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--wp-border-soft);
+}
+
+.wp-admin .wp-order-money {
+  margin: 0;
+}
+
+.wp-admin .wp-order-money > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wp-admin .wp-order-money dt {
+  min-width: 0;
+}
+
+.wp-admin .wp-order-money dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.wp-admin .wp-order-money .is-total {
+  margin-top: 3px;
+  padding-top: 3px;
+  border-top: 1px solid var(--wp-border-soft);
+  font-weight: 600;
+}
+
+/* The discount code and the delivery option, under their row's label. */
+.wp-admin .wp-order-sub {
+  display: block;
+  color: var(--wp-text-muted);
+  font-size: 12px;
+}
+
+.wp-admin .wp-order-proof {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.wp-admin .wp-order-notes {
+  margin: 6px 0 0;
+  color: var(--wp-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  /* Wraps at the spaces; only an unbroken run (a wallet address) is split. */
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 782px) {
+  .wp-admin .wp-orders-scroll {
+    overflow-x: visible;
+  }
+
+  .wp-admin .wp-orders-table {
+    min-width: 0;
+    table-layout: auto;
+    border: 0;
+    background: transparent;
+  }
+
+  .wp-admin .wp-orders-table thead,
+  .wp-admin .wp-orders-table tfoot {
+    display: none;
+  }
+
+  .wp-admin .wp-orders-table tbody,
+  .wp-admin .wp-orders-table tr,
+  .wp-admin .wp-orders-table td {
+    display: block;
+    width: auto;
+  }
+
+  .wp-admin .wp-orders-table tbody tr,
+  .wp-admin .wp-orders-table tbody tr:nth-child(odd) {
+    position: relative;
+    margin-bottom: 12px;
+    padding: 4px 0;
+    border: 1px solid var(--wp-border);
+    background: var(--wp-card-bg);
+  }
+
+  .wp-admin .wp-orders-table td {
+    padding: 6px 12px;
+  }
+
+  .wp-admin .wp-orders-table td + td {
+    border-top: 1px solid var(--wp-border-soft);
+  }
+
+  /* The checkbox sits in the card's top-right corner, beside the reference. */
+  .wp-admin .wp-orders-table td.check-column {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 0;
+  }
+
+  .wp-admin .wp-orders-table td.check-column + td {
+    padding-right: 40px;
+    border-top: 0;
+  }
+
+  .wp-admin .wp-orders-table td[data-colname]::before {
+    content: attr(data-colname);
+    display: block;
+    margin-bottom: 2px;
+    color: var(--wp-text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .wp-admin .wp-orders-table .wp-orders-empty td {
+    border: 1px solid var(--wp-border);
+  }
+}

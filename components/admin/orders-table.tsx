@@ -10,31 +10,67 @@ import { cn } from '@/lib/utils';
 import { runAction } from '@/components/admin/run-action';
 
 /*
-  The orders list, in the same WP_List_Table shape as products and contacts.
+  The orders list, in the same WP_List_Table shape as products and contacts — but every row is
+  the whole order, so nobody has to open each one to pack it (the owner's request, November
+  2026): who, where to, what, how much, how it is being paid, and the notes.
 
   It keeps the two behaviours that are correctness rather than style: selection is pruned when
   the visible rows change, so a bulk action can never reach a row that scrolled out of the
   filter, and delete names what it is about to remove.
 
-  There is no payment column, because there is no payment. The Order model carries no such field
-  (see prisma/schema.prisma) and a column reading "unpaid" on every row would imply this system
-  knows something about money that it does not.
+  From 783px it is a table; below that each order is a card (the cells stack, each with its
+  column name), the same switch wp-admin makes at the same width. The styles are the
+  `.wp-orders-table` block in app/admin/wp-admin.css.
+
+  Payment is shown as the method the customer chose and, for Cash App, whether a screenshot came
+  in. Neither is a statement that money arrived: the order model has no such field.
 */
+
+export type OrderRowItem = {
+  id: string;
+  name: string;
+  quantity: number;
+  unitPrice: string;
+  lineTotal: string;
+};
 
 export type OrderRow = {
   id: string;
   reference: string;
   status: OrderStatus;
+  /** "YYYY-MM-DD HH:MM", UTC, as on the order screen. */
+  placedAt: string;
   contactId: string;
   contactName: string;
   contactEmail: string;
-  itemCount: number;
+  phone: string | null;
+  /** Name and street lines, empty parts already dropped (lib/orders/address.ts). */
+  addressLines: string[];
+  country: string;
+  items: OrderRowItem[];
+  subtotal: string;
+  discountCode: string | null;
+  discountTotal: string;
+  shippingMethod: string | null;
+  shipping: string;
+  total: string;
+  /** The method the customer chose at checkout; null for orders staff typed in. */
+  paymentMethod: string | null;
+  isCashApp: boolean;
   /** Cash App screenshots the customer uploaded. */
   proofCount: number;
-  total: string;
-  shipCity: string;
-  shipCountry: string;
-  createdAt: string;
+  notes: string | null;
+};
+
+export type OrdersPager = {
+  page: number;
+  pages: number;
+  /** Orders matching the tab and the search, across every page. */
+  total: number;
+  first: string | null;
+  prev: string | null;
+  next: string | null;
+  last: string | null;
 };
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
@@ -64,9 +100,12 @@ const BULK_OPTIONS: { value: OrderBulkAction; label: string }[] = [
   { value: 'delete', label: 'Delete permanently' },
 ];
 
-const day = (iso: string) => iso.slice(0, 10);
+const money = (value: string) => formatPrice(Number(value));
 
-export function OrdersTable({ rows }: { rows: OrderRow[] }) {
+/* A number a phone can dial: digits and a leading plus only. */
+const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, '')}`;
+
+export function OrdersTable({ rows, pager }: { rows: OrderRow[]; pager: OrdersPager }) {
   const router = useRouter();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [busy, setBusy] = React.useState(false);
@@ -158,6 +197,25 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
     }
   }
 
+  const pagination = (
+    <span className="wp-pagination">
+      <span className="wp-displaying-num">
+        {pager.total} {pager.total === 1 ? 'order' : 'orders'}
+      </span>
+      {pager.pages > 1 && (
+        <span className="wp-pagination-links">
+          <PageLink href={pager.first} label="First page" text="«" />
+          <PageLink href={pager.prev} label="Previous page" text="‹" />
+          <span className="wp-displaying-num">
+            {pager.page} of {pager.pages}
+          </span>
+          <PageLink href={pager.next} label="Next page" text="›" />
+          <PageLink href={pager.last} label="Last page" text="»" />
+        </span>
+      )}
+    </span>
+  );
+
   const bulkBar = (position: 'top' | 'bottom') => (
     <div className="wp-tablenav">
       <div className="wp-tablenav-actions">
@@ -185,9 +243,7 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
         {selected.size > 0 && <span className="wp-displaying-num">{selected.size} selected</span>}
       </div>
 
-      <span className="wp-displaying-num">
-        {rows.length} {rows.length === 1 ? 'order' : 'orders'}
-      </span>
+      {pagination}
     </div>
   );
 
@@ -201,16 +257,15 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
             if (el) el.indeterminate = someSelected;
           }}
           onChange={toggleAll}
-          aria-label="Select all orders"
+          aria-label="Select all orders on this page"
         />
       </td>
-      <th scope="col">Order</th>
-      <th scope="col">Customer</th>
-      <th scope="col">Status</th>
-      <th scope="col">Items</th>
-      <th scope="col">Total</th>
-      <th scope="col">Destination</th>
-      <th scope="col">Placed</th>
+      <th scope="col" className="wp-col-order">Order</th>
+      <th scope="col" className="wp-col-customer">Customer</th>
+      <th scope="col" className="wp-col-address">Deliver to</th>
+      <th scope="col" className="wp-col-items">Items</th>
+      <th scope="col" className="wp-col-money">Totals</th>
+      <th scope="col" className="wp-col-payment">Payment and notes</th>
     </tr>
   );
 
@@ -227,8 +282,8 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
 
       {bulkBar('top')}
 
-      <div className="overflow-x-auto">
-        <table className="wp-list-table min-w-[62rem]">
+      <div className="wp-orders-scroll">
+        <table className="wp-list-table wp-orders-table">
           <thead>{headerCells}</thead>
 
           <tbody>
@@ -243,18 +298,21 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
                   />
                 </td>
 
-                <td>
-                  <strong>
+                {/* The card's heading on a phone, so it carries no column label. */}
+                <td className="wp-col-order">
+                  <strong className="wp-order-ref">
                     <Link href={`/admin/orders/${row.id}`}>{row.reference}</Link>
                   </strong>
-                  {row.proofCount > 0 && (
-                    <div className="text-[12px]" style={{ color: 'var(--wp-success)' }}>
-                      Cash App screenshot uploaded
-                    </div>
-                  )}
+                  <div className="wp-num">{row.placedAt}</div>
+                  <div
+                    className="wp-order-status"
+                    style={{ color: STATUS_COLOUR[row.status] }}
+                  >
+                    {STATUS_LABEL[row.status]}
+                  </div>
                   <div className="row-actions">
                     <span>
-                      <Link href={`/admin/orders/${row.id}`}>View</Link>
+                      <Link href={`/admin/orders/${row.id}`}>Open order</Link>
                     </span>
                     <span className="delete">
                       <button
@@ -270,39 +328,115 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
                   </div>
                 </td>
 
-                <td>
+                <td className="wp-col-customer" data-colname="Customer">
                   <Link href={`/admin/contacts/${row.contactId}`}>{row.contactName}</Link>
-                  <div className="wp-muted text-[12px]">{row.contactEmail}</div>
+                  <div>
+                    <a href={`mailto:${row.contactEmail}`}>{row.contactEmail}</a>
+                  </div>
+                  {row.phone ? (
+                    <div>
+                      <a href={telHref(row.phone)}>{row.phone}</a>
+                    </div>
+                  ) : (
+                    <div className="wp-muted">No phone</div>
+                  )}
                 </td>
 
-                <td>
-                  <span
-                    className="text-[11px] font-semibold uppercase"
-                    style={{ color: STATUS_COLOUR[row.status] }}
-                  >
-                    {STATUS_LABEL[row.status]}
-                  </span>
+                <td className="wp-col-address" data-colname="Deliver to">
+                  {row.addressLines.length === 0 && !row.country.trim() ? (
+                    <span className="wp-muted">No address recorded</span>
+                  ) : (
+                    <>
+                      <address className="not-italic">
+                        {row.addressLines.map((line, i) => (
+                          <React.Fragment key={i}>
+                            {i > 0 && <br />}
+                            {line}
+                          </React.Fragment>
+                        ))}
+                      </address>
+                      {row.country.trim() && <div className="wp-order-country">{row.country}</div>}
+                    </>
+                  )}
                 </td>
 
-                <td className="wp-num">{row.itemCount}</td>
-
-                <td className="wp-num">{formatPrice(Number(row.total))}</td>
-
-                <td className="wp-muted text-[12px]">
-                  {row.shipCity}, {row.shipCountry}
+                <td className="wp-col-items" data-colname="Items">
+                  {row.items.length === 0 ? (
+                    <span className="wp-muted">No lines recorded</span>
+                  ) : (
+                    <ul className="wp-order-lines">
+                      {row.items.map((item) => (
+                        <li key={item.id}>
+                          {item.name}{' '}
+                          <span className="wp-muted wp-num">
+                            × {item.quantity} at {money(item.unitPrice)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </td>
 
-                <td className="wp-num">{day(row.createdAt)}</td>
+                <td className="wp-col-money" data-colname="Totals">
+                  <dl className="wp-order-money">
+                    <div>
+                      <dt>Subtotal</dt>
+                      <dd>{money(row.subtotal)}</dd>
+                    </div>
+                    {(row.discountCode || Number(row.discountTotal) > 0) && (
+                      <div>
+                        <dt>
+                          Discount
+                          {row.discountCode && (
+                            <span className="wp-order-sub">{row.discountCode}</span>
+                          )}
+                        </dt>
+                        <dd>−{money(row.discountTotal)}</dd>
+                      </div>
+                    )}
+                    <div>
+                      <dt>
+                        Shipping
+                        {row.shippingMethod && (
+                          <span className="wp-order-sub">{row.shippingMethod}</span>
+                        )}
+                      </dt>
+                      <dd>{money(row.shipping)}</dd>
+                    </div>
+                    <div className="is-total">
+                      <dt>Total</dt>
+                      <dd>{money(row.total)}</dd>
+                    </div>
+                  </dl>
+                </td>
+
+                <td className="wp-col-payment" data-colname="Payment and notes">
+                  <div>
+                    {row.paymentMethod ?? <span className="wp-muted">Not recorded</span>}
+                  </div>
+                  {(row.isCashApp || row.proofCount > 0) && (
+                    <div
+                      className="wp-order-proof"
+                      style={{
+                        color: row.proofCount > 0 ? 'var(--wp-success)' : 'var(--wp-text-muted)',
+                      }}
+                    >
+                      {row.proofCount > 0
+                        ? `Cash App screenshot uploaded${row.proofCount > 1 ? ` (${row.proofCount})` : ''}`
+                        : 'No Cash App screenshot yet'}
+                    </div>
+                  )}
+                  {row.notes && <p className="wp-order-notes">{row.notes}</p>}
+                </td>
               </tr>
             ))}
 
             {rows.length === 0 && (
-              <tr>
-                <td colSpan={8} className="py-10 text-center">
+              <tr className="wp-orders-empty">
+                <td colSpan={7} className="py-10 text-center">
                   <p className="m-0 font-semibold">No orders here.</p>
                   <p className="m-0 mt-1 wp-muted">
-                    Orders are recorded from the admin — the storefront checkout does not place
-                    them, because this build takes no payment.
+                    Try another tab, or clear the search.
                   </p>
                 </td>
               </tr>
@@ -315,5 +449,20 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
 
       {bulkBar('bottom')}
     </div>
+  );
+}
+
+function PageLink({ href, label, text }: { href: string | null; label: string; text: string }) {
+  if (!href) {
+    return (
+      <span className="wp-button wp-page-button" aria-hidden="true" data-disabled="true">
+        {text}
+      </span>
+    );
+  }
+  return (
+    <Link href={href} className="wp-button wp-page-button" aria-label={label}>
+      {text}
+    </Link>
   );
 }
