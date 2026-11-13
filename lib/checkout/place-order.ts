@@ -20,9 +20,14 @@ export type CheckoutSubmitInput = {
   cart: Array<{ productId: string; quantity: number }>;
   shipping: {
     line1: string;
-    line2?: string;
     city: string;
-    postcode: string;
+    /*
+      The checkout stopped asking for an apartment line and a postal code in November 2026 (the
+      owner's decision). Both are still accepted, so a checkout tab opened before that deploy
+      can place its order, but neither is required.
+    */
+    line2?: string;
+    postcode?: string;
   };
   shippingMethod?: string;
   discountCode?: string;
@@ -65,8 +70,11 @@ export async function placeCheckoutOrder(input: CheckoutSubmitInput): Promise<Ch
     return { ok: false, error: 'Name required' };
   }
 
-  if (!input.shipping?.line1 || !input.shipping.city || !input.shipping.postcode) {
-    return { ok: false, error: 'Complete address required' };
+  const text = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
+  const line1 = text(input.shipping?.line1);
+  const city = text(input.shipping?.city);
+  if (!line1 || !city) {
+    return { ok: false, error: 'Enter your street address and city.' };
   }
 
   /* The browser checked this already; a request posted straight to the server has not been. */
@@ -131,10 +139,10 @@ export async function placeCheckoutOrder(input: CheckoutSubmitInput): Promise<Ch
       lines: input.cart,
       shipping: {
         name: `${input.firstName} ${input.lastName}`,
-        line1: input.shipping.line1,
-        line2: input.shipping.line2 ?? null,
-        city: input.shipping.city,
-        postcode: input.shipping.postcode,
+        line1,
+        line2: text(input.shipping.line2) || null,
+        city,
+        postcode: text(input.shipping.postcode) || null,
         country: input.country,
         phone,
       },

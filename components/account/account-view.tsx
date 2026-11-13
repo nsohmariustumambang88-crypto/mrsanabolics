@@ -10,6 +10,7 @@ import { BullMark } from '@/components/brand/bull-mark';
 import { useCatalogueSearch } from '@/components/shop/use-catalogue-search';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { clearCheckoutDraft } from '@/lib/checkout/draft';
 
 /*
   A signed-in person's own account.
@@ -89,6 +90,8 @@ export function AccountView({
   /* A real navigation, so every server component re-reads the cleared cookie. */
   async function signOut() {
     setSigningOut(true);
+    /* The checkout's saved name and address go too: signing out says "not only my device". */
+    clearCheckoutDraft();
     try {
       await fetch('/api/account/logout', { method: 'POST' });
     } catch {

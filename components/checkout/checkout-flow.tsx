@@ -37,6 +37,8 @@ import { MINIMUM_ORDER } from '@/lib/orders/minimum';
 import { checkPhone, PHONE_PLACEHOLDER } from '@/lib/checkout/phone';
 import { submitCheckout, type CheckoutSubmitInput } from '@/app/checkout/checkout-actions';
 import { CashAppPayment } from '@/components/checkout/cash-app-payment';
+import { readCheckoutDraft, writeCheckoutDraft } from '@/lib/checkout/draft';
+import { countryCode, normalizeCountryInput } from '@/lib/checkout/country-input';
 
 type CashAppPlaced = { tag: string; name: string | null; token: string; total: number };
 
@@ -90,13 +92,15 @@ export function CheckoutFlow({
   /* The order summary on phones (below lg) starts closed; from lg it is always open. */
   const [summaryOpen, setSummaryOpen] = React.useState(false);
 
-  /* Form state */
+  /*
+    Form state. No apartment line and no postal code since November 2026, at the owner's
+    decision: one address line (the browser's `street-address`, which carries an apartment
+    number with it) and the city. The order columns stay; new orders leave them empty.
+  */
   const [firstName, setFirstName] = React.useState('');
   const [lastName, setLastName] = React.useState('');
   const [shippingAddr, setShippingAddr] = React.useState('');
-  const [shippingAddr2, setShippingAddr2] = React.useState('');
   const [shippingCity, setShippingCity] = React.useState('');
-  const [shippingPost, setShippingPost] = React.useState('');
 
   /*
     The delivery phone. Required, checked with the same rule the server applies (lib/checkout/
@@ -128,7 +132,42 @@ export function CheckoutFlow({
     What is held here is only what the person chose.
   */
   const [country, setCountry] = React.useState('');
-  const delivery = useDeliveryQuote(country, cartSubtotal);
+  /* Quoted only for a two-letter code: a country name still being typed is not a country yet. */
+  const quoteCountry = countryCode(country);
+  const delivery = useDeliveryQuote(quoteCountry, cartSubtotal);
+  /*
+    The delivery option the shopper chose, by name, so a restored draft can choose it again once
+    the options for their country arrive. Empty means "whichever is offered first".
+  */
+  const [rateName, setRateName] = React.useState('');
+
+  /*
+    Where they left this form last time (lib/checkout/draft.ts). Read once, on mount, and BEFORE
+    the header-country effect below, so a saved country is not replaced by the selector's guess.
+    `draftReady` is the same gate the cart uses in store-provider: nothing is written until the
+    saved draft has been read, so the empty first render can never overwrite it.
+  */
+  const [draftReady, setDraftReady] = React.useState(false);
+  const { setEmail: setMarketingEmail } = marketing;
+  React.useEffect(() => {
+    if (draftReady) return;
+    const draft = readCheckoutDraft();
+    if (draft) {
+      if (draft.email) setMarketingEmail(draft.email);
+      if (draft.firstName) setFirstName(draft.firstName);
+      if (draft.lastName) setLastName(draft.lastName);
+      if (draft.address) setShippingAddr(draft.address);
+      if (draft.city) setShippingCity(draft.city);
+      if (draft.phone) setPhone(draft.phone);
+      if (draft.country) setCountry(normalizeCountryInput(draft.country));
+      if (draft.shippingMethod) setRateName(draft.shippingMethod);
+      /* Only a method the admin still lists. */
+      if (draft.paymentMethod && paymentMethods.some((m) => m.key === draft.paymentMethod)) {
+        setMethod(draft.paymentMethod as PaymentMethod);
+      }
+    }
+    setDraftReady(true);
+  }, [draftReady, setMarketingEmail, paymentMethods]);
 
   /*
     Start from the country picked in the header, once it is known, unless the field already has
@@ -160,6 +199,44 @@ export function CheckoutFlow({
       keepalive: true,
     }).catch(() => {});
   }, [cart]);
+
+  /* Re-select the delivery option they chose, by name, whenever the options are (re)quoted. */
+  const { options: rateOptions, selectedId: selectedRateId, select: selectRate } = delivery;
+  React.useEffect(() => {
+    if (!rateName) return;
+    const match = rateOptions.find((option) => option.name === rateName);
+    if (match && match.rateId !== selectedRateId) selectRate(match.rateId);
+  }, [rateName, rateOptions, selectedRateId, selectRate]);
+
+  /*
+    Save the form as it changes. Contact, address and the two choices only: no prices, no totals,
+    no discount code, and never the marketing checkbox, which must be ticked afresh each time.
+  */
+  React.useEffect(() => {
+    if (!draftReady) return;
+    writeCheckoutDraft({
+      email: marketing.email,
+      firstName,
+      lastName,
+      address: shippingAddr,
+      city: shippingCity,
+      phone,
+      country,
+      shippingMethod: rateName,
+      paymentMethod: method,
+    });
+  }, [
+    draftReady,
+    marketing.email,
+    firstName,
+    lastName,
+    shippingAddr,
+    shippingCity,
+    phone,
+    country,
+    rateName,
+    method,
+  ]);
 
   const chosenRate =
     delivery.options.find((o) => o.rateId === delivery.selectedId) ?? delivery.options[0] ?? null;
@@ -225,16 +302,14 @@ export function CheckoutFlow({
     firstName,
     lastName,
     phone,
-    country,
+    country: quoteCountry,
     cart: cart.map((item) => ({
       productId: item.productId,
       quantity: item.quantity,
     })),
     shipping: {
       line1: shippingAddr,
-      line2: shippingAddr2,
       city: shippingCity,
-      postcode: shippingPost,
     },
     shippingMethod: chosenRate?.name,
     /* Only a code the server accepted for this basket; a half-typed one is not sent. */
@@ -440,7 +515,21 @@ export function CheckoutFlow({
       <div className="mx-auto max-w-[86rem] px-4 py-10 sm:px-6 lg:px-10">
         <div className="grid gap-px bg-rule lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-px">
           <div className="bg-card p-6 sm:p-8">
+            {/*
+              A real <form>, submitted by Continue (form="checkout-shipping" below) or by Enter.
+              Browsers offer to save an address they saw submitted in a form, and fill it next
+              time; loose inputs behind a click handler give them nothing to recognise.
+              noValidate keeps the checks where they were: the phone here, the rest on the server.
+            */}
             {step === 0 && (
+              <form
+                id="checkout-shipping"
+                noValidate
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  next();
+                }}
+              >
               <Fieldset legend="Where it ships">
                 <div>
                   <label htmlFor="checkout-email" className="block text-sm font-medium">
@@ -448,8 +537,12 @@ export function CheckoutFlow({
                   </label>
                   <input
                     id="checkout-email"
+                    name="email"
                     type="email"
+                    inputMode="email"
                     autoComplete="email"
+                    autoCapitalize="none"
+                    spellCheck={false}
                     value={marketing.email}
                     onChange={(e) => marketing.setEmail(e.target.value)}
                     placeholder="you@domain.com"
@@ -482,51 +575,41 @@ export function CheckoutFlow({
 
                 <Row>
                   <Input
-                    id="first"
+                    id="checkout-given-name"
+                    name="given-name"
                     label="First name"
                     autoComplete="given-name"
                     value={firstName}
                     onChange={setFirstName}
                   />
                   <Input
-                    id="last"
+                    id="checkout-family-name"
+                    name="family-name"
                     label="Last name"
                     autoComplete="family-name"
                     value={lastName}
                     onChange={setLastName}
                   />
                 </Row>
+                {/* `street-address`, not `address-line1`: with no apartment field, a saved
+                    address's second line (flat, suite) is filled into this one with it. */}
                 <Input
-                  id="addr1"
+                  id="checkout-street-address"
+                  name="street-address"
                   label="Address"
-                  autoComplete="address-line1"
+                  placeholder="Street, number, apartment"
+                  autoComplete="street-address"
                   value={shippingAddr}
                   onChange={setShippingAddr}
                 />
                 <Input
-                  id="addr2"
-                  label="Apartment, suite (optional)"
-                  autoComplete="address-line2"
-                  required={false}
-                  value={shippingAddr2}
-                  onChange={setShippingAddr2}
+                  id="checkout-city"
+                  name="city"
+                  label="City"
+                  autoComplete="address-level2"
+                  value={shippingCity}
+                  onChange={setShippingCity}
                 />
-                <Row>
-                  <Input
-                    id="city"
-                    label="City"
-                    autoComplete="address-level2"
-                    value={shippingCity}
-                    onChange={setShippingCity}
-                  />
-                  <Input
-                    id="post"
-                    label="Postal code"
-                    autoComplete="postal-code"
-                    value={shippingPost}
-                    onChange={setShippingPost}
-                  />
-                </Row>
                 <div>
                   <label htmlFor="checkout-phone" className="block text-sm font-medium">
                     Phone number
@@ -534,8 +617,9 @@ export function CheckoutFlow({
                   <input
                     ref={phoneRef}
                     id="checkout-phone"
-                    name="phone"
+                    name="tel"
                     type="tel"
+                    inputMode="tel"
                     autoComplete="tel"
                     required
                     aria-invalid={phoneError ? true : undefined}
@@ -562,20 +646,29 @@ export function CheckoutFlow({
                   )}
                 </div>
                 <div>
-                  <label htmlFor="country" className="block text-sm font-medium">
+                  <label htmlFor="checkout-country" className="block text-sm font-medium">
                     Country
                   </label>
+                  {/*
+                    No maxLength: autofill may put the country's NAME here, and a two-character
+                    limit cut "United Kingdom" to "UN". A name becomes its code as it arrives
+                    (lib/checkout/country-input.ts).
+                  */}
                   <input
-                    id="country"
+                    id="checkout-country"
+                    name="country"
                     autoComplete="country"
+                    autoCapitalize="characters"
+                    spellCheck={false}
                     value={country}
-                    onChange={(e) => setCountry(e.target.value)}
+                    onChange={(e) => setCountry(normalizeCountryInput(e.target.value))}
                     placeholder="Two-letter code, e.g. US"
-                    maxLength={2}
                     className="mt-2 w-full border-b border-rule-strong bg-transparent py-2.5 text-sm uppercase outline-none focus:border-pigment-indigo"
                   />
                   <p className="mt-1.5 text-xs text-ink-faint">
-                    The delivery options below are the ones set for that country.
+                    {country.trim().length > 2 && !quoteCountry
+                      ? 'Type the two-letter code (US, GB, CA, AU…) or the full country name.'
+                      : 'The delivery options below are the ones set for that country.'}
                   </p>
                 </div>
 
@@ -584,7 +677,7 @@ export function CheckoutFlow({
                   Nothing is shown until a country is given, because a rate without a
                   destination is a guess presented as a price.
                 */}
-                {country.trim().length >= 2 && (
+                {quoteCountry && (
                   <fieldset>
                     <legend className="font-mono text-2xs uppercase tracking-[0.16em] text-ink-faint">
                       Delivery
@@ -618,7 +711,10 @@ export function CheckoutFlow({
                                 name="delivery-rate"
                                 value={option.rateId}
                                 checked={active}
-                                onChange={() => delivery.select(option.rateId)}
+                                onChange={() => {
+                                  delivery.select(option.rateId);
+                                  setRateName(option.name);
+                                }}
                                 className="h-4 w-4 shrink-0 accent-pigment-indigo"
                               />
                               <span className="min-w-0 flex-1">
@@ -645,6 +741,7 @@ export function CheckoutFlow({
                   </fieldset>
                 )}
               </Fieldset>
+              </form>
             )}
 
             {step === 1 && (
@@ -697,9 +794,11 @@ export function CheckoutFlow({
                   <strong className="font-medium text-ink">Pay with ETH</strong> above to place your order.
                 </p>
               ) : step < 2 ? (
+                /* On the shipping step this submits the address form above (see its note). */
                 <button
-                  type="button"
-                  onClick={next}
+                  type={step === 0 ? 'submit' : 'button'}
+                  form={step === 0 ? 'checkout-shipping' : undefined}
+                  onClick={step === 0 ? undefined : next}
                   disabled={isSubmitting}
                   className="group inline-flex items-center gap-2.5 rounded-full bg-pigment-indigo px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift disabled:opacity-60"
                 >
@@ -998,6 +1097,7 @@ function Row({ children }: { children: React.ReactNode }) {
 
 function Input({
   id,
+  name,
   label,
   placeholder,
   autoComplete,
@@ -1006,6 +1106,8 @@ function Input({
   onChange,
 }: {
   id: string;
+  /** The field's name for the browser's autofill; defaults to the id. */
+  name?: string;
   label: string;
   placeholder?: string;
   autoComplete?: string;
@@ -1020,7 +1122,8 @@ function Input({
       </label>
       <input
         id={id}
-        name={id}
+        name={name ?? id}
+        type="text"
         placeholder={placeholder}
         autoComplete={autoComplete}
         required={required}

@@ -1,5 +1,7 @@
+import * as React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { addressLines } from '@/lib/orders/address';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { formatPrice } from '@/lib/format';
@@ -167,9 +169,15 @@ export default async function AdminOrderPage({ params }: { params: { id: string 
                 <dd className="wp-num">{formatPrice(Number(order.subtotal))}</dd>
               </div>
               <div className="flex justify-between py-1">
-                <dt>Shipping</dt>
+                <dt>Shipping{order.shippingMethod ? ` (${order.shippingMethod})` : ''}</dt>
                 <dd className="wp-num">{formatPrice(Number(order.shipping))}</dd>
               </div>
+              {Number(order.discountTotal) > 0 && (
+                <div className="flex justify-between py-1">
+                  <dt>Discount{order.discountCode ? ` (${order.discountCode})` : ''}</dt>
+                  <dd className="wp-num">−{formatPrice(Number(order.discountTotal))}</dd>
+                </div>
+              )}
               <div className="flex justify-between border-t border-[#c3c4c7] py-1 font-semibold">
                 <dt>Total</dt>
                 <dd className="wp-num">{formatPrice(Number(order.total))}</dd>
@@ -232,22 +240,15 @@ export default async function AdminOrderPage({ params }: { params: { id: string 
           </WpPostbox>
 
           <WpPostbox title="Deliver to">
+            {/* Only the parts the order has: new checkout orders carry no apartment line or
+                postcode, and an empty one must not leave a blank line. */}
             <address className="not-italic text-[13px] leading-relaxed">
-              {order.shipName}
-              <br />
-              {order.shipLine1}
-              {order.shipLine2 && (
-                <>
-                  <br />
-                  {order.shipLine2}
-                </>
-              )}
-              <br />
-              {order.shipCity}
-              <br />
-              {order.shipPostcode}
-              <br />
-              {order.shipCountry}
+              {addressLines(order).map((line, i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && <br />}
+                  {line}
+                </React.Fragment>
+              ))}
               {order.shipPhone && (
                 <>
                   <br />

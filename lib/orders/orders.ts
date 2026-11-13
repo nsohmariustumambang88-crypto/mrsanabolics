@@ -101,7 +101,12 @@ export type CreateOrderInput = {
     line1: string;
     line2?: string | null;
     city: string;
-    postcode: string;
+    /**
+     * The storefront checkout no longer asks for one (November 2026); staff may still type one.
+     * The column is NOT NULL, so a missing postcode is stored as ''. Display goes through
+     * lib/orders/address.ts, which drops empty parts.
+     */
+    postcode?: string | null;
     country: string;
     /** For the courier. Snapshotted with the address; the checkout requires it, staff may not have one. */
     phone?: string | null;
@@ -241,7 +246,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       shipLine1: input.shipping.line1,
       shipLine2: input.shipping.line2 ?? null,
       shipCity: input.shipping.city,
-      shipPostcode: input.shipping.postcode,
+      shipPostcode: input.shipping.postcode?.trim() ?? '',
       shipCountry: input.shipping.country,
       shipPhone: input.shipping.phone ?? null,
       subtotal: subtotal.toFixed(2),
