@@ -70,17 +70,17 @@ A genuine pack carries a printed batch or lot number and an expiry date, and the
 
 Every batch we sell is tested by an independent laboratory, and the certificate of analysis for your batch comes with your order. Check ours the same way you would check anyone's: [how to read a certificate of analysis](/blog/how-to-read-a-certificate-of-analysis) explains how to confirm that the laboratory is real, that the test is on its accredited scope, and that the batch number matches your pack.
 
-## The law where you live
+## The law where you live {fold}
 
-Testosterone is regulated in all four countries below, and in each of them ordering by post is treated differently from simple possession. This is a summary; [anabolic steroids and the law in the US, UK, Canada and Australia](/blog/anabolic-steroids-law-us-uk-canada-australia) quotes the legislation in full.
+Testosterone is regulated in all four countries below. This is a summary; [anabolic steroids and the law in the US, UK, Canada and Australia](/blog/anabolic-steroids-law-us-uk-canada-australia) quotes the legislation in full.
 
-- **United States.** Testosterone is listed in Schedule III.[^4] Possession without a valid prescription is a federal offence; a first offence carries up to one year in prison and a minimum $1,000 fine.[^5] A controlled substance that is a prescription drug may not be "delivered, distributed, or dispensed by means of the Internet without a valid prescription".[^6] Importing a Schedule III substance is unlawful except for "medical, scientific, or other legitimate uses" under federal rules.[^7]
-- **United Kingdom.** Testosterone is named as a Class C drug.[^8] Possession of the steroids in Part II of Schedule 4 is not an offence in England, Wales and Scotland, but since 2012 the import exemption covers only importation "carried out in person for administration to that person".[^9][^10] A parcel sent to you by post or courier is not covered.
-- **Canada.** Anabolic steroids are in Schedule IV. Simple possession is not an offence, but importing is prohibited "except as authorized under the regulations".[^11]
-- **Australia.** Anabolic and androgenic steroidal agents are Schedule 4 (prescription-only), and possession without authority is illegal.[^12] Importing them requires a permission "granted in writing".[^13]
+- **United States.** Testosterone is listed in Schedule III.[^4] Possession without a valid prescription is a federal offence; a first offence carries up to one year in prison and a minimum $1,000 fine.[^5]
+- **United Kingdom.** Testosterone is named as a Class C drug.[^6]
+- **Canada.** Anabolic steroids are in Schedule IV.[^7]
+- **Australia.** Anabolic and androgenic steroidal agents are Schedule 4 (prescription-only), and possession without authority is illegal.[^8]
 
 > **Before you order**
-> The law that applies is the law at your border, not the seller's. Check it before you place an order. This is general information checked against the legislation, not legal advice.
+> The law that applies is the law where you live, not the seller's. Check it before you place an order. This is general information checked against the legislation, not legal advice.
 
 ## Ordering from us
 
@@ -88,6 +88,7 @@ Testosterone is regulated in all four countries below, and in each of them order
 - **United States:** standard tracked shipping is $9.00 (3 to 6 working days), and free when the goods in your basket come to $150.00 or more. Express tracked is $24.00 (1 to 2 working days).
 - **Europe** (the UK, Ireland, France, Germany, Spain, Italy, the Netherlands, Belgium, Portugal, Austria, Sweden, Denmark and Poland): standard tracked is $14.00 (5 to 9 working days), free from $200.00 of goods. Express tracked is $32.00 (2 to 4 working days).
 - **Everywhere else:** international tracked is $22.00 (7 to 16 working days).
+- **Delivery:** once you have placed your order, we pack it in plain, unmarked packaging and send it tracked and insured, as we do every order. Orders are processed within 1 to 2 working days, and the tracking number is emailed to you when your parcel is dispatched.
 - **Payment:** checkout lists cryptocurrency (Bitcoin or Ethereum), bank transfer and Cash App. For bank transfer, the payment details are emailed to you after you order. For Cash App, checkout shows our $Cashtag; once you have placed the order, you send the total in Cash App and upload a screenshot of the payment.
 
 The working-day estimates are the rates' stated ranges, not a guarantee. Our [shipping policy](/legal/shipping) lists every delivery zone and rate, and the [frequently asked questions](/faq) cover packaging, payment, returns and how to reach us.

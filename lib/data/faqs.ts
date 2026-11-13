@@ -52,7 +52,7 @@ export const faqs: FaqItem[] = [
   {
     question: 'Are these products legal in my country?',
     answer:
-      'It depends on where you live, and in many countries buying these products without a prescription, or importing them, is an offence. Check the law where you live before you order: you are responsible for complying with it. Our guide to steroid law in the US, UK, Canada and Australia, in the Journal, sets out what the legislation says. We cannot give legal advice.',
+      'It depends on where you live: these products are controlled in many countries, and the rules differ from one to the next. Check the law where you live before you order: you are responsible for complying with it. Our guide to steroid law in the US, UK, Canada and Australia, in the Journal, sets out what the legislation says. We cannot give legal advice.',
   },
   {
     question: 'How should I store my products?',

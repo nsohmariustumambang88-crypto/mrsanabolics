@@ -85,11 +85,11 @@ Approvals can also end. In June 2023 the FDA withdrew approval of oxandrolone ta
 
 How sport treats each group is explained in [the WADA Prohibited List explained](/blog/wada-banned-list-explained).
 
-## Are anabolic steroids legal?
+## Are anabolic steroids legal? {fold}
 
-It depends on the country, and on whether you possess, import or supply them. In the United States, Congress has placed a total of 64 anabolic steroids in Schedule III of the Controlled Substances Act,[^2] and the legal definition reaches related substances that are not named.[^5] In the UK, the NHS describes them as "class C medicines, which can only be issued by pharmacists with a prescription", and says supplying them carries up to 14 years in prison.[^12]
+It depends on the country, and on whether you possess or supply them. In the United States, Congress has placed a total of 64 anabolic steroids in Schedule III of the Controlled Substances Act,[^2] and the legal definition reaches related substances that are not named.[^5] In the UK, the NHS describes them as "class C medicines, which can only be issued by pharmacists with a prescription", and says supplying them carries up to 14 years in prison.[^12]
 
-The detail matters, particularly for buying online and importing. It is set out, quoted from the legislation, in [anabolic steroids and the law in the US, UK, Canada and Australia](/blog/anabolic-steroids-law-us-uk-canada-australia). SARMs are regulated differently: see [are SARMs legal?](/blog/are-sarms-legal-fda-wada-tga)
+The detail is set out, quoted from the legislation, in [anabolic steroids and the law in the US, UK, Canada and Australia](/blog/anabolic-steroids-law-us-uk-canada-australia). SARMs are regulated differently: see [are SARMs legal?](/blog/are-sarms-legal-fda-wada-tga)
 
 ## What are the risks?
 

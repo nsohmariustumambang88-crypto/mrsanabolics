@@ -93,19 +93,19 @@ Labels on this market are often wrong. A 2022 meta-analysis of 19 studies coveri
 
 Every batch we sell is tested by an independent laboratory, and the certificate of analysis for your batch comes with your order. Check ours the same way you would check anyone's: [how to read a certificate of analysis](/blog/how-to-read-a-certificate-of-analysis) explains how to confirm the laboratory is real, that the test is on its accredited scope, and that the batch number matches your pack. [What lab tests can and cannot prove](/blog/hplc-mass-spectrometry-lab-testing-explained) explains which tests can show what is in a vial, and which can show how much of it there is.
 
-## The law where you live
+## The law where you live {fold}
 
-Trenbolone is controlled in all four countries below, and in each of them ordering by post is treated differently from simple possession. This is a summary; [anabolic steroids and the law in the US, UK, Canada and Australia](/blog/anabolic-steroids-law-us-uk-canada-australia) quotes the legislation in full.
+Trenbolone is controlled in all four countries below. This is a summary; [anabolic steroids and the law in the US, UK, Canada and Australia](/blog/anabolic-steroids-law-us-uk-canada-australia) quotes the legislation in full.
 
-- **United States.** Schedule III names trenbolone, and covers it "including its salts, esters and ethers", so the acetate, enanthate and hexahydrobenzylcarbonate alike. Methyltrienolone is listed separately in the same schedule.[^1] Possessing a controlled substance is a federal offence unless it was obtained from a practitioner, directly or on a valid prescription or order; a first offence carries up to one year in prison and a minimum $1,000 fine.[^15] Importing a Schedule III substance is unlawful unless it is imported "for medical, scientific, or other legitimate uses", under the permit and notification rules the Attorney General sets.[^16]
-- **United Kingdom.** Trenbolone is named as a Class C drug, and the Class C entry also covers its esters.[^13] Possession of the drugs in Part II of Schedule 4 to the Misuse of Drugs Regulations 2001, which names trenbolone, is not an offence in England, Wales and Scotland.[^17][^18] Since 23 April 2012, the import exemption has covered only importation "carried out in person for administration to that person", so a parcel sent to you by post or courier is not covered.[^17]
-- **Canada.** Schedule IV lists "Anabolic steroids and their derivatives" and names trenbolone among them. Simple possession of a Schedule IV substance is not an offence, but importing it is prohibited "except as authorized under the regulations".[^19]
-- **Australia.** Trenbolone is a Schedule 4 substance, and Appendix D of the Poisons Standard lists anabolic steroidal agents among the poisons "for which possession without authority is illegal".[^11] Importing anabolic or androgenic substances requires a permission "granted in writing".[^20]
+- **United States.** Schedule III names trenbolone, and covers it "including its salts, esters and ethers", so the acetate, enanthate and hexahydrobenzylcarbonate alike. Methyltrienolone is listed separately in the same schedule.[^1] Possessing a controlled substance is a federal offence unless it was obtained from a practitioner, directly or on a valid prescription or order; a first offence carries up to one year in prison and a minimum $1,000 fine.[^15]
+- **United Kingdom.** Trenbolone is named as a Class C drug, and the Class C entry also covers its esters.[^13]
+- **Canada.** Schedule IV lists "Anabolic steroids and their derivatives" and names trenbolone among them.[^16]
+- **Australia.** Trenbolone is a Schedule 4 substance, and Appendix D of the Poisons Standard lists anabolic steroidal agents among the poisons "for which possession without authority is illegal".[^11]
 
 In sport, WADA's 2026 Prohibited List names trenbolone and metribolone among the anabolic androgenic steroids prohibited at all times, in and out of competition.[^2] Our [guide to the WADA list](/blog/wada-banned-list-explained) explains how it works.
 
 > **Before you order**
-> The law that applies is the law at your border, not the seller's. Check it before you place an order. This is general information checked against the legislation, not legal advice.
+> The law that applies is the law where you live, not the seller's. Check it before you place an order. This is general information checked against the legislation, not legal advice.
 
 ## Ordering from us
 
@@ -113,6 +113,7 @@ In sport, WADA's 2026 Prohibited List names trenbolone and metribolone among the
 - **United States:** standard tracked shipping is $9.00 (3 to 6 working days), and free when the goods in your basket come to $150.00 or more. Express tracked is $24.00 (1 to 2 working days).
 - **Europe** (the UK, Ireland, France, Germany, Spain, Italy, the Netherlands, Belgium, Portugal, Austria, Sweden, Denmark and Poland): standard tracked is $14.00 (5 to 9 working days), free from $200.00 of goods. Express tracked is $32.00 (2 to 4 working days).
 - **Everywhere else:** international tracked is $22.00 (7 to 16 working days).
+- **Delivery:** once you have placed your order, we pack it in plain, unmarked packaging and send it tracked and insured, as we do every order. Orders are processed within 1 to 2 working days, and the tracking number is emailed to you when your parcel is dispatched.
 - **Payment:** checkout lists cryptocurrency (Bitcoin or Ethereum), bank transfer and Cash App. For bank transfer, the payment details are emailed to you after you order. For Cash App, checkout shows our $Cashtag; once you have placed the order, you send the total in Cash App and upload a screenshot of the payment.
 
 The working-day estimates are the rates' stated ranges, not a guarantee. Our [shipping policy](/legal/shipping) lists every delivery zone and rate, and the [frequently asked questions](/faq) cover packaging, payment, returns and how to reach us.

@@ -645,7 +645,7 @@ export const articles: JournalArticle[] = [
       {
         question: 'Is it legal to buy steroids online?',
         answer:
-          'It depends on where you live, and ordering by post is often treated more strictly than possession. In the US, anabolic steroids are Schedule III and a prescription controlled substance may not be supplied over the internet without a valid prescription. In the UK, the import exemption covers only steroids carried in person for your own use, not a parcel. Canada prohibits importing them unless authorised under the regulations, and Australia requires a written permission to import them.',
+          'It depends on where you live. Anabolic steroids are controlled in the United States (Schedule III), the United Kingdom (Class C), Canada (Schedule IV) and Australia (Schedule 4), and the rules differ from one country to the next. Our article on steroid law in the US, UK, Canada and Australia quotes each country’s legislation.',
       },
       {
         question: 'How can I tell if a steroid supplier is legit?',
@@ -682,27 +682,10 @@ export const articles: JournalArticle[] = [
         url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapI-partC-sec829.htm',
       },
       {
-        title: '21 U.S.C. 952: Importation of controlled substances',
-        publisher: 'US Government Publishing Office',
-        year: '2024',
-        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapII-sec952.htm',
-      },
-      {
-        title: 'Misuse of Drugs Regulations 2001, regulation 4',
-        publisher: 'legislation.gov.uk',
-        url: 'https://www.legislation.gov.uk/uksi/2001/3998/regulation/4',
-      },
-      {
         title: 'Controlled Drugs and Substances Act (S.C. 1996, c. 19)',
         publisher: 'Justice Laws Website, Government of Canada',
         year: '2026',
         url: 'https://laws-lois.justice.gc.ca/eng/acts/C-38.8/FullText.html',
-      },
-      {
-        title: 'Customs (Prohibited Imports) Regulations 1956 (regulation 5G and Schedule 7A)',
-        publisher: 'Federal Register of Legislation (Australia)',
-        year: '2026',
-        url: 'https://www.legislation.gov.au/F1996B03651/latest/text',
       },
       {
         title: 'Fake anabolic androgenic steroids on the black market: a systematic review and meta-analysis on qualitative and quantitative analytical results found within the literature',
@@ -1144,7 +1127,7 @@ export const articles: JournalArticle[] = [
       {
         question: 'Is it legal to buy testosterone enanthate online?',
         answer:
-          'It depends on where you live. In the US it is Schedule III and cannot be delivered over the internet without a valid prescription. In the UK the import exemption covers only importation in person. Canada prohibits import unless authorised, and Australia requires written permission to import.',
+          'It depends on where you live. Testosterone is controlled in the United States (Schedule III), the United Kingdom (Class C), Canada (Schedule IV) and Australia (Schedule 4). Our article on steroid law in the US, UK, Canada and Australia quotes each country’s legislation.',
       },
       {
         question: 'Do your products come with a certificate of analysis?',
@@ -1178,26 +1161,7 @@ export const articles: JournalArticle[] = [
         year: '2024',
         url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapI-partD-sec844.htm',
       },
-      {
-        title: '21 U.S.C. 829: Prescriptions (Ryan Haight Online Pharmacy Consumer Protection Act)',
-        publisher: 'US Government Publishing Office',
-        year: '2024',
-        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapI-partC-sec829.htm',
-      },
-      {
-        title: '21 U.S.C. 952: Importation of controlled substances',
-        publisher: 'US Government Publishing Office',
-        year: '2024',
-        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapII-sec952.htm',
-      },
       { title: 'Misuse of Drugs Act 1971, Schedule 2', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/ukpga/1971/38/schedule/2' },
-      { title: 'Misuse of Drugs Regulations 2001, regulation 4', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/uksi/2001/3998/regulation/4' },
-      {
-        title: 'The Misuse of Drugs (Amendment No. 2) (England, Wales and Scotland) Regulations 2012: Explanatory Note',
-        publisher: 'legislation.gov.uk',
-        year: '2012',
-        url: 'https://www.legislation.gov.uk/uksi/2012/973/note/made',
-      },
       {
         title: 'Controlled Drugs and Substances Act (S.C. 1996, c. 19)',
         publisher: 'Justice Laws Website, Government of Canada',
@@ -1209,12 +1173,6 @@ export const articles: JournalArticle[] = [
         publisher: 'Federal Register of Legislation (Australia)',
         year: '2026',
         url: 'https://www.legislation.gov.au/F2026L00633/asmade',
-      },
-      {
-        title: 'Customs (Prohibited Imports) Regulations 1956',
-        publisher: 'Federal Register of Legislation (Australia)',
-        year: '2026',
-        url: 'https://www.legislation.gov.au/F1996B03651/latest/text',
       },
     ],
   },
@@ -1248,7 +1206,7 @@ export const articles: JournalArticle[] = [
       {
         question: 'Is nandrolone legal?',
         answer:
-          'In the US it is a Schedule III controlled substance, esters included, and cannot be dispensed over the internet without a valid prescription. In the UK it is a Class C drug and the import exemption covers importation in person only. Canada prohibits import unless authorised, and Australia requires written permission to import.',
+          'It is controlled in the United States (Schedule III, esters included), the United Kingdom (Class C), Canada (Schedule IV) and Australia (Schedule 4). Our article on steroid law in the US, UK, Canada and Australia quotes each country’s legislation.',
       },
       {
         question: 'How much does nandrolone decanoate cost?',
@@ -1291,26 +1249,7 @@ export const articles: JournalArticle[] = [
         year: '2024',
         url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapI-partD-sec844.htm',
       },
-      {
-        title: '21 U.S.C. 829: Prescriptions (Ryan Haight Online Pharmacy Consumer Protection Act)',
-        publisher: 'US Government Publishing Office',
-        year: '2024',
-        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapI-partC-sec829.htm',
-      },
-      {
-        title: '21 U.S.C. 952: Importation of controlled substances',
-        publisher: 'US Government Publishing Office',
-        year: '2024',
-        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapII-sec952.htm',
-      },
       { title: 'Misuse of Drugs Act 1971, Schedule 2', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/ukpga/1971/38/schedule/2' },
-      { title: 'Misuse of Drugs Regulations 2001, regulation 4', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/uksi/2001/3998/regulation/4' },
-      {
-        title: 'The Misuse of Drugs (Amendment No. 2) (England, Wales and Scotland) Regulations 2012: Explanatory Note',
-        publisher: 'legislation.gov.uk',
-        year: '2012',
-        url: 'https://www.legislation.gov.uk/uksi/2012/973/note/made',
-      },
       {
         title: 'Controlled Drugs and Substances Act (S.C. 1996, c. 19)',
         publisher: 'Justice Laws Website, Government of Canada',
@@ -1322,12 +1261,6 @@ export const articles: JournalArticle[] = [
         publisher: 'Federal Register of Legislation (Australia)',
         year: '2026',
         url: 'https://www.legislation.gov.au/F2026L00633/asmade',
-      },
-      {
-        title: 'Customs (Prohibited Imports) Regulations 1956',
-        publisher: 'Federal Register of Legislation (Australia)',
-        year: '2026',
-        url: 'https://www.legislation.gov.au/F1996B03651/latest/text',
       },
       {
         title: 'International Standard: Prohibited List 2026',
@@ -1366,7 +1299,7 @@ export const articles: JournalArticle[] = [
       {
         question: 'Is trenbolone legal?',
         answer:
-          'In the US it is a Schedule III controlled substance, esters included. In the UK it is a Class C drug and the import exemption covers importation in person only. Canada prohibits import unless authorised, and Australia lists it in Schedule 4 and requires written permission to import.',
+          'It is controlled in the United States (Schedule III, esters included), the United Kingdom (Class C), Canada (Schedule IV) and Australia (Schedule 4). Our article on steroid law in the US, UK, Canada and Australia quotes each country’s legislation.',
       },
       {
         question: 'How much does trenbolone cost?',
@@ -1432,24 +1365,10 @@ export const articles: JournalArticle[] = [
         url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapI-partD-sec844.htm',
       },
       {
-        title: '21 U.S.C. 952: Importation of controlled substances',
-        publisher: 'US Government Publishing Office',
-        year: '2024',
-        url: 'https://www.govinfo.gov/content/pkg/USCODE-2024-title21/html/USCODE-2024-title21-chap13-subchapII-sec952.htm',
-      },
-      { title: 'Misuse of Drugs Regulations 2001, regulation 4', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/uksi/2001/3998/regulation/4' },
-      { title: 'Misuse of Drugs Regulations 2001, Schedule 4', publisher: 'legislation.gov.uk', url: 'https://www.legislation.gov.uk/uksi/2001/3998/schedule/4' },
-      {
         title: 'Controlled Drugs and Substances Act (S.C. 1996, c. 19)',
         publisher: 'Justice Laws Website, Government of Canada',
         year: '2026',
         url: 'https://laws-lois.justice.gc.ca/eng/acts/C-38.8/FullText.html',
-      },
-      {
-        title: 'Customs (Prohibited Imports) Regulations 1956',
-        publisher: 'Federal Register of Legislation (Australia)',
-        year: '2026',
-        url: 'https://www.legislation.gov.au/F1996B03651/latest/text',
       },
     ],
   },
