@@ -174,11 +174,15 @@ export function ExitCapture() {
               </label>
               <input
                 id="exit-email"
+                name="email"
                 type="email"
+                inputMode="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@domain.com"
                 autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
                 className="w-full border-b border-rule-strong bg-transparent py-2.5 text-sm outline-none focus:border-pigment-indigo"
               />
 

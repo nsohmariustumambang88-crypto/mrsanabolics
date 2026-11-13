@@ -85,7 +85,12 @@ export function Newsletter() {
                 <div className="flex items-stretch border-b border-field-foreground/35 focus-within:border-primary-foreground">
                   <input
                     id="close-email"
+                    name="email"
                     type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    autoCapitalize="none"
+                    spellCheck={false}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@domain.com"

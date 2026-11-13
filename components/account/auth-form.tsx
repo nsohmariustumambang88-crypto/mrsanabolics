@@ -196,6 +196,11 @@ export function AuthForm() {
               />
             )}
 
+            {/*
+              The email is the account's username. On sign-in it is marked `username`, which is
+              what password managers look for to fill a saved login; on register and forgot it is
+              `email`, so the browser offers the visitor's own address.
+            */}
             <Field
               id="email"
               label="Email"
@@ -204,7 +209,7 @@ export function AuthForm() {
               icon={Mail}
               value={values.email}
               onChange={set('email')}
-              autoComplete="email"
+              autoComplete={mode === 'login' ? 'username' : 'email'}
             />
 
             {mode !== 'forgot' && (
@@ -220,12 +225,18 @@ export function AuthForm() {
               />
             )}
 
+            {/*
+              The honeypot. Named and labelled "website" on purpose: browsers autofill a field
+              called "Company" from the visitor's saved address (organisation), which would fill
+              this silently and turn a real sign-up away as a bot. No browser autofills a website.
+              It is still sent as `company`, the key the API routes check.
+            */}
             {(mode === 'register' || mode === 'forgot') && (
               <div aria-hidden="true" className="pointer-events-none absolute left-[-9999px]">
-                <label htmlFor="company">Company</label>
+                <label htmlFor="auth-website">Website</label>
                 <input
-                  id="company"
-                  name="company"
+                  id="auth-website"
+                  name="website"
                   type="text"
                   tabIndex={-1}
                   autoComplete="off"
@@ -338,6 +349,10 @@ export function Field({
           id={id}
           name={id}
           type={type}
+          inputMode={type === 'email' ? 'email' : undefined}
+          /* Phones would otherwise capitalise the first letter of an address or a password. */
+          autoCapitalize={type === 'email' || type === 'password' ? 'none' : undefined}
+          spellCheck={type === 'email' || type === 'password' ? false : undefined}
           required={required}
           value={value}
           onChange={onChange}

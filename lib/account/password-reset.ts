@@ -94,12 +94,23 @@ export async function requestPasswordReset(rawEmail: string): Promise<void> {
 
 /** Whether a link is still good, so the page can say so before anybody types a password. */
 export async function isResetTokenValid(token: unknown): Promise<boolean> {
-  if (!looksLikeToken(token)) return false;
+  return (await resetTokenEmail(token)) !== null;
+}
+
+/**
+ * The account address a still-good link belongs to, or null. The reset page puts it in a hidden
+ * `username` field so a password manager updates the right saved login. Whoever holds the link
+ * received it at that address, so showing it to them discloses nothing new.
+ */
+export async function resetTokenEmail(token: unknown): Promise<string | null> {
+  if (!looksLikeToken(token)) return null;
   const customer = await prisma.customer.findUnique({
     where: { resetTokenHash: hashToken(token) },
-    select: { resetTokenExpiresAt: true },
+    select: { email: true, resetTokenExpiresAt: true },
   });
-  return Boolean(customer?.resetTokenExpiresAt && customer.resetTokenExpiresAt > new Date());
+  return customer?.resetTokenExpiresAt && customer.resetTokenExpiresAt > new Date()
+    ? customer.email
+    : null;
 }
 
 export type ResetResult =

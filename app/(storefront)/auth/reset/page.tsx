@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { ResetPasswordForm } from '@/components/account/reset-password-form';
-import { isResetTokenValid } from '@/lib/account/password-reset';
+import { resetTokenEmail } from '@/lib/account/password-reset';
 
 /*
   Where a password reset email lands: /auth/reset?token=…
@@ -25,6 +25,6 @@ export default async function ResetPasswordPage({
   searchParams: { token?: string };
 }) {
   const token = typeof searchParams.token === 'string' ? searchParams.token : '';
-  const valid = await isResetTokenValid(token).catch(() => false);
-  return <ResetPasswordForm token={token} valid={valid} />;
+  const email = await resetTokenEmail(token).catch(() => null);
+  return <ResetPasswordForm token={token} valid={email !== null} email={email} />;
 }

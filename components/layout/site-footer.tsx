@@ -107,7 +107,12 @@ function Newsletter({ t }: { t: Dictionary }) {
             </label>
             <input
               id="footer-email"
+              name="email"
               type="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck={false}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@domain.com"

@@ -239,8 +239,12 @@ export function RestockAlertsModal() {
             <input
               ref={inputRef}
               id="restock-email"
+              name="email"
               type="email"
+              inputMode="email"
               autoComplete="email"
+              autoCapitalize="none"
+              spellCheck={false}
               placeholder="you@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}

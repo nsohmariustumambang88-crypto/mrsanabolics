@@ -212,6 +212,7 @@ export default function ContactPage() {
                       </label>
                       <select
                         id="subject"
+                        name="subject"
                         value={values.subject}
                         onChange={set('subject')}
                         className="mt-2 w-full border-b border-rule-strong bg-transparent py-2.5 text-sm outline-none focus:border-pigment-indigo"
@@ -231,6 +232,7 @@ export default function ContactPage() {
                     </label>
                     <textarea
                       id="message"
+                      name="message"
                       rows={6}
                       value={values.message}
                       onChange={set('message')}
@@ -249,15 +251,20 @@ export default function ContactPage() {
                     )}
                   </div>
 
-                  {/* Off-screen rather than display:none — some bots skip hidden inputs. */}
+                  {/*
+                    Off-screen rather than display:none — some bots skip hidden inputs. Named
+                    "website", never "company": browsers autofill a Company field from the
+                    visitor's saved address, which would fill this trap and silently drop a real
+                    enquiry. Nothing autofills a website. It is still sent as `company`.
+                  */}
                   <div
                     aria-hidden
                     className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden"
                   >
-                    <label htmlFor="company">Company</label>
+                    <label htmlFor="contact-website">Website</label>
                     <input
-                      id="company"
-                      name="company"
+                      id="contact-website"
+                      name="website"
                       type="text"
                       tabIndex={-1}
                       autoComplete="off"
@@ -336,7 +343,11 @@ function Field({
       </label>
       <input
         id={id}
+        name={id}
         type={type}
+        inputMode={type === 'email' ? 'email' : type === 'tel' ? 'tel' : undefined}
+        autoCapitalize={type === 'email' ? 'none' : undefined}
+        spellCheck={type === 'email' ? false : undefined}
         value={value}
         onChange={onChange}
         placeholder={placeholder}

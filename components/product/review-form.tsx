@@ -188,22 +188,28 @@ export function ReviewForm({
 
         {/* -------------------------------------------------------------- person */}
         <div className="grid gap-6 sm:grid-cols-2">
+          {/* `nickname`, not `name`: this one is published, so the browser should not
+              volunteer somebody's full legal name for it. */}
           <Field
             id="review-author"
+            name="nickname"
             label="Name to publish"
             value={values.author}
             onChange={set('author')}
             error={errors.author}
             placeholder="Alex R."
+            autoComplete="nickname"
           />
           <Field
             id="review-email"
+            name="email"
             label="Email (optional, never published)"
             type="email"
             value={values.email}
             onChange={set('email')}
             error={errors.email}
             placeholder="you@domain.com"
+            autoComplete="email"
           />
         </div>
 
@@ -241,12 +247,14 @@ export function ReviewForm({
           )}
         </div>
 
-        {/* Off-screen rather than display:none — some bots skip hidden inputs. */}
+        {/* Off-screen rather than display:none — some bots skip hidden inputs. Named "website",
+            never "company": browsers autofill a Company field from a saved address, which would
+            fill this trap and silently drop a real review. It is still sent as `company`. */}
         <div aria-hidden className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden">
-          <label htmlFor="review-company">Company</label>
+          <label htmlFor="review-website">Website</label>
           <input
-            id="review-company"
-            name="company"
+            id="review-website"
+            name="website"
             type="text"
             tabIndex={-1}
             autoComplete="off"
@@ -275,20 +283,24 @@ export function ReviewForm({
 
 function Field({
   id,
+  name,
   label,
   type = 'text',
   value,
   onChange,
   error,
   placeholder,
+  autoComplete,
 }: {
   id: string;
+  name?: string;
   label: string;
   type?: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
   placeholder?: string;
+  autoComplete?: string;
 }) {
   return (
     <div>
@@ -297,7 +309,12 @@ function Field({
       </label>
       <input
         id={id}
+        name={name ?? id}
         type={type}
+        inputMode={type === 'email' ? 'email' : undefined}
+        autoCapitalize={type === 'email' ? 'none' : undefined}
+        spellCheck={type === 'email' ? false : undefined}
+        autoComplete={autoComplete}
         value={value}
         onChange={onChange}
         placeholder={placeholder}

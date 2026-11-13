@@ -20,7 +20,16 @@ import { Field } from '@/components/account/auth-form';
   render and the header would still say "Sign in".
 */
 
-export function ResetPasswordForm({ token, valid }: { token: string; valid: boolean }) {
+export function ResetPasswordForm({
+  token,
+  valid,
+  email = null,
+}: {
+  token: string;
+  valid: boolean;
+  /** The account the link belongs to, for the hidden username field below. */
+  email?: string | null;
+}) {
   const [password, setPassword] = React.useState('');
   const [confirm, setConfirm] = React.useState('');
   const [busy, setBusy] = React.useState(false);
@@ -115,6 +124,21 @@ export function ResetPasswordForm({ token, valid }: { token: string; valid: bool
                 </p>
               ) : (
                 <form onSubmit={submit} className="mt-8 space-y-5">
+                  {/*
+                    Which account this password is for. Password managers read a hidden
+                    `username` field on a change-password form to update the right saved login
+                    instead of saving a second one with no name.
+                  */}
+                  {email && (
+                    <input
+                      type="email"
+                      name="username"
+                      autoComplete="username"
+                      value={email}
+                      readOnly
+                      hidden
+                    />
+                  )}
                   <Field
                     id="new-password"
                     label="New password"
