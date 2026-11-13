@@ -71,7 +71,8 @@ export async function createOrderAction(form: FormData): Promise<CreateOrderForm
   const contactId = text('contactId');
   if (!contactId) return { ok: false, error: 'Choose which contact this order is for.' };
 
-  const required = ['shipName', 'shipLine1', 'shipCity', 'shipPostcode', 'shipCountry'] as const;
+  /* No postcode: optional here as at the storefront checkout since November 2026. */
+  const required = ['shipName', 'shipLine1', 'shipCity', 'shipCountry'] as const;
   for (const key of required) {
     if (!text(key)) return { ok: false, error: 'A delivery address needs all of its parts.' };
   }
@@ -117,7 +118,7 @@ export async function createOrderAction(form: FormData): Promise<CreateOrderForm
       line1: text('shipLine1')!,
       line2: text('shipLine2'),
       city: text('shipCity')!,
-      postcode: text('shipPostcode')!,
+      postcode: text('shipPostcode'),
       country: text('shipCountry')!,
       phone: shipPhone,
     },

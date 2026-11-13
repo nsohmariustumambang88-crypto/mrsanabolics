@@ -289,9 +289,9 @@ export function OrderCreateForm({
 
         <div>
           <label className="wp-label" htmlFor="shipPostcode">
-            Postcode <span style={{ color: 'var(--wp-error)' }}>*</span>
+            Postcode
           </label>
-          <input id="shipPostcode" name="shipPostcode" className="wp-input" required />
+          <input id="shipPostcode" name="shipPostcode" className="wp-input" />
         </div>
 
         <div className="sm:col-span-2">
