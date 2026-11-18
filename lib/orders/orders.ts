@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { OrderStatus, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { evaluateDiscount, reasonMessage, redeemDiscount } from '@/lib/discounts';
+import { advertisedDiscount, evaluateDiscount, reasonMessage, redeemDiscount } from '@/lib/discounts';
 import { MINIMUM_ORDER } from '@/lib/orders/minimum';
 import {
   sendOrderConfirmation,
@@ -11,9 +11,12 @@ import {
   sendReviewRequestEmail,
 } from '@/lib/email/resend';
 import { SITE } from '@/lib/site';
+import { deadlineEventSummary } from '@/lib/orders/payment-deadline';
 
 /* The order event that records the review request, so it is sent at most once per order. */
 const REVIEW_REQUEST_EVENT = 'Review request emailed.';
+/* The order event that records the "Order Confirmed" email, so it is sent at most once. */
+const CONFIRMATION_EVENT = 'Order confirmation emailed.';
 
 /*
   The order write path.
@@ -128,15 +131,16 @@ export type CreateOrderInput = {
   notes?: string | null;
   actorEmail?: string | null;
   /**
-   * Storefront checkout only: how the customer chose to pay, so the "Order Received" email can
-   * say what happens next and staff can see the method in their notification. `payLink` is the
-   * page a crypto customer pays on; it needs the reference, which is only known in here.
+   * Storefront checkout only: how the customer chose to pay, for the staff notification. Its
+   * presence also means "send the customer nothing yet" — see the note where emails are sent.
    */
   payment?: {
     label: string;
-    payLink?: (reference: string) => string | null;
-    /** Cash App: where to send the money, for the email's instructions. */
-    cashApp?: { tag: string; name: string | null } | null;
+    /**
+     * The payment deadline (lib/orders/payment-deadline.ts), recorded as an order event: the
+     * payment page counts down to it and lib/orders/payment-expiry.ts enforces it.
+     */
+    dueAt?: Date | null;
   };
 };
 
@@ -260,11 +264,22 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       notes: input.notes ?? null,
       items: { create: items },
       events: {
-        create: {
-          summary: `Order ${reference} created with ${items.length} line${items.length === 1 ? '' : 's'}.`,
-          detail: items.map((i) => `${i.quantity} × ${i.name}`).join('\n'),
-          actorEmail: input.actorEmail ?? null,
-        },
+        create: [
+          {
+            summary: `Order ${reference} created with ${items.length} line${items.length === 1 ? '' : 's'}.`,
+            detail: items.map((i) => `${i.quantity} × ${i.name}`).join('\n'),
+            actorEmail: input.actorEmail ?? null,
+          },
+          ...(input.payment?.dueAt
+            ? [
+                {
+                  summary: deadlineEventSummary(input.payment.dueAt),
+                  detail: input.payment.dueAt.toISOString(),
+                  actorEmail: null,
+                },
+              ]
+            : []),
+        ],
       },
     },
     select: { id: true, reference: true },
@@ -303,34 +318,34 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     },
   });
 
-  /* Send emails asynchronously - don't block order creation on email delivery */
-  sendOrderConfirmation(
-    contact.email,
-    reference,
-    items.map((i) => ({
-      name: i.name,
-      quantity: i.quantity,
-      price: Number(i.unitPrice),
-    })),
-    {
-      subtotal,
-      discountCode,
-      discountTotal,
-      shippingMethod: input.shippingMethod ?? null,
-      shipping: shippingCost,
-      total,
-    },
-    false,
-    input.payment
-      ? {
-          label: input.payment.label,
-          payLink: input.payment.payLink?.(reference) ?? null,
-          cashApp: input.payment.cashApp ?? null,
-        }
-      : undefined
-  ).catch(() => {
-    /* Order is already created; email failure must not undo it */
-  });
+  /*
+    A storefront order sends the customer nothing now: their first email is the confirmation,
+    once the payment is confirmed (sendPaidConfirmationOnce). The owner's rule since
+    18 November 2026 — the payment page itself carries the instructions and the countdown. An
+    order staff record by hand (no `payment`) still gets its "Order Received" email.
+  */
+  if (!input.payment) {
+    sendOrderConfirmation(
+      contact.email,
+      reference,
+      items.map((i) => ({
+        name: i.name,
+        quantity: i.quantity,
+        price: Number(i.unitPrice),
+      })),
+      {
+        subtotal,
+        discountCode,
+        discountTotal,
+        shippingMethod: input.shippingMethod ?? null,
+        shipping: shippingCost,
+        total,
+      },
+      false
+    ).catch(() => {
+      /* Order is already created; email failure must not undo it */
+    });
+  }
 
   sendAdminOrderNotification(
     reference,
@@ -375,7 +390,14 @@ export type StatusResult = { ok: true } | { ok: false; error: string };
 export async function setOrderStatus(
   orderId: string,
   status: OrderStatus,
-  actorEmail: string
+  /** Null when the system did it: the NOWPayments webhook, the Cash App screenshot check. */
+  actorEmail: string | null,
+  /**
+   * `from`: move only from one of these statuses. The webhook and the screenshot check confirm
+   * only a NEW order (or one cancelled for running out of time), never one staff have already
+   * moved on. `notify: false` skips the customer email.
+   */
+  options: { from?: OrderStatus[]; notify?: boolean } = {}
 ): Promise<StatusResult> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
@@ -392,6 +414,7 @@ export async function setOrderStatus(
 
   if (!order) return { ok: false, error: 'That order no longer exists.' };
   if (order.status === status) return { ok: true };
+  if (options.from && !options.from.includes(order.status)) return { ok: true };
 
   /* Only stamp a milestone the first time it is reached. */
   const alreadyStamped =
@@ -401,14 +424,16 @@ export async function setOrderStatus(
 
   const summary = `Status moved from ${STATUS_LABEL[order.status]} to ${STATUS_LABEL[status]}.`;
 
-  await prisma.order.update({
-    where: { id: orderId },
-    data: {
-      status,
-      ...(alreadyStamped ? {} : stampFor(status)),
-      events: { create: { summary, actorEmail } },
-    },
+  /*
+    Conditional on the status just read: if a webhook, the expiry sweep or another admin tab
+    moved the order in between, this write does nothing rather than overwrite their decision.
+  */
+  const changed = await prisma.order.updateMany({
+    where: { id: orderId, status: order.status },
+    data: { status, ...(alreadyStamped ? {} : stampFor(status)) },
   });
+  if (changed.count === 0) return { ok: true };
+  await prisma.orderEvent.create({ data: { orderId, summary, actorEmail } });
 
   await prisma.contact.update({
     where: { id: order.contactId },
@@ -436,6 +461,16 @@ export async function setOrderStatus(
     return { ok: true };
   }
 
+  if (options.notify === false) return { ok: true };
+
+  /* Confirmed means paid: the full confirmation with the items, once per order. */
+  if (status === 'CONFIRMED') {
+    await sendPaidConfirmationOnce(orderId).catch((error) => {
+      console.error(`[orders] confirmation email for ${order.reference} failed:`, error);
+    });
+    return { ok: true };
+  }
+
   /* Send status update email to customer */
   sendOrderStatusUpdate(
     order.contact.email,
@@ -451,6 +486,75 @@ export async function setOrderStatus(
   });
 
   return { ok: true };
+}
+
+/*
+  The "Order Confirmed" email: the customer's first email about a storefront order, sent once
+  the payment is confirmed — by the NOWPayments webhook, the Cash App screenshot check, or staff
+  setting Confirmed. At most once per order (an order event records it), because an order moved
+  back and confirmed again, or a webhook delivered twice, must not send it twice.
+*/
+export async function sendPaidConfirmationOnce(orderId: string): Promise<void> {
+  const already = await prisma.orderEvent.count({ where: { orderId, summary: CONFIRMATION_EVENT } });
+  if (already > 0) return;
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { contact: { select: { email: true } }, items: true },
+  });
+  if (!order?.contact?.email) return;
+  const offer = await subscriberOfferFor(order.contactId, order.contact.email, order.discountCode);
+  const { error } = await sendOrderConfirmation(
+    order.contact.email,
+    order.reference,
+    order.items.map((i) => ({ name: i.name, quantity: i.quantity, price: Number(i.unitPrice) })),
+    {
+      subtotal: Number(order.subtotal),
+      discountCode: order.discountCode,
+      discountTotal: Number(order.discountTotal),
+      shippingMethod: order.shippingMethod,
+      shipping: Number(order.shipping),
+      total: Number(order.total),
+    },
+    true,
+    undefined,
+    offer
+  );
+  if (error) throw new Error(`Resend refused the confirmation: ${error.message}`);
+  await prisma.orderEvent.create({
+    data: {
+      orderId,
+      summary: CONFIRMATION_EVENT,
+      detail: `Sent to ${order.contact.email}${offer ? `, with the ${offer.code} code for their next order` : ''}.`,
+    },
+  });
+}
+
+/*
+  The checkout's sign-up box promises a 15% code for the next order (CONSENT.checkout_offer).
+  It is kept here, in the confirmation, so it reaches only someone who is subscribed and has
+  paid. Offered when ALL hold: the address is SUBSCRIBED (marketing consent — the only thing
+  that permits an offer), the code is live (advertisedDiscount refuses a paused, expired or
+  used-up one), this person has never redeemed it, and this order did not just use it.
+*/
+export const WELCOME_OFFER_CODE = 'WELCOME15';
+
+async function subscriberOfferFor(
+  contactId: string,
+  email: string,
+  usedOnThisOrder: string | null
+): Promise<{ code: string; headline: string; condition: string } | null> {
+  if (usedOnThisOrder?.toUpperCase() === WELCOME_OFFER_CODE) return null;
+  const subscribed = await prisma.subscriber.count({
+    where: { email: { equals: email.trim(), mode: 'insensitive' }, status: 'SUBSCRIBED' },
+  });
+  if (subscribed === 0) return null;
+  const live = await advertisedDiscount(WELCOME_OFFER_CODE);
+  if (!live) return null;
+  const used = await prisma.discountRedemption.count({
+    where: { contactId, discount: { code: WELCOME_OFFER_CODE } },
+  });
+  if (used > 0) return null;
+  return { code: live.code, headline: live.headline, condition: live.condition };
 }
 
 async function sendReviewRequestOnce(orderId: string, reference: string, email: string): Promise<void> {

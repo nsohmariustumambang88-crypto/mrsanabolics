@@ -36,11 +36,9 @@ import type { AdvertisedDiscount, CartItem } from '@/lib/types';
 import { MINIMUM_ORDER } from '@/lib/orders/minimum';
 import { checkPhone, PHONE_PLACEHOLDER } from '@/lib/checkout/phone';
 import { submitCheckout, type CheckoutSubmitInput } from '@/app/checkout/checkout-actions';
-import { CashAppPayment } from '@/components/checkout/cash-app-payment';
+import { WhatsAppButton } from '@/components/checkout/payment-help';
 import { readCheckoutDraft, writeCheckoutDraft } from '@/lib/checkout/draft';
 import { countryCode, normalizeCountryInput } from '@/lib/checkout/country-input';
-
-type CashAppPlaced = { tag: string; name: string | null; token: string; total: number };
 
 /*
   The lift: one contact, and the sheet is committed. The wizard mirrors that — each step is a
@@ -81,12 +79,12 @@ export function CheckoutFlow({
   const [orderReference, setOrderReference] = React.useState('');
   /* The label of the method paid by hand (bank transfer, Cash App) the order was placed with. */
   const [placedMethodLabel, setPlacedMethodLabel] = React.useState('');
-  /* A Cash App order: where to pay and the screenshot token, from the server's answer. */
-  const [placedCashApp, setPlacedCashApp] = React.useState<CashAppPlaced | null>(null);
   /* Pre-select whichever method the admin lists first. */
   const [method, setMethod] = React.useState<PaymentMethod>(
     () => (paymentMethods[0]?.key as PaymentMethod | undefined) ?? 'crypto'
   );
+  /* Crypto: which coin. Chosen like the method, paid only once "Proceed to payment" is pressed. */
+  const [cryptoAsset, setCryptoAsset] = React.useState<CryptoAsset>('BTC');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState('');
   /* The order summary on phones (below lg) starts closed; from lg it is always open. */
@@ -121,7 +119,7 @@ export function CheckoutFlow({
     the consent invalid, since it would not be freely given. The basket value travels with the
     sign-up so a recovery email can name what was left behind.
   */
-  const marketing = useSubscribe('checkout', cartSubtotal);
+  const marketing = useSubscribe('checkout_offer', cartSubtotal);
 
   /*
     Delivery and discounts are administered, not hard-coded.
@@ -334,17 +332,44 @@ export function CheckoutFlow({
     }
   };
 
+  /*
+    "Proceed to payment": creates the order for the method chosen above and opens its payment
+    page, where the 90-minute countdown runs (lib/orders/payment-deadline.ts). Crypto creates the
+    NOWPayments address on the way; Cash App opens the page with the $Cashtag and the screenshot
+    upload. Nothing is emailed to the customer until the payment is confirmed. Bank transfer, which
+    has no payment page, still ends on the "Order placed" screen.
+  */
   const place = async () => {
     setSubmitError('');
     setIsSubmitting(true);
+    let leaving = false;
 
     try {
+      if (method === 'crypto') {
+        const paid = await payWithCrypto(cryptoAsset);
+        if (paid.ok) {
+          leaving = true;
+          window.location.assign(paid.paymentUrl);
+        } else {
+          setSubmitError(paid.error);
+        }
+        return;
+      }
+
       const result = await submitCheckout(checkoutInput(method));
+
+      if (result.ok && result.cashApp) {
+        leaving = true;
+        clearCart();
+        window.location.assign(
+          `/checkout/payment-confirmation?order=${encodeURIComponent(result.reference)}&t=${encodeURIComponent(result.cashApp.token)}`
+        );
+        return;
+      }
 
       if (result.ok) {
         setOrderReference(result.reference);
         setPlacedMethodLabel(paymentMethods.find((m) => m.key === method)?.label ?? '');
-        setPlacedCashApp(result.cashApp ?? null);
         setPlaced(true);
         clearCart();
         setStep(STEPS.length - 1);
@@ -355,7 +380,8 @@ export function CheckoutFlow({
       setSubmitError('Failed to place order. Please try again.');
       console.error('Checkout error:', error);
     } finally {
-      setIsSubmitting(false);
+      /* Leaving for the payment page: keep the button busy so it cannot be pressed twice. */
+      if (!leaving) setIsSubmitting(false);
     }
   };
 
@@ -391,29 +417,12 @@ export function CheckoutFlow({
           <p className="text-xs font-medium uppercase tracking-wider text-ink-faint">Order reference</p>
           <p className="font-mono text-xl font-semibold text-ink">{orderReference}</p>
         </div>
-        {placedCashApp ? (
-          <>
-            <p className="measure-tight mt-6 text-sm leading-relaxed text-ink-soft">
-              Pay now in Cash App, then send us the screenshot below. These details are also in
-              the email we sent to {marketing.email}, with a link back to this upload box.
-            </p>
-            <div className="mt-6 w-full">
-              <CashAppPayment
-                reference={orderReference}
-                token={placedCashApp.token}
-                total={placedCashApp.total}
-                tag={placedCashApp.tag}
-                name={placedCashApp.name}
-              />
-            </div>
-          </>
-        ) : (
-          <p className="measure-tight mt-6 text-sm leading-relaxed text-ink-soft">
-            {placedMethodLabel
-              ? `You chose to pay by ${placedMethodLabel}. We'll email the payment details to ${marketing.email}, and your order is sent once your payment arrives.`
-              : `Your order summary is on its way to ${marketing.email}.`}
-          </p>
-        )}
+        {/* Only methods with no payment page land here (bank transfer, Cash App with no tag). */}
+        <p className="measure-tight mt-6 text-sm leading-relaxed text-ink-soft">
+          {placedMethodLabel
+            ? `You chose to pay by ${placedMethodLabel}. We'll email the payment details to ${marketing.email}, and your order is sent once your payment arrives.`
+            : `Your order summary is on its way to ${marketing.email}.`}
+        </p>
         <p className="measure-tight mt-3 text-xs leading-relaxed text-ink-faint">
           Questions? Email{' '}
           <a
@@ -430,9 +439,10 @@ export function CheckoutFlow({
             className="underline underline-offset-4 hover:text-pigment-indigo"
           >
             Telegram
-          </a>{' '}
-          or WhatsApp (+1 914 313 7729), quoting {orderReference}.
+          </a>
+          , quoting {orderReference}.
         </p>
+        <WhatsAppButton message={`Hi, about my order ${orderReference}`} className="mt-5" />
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link
             href="/shop"
@@ -555,16 +565,31 @@ export function CheckoutFlow({
                   {/*
                     Separate and unticked. Consent bundled into a required field is not freely
                     given, and an address collected that way cannot lawfully be marketed to.
+                    The reason to tick is stated up front; the code itself arrives with the
+                    "Order Confirmed" email, so it cannot be used without subscribing.
                   */}
-                  <label className="mt-3 flex cursor-pointer items-start gap-2.5 text-xs leading-relaxed text-ink-soft">
-                    <input
-                      type="checkbox"
-                      checked={marketing.consent}
-                      onChange={(e) => marketing.setConsent(e.target.checked)}
-                      className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-pigment-indigo"
-                    />
-                    {CONSENT.checkout}
-                  </label>
+                  <div className="mt-4 border border-rule-strong bg-paper-sunk p-3.5">
+                    <label className="flex cursor-pointer items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={marketing.consent}
+                        onChange={(e) => marketing.setConsent(e.target.checked)}
+                        className="mt-1 h-4 w-4 shrink-0 accent-pigment-indigo"
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-ink">
+                          Get 15% off your next order
+                        </span>
+                        <span className="mt-1 block text-xs leading-relaxed text-ink-soft">
+                          {CONSENT.checkout_offer}
+                        </span>
+                        <span className="mt-1 block text-xs leading-relaxed text-ink-faint">
+                          Your code comes with your order confirmation once your payment is in. One
+                          per customer.
+                        </span>
+                      </span>
+                    </label>
+                  </div>
 
                   {marketing.error && (
                     <p role="alert" className="mt-2 text-xs text-destructive">
@@ -758,10 +783,9 @@ export function CheckoutFlow({
                 total={total}
                 method={method}
                 onMethodChange={setMethod}
-                cryptoAsset="BTC"
-                onCryptoAssetChange={() => {}}
+                cryptoAsset={cryptoAsset}
+                onCryptoAssetChange={setCryptoAsset}
                 methods={paymentMethods}
-                onCryptoPay={payWithCrypto}
               />
             )}
 
@@ -783,17 +807,7 @@ export function CheckoutFlow({
                 Back
               </button>
 
-              {step === 2 && method === 'crypto' ? (
-                /*
-                  Crypto is placed by the Pay with BTC / Pay with ETH buttons, which create the
-                  payment address too. This button used to place a crypto order with no address,
-                  and the customer had no way to pay it.
-                */
-                <p className="text-right text-sm text-ink-soft">
-                  Choose <strong className="font-medium text-ink">Pay with BTC</strong> or{' '}
-                  <strong className="font-medium text-ink">Pay with ETH</strong> above to place your order.
-                </p>
-              ) : step < 2 ? (
+              {step < 2 ? (
                 /* On the shipping step this submits the address form above (see its note). */
                 <button
                   type={step === 0 ? 'submit' : 'button'}
@@ -818,12 +832,12 @@ export function CheckoutFlow({
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.75} />
-                      Placing…
+                      Opening payment…
                     </>
                   ) : (
                     <>
                       <Lock className="h-4 w-4" strokeWidth={1.75} />
-                      Place order · {formatPrice(total)}
+                      Proceed to payment · {formatPrice(total)}
                     </>
                   )}
                 </button>

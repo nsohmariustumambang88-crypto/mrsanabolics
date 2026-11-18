@@ -61,6 +61,31 @@ const nextConfig = {
     */
     cpus: 1,
     workerThreads: false,
+
+    /*
+      The Cash App screenshot check (lib/checkout/screenshot-check.ts) reads pictures with
+      tesseract.js, which starts a worker thread from a file path and loads its engine as
+      WebAssembly. Bundled by webpack, neither path exists any more, so it stays a plain Node
+      package, and its files are copied into the upload route's function explicitly.
+    */
+    serverComponentsExternalPackages: ['tesseract.js'],
+    outputFileTracingIncludes: {
+      '/api/orders/[reference]/payment-proof': [
+        './node_modules/tesseract.js/**/*',
+        './node_modules/tesseract.js-core/**/*',
+        './node_modules/wasm-feature-detect/**/*',
+        './node_modules/regenerator-runtime/**/*',
+        './node_modules/is-url/**/*',
+        './node_modules/node-fetch/**/*',
+        './node_modules/whatwg-url/**/*',
+        './node_modules/tr46/**/*',
+        './node_modules/webidl-conversions/**/*',
+        './node_modules/zlibjs/**/*',
+        './node_modules/bmp-js/**/*',
+        './node_modules/is-electron/**/*',
+        './node_modules/idb-keyval/**/*',
+      ],
+    },
   },
 };
 

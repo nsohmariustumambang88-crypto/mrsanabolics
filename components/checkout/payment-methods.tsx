@@ -7,8 +7,9 @@ import { cn } from '@/lib/utils';
 import { CashtagRow } from '@/components/checkout/cash-app-payment';
 
 /*
-  Three payment methods: Zelle, CashApp, and Crypto (BTC/USDT).
-  Crypto payments are processed through NOWPayments API.
+  The payment methods the admin lists (crypto through NOWPayments, Cash App, bank transfer), as
+  selectors. Nothing here pays: the checkout's "Proceed to payment" button creates the order for
+  the method and coin chosen and opens its payment page, where the 90-minute countdown runs.
 */
 
 export type PaymentMethod = 'cashapp' | 'bank_transfer' | 'crypto';
@@ -50,7 +51,6 @@ export function PaymentMethods({
   cryptoAsset,
   onCryptoAssetChange,
   methods,
-  onCryptoPay,
 }: {
   total: number;
   method: PaymentMethod;
@@ -59,8 +59,6 @@ export function PaymentMethods({
   onCryptoAssetChange: (a: CryptoAsset) => void;
   /** Enabled methods from the database, in administered order. */
   methods: PaymentMethodOption[];
-  /** Places the order and starts the crypto payment; the server works out the amount. */
-  onCryptoPay: (asset: CryptoAsset) => Promise<CryptoPayResult>;
 }) {
 
   /* The notice for whichever method is showing, so each panel states its own position. */
@@ -74,8 +72,12 @@ export function PaymentMethods({
           How would you like to pay?
         </legend>
 
+        {/* As many columns as there are methods, so no empty rule-coloured cell closes the row. */}
         <div
-          className="mt-5 grid grid-cols-1 gap-px border border-rule bg-rule sm:grid-cols-3"
+          className={cn(
+            'mt-5 grid grid-cols-1 gap-px border border-rule bg-rule',
+            methods.length === 2 ? 'sm:grid-cols-2' : methods.length >= 3 ? 'sm:grid-cols-3' : ''
+          )}
         >
           {methods.map((m) => {
             const { hint, icon: Icon } = PRESENTATION[m.key] ?? FALLBACK_PRESENTATION;
@@ -121,7 +123,12 @@ export function PaymentMethods({
         )}
         {method === 'bank_transfer' && <BankTransferPanel notice={notice} />}
         {method === 'crypto' && (
-          <CryptoPanel total={total} notice={notice} onPay={onCryptoPay} />
+          <CryptoPanel
+            total={total}
+            notice={notice}
+            asset={cryptoAsset}
+            onAssetChange={onCryptoAssetChange}
+          />
         )}
       </div>
     </div>
@@ -190,8 +197,9 @@ function CashAppPanel({
       </div>
 
       <p className="text-sm leading-relaxed text-ink-soft">
-        Place your order first. The next screen gives you your order number to write in the
-        Cash App note, and a box to upload a screenshot of the payment once you have sent it.
+        Press <strong className="font-medium text-ink">Proceed to payment</strong>. The next page
+        gives you your order number for the Cash App note, a box for the screenshot of your
+        payment, and 90 minutes to pay.
       </p>
 
       <NotConnected>{notice}</NotConnected>
@@ -204,67 +212,59 @@ function CashAppPanel({
 function CryptoPanel({
   total,
   notice,
-  onPay,
+  asset,
+  onAssetChange,
 }: {
   total: number;
   notice: string;
-  onPay: (asset: CryptoAsset) => Promise<CryptoPayResult>;
+  asset: CryptoAsset;
+  onAssetChange: (a: CryptoAsset) => void;
 }) {
-  const [isProcessing, setIsProcessing] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-
-  const handleCryptoPayment = async (cryptoAsset: CryptoAsset) => {
-    setIsProcessing(true);
-    setError(null);
-    const result = await onPay(cryptoAsset);
-    if (result.ok) {
-      window.location.href = result.paymentUrl;
-      return;
-    }
-    setError(result.error);
-    setIsProcessing(false);
-  };
-
   return (
     <div className="space-y-4">
       <div className="border border-rule bg-paper-sunk p-4">
         <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
-          Total Amount
+          Total amount
         </p>
         <p className="mt-1 font-display text-2xl font-semibold tabular">{formatPrice(total)}</p>
 
-        <div className="mt-6 space-y-3">
-          <p className="text-sm font-medium text-ink">Select payment currency:</p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {ASSETS.map((asset) => (
-              <div key={asset.id} className="flex flex-col gap-2">
-                <button
-                  onClick={() => handleCryptoPayment(asset.id)}
-                  disabled={isProcessing}
+        <fieldset className="mt-6">
+          <legend className="text-sm font-medium text-ink">Pay with</legend>
+          <div className="mt-3 grid grid-cols-1 gap-px border border-rule bg-rule sm:grid-cols-2">
+            {ASSETS.map((a) => {
+              const active = asset === a.id;
+              return (
+                <label
+                  key={a.id}
                   className={cn(
-                    'py-2.5 px-3 text-sm font-medium rounded border transition-colors',
-                    isProcessing
-                      ? 'bg-ink-faint text-paper-sunk cursor-not-allowed'
-                      : 'bg-pigment-indigo text-paper border-pigment-indigo hover:bg-pigment-indigo/80'
+                    'flex cursor-pointer items-center gap-2.5 bg-card p-3.5 transition-colors',
+                    active ? 'bg-paper-sunk' : 'hover:bg-paper-sunk'
                   )}
                 >
-                  {isProcessing ? 'Processing...' : `Pay with ${asset.id}`}
-                </button>
-                <p className="text-xs text-ink-faint">
-                  {asset.network}
-                </p>
-              </div>
-            ))}
+                  <input
+                    type="radio"
+                    name="crypto-asset"
+                    value={a.id}
+                    checked={active}
+                    onChange={() => onAssetChange(a.id)}
+                    className="h-4 w-4 accent-pigment-indigo"
+                  />
+                  <span className="text-sm font-medium">
+                    {a.label} ({a.id})
+                  </span>
+                  <span className="ml-auto text-xs text-ink-faint">{a.network}</span>
+                </label>
+              );
+            })}
           </div>
-        </div>
+        </fieldset>
       </div>
 
-      {error && (
-        <p className="flex items-start gap-2.5 border border-warning/40 bg-warning/5 p-3 text-xs leading-relaxed text-warning">
-          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-          <span>{error}</span>
-        </p>
-      )}
+      <p className="text-sm leading-relaxed text-ink-soft">
+        Press <strong className="font-medium text-ink">Proceed to payment</strong>. The next page
+        shows the exact {asset} amount and the address to send it to, and gives you 90 minutes to
+        pay.
+      </p>
 
       <NotConnected>{notice}</NotConnected>
     </div>

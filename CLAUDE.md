@@ -657,11 +657,11 @@ and refuses a method the zone does not offer, re-evaluates the code, and stores 
 - **Cash App is paid to a $Cashtag, with a screenshot as evidence** (owner's direction,
   8 November 2026). The tag and the name the account shows are the `cashapp` row's
   `walletAddress`/`accountName`, set in the database — deliberately not editable in the admin.
-  Checkout's Cash App panel shows the tag (Copy button) and the amount; after **Place order** the
-  "Order placed" screen shows the tag, the exact total and the reference for the "For" note, and
-  an upload box ([cash-app-payment.tsx](components/checkout/cash-app-payment.tsx)). The "Order
-  Received" email carries the same instructions and a link to
-  `/checkout/payment-confirmation?order=<ref>&t=<token>`, where the box appears again.
+  Checkout's Cash App panel shows the tag (Copy button) and the amount; **Proceed to payment**
+  opens `/checkout/payment-confirmation?order=<ref>&t=<token>`, which shows the tag, the exact
+  total, the reference for the "For" note, the 90-minute countdown and the upload box
+  ([cash-app-payment.tsx](components/checkout/cash-app-payment.tsx)). No email is sent until the
+  order is confirmed (see "Paying: Proceed to payment…" below).
   - The token is an HMAC of the reference with `AUTH_SECRET` ([lib/checkout/cashapp.ts](lib/checkout/cashapp.ts)),
     stored nowhere; the reference alone cannot upload. Rotating `AUTH_SECRET` breaks every
     outstanding upload link (and signs everyone out).
@@ -671,10 +671,12 @@ and refuses a method the zone does not offer, re-evaluates the code, and stores 
     uploads to Cloudinary as an **authenticated** asset under `mranabolics/payment-proofs/`, which
     has no public URL: only `signedImageUrl()` opens it, and only the admin order screen builds
     one. It writes a `PaymentProof` row (its own table, so `orders` still has no payment column)
-    and an order event, and emails the shop's alert address (support@mrsanabolics.com; see
-    "Email, as built") "Cash App screenshot - <ref>".
-  - Nothing marks the order paid. The admin order screen shows the screenshots first, with the
-    sentence that a screenshot is the customer's claim; staff check Cash App and set Confirmed.
+    and an order event, reads the picture (lib/checkout/screenshot-check.ts) and emails the shop's
+    alert address (support@mrsanabolics.com; see "Email, as built") "Cash App screenshot - <ref>".
+  - A screenshot that shows our name or tag and the exact amount confirms the order
+    automatically (see "Paying: Proceed to payment…"); otherwise staff check Cash App and set
+    Confirmed. The admin order screen shows the screenshots first, with the sentence that a
+    screenshot is the customer's claim.
     The orders list marks rows that have one. With no tag on the row, Cash App falls back to the
     old "details by email" behaviour.
 
@@ -712,13 +714,76 @@ the Vercel functions work without a fixed IP. Do not extend the allow-list to al
 To test a webhook against the live site without touching an order, sign a payload with the IPN
 secret for a made-up `order_id`: a 200 means the secret matches, a 401 means it does not.
 
+## Paying: "Proceed to payment", the 90-minute window, and email only once paid
+
+Rebuilt 18 November 2026 at the owner's direction. Three rules hold it together.
+
+**1. Checkout opens the payment, it does not "place an order".** The payment step lists the
+methods as selectors (crypto with a BTC/ETH choice, Cash App, bank transfer if enabled) and one
+button, **Proceed to payment**. It creates the order and opens the payment page for the chosen
+method: crypto through `/api/crypto/checkout` (which also creates the NOWPayments address), Cash
+App through `submitCheckout`, then `/checkout/payment-confirmation?order=…&t=<upload token>`.
+Bank transfer has no payment page and still ends on the "Order placed" screen.
+
+**2. Every payment has 90 minutes, and the countdown runs to something real.** A timer that reaches
+zero and changes nothing is fake urgency, so an unpaid order is cancelled when its time is up.
+- The deadline is written as an order event when the order is created: "Payment due by …" in
+  `summary`, the ISO date in `detail`. It is an event because `Order` has no payment columns. The
+  constants live in [lib/orders/payment-deadline.ts](lib/orders/payment-deadline.ts), and the
+  countdown is [payment-countdown.tsx](components/checkout/payment-countdown.tsx).
+- `expireUnpaidOrders()` ([lib/orders/payment-expiry.ts](lib/orders/payment-expiry.ts)) does the
+  cancelling. It cancels an order only if it is NEW, its deadline has passed, it has no Cash App
+  screenshot, and NOWPayments has not seen coins arrive (`CRYPTO_DETECTED_EVENT`, written by the
+  webhook on `confirming`/`confirmed`/`sending`/`partially_paid`). The status change is
+  conditional (NEW → CANCELLED), so a webhook confirming at the same moment wins. No email.
+- Vercel's free cron is daily, so the sweep runs whenever someone looks: the payment page and its
+  5-second status poll check their own order; `/admin` and `/admin/orders` check them all; and
+  `/api/cron/payment-deadlines` sweeps daily as a backstop. It fails closed without `CRON_SECRET`.
+- A late payment is not lost. A crypto payment that finishes after the cancel still confirms the
+  order through the webhook, because NOWPayments keeps the address open for 7 days. A Cash App
+  screenshot can still be uploaded to an order cancelled only for time (`UNPAID_CANCEL_EVENT`).
+  The expired page hides the tag or address and offers only the upload and the contacts.
+- Orders from before 18 November 2026 have no deadline event and are never auto-cancelled. An
+  old crypto order's page counts down to NOWPayments' own 7-day expiry.
+
+**3. The customer's first email is the confirmation, sent once paid.** A storefront order sends
+the customer nothing when it is created; an order typed in by staff still gets "Order Received".
+`sendPaidConfirmationOnce()` in [lib/orders/orders.ts](lib/orders/orders.ts) sends "Order
+Confirmed" at most once per order. It is guarded by the "Order confirmation emailed." event and
+runs from `setOrderStatus(…, 'CONFIRMED')`, whoever confirms:
+- **Crypto:** the NOWPayments webhook on `finished`, from NEW or a time-out cancel only. It also
+  emails support@ "Paid - <ref> - crypto".
+- **Cash App:** the screenshot check on upload. [lib/checkout/screenshot-check.ts](lib/checkout/screenshot-check.ts)
+  reads the picture with tesseract.js on our own server, as it is and inverted for dark mode. It
+  passes only if the picture shows **our account name (every word, one-letter OCR slack) or our
+  $Cashtag, AND the order's exact dollar amount**, with none of failed / declined / cancelled /
+  refunded / pending / request. The same picture sent for two orders fails, detected by SHA-256 in
+  the event detail. Passing confirms the order and emails the customer. Either way support@ gets
+  "Cash App screenshot - <ref> - confirmed automatically / check needed" with the findings. **A
+  screenshot can be edited, and Cash App gives a personal account no API to verify a payment**,
+  so every automatic confirmation tells staff to check the Cash App balance before shipping.
+- **Staff** setting Confirmed in the admin also send the full confirmation now, instead of the
+  bare status email.
+
+tesseract.js must stay out of webpack: it starts a worker thread from a file path and loads
+WebAssembly. That is why `next.config.js` lists it in `serverComponentsExternalPackages` and
+copies it into the upload route's function with `outputFileTracingIncludes`. The English language
+data (about 2 MB) downloads from jsdelivr on a cold start and is cached in the function's tmp
+directory. A real screenshot reads in about 10 seconds locally, so the route has `maxDuration` 60
+and a 40-second reading limit; a picture it cannot read fails safe and waits for a person.
+
+The "New Order" alert to support@ now says "(awaiting payment)", because orders are created when
+the payment page opens. WhatsApp and Telegram are buttons on every payment page and on the "Order
+placed" screen (`WhatsAppButton` in [payment-help.tsx](components/checkout/payment-help.tsx)).
+
 ## Email, as built
 
 Mail is sent through the Resend REST API ([lib/email/resend.ts](lib/email/resend.ts)) from
 `orders@mrsanabolics.com` with `reply_to` `support@mrsanabolics.com`. `sendOrderConfirmation`
 renders one template ([lib/email/templates.ts](lib/email/templates.ts)) with Subtotal, Discount,
-Shipping and Total rows — "Order Received" when placed, "Order Confirmed" when paid — and is the
-only order email; an older duplicate template in the webhook was deleted. Campaigns and newsletters
+Shipping and Total rows — "Order Confirmed" when paid (a storefront customer's first email, sent
+once by `sendPaidConfirmationOnce`), "Order Received" only for orders staff record by hand — and
+is the only order email; an older duplicate template in the webhook was deleted. Campaigns and newsletters
 have been sent by script through the same API, test to the owner first.
 
 **The shop's own alerts go to support@mrsanabolics.com** (since 10 November 2026): "New Order -
@@ -745,8 +810,17 @@ for the people who *did* subscribe with it.
 Three capture points, one path: the newsletter band, [components/marketing/exit-capture.tsx](components/marketing/exit-capture.tsx),
 and the consent box at checkout, all through
 [components/marketing/use-subscribe.ts](components/marketing/use-subscribe.ts) →
-`POST /api/subscribe` → [lib/marketing/subscribe.ts](lib/marketing/subscribe.ts). Rules the
-schema and the route enforce together:
+`POST /api/subscribe` → [lib/marketing/subscribe.ts](lib/marketing/subscribe.ts).
+
+**The checkout box offers a reason to tick (since 19 November 2026).** It still starts unticked.
+It leads with "Get 15% off your next order" and records the `checkout_offer` wording, which is
+about marketing only; the old `checkout` sentence stays for the rows that agreed to it. The code
+is never shown on the page, where anyone could use it without subscribing. It is printed in the
+"Order Confirmed" email (`subscriberOfferFor` in lib/orders/orders.ts), and only when the
+address is SUBSCRIBED, WELCOME15 is live, this person has never redeemed it, and this order did
+not just use it. Ticking the box still starts the welcome sequence (email 1 immediately).
+
+Rules the schema and the route enforce together:
 
 - **A row cannot exist without consent evidence.** `consentText` stores the literal sentence
   shown at the time, from [lib/marketing/consent.ts](lib/marketing/consent.ts), which both the

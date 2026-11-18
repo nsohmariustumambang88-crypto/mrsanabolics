@@ -5,10 +5,10 @@ import { prisma } from '@/lib/prisma';
 import { createOrder } from '@/lib/orders/orders';
 import { quoteDelivery } from '@/lib/delivery';
 import { markBasketOrdered } from '@/lib/basket';
-import { SITE } from '@/lib/site';
 import { formatCheckoutNote, PAYMENT_METHOD_LABEL } from '@/lib/checkout/order-notes';
 import { checkPhone } from '@/lib/checkout/phone';
-import { cashAppDetails, cashAppPayUrl, proofToken, type CashAppDetails } from '@/lib/checkout/cashapp';
+import { cashAppDetails, proofToken, type CashAppDetails } from '@/lib/checkout/cashapp';
+import { paymentDeadlineFor } from '@/lib/orders/payment-deadline';
 
 export type CheckoutSubmitInput = {
   email: string;
@@ -43,7 +43,7 @@ export type CheckoutResult =
   | {
       ok: true;
       reference: string;
-      cashApp?: CashAppDetails & { token: string; total: number };
+      cashApp?: CashAppDetails & { token: string; total: number; dueAt: string | null };
     }
   | { ok: false; error: string };
 
@@ -134,6 +134,13 @@ export async function placeCheckoutOrder(input: CheckoutSubmitInput): Promise<Ch
     /* Cash App is paid to the $Cashtag on the method's row; no tag means details by email, as before. */
     const cashApp = method.key === 'cashapp' ? await cashAppDetails() : null;
 
+    /*
+      The 90-minute payment window (lib/orders/payment-deadline.ts), for crypto and for Cash App
+      with a $Cashtag to pay to. Without a tag the customer cannot pay on the page, so no clock.
+    */
+    const dueAt =
+      method.key === 'cashapp' && !cashApp ? null : paymentDeadlineFor(method.key, new Date());
+
     const result = await createOrder({
       contactId: contact.id,
       lines: input.cart,
@@ -154,13 +161,7 @@ export async function placeCheckoutOrder(input: CheckoutSubmitInput): Promise<Ch
       notes: formatCheckoutNote(method.key, input.cryptoAsset),
       payment: {
         label: method.label || PAYMENT_METHOD_LABEL[method.key] || method.key,
-        payLink: (reference) =>
-          method.key === 'crypto'
-            ? `${SITE.url}/checkout/payment-confirmation?order=${reference}`
-            : cashApp
-              ? cashAppPayUrl(reference)
-              : null,
-        cashApp,
+        dueAt,
       },
     });
 
@@ -191,7 +192,14 @@ export async function placeCheckoutOrder(input: CheckoutSubmitInput): Promise<Ch
       ok: true,
       reference: result.reference,
       ...(cashApp
-        ? { cashApp: { ...cashApp, token: proofToken(result.reference), total: result.total } }
+        ? {
+            cashApp: {
+              ...cashApp,
+              token: proofToken(result.reference),
+              total: result.total,
+              dueAt: dueAt?.toISOString() ?? null,
+            },
+          }
         : {}),
     };
   } catch (error) {

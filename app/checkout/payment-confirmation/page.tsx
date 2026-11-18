@@ -10,6 +10,14 @@ import {
   parseCryptoNote,
   paymentMethodFromNotes,
 } from '@/lib/checkout/order-notes';
+import {
+  CRYPTO_DETECTED_EVENT,
+  PAYMENT_DEADLINE_EVENT_PREFIX,
+  UNPAID_CANCEL_EVENT,
+  deadlineFromEvents,
+  legacyCryptoDueAt,
+} from '@/lib/orders/payment-deadline';
+import { expireUnpaidOrdersSafe } from '@/lib/orders/payment-expiry';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +34,18 @@ async function getOrderDetails(orderReference: string) {
       status: true,
       total: true,
       notes: true,
+      createdAt: true,
+      /* The payment deadline, and whether it ran out or the coins are on their way. */
+      events: {
+        where: {
+          OR: [
+            { summary: { startsWith: PAYMENT_DEADLINE_EVENT_PREFIX } },
+            { summary: UNPAID_CANCEL_EVENT },
+            { summary: CRYPTO_DETECTED_EVENT },
+          ],
+        },
+        select: { summary: true, detail: true },
+      },
       _count: { select: { paymentProofs: true } },
     },
   });
@@ -40,8 +60,14 @@ export default async function PaymentConfirmationPage({
   const orderReference = searchParams.order;
   if (!orderReference) notFound();
 
+  /* Apply the 90-minute expiry to this order before showing it (lib/orders/payment-expiry.ts). */
+  await expireUnpaidOrdersSafe({ reference: orderReference });
+
   const order = await getOrderDetails(orderReference);
   if (!order) notFound();
+  const dueAt = deadlineFromEvents(order.events);
+  const timedOut =
+    order.status === 'CANCELLED' && order.events.some((e) => e.summary === UNPAID_CANCEL_EVENT);
 
   const total = Number(order.total);
   const crypto = parseCryptoNote(order.notes);
@@ -57,10 +83,13 @@ export default async function PaymentConfirmationPage({
     const cancelled = order.status === 'CANCELLED';
 
     /*
-      Cash App with a $Cashtag on file: the tag, the amount and, with a valid token, the
-      screenshot upload. Once staff have confirmed it, say so instead.
+      Cash App with a $Cashtag on file: the tag, the amount, the countdown and, with a valid
+      token, the screenshot upload. An order cancelled only because its 90 minutes ran out keeps
+      the upload box (the countdown shows the time is up), so somebody who did pay can still send
+      the screenshot. Once confirmed, say so instead.
     */
-    const cashApp = method === 'cashapp' && !cancelled ? await cashAppDetails() : null;
+    const cashApp =
+      method === 'cashapp' && (!cancelled || timedOut) ? await cashAppDetails() : null;
     if (cashApp) {
       const confirmed = ['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(order.status);
       return (
@@ -68,7 +97,7 @@ export default async function PaymentConfirmationPage({
           <div className="mx-auto max-w-xl space-y-8">
             <div>
               <h1 className="font-display text-3xl font-semibold tracking-[-0.03em] text-ink">
-                {confirmed ? 'Payment received' : 'Pay with Cash App'}
+                {confirmed ? 'Payment received' : timedOut ? 'The time to pay has run out' : 'Pay with Cash App'}
               </h1>
               <p className="mt-2 text-sm text-ink-soft">
                 Order <span className="font-mono">{orderReference}</span> · ${total.toFixed(2)}
@@ -76,8 +105,8 @@ export default async function PaymentConfirmationPage({
             </div>
             {confirmed ? (
               <p className="text-sm leading-relaxed text-ink-soft">
-                We have checked your payment and your order is confirmed. We&rsquo;ll email you the
-                tracking number when it ships.
+                Your payment is confirmed and so is your order: the confirmation is in your email.
+                We&rsquo;ll email you the tracking number when it ships.
               </p>
             ) : (
               <CashAppPayment
@@ -89,6 +118,7 @@ export default async function PaymentConfirmationPage({
                 tag={cashApp.tag}
                 name={cashApp.name}
                 initialCount={order._count.paymentProofs}
+                dueAt={dueAt?.toISOString() ?? null}
               />
             )}
             <PaymentHelp reference={orderReference} intro="Questions about paying? Contact us:" />
@@ -137,6 +167,8 @@ export default async function PaymentConfirmationPage({
               }
             : null
         }
+        dueAt={(dueAt ?? legacyCryptoDueAt(order.createdAt)).toISOString()}
+        paymentDetected={order.events.some((e) => e.summary === CRYPTO_DETECTED_EVENT)}
       />
     </Suspense>
   );

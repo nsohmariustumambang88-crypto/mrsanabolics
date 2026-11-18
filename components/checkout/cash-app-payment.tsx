@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Check, Copy, ImageUp, Info } from 'lucide-react';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { PaymentCountdown } from '@/components/checkout/payment-countdown';
 import {
   MAX_PROOFS_PER_ORDER,
   PROOF_MAX_BYTES,
@@ -29,6 +30,7 @@ export function CashAppPayment({
   tag,
   name,
   initialCount = 0,
+  dueAt = null,
 }: {
   reference: string;
   /** The upload token for this order; null hides the upload box. */
@@ -38,9 +40,42 @@ export function CashAppPayment({
   name: string | null;
   /** Screenshots already received for this order. */
   initialCount?: number;
+  /**
+   * ISO end of the 90-minute payment window (lib/orders/payment-deadline.ts). Null for an order
+   * from before the window existed: no countdown, because nothing enforces one.
+   */
+  dueAt?: string | null;
 }) {
+  const [proofCount, setProofCount] = React.useState(initialCount);
+  const [timeUp, setTimeUp] = React.useState(
+    () => Boolean(dueAt) && new Date(dueAt as string).getTime() <= Date.now()
+  );
+  const markTimeUp = React.useCallback(() => setTimeUp(true), []);
+  const upload = token
+    ? 'upload the screenshot below'
+    : 'message us the screenshot (contact details below)';
+  /* Out of time with nothing sent: stop presenting the tag as something to pay. */
+  const closed = timeUp && proofCount === 0;
+
   return (
     <div className="space-y-6 text-left">
+      {/* Once a screenshot is in, the clock no longer decides anything: it is being checked. */}
+      {dueAt && proofCount === 0 && (
+        <PaymentCountdown
+          dueAt={dueAt}
+          onExpire={markTimeUp}
+          note={<>Orders that are not paid by then are cancelled automatically.</>}
+          expiredNote={
+            <>
+              This order is cancelled, so do not send a payment now. If you paid before the time ran
+              out, {upload} and we will check it.
+            </>
+          }
+        />
+      )}
+
+      {!closed && (
+      <>
       <div className="border border-rule bg-paper-sunk p-5">
         <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
           Send exactly
@@ -68,15 +103,22 @@ export function CashAppPayment({
         <li>Write your order number, {reference}, in the &ldquo;For&rdquo; note.</li>
         <li>Upload a screenshot of the completed payment below.</li>
       </ol>
+      </>
+      )}
 
       {token ? (
-        <ProofUpload reference={reference} token={token} initialCount={initialCount} />
+        <ProofUpload
+          reference={reference}
+          token={token}
+          initialCount={initialCount}
+          onCount={setProofCount}
+        />
       ) : (
         <p className="flex items-start gap-2.5 border border-rule p-3 text-xs leading-relaxed text-ink-soft">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-pigment-indigo" strokeWidth={1.75} />
           <span>
-            To send us the screenshot, open the link in your order email, or reply to that email
-            with the screenshot attached.
+            To send us the screenshot, message it to us on WhatsApp or Telegram with your order
+            number, {reference} (contact details below).
           </span>
         </p>
       )}
@@ -167,10 +209,12 @@ function ProofUpload({
   reference,
   token,
   initialCount,
+  onCount,
 }: {
   reference: string;
   token: string;
   initialCount: number;
+  onCount?: (count: number) => void;
 }) {
   const inputId = React.useId();
   const [file, setFile] = React.useState<File | null>(null);
@@ -179,6 +223,8 @@ function ProofUpload({
   const [error, setError] = React.useState<string | null>(null);
   const [count, setCount] = React.useState(initialCount);
   const [justSent, setJustSent] = React.useState(false);
+  /* The server read the screenshot and confirmed the order (lib/checkout/screenshot-check.ts). */
+  const [confirmed, setConfirmed] = React.useState(false);
 
   /* The preview is an object URL; release it when it is replaced or the box goes away. */
   React.useEffect(() => {
@@ -214,15 +260,18 @@ function ProofUpload({
         body,
       });
       const data = (await response.json().catch(() => null)) as
-        | { ok?: boolean; count?: number; error?: string }
+        | { ok?: boolean; count?: number; confirmed?: boolean; error?: string }
         | null;
       if (!response.ok || !data?.ok) {
         setError(data?.error ?? 'The screenshot did not send. Try again in a moment.');
         return;
       }
-      setCount(data.count ?? count + 1);
+      const next = data.count ?? count + 1;
+      setCount(next);
+      onCount?.(next);
       setFile(null);
       setJustSent(true);
+      if (data.confirmed) setConfirmed(true);
     } catch (e) {
       setError(
         e instanceof Error && e.message
@@ -234,7 +283,7 @@ function ProofUpload({
     }
   };
 
-  const full = count >= MAX_PROOFS_PER_ORDER;
+  const full = count >= MAX_PROOFS_PER_ORDER || confirmed;
 
   return (
     <div className="border border-rule p-5">
@@ -248,11 +297,18 @@ function ProofUpload({
           className="mt-3 flex items-start gap-2.5 border border-pigment-verdigris bg-paper-sunk p-3 text-sm leading-relaxed text-ink"
         >
           <Check className="mt-0.5 h-4 w-4 shrink-0 text-pigment-verdigris" strokeWidth={2} />
-          <span>
-            {justSent ? 'Screenshot received.' : `We have ${count === 1 ? 'your screenshot' : `${count} screenshots`}.`}{' '}
-            We&rsquo;ll check the payment in our Cash App and email you as soon as your order is
-            confirmed.
-          </span>
+          {confirmed ? (
+            <span>
+              <strong className="font-medium">Payment confirmed.</strong> Your order is confirmed
+              and the confirmation is on its way to your email.
+            </span>
+          ) : (
+            <span>
+              {justSent ? 'Screenshot received.' : `We have ${count === 1 ? 'your screenshot' : `${count} screenshots`}.`}{' '}
+              We&rsquo;re checking the payment and will email you as soon as your order is
+              confirmed.
+            </span>
+          )}
         </p>
       )}
 

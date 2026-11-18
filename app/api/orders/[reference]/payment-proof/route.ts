@@ -3,7 +3,10 @@ import { randomBytes } from 'node:crypto';
 import { prisma } from '@/lib/prisma';
 import { clientIp, hashIp } from '@/lib/ip-hash';
 import { SITE } from '@/lib/site';
-import { proofTokenMatches } from '@/lib/checkout/cashapp';
+import { cashAppDetails, proofTokenMatches } from '@/lib/checkout/cashapp';
+import { checkCashAppScreenshot } from '@/lib/checkout/screenshot-check';
+import { setOrderStatus } from '@/lib/orders/orders';
+import { UNPAID_CANCEL_EVENT } from '@/lib/orders/payment-deadline';
 import { paymentMethodFromNotes } from '@/lib/checkout/order-notes';
 import {
   MAX_PROOFS_PER_ORDER,
@@ -17,11 +20,15 @@ import { sendPaymentProofNotification } from '@/lib/email/resend';
   A customer's screenshot of their Cash App payment, for one order.
 
   Who may upload: whoever holds the order's upload token (lib/checkout/cashapp.ts), which only the
-  checkout that placed the order and the "Order Received" email carry. The reference alone is not
-  enough. Only Cash App orders take one, at most MAX_PROOFS_PER_ORDER, images only.
+  checkout that placed the order carries (it opens the payment page with it). The reference alone
+  is not enough. Only Cash App orders take one, at most MAX_PROOFS_PER_ORDER, images only — also
+  on an order cancelled because its 90 minutes ran out, so somebody who paid can still prove it.
 
-  What it does NOT do is mark anything paid. A screenshot is the customer's claim; staff check the
-  Cash App account and confirm the order themselves. The admin gets an email so it is not missed.
+  The screenshot is read on arrival (lib/checkout/screenshot-check.ts). When it shows our Cash App
+  name or tag and the order's exact amount, the order is confirmed and the customer gets their
+  "Order Confirmed" email — the owner's rule since 18 November 2026. Otherwise the order waits
+  for staff, as before. Either way the shop is emailed, and an automatic confirmation says plainly
+  that a screenshot can be faked: staff check the Cash App balance before shipping.
 
   The image goes to Cloudinary as an authenticated asset (no public URL); the order keeps a
   PaymentProof row and a line in its history.
@@ -29,6 +36,8 @@ import { sendPaymentProofNotification } from '@/lib/email/resend';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+/* Reading the picture takes several seconds, more on a cold start. */
+export const maxDuration = 60;
 
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_PER_WINDOW = 8;
@@ -81,6 +90,7 @@ export async function POST(request: Request, { params }: { params: { reference: 
       notes: true,
       total: true,
       contact: { select: { email: true } },
+      events: { where: { summary: UNPAID_CANCEL_EVENT }, select: { id: true }, take: 1 },
       _count: { select: { paymentProofs: true } },
     },
   });
@@ -88,8 +98,12 @@ export async function POST(request: Request, { params }: { params: { reference: 
   if (paymentMethodFromNotes(order.notes) !== 'cashapp') {
     return refuse('This order is not paid by Cash App.', 400);
   }
-  if (order.status === 'CANCELLED') {
+  /* Cancelled by a person: refused. Cancelled only because the time ran out: still accepted. */
+  if (order.status === 'CANCELLED' && order.events.length === 0) {
     return refuse('This order was cancelled. If you have paid, contact us with your order number.', 409);
+  }
+  if (['CONFIRMED', 'PACKED', 'SHIPPED', 'DELIVERED'].includes(order.status)) {
+    return refuse('This order is already confirmed. There is nothing more to send.', 409);
   }
   if (order._count.paymentProofs >= MAX_PROOFS_PER_ORDER) {
     return refuse(
@@ -102,8 +116,8 @@ export async function POST(request: Request, { params }: { params: { reference: 
   }
 
   let uploaded;
+  const buffer = Buffer.from(await file.arrayBuffer());
   try {
-    const buffer = Buffer.from(await file.arrayBuffer());
     uploaded = await uploadPrivateImage(buffer, `${reference}-${randomBytes(6).toString('hex')}`);
   } catch (error) {
     console.error('[payment-proof] upload failed', error);
@@ -133,15 +147,60 @@ export async function POST(request: Request, { params }: { params: { reference: 
     },
   });
 
+  /* Read it, and confirm the order if it shows a payment to us of this order's amount. */
+  const total = Number(order.total);
+  const cashApp = await cashAppDetails();
+  let verdict = cashApp
+    ? await checkCashAppScreenshot(buffer, { name: cashApp.name, tag: cashApp.tag, total })
+    : null;
+  if (verdict?.passed) {
+    /* The same picture sent for another order proves nothing about this one. */
+    const reused = await prisma.orderEvent.findFirst({
+      where: { detail: { contains: verdict.sha256 }, orderId: { not: order.id } },
+      select: { order: { select: { reference: true } } },
+    });
+    if (reused) {
+      verdict = {
+        ...verdict,
+        passed: false,
+        findings: [...verdict.findings, `The same picture was sent for order ${reused.order.reference}.`],
+      };
+    }
+  }
+  if (verdict) {
+    await prisma.orderEvent.create({
+      data: {
+        orderId: order.id,
+        summary: verdict.passed
+          ? 'Screenshot check passed: order confirmed automatically.'
+          : 'Screenshot check did not pass: a person needs to check the payment.',
+        detail: `${verdict.findings.join(' ')}
+Image sha256: ${verdict.sha256}`,
+      },
+    });
+  }
+
+  let confirmed = false;
+  if (verdict?.passed) {
+    /* Sends the customer's "Order Confirmed" email (once). From NEW or a timed-out cancel only. */
+    await setOrderStatus(order.id, 'CONFIRMED', null, { from: ['NEW', 'CANCELLED'] });
+    const now = await prisma.order.findUnique({ where: { id: order.id }, select: { status: true } });
+    confirmed = now?.status === 'CONFIRMED';
+  }
+
   await sendPaymentProofNotification(
     reference,
     order.contact.email,
-    Number(order.total),
-    `${SITE.url}/admin/orders/${order.id}`
+    total,
+    `${SITE.url}/admin/orders/${order.id}`,
+    { confirmed, findings: verdict?.findings ?? ['No $Cashtag is on file, so it was not checked.'] }
   ).catch((error) => {
     /* The screenshot is saved and on the order; a missed email must not fail the upload. */
     console.error('[payment-proof] admin email failed', error);
   });
 
-  return NextResponse.json({ ok: true, count: order._count.paymentProofs + 1 }, { status: 201 });
+  return NextResponse.json(
+    { ok: true, count: order._count.paymentProofs + 1, confirmed },
+    { status: 201 }
+  );
 }

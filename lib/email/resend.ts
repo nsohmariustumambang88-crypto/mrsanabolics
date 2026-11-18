@@ -10,6 +10,7 @@ import {
   renderWelcomeEmail1,
   renderWelcomeEmail2,
   renderWelcomeEmail3,
+  type OrderEmailOffer,
   type OrderEmailPayment,
   type OrderEmailTotals,
 } from './templates';
@@ -36,7 +37,8 @@ export async function sendOrderConfirmation(
   items: Array<{ name: string; quantity: number; price: number }>,
   totals: OrderEmailTotals,
   paid = false,
-  payment?: OrderEmailPayment
+  payment?: OrderEmailPayment,
+  offer?: OrderEmailOffer | null
 ) {
   const resend = getResend();
 
@@ -45,7 +47,7 @@ export async function sendOrderConfirmation(
     replyTo: SUPPORT_EMAIL,
     to,
     subject: `${paid ? 'Order Confirmed' : 'Order Received'} - ${orderRef}`,
-    html: renderOrderConfirmationHTML(orderRef, items, totals, paid, payment),
+    html: renderOrderConfirmationHTML(orderRef, items, totals, paid, payment, offer),
   });
 }
 
@@ -62,23 +64,56 @@ export async function sendAdminOrderNotification(
     from: FROM_EMAIL,
     replyTo: SUPPORT_EMAIL,
     to: ADMIN_EMAIL,
-    subject: `New Order - ${orderRef}${paymentLabel ? ` - ${paymentLabel}` : ''}`,
+    /* A storefront order is created when the customer opens the payment page, before paying. */
+    subject: paymentLabel
+      ? `New Order (awaiting payment) - ${orderRef} - ${paymentLabel}`
+      : `New Order - ${orderRef}`,
     html: renderAdminNotificationHTML(orderRef, customerEmail, items, dashboardLink, paymentLabel),
   });
 }
 
-/* To the shop, when a customer uploads a Cash App payment screenshot. Throws on a refusal. */
-export async function sendPaymentProofNotification(
-  orderRef: string,
-  customerEmail: string,
-  total: number,
-  adminLink: string
-) {
+/* To the shop, when NOWPayments reports a crypto order paid in full. Throws on a refusal. */
+export async function sendCryptoPaidNotification(orderRef: string, total: number, adminLink: string) {
   const { error } = await getResend().emails.send({
     from: FROM_EMAIL,
     replyTo: SUPPORT_EMAIL,
     to: ADMIN_EMAIL,
-    subject: `Cash App screenshot - ${orderRef}`,
+    subject: `Paid - ${orderRef} - crypto`,
+    html: `<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; background-color: #f9f9f9;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #1d2327; color: #fff; padding: 20px; border-radius: 4px 4px 0 0;">
+        <h1 style="margin: 0; font-size: 20px;">Crypto payment received</h1>
+      </div>
+      <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd; color: #333;">
+        <p style="margin: 0 0 20px 0;">NOWPayments reports order <strong>${orderRef}</strong> paid in full ($${total.toFixed(2)}). The order is confirmed and the customer has been sent their confirmation.</p>
+        <p style="margin: 0;"><a href="${adminLink}" style="display: inline-block; background-color: #2271b1; color: #fff; padding: 10px 18px; text-decoration: none; border-radius: 3px;">Open the order</a></p>
+      </div>
+    </div>
+  </body>
+</html>`,
+  });
+  if (error) throw new Error(`Resend refused the paid notification: ${error.message}`);
+}
+
+/*
+  To the shop, when a customer uploads a Cash App payment screenshot, with what the automatic
+  check (lib/checkout/screenshot-check.ts) found. Throws on a refusal.
+*/
+export async function sendPaymentProofNotification(
+  orderRef: string,
+  customerEmail: string,
+  total: number,
+  adminLink: string,
+  check: { confirmed: boolean; findings: string[] }
+) {
+  const findings = check.findings.map((f) => `<li style="margin: 0 0 4px 0;">${f}</li>`).join('');
+  const { error } = await getResend().emails.send({
+    from: FROM_EMAIL,
+    replyTo: SUPPORT_EMAIL,
+    to: ADMIN_EMAIL,
+    subject: `Cash App screenshot - ${orderRef} - ${check.confirmed ? 'confirmed automatically' : 'check needed'}`,
     html: `<!DOCTYPE html>
 <html>
   <body style="font-family: Arial, sans-serif; background-color: #f9f9f9;">
@@ -88,7 +123,13 @@ export async function sendPaymentProofNotification(
       </div>
       <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd; color: #333;">
         <p style="margin: 0 0 12px 0;">The customer on order <strong>${orderRef}</strong> (${customerEmail}) uploaded a screenshot of their Cash App payment. The order total is <strong>$${total.toFixed(2)}</strong>.</p>
-        <p style="margin: 0 0 20px 0;">Check that the money is in the Cash App account, then set the order to <strong>Confirmed</strong>.</p>
+        <p style="margin: 0 0 6px 0;"><strong>What the automatic check read:</strong></p>
+        <ul style="margin: 0 0 16px 0; padding-left: 20px;">${findings}</ul>
+        ${
+          check.confirmed
+            ? `<p style="margin: 0 0 20px 0; padding: 12px; background-color: #fcf9e8; border-left: 4px solid #dba617;">The order was <strong>confirmed automatically</strong> and the customer has been sent their confirmation. A screenshot can be edited: <strong>check that $${total.toFixed(2)} is in the Cash App account before you ship.</strong> If it is not, set the order to Cancelled.</p>`
+            : `<p style="margin: 0 0 20px 0;">The check did not pass, so nothing was confirmed. Check that the money is in the Cash App account, then set the order to <strong>Confirmed</strong>; the customer is emailed their confirmation then.</p>`
+        }
         <p style="margin: 0;"><a href="${adminLink}" style="display: inline-block; background-color: #2271b1; color: #fff; padding: 10px 18px; text-decoration: none; border-radius: 3px;">Open the order and the screenshot</a></p>
       </div>
     </div>
@@ -278,7 +319,7 @@ export async function sendWelcomeEmail3(to: string, unsubscribeToken: string) {
     from: FROM_EMAIL,
     replyTo: SUPPORT_EMAIL,
     to,
-    subject: "Ready to start? Here's where to begin (+ 10% off)",
+    subject: "Ready to start? Here's where to begin (+ 15% off)",
     html: renderWelcomeEmail3(unsubscribeLink),
   });
 }

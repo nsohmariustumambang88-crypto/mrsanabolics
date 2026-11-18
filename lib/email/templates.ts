@@ -91,12 +91,16 @@ function paymentNextStepHTML(payment: OrderEmailPayment, orderRef: string, total
 }
 
 /* `paid` switches the wording: an order is "received" when placed and "confirmed" once paid. */
+/** A code for the customer's NEXT order, shown on "Order Confirmed" to a subscriber (lib/orders/orders.ts). */
+export type OrderEmailOffer = { code: string; headline: string; condition: string };
+
 export function renderOrderConfirmationHTML(
   orderRef: string,
   items: Array<{ name: string; quantity: number; price: number }>,
   totals: OrderEmailTotals,
   paid = false,
-  payment?: OrderEmailPayment
+  payment?: OrderEmailPayment,
+  offer?: OrderEmailOffer | null
 ): string {
   const money = (n: number) => `$${n.toFixed(2)}`;
   const row = (label: string, value: string, strong = false) =>
@@ -165,6 +169,15 @@ export function renderOrderConfirmationHTML(
         </table>
 
         <p style="margin: 20px 0 0 0; color: #666; font-size: 14px;">We'll send you tracking information as soon as your order ships. If you have any questions, reply to this email and our support team will help.</p>
+        ${
+          paid && offer
+            ? `<div style="margin: 24px 0 0 0; padding: 16px; border: 2px dashed #dba617; background-color: #fcf9e8; text-align: center; color: #333;">
+          <p style="margin: 0 0 6px 0; font-size: 14px;">Thanks for subscribing. Here is ${offer.headline} your next order${offer.condition ? ` ${offer.condition}` : ''}:</p>
+          <p style="margin: 0; font-family: 'Courier New', monospace; font-size: 22px; font-weight: bold; letter-spacing: 3px;">${offer.code}</p>
+          <p style="margin: 6px 0 0 0; font-size: 12px; color: #666;">Enter it at checkout. One use per customer.</p>
+        </div>`
+            : ''
+        }
       </div>
 
       <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
@@ -455,7 +468,7 @@ export function renderWelcomeEmail3(unsubscribeLink: string): string {
         </div>
 
         <div style="background-color: #fffbee; padding: 15px; border-left: 4px solid #f9a825; margin: 20px 0;">
-          <p style="margin: 0; color: #333;"><strong>New subscriber offer: Use code WELCOME10 for 10% off your first order.</strong></p>
+          <p style="margin: 0; color: #333;"><strong>New subscriber offer: Use code WELCOME15 for 15% off your next order (one use per customer).</strong></p>
         </div>
 
         <div style="text-align: center; margin: 30px 0;">

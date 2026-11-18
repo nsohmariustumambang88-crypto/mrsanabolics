@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Check, Clock, Copy } from 'lucide-react';
 import { PaymentHelp } from '@/components/checkout/payment-help';
+import { PaymentCountdown } from '@/components/checkout/payment-countdown';
 
 interface PaymentDetails {
   pay_amount: number;
@@ -21,6 +22,13 @@ interface PaymentConfirmationClientProps {
    * every order since November 2026; older orders leave it null and the page asks NOWPayments.
    */
   initialDetails: PaymentDetails | null;
+  /**
+   * ISO end of the 90-minute payment window (lib/orders/payment-deadline.ts); for an order from
+   * before it, NOWPayments' own 7-day expiry. The countdown runs to it.
+   */
+  dueAt: string;
+  /** NOWPayments has seen the coins arrive; the order is waiting for them to confirm. */
+  paymentDetected: boolean;
 }
 
 const ATTEMPTS = 3;
@@ -44,12 +52,19 @@ export function PaymentConfirmationClient({
   orderTotal,
   cryptoType,
   initialDetails,
+  dueAt,
+  paymentDetected: initialDetected,
 }: PaymentConfirmationClientProps) {
+  /* Past the deadline the address is not to be used: stop showing it as something to pay to. */
+  const [timeUp, setTimeUp] = useState(() => new Date(dueAt).getTime() <= Date.now());
+  const markTimeUp = useCallback(() => setTimeUp(true), []);
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(initialDetails);
-  const [isLoading, setIsLoading] = useState(!initialDetails);
+  /* An expired payment's address is not worth a minute's wait on NOWPayments. */
+  const [isLoading, setIsLoading] = useState(!initialDetails && !timeUp);
   const [failed, setFailed] = useState(false);
   const [copied, setCopied] = useState(false);
   const [orderStatus, setOrderStatus] = useState(initialStatus);
+  const [detected, setDetected] = useState(initialDetected);
 
   /*
     Only for orders that predate the stored address. NOWPayments has been measured taking from
@@ -86,7 +101,9 @@ export function PaymentConfirmationClient({
   }, [paymentId, orderReference]);
 
   useEffect(() => {
-    if (!initialDetails) void loadDetails();
+    if (!initialDetails && !timeUp) void loadDetails();
+    /* Only on arrival: running out of time later must not trigger a load. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialDetails, loadDetails]);
 
   /*
@@ -105,6 +122,7 @@ export function PaymentConfirmationClient({
         if (!response.ok) return;
         const data = await response.json();
         if (typeof data?.status === 'string') setOrderStatus(data.status);
+        if (data?.paymentDetected === true) setDetected(true);
       } catch {
         /* the next tick tries again */
       }
@@ -131,8 +149,8 @@ export function PaymentConfirmationClient({
     return (
       <Shell reference={orderReference} heading="This payment has expired">
         <p className="text-sm leading-relaxed text-ink-soft">
-          Order {orderReference} was cancelled because its {coin} payment was not received in time.
-          Do not send anything to the old address.
+          Order {orderReference} was cancelled because its {coin} payment was not received within
+          the time to pay. Do not send anything to the old address.
         </p>
         <PaymentHelp
           reference={orderReference}
@@ -152,7 +170,7 @@ export function PaymentConfirmationClient({
     );
   }
 
-  if (!isConfirmed && (failed || !paymentDetails)) {
+  if (!isConfirmed && !timeUp && (failed || !paymentDetails)) {
     return (
       <Shell reference={orderReference} heading="Your order is saved">
         <div className="rounded-lg border border-warning/40 bg-warning/5 p-5">
@@ -201,18 +219,49 @@ export function PaymentConfirmationClient({
             )}
             <div>
               <p className="font-semibold text-ink">
-                {isConfirmed ? 'Payment Confirmed' : 'Waiting for Payment'}
+                {isConfirmed
+                  ? 'Payment Confirmed'
+                  : detected
+                    ? 'Payment detected'
+                    : timeUp
+                      ? 'Payment time ended'
+                      : 'Waiting for Payment'}
               </p>
               <p className="text-sm text-ink-soft">
                 {isConfirmed
                   ? 'Your payment has been received. Order is being processed.'
-                  : 'Send the amount below to complete your order'}
+                  : detected
+                    ? 'Your payment has arrived and is being confirmed on the network. This page updates when it completes.'
+                    : timeUp
+                    ? 'This payment address has expired.'
+                    : 'Send the amount below to complete your order'}
               </p>
             </div>
           </div>
         </div>
 
-        {!isConfirmed && paymentDetails && (
+        {!isConfirmed && !detected && (paymentDetails || timeUp) && (
+          <PaymentCountdown
+            dueAt={dueAt}
+            onExpire={markTimeUp}
+            note={
+              <>
+                Orders that are not paid by then are cancelled, so do not send a payment after the
+                time runs out. The {coin} amount was worked out at the exchange rate when you
+                placed your order.
+              </>
+            }
+            expiredNote={
+              <>
+                Do not send anything to this address now. If you sent the payment before the time
+                ran out, keep this page open: it updates when the payment confirms. Otherwise
+                contact us and we&rsquo;ll help you place the order again.
+              </>
+            }
+          />
+        )}
+
+        {!isConfirmed && !detected && paymentDetails && !timeUp && (
           <>
             {/* Payment Details */}
             <div className="space-y-4">
@@ -287,7 +336,7 @@ export function PaymentConfirmationClient({
             <div className="flex justify-between">
               <span className="text-ink-soft">Status:</span>
               <span className={`font-semibold ${isConfirmed ? 'text-pigment-verdigris' : 'text-pigment-indigo'}`}>
-                {isConfirmed ? 'Confirmed' : 'Pending'}
+                {isConfirmed ? 'Confirmed' : detected ? 'Confirming' : timeUp ? 'Payment expired' : 'Pending'}
               </span>
             </div>
           </div>

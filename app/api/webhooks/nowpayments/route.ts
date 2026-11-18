@@ -1,6 +1,9 @@
 import { prisma } from '@/lib/prisma';
 import { verifyNowpaymentsWebhook } from '@/lib/crypto/webhook-verify';
-import { sendOrderConfirmation } from '@/lib/email/resend';
+import { setOrderStatus } from '@/lib/orders/orders';
+import { sendCryptoPaidNotification } from '@/lib/email/resend';
+import { SITE } from '@/lib/site';
+import { CRYPTO_DETECTED_EVENT } from '@/lib/orders/payment-deadline';
 import { WebhookPayload } from '@/lib/crypto/nowpayments';
 import { parseCryptoNote } from '@/lib/checkout/order-notes';
 import { NextRequest, NextResponse } from 'next/server';
@@ -32,7 +35,13 @@ export async function POST(request: NextRequest) {
     // Find order by reference number
     const order = await prisma.order.findUnique({
       where: { reference: order_id },
-      include: { items: true }, // Adjust based on your schema
+      select: {
+        id: true,
+        status: true,
+        total: true,
+        notes: true,
+        events: { where: { summary: CRYPTO_DETECTED_EVENT }, select: { summary: true } },
+      },
     });
 
     if (!order) {
@@ -57,75 +66,56 @@ export async function POST(request: NextRequest) {
 
     // Handle different payment statuses
     switch (payment_status) {
-      /* Only "finished" means the money is settled; "confirmed" is a blockchain confirmation on the way there. */
+      /*
+        Only "finished" means the money is settled; "confirmed" is a blockchain confirmation on
+        the way there. Confirms a NEW order, or one cancelled because its 90 minutes ran out (the
+        customer paid late; they still get their order). Never touches an order staff have moved
+        on, so a repeated notification cannot drag a shipped order back to Confirmed.
+        setOrderStatus sends the "Order Confirmed" email, at most once per order.
+      */
       case 'finished':
-        // Idempotency check: only process if not already confirmed
-        if (order.status === 'CONFIRMED') {
-          console.log(`[Webhook] Order ${order_id} already marked as confirmed, skipping`);
-          return NextResponse.json({ success: true });
+        if (order.status === 'NEW' || order.status === 'CANCELLED') {
+          await setOrderStatus(order.id, 'CONFIRMED', null, { from: ['NEW', 'CANCELLED'] });
+          await sendCryptoPaidNotification(
+            order_id,
+            Number(order.total),
+            `${SITE.url}/admin/orders/${order.id}`
+          ).catch((error) => console.error(`[Webhook] paid alert for ${order_id} failed:`, error));
+          console.log(`[Webhook] Order ${order_id} confirmed (was ${order.status})`);
         }
-
-        // Update order status to CONFIRMED
-        const updatedOrder = await prisma.order.update({
-          where: { id: order.id },
-          data: { status: 'CONFIRMED' },
-          include: { contact: true, items: true },
-        });
-
-        // Send confirmation email
-        try {
-          if (!updatedOrder.contact?.email) throw new Error('No customer email on order');
-          await sendOrderConfirmation(
-            updatedOrder.contact.email,
-            updatedOrder.reference,
-            updatedOrder.items.map((i) => ({
-              name: i.name,
-              quantity: i.quantity,
-              price: Number(i.unitPrice),
-            })),
-            {
-              subtotal: Number(updatedOrder.subtotal),
-              discountCode: updatedOrder.discountCode,
-              discountTotal: Number(updatedOrder.discountTotal),
-              shippingMethod: updatedOrder.shippingMethod,
-              shipping: Number(updatedOrder.shipping),
-              total: Number(updatedOrder.total),
-            },
-            true
-          );
-          console.log(`[Webhook] Sent confirmation email for order ${order_id}`);
-        } catch (emailError) {
-          console.error(`[Webhook] Failed to send email for order ${order_id}:`, emailError);
-          // Don't fail the webhook if email fails - order is still confirmed
-        }
-
-        console.log(`[Webhook] Order ${order_id} marked as CONFIRMED`);
         break;
 
       case 'failed':
       case 'expired':
       case 'cancelled':
-        // Update order status to CANCELLED
-        if (order.status !== 'CANCELLED') {
-          await prisma.order.update({
-            where: { id: order.id },
-            data: { status: 'CANCELLED' },
-          });
-          console.log(`[Webhook] Order ${order_id} marked as ${payment_status.toUpperCase()}`);
-        }
+        /* Only an order still waiting; no email (the customer hears from us once paid). */
+        await setOrderStatus(order.id, 'CANCELLED', null, { from: ['NEW'], notify: false });
+        console.log(`[Webhook] Order ${order_id}: payment ${payment_status}`);
         break;
 
       case 'waiting':
+        break;
+
       case 'confirming':
       case 'confirmed':
       case 'sending':
-        // Seen or confirming, not settled yet: no change until "finished".
-        console.log(`[Webhook] Order ${order_id} is ${payment_status}`);
-        break;
-
       case 'partially_paid':
-        // Underpaid. Not marked paid; staff decide from the NOWPayments dashboard.
-        console.warn(`[Webhook] Order ${order_id} partially paid`);
+        /*
+          The coins have arrived and are confirming (or arrived short). Recorded once, so the
+          90-minute expiry (lib/orders/payment-expiry.ts) never cancels an order whose payment
+          is on its way, and the payment page can say so. Underpaid orders are left to staff,
+          who can complete them from the NOWPayments dashboard.
+        */
+        if (!order.events.some((e) => e.summary === CRYPTO_DETECTED_EVENT)) {
+          await prisma.orderEvent.create({
+            data: {
+              orderId: order.id,
+              summary: CRYPTO_DETECTED_EVENT,
+              detail: `NOWPayments status: ${payment_status}.`,
+            },
+          });
+        }
+        console.log(`[Webhook] Order ${order_id} is ${payment_status}`);
         break;
 
       default:
