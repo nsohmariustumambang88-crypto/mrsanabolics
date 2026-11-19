@@ -83,14 +83,36 @@ export function MarbleBath({
     return () => io.disconnect();
   }, []);
 
-  /* Re-float the sheet when the substrate changes: the same pigments on a different ground. */
+  /*
+    Re-float the sheet when the substrate changes: the same pigments on a different ground.
+    Deferred until the browser is idle (or 250ms at most): recomposing every bath on the page
+    synchronously, right after the theme switch, is what held the switch's next paint.
+  */
   React.useEffect(() => {
-    const observer = new MutationObserver(() => setThemeKey((k) => k + 1));
+    let pending: number | null = null;
+    const schedule = () => {
+      if (pending !== null) return;
+      const run = () => {
+        pending = null;
+        setThemeKey((k) => k + 1);
+      };
+      pending =
+        typeof window.requestIdleCallback === 'function'
+          ? window.requestIdleCallback(run, { timeout: 250 })
+          : window.setTimeout(run, 50);
+    };
+    const observer = new MutationObserver(schedule);
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class'],
     });
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (pending !== null) {
+        if (typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(pending);
+        window.clearTimeout(pending);
+      }
+    };
   }, []);
 
   React.useEffect(() => {

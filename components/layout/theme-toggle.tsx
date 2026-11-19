@@ -7,19 +7,34 @@ import { cn } from '@/lib/utils';
 /*
   Two substrates, one bath. The control shows both states at once — the lifted sheet and the
   size it came out of — so the choice reads as a material, not as a brightness setting.
+
+  The knob moves first and the theme follows a frame later. Switching the theme restyles the
+  whole page, and doing it inside the click held the next paint for ~200ms (Chrome reported it as
+  an INP issue on this button, 20 November 2026). Now the press is answered at once and the
+  restyle lands on the following frame.
 */
 export function ThemeToggle({ className }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
+  /* The state the knob shows while the theme catches up; null once it has. */
+  const [pending, setPending] = React.useState<'light' | 'dark' | null>(null);
 
   React.useEffect(() => setMounted(true), []);
+  React.useEffect(() => setPending(null), [resolvedTheme]);
 
-  const isBath = mounted && resolvedTheme === 'dark';
+  const isBath = pending ? pending === 'dark' : mounted && resolvedTheme === 'dark';
+
+  const toggle = () => {
+    const next = isBath ? 'light' : 'dark';
+    setPending(next);
+    /* Two frames: the first paints the knob, the second applies the theme. */
+    requestAnimationFrame(() => requestAnimationFrame(() => setTheme(next)));
+  };
 
   return (
     <button
       type="button"
-      onClick={() => setTheme(isBath ? 'light' : 'dark')}
+      onClick={toggle}
       className={cn(
         'group relative inline-flex h-8 w-[3.25rem] items-center rounded-full border border-rule-strong bg-paper-sunk px-0.5 transition-colors duration-300 hover:border-pigment-indigo-lift',
         className
