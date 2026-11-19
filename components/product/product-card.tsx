@@ -89,7 +89,12 @@ export function ProductCard({
         className="block rounded-[4px] outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-pigment-indigo"
       >
         <div className="relative aspect-[5/4] overflow-hidden rounded-[4px] bg-paper-sunk">
-          <div className="absolute inset-0 transition-transform duration-700 ease-lift group-hover:scale-[1.05] motion-reduce:transition-none motion-reduce:group-hover:scale-100">
+          {/*
+            The zooming layer carries the tile colour itself. A transform makes it a stacking
+            context, and a multiplied photo only blends with what is inside its own context: on
+            a transparent layer the pack's white came back as a white box while zoomed.
+          */}
+          <div className="absolute inset-0 bg-paper-sunk transition-transform duration-700 ease-lift group-hover:scale-[1.05] motion-reduce:transition-none motion-reduce:group-hover:scale-100">
             <ProductPlate
               product={product}
               sizes="(min-width: 1280px) 22vw, (min-width: 768px) 30vw, 46vw"
@@ -114,7 +119,8 @@ export function ProductCard({
           'absolute right-2 top-2 z-10 inline-flex size-8 items-center justify-center rounded-[4px] backdrop-blur-sm transition-[background-color,color,transform] duration-200 active:scale-90',
           wished
             ? 'bg-pigment-madder text-primary-foreground'
-            : 'bg-paper/85 text-ink hover:bg-paper'
+            : /* The colour tokens are bare HSL triplets, so transparency is written out. */
+              'bg-[hsl(var(--paper)/0.85)] text-ink hover:bg-paper'
         )}
       >
         <Heart
