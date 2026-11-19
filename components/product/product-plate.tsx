@@ -36,12 +36,18 @@ export function isPhotograph(source: string | undefined): boolean {
 export function ProductPlate({
   product,
   className,
+  photoClassName,
   showMarking = true,
   sizes = '(min-width: 1280px) 25vw, (min-width: 640px) 33vw, 50vw',
   priority = false,
 }: {
   product: ProductSummary;
   className?: string;
+  /**
+   * Classes for a store photograph only, never a drawn plate: e.g. multiplying the pack shot's
+   * white into the tile, which would muddy a plate that carries its own ground colour.
+   */
+  photoClassName?: string;
   showMarking?: boolean;
   /** Which srcset candidate to take. Wrong values pull a 1200px file into a 44px thumbnail. */
   sizes?: string;
@@ -88,7 +94,11 @@ export function ProductPlate({
           fill
           sizes={sizes}
           priority={priority}
-          className={cn(photograph ? 'object-contain' : 'object-cover', className)}
+          className={cn(
+            photograph ? 'object-contain' : 'object-cover',
+            className,
+            photograph && photoClassName
+          )}
         />
         {photograph ? null : markingOn('text-plate-ink')}
       </>

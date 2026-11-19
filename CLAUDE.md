@@ -293,6 +293,28 @@ Four token distinctions exist because collapsing them visibly broke the build du
 
 `GridFillers` takes one tier per breakpoint that changes the column count, because a filler that closes the row at one width is wrong at the next. `ProductGrid` steps **2 / 3 / 4** (`md`, `xl`) rather than jumping 2 → 4: at 1024px four columns put each card near 240px and wrapped most product names onto three lines. Changing a column count means changing the card's `sizes` in the same commit — a stale `sizes` is how a 1200w file lands in a 190px thumbnail.
 
+**Product cards follow a reference store the owner chose (19 November 2026).** That store
+("CALIBER", a local Next.js 16 project at localhost:3000) was studied with REA, and its card
+was copied in this site's own colours. The card has no box: a 5:4 `bg-paper-sunk` tile with a
+4px radius. The pack shot has 9% padding and is `mix-blend-multiply` (normal in dark). On hover
+the photo eases to 105% over 0.7s (`ease-lift`, the same `cubic-bezier(.16,1,.3,1)` the
+reference calls expo-out) and the name underlines. The heart is a frosted 32px square beside
+the link, never inside it, and does `active:scale-90`. Below the tile: a bold name with two
+lines reserved, the maker and strength in 11px caps, a heavy price, and the stock dot where the
+reference shows a rating. "Add to cart" stays at the foot at the owner's request.
+`ProductGrid` now uses the reference's open gaps (`gap-x-3 gap-y-7`, `md:gap-x-5 md:gap-y-10`)
+instead of the hairline grid, so it no longer needs `GridFillers`. Its columns are unchanged.
+
+**Scroll reveal** ([components/motion/scroll-reveal.tsx](components/motion/scroll-reveal.tsx),
+mounted once in the storefront layout) animates anything marked `data-reveal`. It copies the
+reference's GSAP `ScrollTrigger.batch`: rise 28px and fade over 0.8s, 70ms apart, once. It needs
+no library: an IntersectionObserver sets `data-reveal-state` and a CSS animation in globals.css
+plays it, so the element's own transitions are untouched. On first load, what is already on
+screen is never hidden. Elements added later (Show more, client navigation) rise in. React's
+double effect in development once left every below-fold card invisible, so a mount re-observes
+`hidden` elements. `prefers-reduced-motion` now stops every transition and animation
+site-wide, as the reference does.
+
 **Craft rules this build holds to** (from the Impeccable craft floor — violating them is a regression):
 - Chips and cards sitting over live pigment are **opaque**. Translucent ones lost legibility against the field.
 - No kicker/eyebrow labels above headings. `SectionHeading` has no `eyebrow` prop by design.
@@ -768,7 +790,10 @@ runs from `setOrderStatus(…, 'CONFIRMED')`, whoever confirms:
 
 tesseract.js must stay out of webpack: it starts a worker thread from a file path and loads
 WebAssembly. That is why `next.config.js` lists it in `serverComponentsExternalPackages` and
-copies it into the upload route's function with `outputFileTracingIncludes`. The English language
+adds its `.wasm` files to the upload route's trace in a `postbuild` step
+([scripts/trace-ocr-engine.mjs](scripts/trace-ocr-engine.mjs)). `outputFileTracingIncludes` was
+tried first and silently did nothing: Next 13.5 applies it to pages-router routes only, and the
+first live check failed with `ENOENT … tesseract-core-simd.wasm`. The English language
 data (about 2 MB) downloads from jsdelivr on a cold start and is cached in the function's tmp
 directory. A real screenshot reads in about 10 seconds locally, so the route has `maxDuration` 60
 and a 40-second reading limit; a picture it cannot read fails safe and waits for a person.

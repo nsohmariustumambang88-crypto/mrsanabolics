@@ -66,26 +66,11 @@ const nextConfig = {
       The Cash App screenshot check (lib/checkout/screenshot-check.ts) reads pictures with
       tesseract.js, which starts a worker thread from a file path and loads its engine as
       WebAssembly. Bundled by webpack, neither path exists any more, so it stays a plain Node
-      package, and its files are copied into the upload route's function explicitly.
+      package. Its .wasm files are added to the upload route's function by the `postbuild` step
+      (scripts/trace-ocr-engine.mjs): `outputFileTracingIncludes` would be the obvious tool, but
+      Next 13.5 applies it to pages-router routes only, and this is an app route.
     */
     serverComponentsExternalPackages: ['tesseract.js'],
-    outputFileTracingIncludes: {
-      '/api/orders/[reference]/payment-proof': [
-        './node_modules/tesseract.js/**/*',
-        './node_modules/tesseract.js-core/**/*',
-        './node_modules/wasm-feature-detect/**/*',
-        './node_modules/regenerator-runtime/**/*',
-        './node_modules/is-url/**/*',
-        './node_modules/node-fetch/**/*',
-        './node_modules/whatwg-url/**/*',
-        './node_modules/tr46/**/*',
-        './node_modules/webidl-conversions/**/*',
-        './node_modules/zlibjs/**/*',
-        './node_modules/bmp-js/**/*',
-        './node_modules/is-electron/**/*',
-        './node_modules/idb-keyval/**/*',
-      ],
-    },
   },
 };
 

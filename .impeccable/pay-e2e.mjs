@@ -40,6 +40,8 @@ const check = (name, ok, extra = '') => {
   console.log(results[results.length - 1]);
 };
 const created = [];
+/* Closed in `finally`: a browser left open keeps Node alive, and a failed run once hung until killed. */
+let browser = null;
 const [ownerBefore] = (await db.query('select id from contacts where email = $1', [EMAIL])).rows;
 
 try {
@@ -58,7 +60,7 @@ try {
     await new Promise((r) => setTimeout(r, 5000));
   }
 
-  const browser = await chromium.launch();
+  browser = await chromium.launch();
 
   async function placeCashAppOrder(label) {
     const context = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
@@ -91,7 +93,7 @@ try {
     const url = new URL(page.url());
     const reference = url.searchParams.get('order');
     created.push(reference);
-    await page.waitForSelector('text=Time left to pay', { timeout: 120_000 });
+    await page.waitForSelector('text=Please pay within', { timeout: 120_000 });
     await page.waitForTimeout(1500);
     const timer = await page.locator('[role="timer"]').innerText();
     check(`${label}: payment page shows the countdown`, /^\s*(59|60)\s*m/.test(timer.replace(/\n/g, ' ')), timer.replace(/\s+/g, ' '));
@@ -151,10 +153,10 @@ try {
   check('order 2: WhatsApp button present', (await two.page.getByRole('link', { name: /WhatsApp/ }).count()) > 0);
   await two.page.screenshot({ path: `${OUT}/e2e-two-expired.png`, fullPage: true });
   await two.context.close();
-  await browser.close();
 } catch (error) {
   console.error('ERROR', error);
 } finally {
+  await browser?.close().catch(() => {});
   for (const reference of created) {
     const [o] = await q(`select id, "contactId" from orders where reference = $1`, [reference]);
     if (!o) continue;
@@ -162,8 +164,12 @@ try {
     await q(`delete from contact_activities where "contactId" = $1 and summary like $2`, [o.contactId, `%${reference}%`]);
     console.log('deleted test order', reference);
   }
-  const [c] = await q(`select id from contacts where email = $1`, [EMAIL]);
-  if (c && !ownerBefore) { await q(`delete from contacts where id = $1`, [c.id]); console.log('deleted test contact'); }
+  const [c] = await q(`select id, name from contacts where lower(email) = lower($1)`, [EMAIL]);
+  /* The run's own contact; or one an interrupted earlier run left behind, recognisable by its test name. */
+  if (c && (!ownerBefore || /^Test Payment/.test(c.name ?? ''))) {
+    await q(`delete from contacts where id = $1 and not exists (select 1 from orders where "contactId" = $1)`, [c.id]);
+    console.log('deleted test contact');
+  }
   await db.end();
   console.log('\n' + results.join('\n'));
 }

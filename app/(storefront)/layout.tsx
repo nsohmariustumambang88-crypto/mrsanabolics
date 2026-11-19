@@ -12,6 +12,7 @@ import { advertisedDiscount, promotedCode } from '@/lib/discounts';
 import { VisitTracker } from '@/components/analytics/visit-tracker';
 import { TelegramWidget } from '@/components/chat/telegram-widget';
 import { WhatsappWidget } from '@/components/chat/whatsapp-widget';
+import { ScrollReveal } from '@/components/motion/scroll-reveal';
 import { getCategories, getBrands } from '@/lib/db/catalogue';
 import { getSettingsSafe, asBoolean, asNumber } from '@/lib/settings';
 import { CountryProvider } from '@/components/providers/country-provider';
@@ -106,6 +107,8 @@ export default async function StorefrontLayout({
         <RestockAlertsModal />
         <TelegramWidget />
         <WhatsappWidget />
+        {/* Cards rise into place as they scroll in (anything marked data-reveal). */}
+        <ScrollReveal />
         {/*
           Storefront only, and only when the analytics_enabled setting is on. It sends a path
           and a referrer host to /api/track, which sets a random first-party token: no IP is

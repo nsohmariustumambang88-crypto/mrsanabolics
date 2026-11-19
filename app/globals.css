@@ -182,12 +182,49 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* An app answers a tap with its own pressed state, not the browser's grey flash. */
+    -webkit-tap-highlight-color: transparent;
   }
 
 
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
+    }
+    /* Asked for less motion: every transition and animation stops, site-wide. */
+    *,
+    *::before,
+    *::after {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+
+  /*
+    Scroll reveal (components/motion/scroll-reveal.tsx). The script marks elements below the fold
+    `hidden`, then `in` as they arrive, then `done`. An animation rather than a transition, so an
+    element's own transition (a card's hover shadow) is untouched. `translate` is the individual
+    transform property, so it does not fight a transform the element already has.
+  */
+  [data-reveal-state='hidden'] {
+    opacity: 0;
+  }
+  [data-reveal-state='in'] {
+    animation: reveal-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) var(--reveal-delay, 0ms) both;
+  }
+  @keyframes reveal-rise {
+    from {
+      opacity: 0;
+      translate: 0 28px;
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal-state] {
+      opacity: 1 !important;
     }
   }
 
