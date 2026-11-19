@@ -41,41 +41,26 @@ export function CashAppPayment({
   /** Screenshots already received for this order. */
   initialCount?: number;
   /**
-   * ISO end of the 90-minute payment window (lib/orders/payment-deadline.ts). Null for an order
-   * from before the window existed: no countdown, because nothing enforces one.
+   * ISO end of the 60-minute countdown (lib/orders/payment-deadline.ts), a request to be quick:
+   * nothing is cancelled at zero. Null for an order from before it: no countdown.
    */
   dueAt?: string | null;
 }) {
   const [proofCount, setProofCount] = React.useState(initialCount);
-  const [timeUp, setTimeUp] = React.useState(
-    () => Boolean(dueAt) && new Date(dueAt as string).getTime() <= Date.now()
-  );
-  const markTimeUp = React.useCallback(() => setTimeUp(true), []);
-  const upload = token
-    ? 'upload the screenshot below'
-    : 'message us the screenshot (contact details below)';
-  /* Out of time with nothing sent: stop presenting the tag as something to pay. */
-  const closed = timeUp && proofCount === 0;
 
   return (
     <div className="space-y-6 text-left">
-      {/* Once a screenshot is in, the clock no longer decides anything: it is being checked. */}
+      {/* Once a screenshot is in, the clock has done its job: the payment is being checked. */}
       {dueAt && proofCount === 0 && (
         <PaymentCountdown
           dueAt={dueAt}
-          onExpire={markTimeUp}
-          note={<>Orders that are not paid by then are cancelled automatically.</>}
+          soft
           expiredNote={
-            <>
-              This order is cancelled, so do not send a payment now. If you paid before the time ran
-              out, {upload} and we will check it.
-            </>
+            <>Send the payment below now, then {token ? 'upload the screenshot' : 'message us the screenshot'}.</>
           }
         />
       )}
 
-      {!closed && (
-      <>
       <div className="border border-rule bg-paper-sunk p-5">
         <p className="font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
           Send exactly
@@ -103,8 +88,6 @@ export function CashAppPayment({
         <li>Write your order number, {reference}, in the &ldquo;For&rdquo; note.</li>
         <li>Upload a screenshot of the completed payment below.</li>
       </ol>
-      </>
-      )}
 
       {token ? (
         <ProofUpload

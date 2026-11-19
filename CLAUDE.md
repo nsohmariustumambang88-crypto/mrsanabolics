@@ -659,7 +659,7 @@ and refuses a method the zone does not offer, re-evaluates the code, and stores 
   `walletAddress`/`accountName`, set in the database — deliberately not editable in the admin.
   Checkout's Cash App panel shows the tag (Copy button) and the amount; **Proceed to payment**
   opens `/checkout/payment-confirmation?order=<ref>&t=<token>`, which shows the tag, the exact
-  total, the reference for the "For" note, the 90-minute countdown and the upload box
+  total, the reference for the "For" note, the 60-minute countdown and the upload box
   ([cash-app-payment.tsx](components/checkout/cash-app-payment.tsx)). No email is sent until the
   order is confirmed (see "Paying: Proceed to payment…" below).
   - The token is an HMAC of the reference with `AUTH_SECRET` ([lib/checkout/cashapp.ts](lib/checkout/cashapp.ts)),
@@ -714,7 +714,7 @@ the Vercel functions work without a fixed IP. Do not extend the allow-list to al
 To test a webhook against the live site without touching an order, sign a payload with the IPN
 secret for a made-up `order_id`: a 200 means the secret matches, a 401 means it does not.
 
-## Paying: "Proceed to payment", the 90-minute window, and email only once paid
+## Paying: "Proceed to payment", a 60-minute countdown, and email only once paid
 
 Rebuilt 18 November 2026 at the owner's direction. Three rules hold it together.
 
@@ -725,26 +725,27 @@ method: crypto through `/api/crypto/checkout` (which also creates the NOWPayment
 App through `submitCheckout`, then `/checkout/payment-confirmation?order=…&t=<upload token>`.
 Bank transfer has no payment page and still ends on the "Order placed" screen.
 
-**2. Every payment has 90 minutes, and the countdown runs to something real.** A timer that reaches
-zero and changes nothing is fake urgency, so an unpaid order is cancelled when its time is up.
+**2. Every payment page counts down 60 minutes, as a nudge; nothing is cancelled at zero.** The
+owner's decision on 19 November 2026, after a day of 90 and then 30 minutes with automatic
+cancellation, which was removed: the clock is "just a sign the user knows he's under timing".
+Because nothing happens at zero, the clock is worded as a request and never claims a consequence:
+"Please pay within 59m 59s", then "Please complete your payment now", with the amount, the address
+or $Cashtag, and the upload all still on the page. Do not reword it as "Time left to pay" or
+"expires" while nothing enforces it; a countdown to a consequence that never comes is fake urgency.
 - The deadline is written as an order event when the order is created: "Payment due by …" in
   `summary`, the ISO date in `detail`. It is an event because `Order` has no payment columns. The
   constants live in [lib/orders/payment-deadline.ts](lib/orders/payment-deadline.ts), and the
-  countdown is [payment-countdown.tsx](components/checkout/payment-countdown.tsx).
-- `expireUnpaidOrders()` ([lib/orders/payment-expiry.ts](lib/orders/payment-expiry.ts)) does the
-  cancelling. It cancels an order only if it is NEW, its deadline has passed, it has no Cash App
-  screenshot, and NOWPayments has not seen coins arrive (`CRYPTO_DETECTED_EVENT`, written by the
-  webhook on `confirming`/`confirmed`/`sending`/`partially_paid`). The status change is
-  conditional (NEW → CANCELLED), so a webhook confirming at the same moment wins. No email.
-- Vercel's free cron is daily, so the sweep runs whenever someone looks: the payment page and its
-  5-second status poll check their own order; `/admin` and `/admin/orders` check them all; and
-  `/api/cron/payment-deadlines` sweeps daily as a backstop. It fails closed without `CRON_SECRET`.
-- A late payment is not lost. A crypto payment that finishes after the cancel still confirms the
-  order through the webhook, because NOWPayments keeps the address open for 7 days. A Cash App
-  screenshot can still be uploaded to an order cancelled only for time (`UNPAID_CANCEL_EVENT`).
-  The expired page hides the tag or address and offers only the upload and the contacts.
-- Orders from before 18 November 2026 have no deadline event and are never auto-cancelled. An
-  old crypto order's page counts down to NOWPayments' own 7-day expiry.
+  countdown is [payment-countdown.tsx](components/checkout/payment-countdown.tsx) with `soft`:
+  just the clock (minutes and seconds, red for the last five), with no sentence under it, at the
+  owner's request. The checkout panels do not mention the time either.
+- What does expire is real and separate. NOWPayments expires an unpaid crypto payment 7 days
+  after creating it, and its webhook cancels the order then (from NEW only). An old crypto order
+  (no deadline event) counts down to that expiry *without* `soft` ("Time left to pay"), and its
+  page hides the address once it is dead. A Cash App order is never cancelled automatically.
+- The webhook still records `CRYPTO_DETECTED_EVENT` on `confirming`/`confirmed`/`sending`/
+  `partially_paid`, so the page swaps the clock for "Payment detected".
+- `UNPAID_CANCEL_EVENT` was written only while orders were cancelled for time. None were. The
+  payment page and the screenshot route still honour it, for safety.
 
 **3. The customer's first email is the confirmation, sent once paid.** A storefront order sends
 the customer nothing when it is created; an order typed in by staff still gets "Order Received".
@@ -813,8 +814,8 @@ and the consent box at checkout, all through
 `POST /api/subscribe` → [lib/marketing/subscribe.ts](lib/marketing/subscribe.ts).
 
 **The checkout box offers a reason to tick (since 19 November 2026).** It still starts unticked.
-It leads with "Get 15% off your next order" and records the `checkout_offer` wording, which is
-about marketing only; the old `checkout` sentence stays for the rows that agreed to it. The code
+It leads with "Get up to 15% off your next order", then one short sentence (the `checkout_offer`
+wording, about marketing only; the owner asked for as little text as possible); the old `checkout` sentence stays for the rows that agreed to it. The code
 is never shown on the page, where anyone could use it without subscribing. It is printed in the
 "Order Confirmed" email (`subscriberOfferFor` in lib/orders/orders.ts), and only when the
 address is SUBSCRIBED, WELCOME15 is live, this person has never redeemed it, and this order did

@@ -8,7 +8,6 @@ import { WpScreenMeta } from '@/components/admin/wp-notice';
 import { OrdersTable, type OrderRow, type OrdersPager } from '@/components/admin/orders-table';
 import { addressLines } from '@/lib/orders/address';
 import { PAYMENT_METHOD_LABEL, paymentMethodFromNotes } from '@/lib/checkout/order-notes';
-import { expireUnpaidOrdersSafe } from '@/lib/orders/payment-expiry';
 
 /*
   The order queue, with everything about each order on the first screen.
@@ -65,8 +64,6 @@ function stamp(date: Date): string {
 
 export default async function AdminOrdersPage({ searchParams }: { searchParams: Params }) {
   await requireAdmin();
-  /* Unpaid orders past their 90 minutes are cancelled before the queue is listed. */
-  await expireUnpaidOrdersSafe();
 
   const activeTab = searchParams.filter ?? 'open';
   const q = searchParams.q?.trim();

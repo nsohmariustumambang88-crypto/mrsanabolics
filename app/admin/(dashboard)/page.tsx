@@ -19,7 +19,6 @@ import { formatPrice } from '@/lib/format';
 import { WpPostbox } from '@/components/admin/wp-ui';
 import { WpNotice, WpScreenMeta } from '@/components/admin/wp-notice';
 import { WpQuickProduct } from '@/components/admin/wp-quick-product';
-import { expireUnpaidOrdersSafe } from '@/lib/orders/payment-expiry';
 
 /*
   The dashboard, laid out as wp-admin lays one out: a field of postbox widgets, one column on
@@ -35,8 +34,6 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
   await requireAdmin();
-  /* Unpaid orders past their 90 minutes are cancelled before anything is counted. */
-  await expireUnpaidOrdersSafe();
 
   const [
     products,

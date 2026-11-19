@@ -17,7 +17,6 @@ import {
   deadlineFromEvents,
   legacyCryptoDueAt,
 } from '@/lib/orders/payment-deadline';
-import { expireUnpaidOrdersSafe } from '@/lib/orders/payment-expiry';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,9 +59,6 @@ export default async function PaymentConfirmationPage({
   const orderReference = searchParams.order;
   if (!orderReference) notFound();
 
-  /* Apply the 90-minute expiry to this order before showing it (lib/orders/payment-expiry.ts). */
-  await expireUnpaidOrdersSafe({ reference: orderReference });
-
   const order = await getOrderDetails(orderReference);
   if (!order) notFound();
   const dueAt = deadlineFromEvents(order.events);
@@ -84,9 +80,9 @@ export default async function PaymentConfirmationPage({
 
     /*
       Cash App with a $Cashtag on file: the tag, the amount, the countdown and, with a valid
-      token, the screenshot upload. An order cancelled only because its 90 minutes ran out keeps
-      the upload box (the countdown shows the time is up), so somebody who did pay can still send
-      the screenshot. Once confirmed, say so instead.
+      token, the screenshot upload. An order cancelled for time (only while that rule briefly
+      existed, 19 November 2026) keeps the upload box, so somebody who did pay can still send the
+      screenshot. Once confirmed, say so instead.
     */
     const cashApp =
       method === 'cashapp' && (!cancelled || timedOut) ? await cashAppDetails() : null;
@@ -168,6 +164,7 @@ export default async function PaymentConfirmationPage({
             : null
         }
         dueAt={(dueAt ?? legacyCryptoDueAt(order.createdAt)).toISOString()}
+        softDeadline={Boolean(dueAt)}
         paymentDetected={order.events.some((e) => e.summary === CRYPTO_DETECTED_EVENT)}
       />
     </Suspense>

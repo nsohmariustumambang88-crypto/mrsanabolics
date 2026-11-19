@@ -22,7 +22,7 @@ import { sendPaymentProofNotification } from '@/lib/email/resend';
   Who may upload: whoever holds the order's upload token (lib/checkout/cashapp.ts), which only the
   checkout that placed the order carries (it opens the payment page with it). The reference alone
   is not enough. Only Cash App orders take one, at most MAX_PROOFS_PER_ORDER, images only — also
-  on an order cancelled because its 90 minutes ran out, so somebody who paid can still prove it.
+  on an order that was cancelled for time while that rule briefly existed (19 November 2026).
 
   The screenshot is read on arrival (lib/checkout/screenshot-check.ts). When it shows our Cash App
   name or tag and the order's exact amount, the order is confirmed and the customer gets their

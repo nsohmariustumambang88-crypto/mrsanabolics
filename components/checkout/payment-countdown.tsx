@@ -5,18 +5,23 @@ import { Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /*
-  Time left to pay an order, counted to a deadline something actually enforces (see
-  lib/orders/payment-deadline.ts). It is never reset by reloading: the deadline comes from the
-  server, the clock from the visitor's device.
+  The payment countdown (lib/orders/payment-deadline.ts). It is never reset by reloading: the
+  deadline comes from the server, the clock from the visitor's device.
 
-  The digits render only after mount, so the server's clock and the browser's never have to
-  agree on a second. The timer role keeps screen readers from announcing every tick; the
-  sentence beneath gives the deadline as a time in the visitor's own zone.
+  Two kinds. `soft` (every order since 19 November 2026) is a request: "Please pay within", and
+  at zero "Please complete your payment now", because nothing is cancelled then and the clock
+  must not say otherwise. Without `soft` it counts to a deadline that is real (an old crypto
+  order's NOWPayments expiry): "Time left to pay", and at zero "The time to pay has run out".
+
+  Just the clock, at the owner's request (19 November 2026): no sentence under it. The digits
+  render only after mount, so the server's clock and the browser's never have to agree on a
+  second. The timer role keeps screen readers from announcing every tick, and its label carries
+  the deadline as a time in the visitor's own zone.
 */
 
 const SECOND = 1000;
-/* The last quarter of an hour turns the clock madder. */
-const URGENT_MS = 15 * 60_000;
+/* The last five minutes turn the clock madder. */
+const URGENT_MS = 5 * 60_000;
 
 function parts(ms: number) {
   const total = Math.max(0, Math.floor(ms / SECOND));
@@ -32,15 +37,15 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
 export function PaymentCountdown({
   dueAt,
-  note,
+  soft = false,
   expiredNote,
   onExpire,
   className,
 }: {
   /** ISO date of the deadline. */
   dueAt: string;
-  /** What happens at the deadline, said once under the clock. */
-  note: React.ReactNode;
+  /** A request rather than a deadline: nothing happens at zero. */
+  soft?: boolean;
   /** Shown instead of the clock once the time has run out. */
   expiredNote: React.ReactNode;
   onExpire?: () => void;
@@ -84,7 +89,7 @@ export function PaymentCountdown({
       >
         <p className="flex items-center gap-2 font-display text-lg font-semibold tracking-[-0.025em] text-pigment-madder">
           <Clock className="h-4 w-4 shrink-0" strokeWidth={2} />
-          The time to pay has run out
+          {soft ? 'Please complete your payment now' : 'The time to pay has run out'}
         </p>
         <div className="mt-2 text-sm leading-relaxed text-ink-soft">{expiredNote}</div>
       </div>
@@ -104,11 +109,11 @@ export function PaymentCountdown({
     >
       <p className="flex items-center gap-2 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
         <Clock className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-        Time left to pay
+        {soft ? 'Please pay within' : 'Time left to pay'}
       </p>
       <p
         role="timer"
-        aria-label="Time left to pay"
+        aria-label={`${soft ? 'Please pay within' : 'Time left to pay'}${deadlineText ? `, until ${deadlineText}` : ''}`}
         className={cn(
           'mt-2 font-mono text-3xl font-semibold tabular tracking-tight',
           urgent ? 'text-pigment-madder' : 'text-ink'
@@ -122,22 +127,19 @@ export function PaymentCountdown({
                 <span className="text-base text-ink-faint">d</span>{' '}
               </>
             )}
-            {pad(p.hours)}
-            <span className="text-base text-ink-faint">h</span> {pad(p.minutes)}
+            {(p.days > 0 || p.hours > 0) && (
+              <>
+                {pad(p.hours)}
+                <span className="text-base text-ink-faint">h</span>{' '}
+              </>
+            )}
+            {pad(p.minutes)}
             <span className="text-base text-ink-faint">m</span> {pad(p.seconds)}
             <span className="text-base text-ink-faint">s</span>
           </>
         ) : (
-          <span className="text-ink-faint">--h --m --s</span>
+          <span className="text-ink-faint">--m --s</span>
         )}
-      </p>
-      <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-        {deadlineText && (
-          <>
-            Pay by <strong className="font-medium text-ink">{deadlineText}</strong> (your time).{' '}
-          </>
-        )}
-        {note}
       </p>
     </div>
   );

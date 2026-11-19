@@ -23,10 +23,12 @@ interface PaymentConfirmationClientProps {
    */
   initialDetails: PaymentDetails | null;
   /**
-   * ISO end of the 90-minute payment window (lib/orders/payment-deadline.ts); for an order from
-   * before it, NOWPayments' own 7-day expiry. The countdown runs to it.
+   * ISO end of the 60-minute countdown (lib/orders/payment-deadline.ts); for an order from before
+   * it, NOWPayments' own 7-day expiry. The countdown runs to it.
    */
   dueAt: string;
+  /** The 60-minute request (nothing happens at zero), not NOWPayments' real expiry. */
+  softDeadline: boolean;
   /** NOWPayments has seen the coins arrive; the order is waiting for them to confirm. */
   paymentDetected: boolean;
 }
@@ -53,11 +55,19 @@ export function PaymentConfirmationClient({
   cryptoType,
   initialDetails,
   dueAt,
+  softDeadline,
   paymentDetected: initialDetected,
 }: PaymentConfirmationClientProps) {
-  /* Past the deadline the address is not to be used: stop showing it as something to pay to. */
-  const [timeUp, setTimeUp] = useState(() => new Date(dueAt).getTime() <= Date.now());
-  const markTimeUp = useCallback(() => setTimeUp(true), []);
+  /*
+    Only a real deadline hides the address: an old order's NOWPayments payment, which stops
+    working after 7 days. The 60-minute clock is a request, so the details stay.
+  */
+  const [timeUp, setTimeUp] = useState(
+    () => !softDeadline && new Date(dueAt).getTime() <= Date.now()
+  );
+  const markTimeUp = useCallback(() => {
+    if (!softDeadline) setTimeUp(true);
+  }, [softDeadline]);
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(initialDetails);
   /* An expired payment's address is not worth a minute's wait on NOWPayments. */
   const [isLoading, setIsLoading] = useState(!initialDetails && !timeUp);
@@ -149,8 +159,8 @@ export function PaymentConfirmationClient({
     return (
       <Shell reference={orderReference} heading="This payment has expired">
         <p className="text-sm leading-relaxed text-ink-soft">
-          Order {orderReference} was cancelled because its {coin} payment was not received within
-          the time to pay. Do not send anything to the old address.
+          Order {orderReference} was cancelled, so its {coin} payment address is no longer in use.
+          Do not send anything to it.
         </p>
         <PaymentHelp
           reference={orderReference}
@@ -243,20 +253,17 @@ export function PaymentConfirmationClient({
         {!isConfirmed && !detected && (paymentDetails || timeUp) && (
           <PaymentCountdown
             dueAt={dueAt}
+            soft={softDeadline}
             onExpire={markTimeUp}
-            note={
-              <>
-                Orders that are not paid by then are cancelled, so do not send a payment after the
-                time runs out. The {coin} amount was worked out at the exchange rate when you
-                placed your order.
-              </>
-            }
             expiredNote={
-              <>
-                Do not send anything to this address now. If you sent the payment before the time
-                ran out, keep this page open: it updates when the payment confirms. Otherwise
-                contact us and we&rsquo;ll help you place the order again.
-              </>
+              softDeadline ? (
+                <>Send the payment below now. This page updates when it arrives.</>
+              ) : (
+                <>
+                  Do not send anything to this address now. Already sent it? Keep this page open:
+                  it updates when the payment confirms.
+                </>
+              )
             }
           />
         )}
@@ -307,14 +314,6 @@ export function PaymentConfirmationClient({
                 </ol>
               </div>
 
-              {/* Info */}
-              <div className="border-t border-rule pt-6">
-                <div className="rounded border border-rule/50 bg-blue-50/30 p-4 text-sm text-ink-soft">
-                  <p>
-                    <strong className="text-ink">Note:</strong> Payment may take several minutes to confirm depending on network congestion. You can close this page and come back to it from the link in your order email.
-                  </p>
-                </div>
-              </div>
             </div>
           </>
         )}

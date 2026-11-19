@@ -1,18 +1,18 @@
 /*
   How long a storefront order waits for its money, and how that deadline is recorded.
 
-  A plain module (no server-only): the countdown on the payment pages uses the same constants
-  as the server code that enforces them (lib/orders/payment-expiry.ts).
+  A plain module (no server-only): the countdown on the payment pages and the checkout that
+  records the deadline use the same constants.
 
-  **90 minutes, every method** (the owner's decision, 18 November 2026). The customer chooses a
-  method, presses "Proceed to payment", and has 90 minutes on the payment page. A countdown must
-  run to something that really happens, so an order still unpaid when it reaches zero is
-  cancelled (payment-expiry.ts) — unless the payment is already on its way:
+  **60 minutes, every method, and it is a request, not a deadline** (the owner's decision,
+  19 November 2026, after a day of 90 and then 30 minutes with automatic cancellation). The
+  customer presses "Proceed to payment" and the payment page counts down an hour to tell them to
+  be quick. Nothing happens at zero: the order is not cancelled and the payment details stay on
+  the page. So the clock is worded as a request ("Please pay within", then "Please complete your
+  payment now") and never claims a consequence that will not follow.
 
-  - Crypto: NOWPayments' webhook reported the coins arriving (`CRYPTO_DETECTED_EVENT`). The
-    payment itself stays open at NOWPayments for 7 days, and a late payment still confirms the
-    order through the webhook, but the page tells the customer not to send after the time is up.
-  - Cash App: a screenshot of the payment was uploaded.
+  A crypto payment really does expire, 7 days after it is created, at NOWPayments; the webhook
+  cancels the order then. A Cash App order is never cancelled automatically.
 
   The deadline is written as an order event when the order is placed (`PAYMENT_DEADLINE_EVENT_PREFIX`,
   ISO date in `detail`), because Order has no payment columns. Orders from before 18 November 2026
@@ -20,7 +20,7 @@
   counts down to NOWPayments' own 7-day expiry.
 */
 
-export const PAYMENT_WINDOW_MINUTES = 90;
+export const PAYMENT_WINDOW_MINUTES = 60;
 
 const MINUTE = 60_000;
 const DAY = 86_400_000;
@@ -29,7 +29,8 @@ const NOWPAYMENTS_EXPIRY_DAYS = 7;
 
 /** Order events. Matched exactly by the expiry sweep and the webhook; do not reword them. */
 export const PAYMENT_DEADLINE_EVENT_PREFIX = 'Payment due by ';
-export const UNPAID_CANCEL_EVENT = `Cancelled automatically: not paid within ${PAYMENT_WINDOW_MINUTES} minutes.`;
+/** Written only while orders were cancelled for time (19 November 2026); still read, for those. */
+export const UNPAID_CANCEL_EVENT = 'Cancelled automatically: not paid within 30 minutes.';
 export const CRYPTO_DETECTED_EVENT = 'Crypto payment detected by NOWPayments; waiting for it to complete.';
 
 /** The deadline for an order placed now; null for a method with no deadline (bank transfer). */

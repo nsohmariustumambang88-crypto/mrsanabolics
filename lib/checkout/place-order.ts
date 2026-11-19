@@ -135,8 +135,8 @@ export async function placeCheckoutOrder(input: CheckoutSubmitInput): Promise<Ch
     const cashApp = method.key === 'cashapp' ? await cashAppDetails() : null;
 
     /*
-      The 90-minute payment window (lib/orders/payment-deadline.ts), for crypto and for Cash App
-      with a $Cashtag to pay to. Without a tag the customer cannot pay on the page, so no clock.
+      The 60-minute countdown (lib/orders/payment-deadline.ts), a request to be quick, for
+      crypto and for Cash App with a $Cashtag to pay to. Without a tag there is no payment page.
     */
     const dueAt =
       method.key === 'cashapp' && !cashApp ? null : paymentDeadlineFor(method.key, new Date());

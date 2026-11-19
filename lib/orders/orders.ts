@@ -138,7 +138,7 @@ export type CreateOrderInput = {
     label: string;
     /**
      * The payment deadline (lib/orders/payment-deadline.ts), recorded as an order event: the
-     * payment page counts down to it and lib/orders/payment-expiry.ts enforces it.
+     * payment page counts down to it. Nothing is cancelled when it passes.
      */
     dueAt?: Date | null;
   };

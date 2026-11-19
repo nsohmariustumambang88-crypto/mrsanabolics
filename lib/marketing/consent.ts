@@ -24,13 +24,14 @@ export const CONSENT = {
   checkout:
     'Email me about this order, and send me marketing emails about products, restocks and offers. I can unsubscribe at any time using the link in any email.',
   /*
-    Checkout since 19 November 2026. Marketing only (order emails are sent regardless, so they
-    no longer share the sentence), and it names the reason to tick: WELCOME15, which the
-    "Order Confirmed" email gives a subscriber who has not used it (lib/orders/orders.ts,
-    WELCOME_OFFER_CODE). If that offer changes, add new wording here rather than editing this.
+    Checkout since 19 November 2026, under the heading "Get up to 15% off your next order":
+    marketing only (order emails are sent regardless), kept short at the owner's request. The
+    offer is WELCOME15, which the "Order Confirmed" email gives a subscriber who has not used it
+    (lib/orders/orders.ts, WELCOME_OFFER_CODE). Edited once before anybody had agreed to it; from
+    now on add new wording rather than editing this.
   */
   checkout_offer:
-    'Yes, send me MrsAnabolics emails about new batches, restocks and offers, starting with a 15% discount code for my next order. I can unsubscribe at any time using the link in any email.',
+    'Yes, email me about new batches, restocks and offers. I can unsubscribe at any time.',
 } as const;
 
 export type ConsentSource = keyof typeof CONSENT;

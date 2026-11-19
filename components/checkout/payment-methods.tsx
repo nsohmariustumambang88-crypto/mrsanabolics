@@ -9,7 +9,7 @@ import { CashtagRow } from '@/components/checkout/cash-app-payment';
 /*
   The payment methods the admin lists (crypto through NOWPayments, Cash App, bank transfer), as
   selectors. Nothing here pays: the checkout's "Proceed to payment" button creates the order for
-  the method and coin chosen and opens its payment page, where the 90-minute countdown runs.
+  the method and coin chosen and opens its payment page, where the 60-minute countdown runs.
 */
 
 export type PaymentMethod = 'cashapp' | 'bank_transfer' | 'crypto';
@@ -198,8 +198,8 @@ function CashAppPanel({
 
       <p className="text-sm leading-relaxed text-ink-soft">
         Press <strong className="font-medium text-ink">Proceed to payment</strong>. The next page
-        gives you your order number for the Cash App note, a box for the screenshot of your
-        payment, and 90 minutes to pay.
+        gives you your order number for the Cash App note and a box for the screenshot of your
+        payment.
       </p>
 
       <NotConnected>{notice}</NotConnected>
@@ -262,8 +262,7 @@ function CryptoPanel({
 
       <p className="text-sm leading-relaxed text-ink-soft">
         Press <strong className="font-medium text-ink">Proceed to payment</strong>. The next page
-        shows the exact {asset} amount and the address to send it to, and gives you 90 minutes to
-        pay.
+        shows the exact {asset} amount and the address to send it to.
       </p>
 
       <NotConnected>{notice}</NotConnected>

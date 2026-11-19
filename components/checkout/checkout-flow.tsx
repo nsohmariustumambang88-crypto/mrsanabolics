@@ -334,7 +334,7 @@ export function CheckoutFlow({
 
   /*
     "Proceed to payment": creates the order for the method chosen above and opens its payment
-    page, where the 90-minute countdown runs (lib/orders/payment-deadline.ts). Crypto creates the
+    page, where the 60-minute countdown runs (lib/orders/payment-deadline.ts). Crypto creates the
     NOWPayments address on the way; Cash App opens the page with the $Cashtag and the screenshot
     upload. Nothing is emailed to the customer until the payment is confirmed. Bank transfer, which
     has no payment page, still ends on the "Order placed" screen.
@@ -566,7 +566,8 @@ export function CheckoutFlow({
                     Separate and unticked. Consent bundled into a required field is not freely
                     given, and an address collected that way cannot lawfully be marketed to.
                     The reason to tick is stated up front; the code itself arrives with the
-                    "Order Confirmed" email, so it cannot be used without subscribing.
+                    "Order Confirmed" email, so it cannot be used without subscribing. Kept to a
+                    heading and one sentence at the owner's request.
                   */}
                   <div className="mt-4 border border-rule-strong bg-paper-sunk p-3.5">
                     <label className="flex cursor-pointer items-start gap-3">
@@ -578,14 +579,10 @@ export function CheckoutFlow({
                       />
                       <span>
                         <span className="block text-sm font-medium text-ink">
-                          Get 15% off your next order
+                          Get up to 15% off your next order
                         </span>
                         <span className="mt-1 block text-xs leading-relaxed text-ink-soft">
                           {CONSENT.checkout_offer}
-                        </span>
-                        <span className="mt-1 block text-xs leading-relaxed text-ink-faint">
-                          Your code comes with your order confirmation once your payment is in. One
-                          per customer.
                         </span>
                       </span>
                     </label>

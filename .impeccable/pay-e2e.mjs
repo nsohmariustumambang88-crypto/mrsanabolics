@@ -1,13 +1,14 @@
 /*
-  End-to-end test of "Proceed to payment" with Cash App, the screenshot check and the 90-minute
-  expiry (CLAUDE.md, "Paying: Proceed to payment…"), against a running site and the real database.
+  End-to-end test of "Proceed to payment" with Cash App, the screenshot check and the 60-minute
+  countdown (CLAUDE.md, "Paying: Proceed to payment…"), against a running site and the real database.
 
     BASE=http://localhost:3210 node --env-file=.env .impeccable/pay-e2e.mjs [screenshot dir]
 
   Places two Cash App orders for TEST_CUSTOMER_EMAIL (from .env) through the real checkout, uploads a
   generated receipt showing our Cash App name and the amount to the first (it must confirm itself
   and log exactly one confirmation email, which goes to the owner), and moves the second's
-  deadline into the past (it must be cancelled, hide the tag and still offer the upload). Both
+  countdown into the past (it must NOT be cancelled, must say "Please complete your payment now" and
+  must still show the tag and the upload). Both
   orders, and the contact if the run created it, are deleted at the end. support@ receives the
   "New Order (awaiting payment)" and "Cash App screenshot" alerts for each run.
 
@@ -93,7 +94,7 @@ try {
     await page.waitForSelector('text=Time left to pay', { timeout: 120_000 });
     await page.waitForTimeout(1500);
     const timer = await page.locator('[role="timer"]').innerText();
-    check(`${label}: payment page shows the countdown`, /01h\s*2\dm|01h\s*30m|01h\s*29m/.test(timer.replace(/\n/g, ' ')), timer.replace(/\s+/g, ' '));
+    check(`${label}: payment page shows the countdown`, /^\s*(59|60)\s*m/.test(timer.replace(/\n/g, ' ')), timer.replace(/\s+/g, ' '));
     await page.screenshot({ path: `${OUT}/e2e-${label}-pay.png`, fullPage: true });
     return { context, page, reference, token: url.searchParams.get('t') };
   }
@@ -132,7 +133,7 @@ try {
   check('order 1: no email before payment', !events1b.some((e) => /Order Received/.test(e.summary)));
   await one.context.close();
 
-  // ---------------------------------------------------------------- order 2: expiry
+  // ---------------------------------------------------------------- order 2: countdown runs out
   const two = await placeCashAppOrder('two');
   const [o2] = await q(`select id from orders where reference = $1`, [two.reference]);
   // Move this test order's deadline into the past (test data only)
@@ -142,11 +143,11 @@ try {
   );
   await two.page.reload({ waitUntil: 'networkidle' });
   const [o2b] = await q(`select status from orders where id = $1`, [o2.id]);
-  check('order 2: cancelled once past its deadline', o2b.status === 'CANCELLED', o2b.status);
+  check('order 2: NOT cancelled after the countdown', o2b.status === 'NEW', o2b.status);
   const expiredText = await two.page.locator('main').innerText();
-  check('order 2: page says the time ran out', /time to pay has run out/i.test(expiredText));
-  check('order 2: tag hidden after expiry', !/Send exactly/i.test(expiredText));
-  check('order 2: upload still offered after expiry', /Upload your payment screenshot/i.test(expiredText));
+  check('order 2: page asks to complete the payment', /complete your payment now/i.test(expiredText));
+  check('order 2: tag still shown after the countdown', /Send exactly/i.test(expiredText));
+  check('order 2: upload still offered after the countdown', /Upload your payment screenshot/i.test(expiredText));
   check('order 2: WhatsApp button present', (await two.page.getByRole('link', { name: /WhatsApp/ }).count()) > 0);
   await two.page.screenshot({ path: `${OUT}/e2e-two-expired.png`, fullPage: true });
   await two.context.close();

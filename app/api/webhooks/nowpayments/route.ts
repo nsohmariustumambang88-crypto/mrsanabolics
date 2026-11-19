@@ -68,8 +68,8 @@ export async function POST(request: NextRequest) {
     switch (payment_status) {
       /*
         Only "finished" means the money is settled; "confirmed" is a blockchain confirmation on
-        the way there. Confirms a NEW order, or one cancelled because its 90 minutes ran out (the
-        customer paid late; they still get their order). Never touches an order staff have moved
+        the way there. Confirms a NEW order, or a CANCELLED one (the payment arrived after
+        all; the customer still gets their order). Never touches an order staff have moved
         on, so a repeated notification cannot drag a shipped order back to Confirmed.
         setOrderStatus sends the "Order Confirmed" email, at most once per order.
       */
@@ -102,8 +102,7 @@ export async function POST(request: NextRequest) {
       case 'partially_paid':
         /*
           The coins have arrived and are confirming (or arrived short). Recorded once, so the
-          90-minute expiry (lib/orders/payment-expiry.ts) never cancels an order whose payment
-          is on its way, and the payment page can say so. Underpaid orders are left to staff,
+          payment page can say the payment is on its way instead of counting down. Underpaid orders are left to staff,
           who can complete them from the NOWPayments dashboard.
         */
         if (!order.events.some((e) => e.summary === CRYPTO_DETECTED_EVENT)) {
