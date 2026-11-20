@@ -53,7 +53,7 @@ export function Splash() {
       className="splash-root fixed inset-0 z-[100] flex cursor-pointer flex-col items-center justify-center bg-paper px-6"
     >
       <div className="splash-mark">
-        <BullMark className="w-28 sm:w-36" />
+        <BullMark className="w-28 sm:w-36" priority />
       </div>
       <p
         aria-hidden="true"

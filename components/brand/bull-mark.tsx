@@ -42,6 +42,12 @@ export function BullMark({
       priority={priority}
       draggable={false}
       className={cn('h-auto select-none', className)}
+      /*
+        The box keeps the drawing's proportions before the file arrives. `h-auto` overrides the
+        height attribute, so without this Chrome reported the lazy-loaded bull as an image with no
+        explicit dimensions, a layout shift waiting to happen (DevTools Issues, 20 November 2026).
+      */
+      style={{ aspectRatio: `${BULL_WIDTH} / ${BULL_HEIGHT}` }}
     />
   );
 }
