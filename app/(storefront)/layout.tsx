@@ -13,6 +13,8 @@ import { VisitTracker } from '@/components/analytics/visit-tracker';
 import { TelegramWidget } from '@/components/chat/telegram-widget';
 import { WhatsappWidget } from '@/components/chat/whatsapp-widget';
 import { ScrollReveal } from '@/components/motion/scroll-reveal';
+import { TabBar } from '@/components/layout/tab-bar';
+import { Splash, SPLASH_BOOT } from '@/components/layout/splash';
 import { getCategories, getBrands } from '@/lib/db/catalogue';
 import { getSettingsSafe, asBoolean, asNumber } from '@/lib/settings';
 import { CountryProvider } from '@/components/providers/country-provider';
@@ -84,6 +86,12 @@ export default async function StorefrontLayout({
       >
       <CountryProvider rates={rates} zones={zones}>
       <StoreProvider>
+        {/*
+          The once-per-session splash. The inline script runs before the splash markup is parsed
+          and hides it (data-splash="seen") when this session has had it or motion is reduced.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: SPLASH_BOOT }} />
+        <Splash />
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-sm focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
@@ -109,6 +117,8 @@ export default async function StorefrontLayout({
         <WhatsappWidget />
         {/* Cards rise into place as they scroll in (anything marked data-reveal). */}
         <ScrollReveal />
+        {/* Phones: the app-style bottom navigation. */}
+        <TabBar />
         {/*
           Storefront only, and only when the analytics_enabled setting is on. It sends a path
           and a referrer host to /api/track, which sets a random first-party token: no IP is

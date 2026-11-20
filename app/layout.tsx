@@ -68,6 +68,9 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
   },
   formatDetection: { telephone: false, address: false },
+  /* viewport-fit=cover makes env(safe-area-inset-*) real on iPhones, so the phone tab bar and the
+     buy bar clear the home indicator (components/layout/tab-bar.tsx). */
+  viewport: { width: 'device-width', initialScale: 1, viewportFit: 'cover' },
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#f2ece0' },
     { media: '(prefers-color-scheme: dark)', color: '#0b1016' },

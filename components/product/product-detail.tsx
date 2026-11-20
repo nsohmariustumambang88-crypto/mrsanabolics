@@ -669,7 +669,10 @@ export function ProductDetail({
       )}
 
       {showBuyBar && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-rule-strong bg-card shadow-lift lg:hidden">
+        <div
+          data-buybar-el
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-rule-strong bg-card shadow-lift lg:hidden"
+        >
           <div className="mx-auto flex max-w-[86rem] items-center gap-3 px-4 pb-[max(0.625rem,env(safe-area-inset-bottom))] pt-2.5 sm:px-6">
             <p className="min-w-0 flex-1">
               <span className="block truncate text-sm font-medium leading-snug">{product.name}</span>

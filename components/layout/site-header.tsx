@@ -199,7 +199,7 @@ export function SiteHeader() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 border-b bg-paper transition-[border-color,box-shadow] duration-300',
+        'sticky top-0 z-50 border-b bg-[hsl(var(--paper)/0.9)] backdrop-blur-md transition-[border-color,box-shadow] duration-300',
         condensed ? 'border-rule-strong shadow-lift' : 'border-rule'
       )}
       onMouseLeave={leave}
