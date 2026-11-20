@@ -108,12 +108,19 @@ export function judgeScreenshotText(
 */
 async function readText(image: Buffer): Promise<string[]> {
   const sharp = (await import('sharp')).default;
-  const { createWorker } = await import('tesseract.js');
+  const { createWorker, PSM } = await import('tesseract.js');
   const base = sharp(image).rotate().resize({ width: 1400, withoutEnlargement: false }).grayscale().normalize();
   const plain = await base.clone().png().toBuffer();
   const inverted = await base.clone().negate().png().toBuffer();
 
   const worker = await createWorker('eng', 1, { cachePath: tmpdir() });
+  /*
+    Sparse text, not tesseract.js's default single-block mode. A Cash App receipt is scattered
+    lines of very different sizes, and in single-block mode the reader dropped the huge "$190" at
+    the top while reading every smaller line, so no receipt ever passed (live test, 20 November
+    2026). Sparse mode reads all of it; the order of lines does not matter to the rule.
+  */
+  await worker.setParameters({ tessedit_pageseg_mode: PSM.SPARSE_TEXT });
   try {
     const texts: string[] = [];
     for (const variant of [plain, inverted]) {
