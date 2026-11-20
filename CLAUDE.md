@@ -826,7 +826,10 @@ WebAssembly. That is why `next.config.js` lists it in `serverComponentsExternalP
 adds its `.wasm` files to the upload route's trace in a `postbuild` step
 ([scripts/trace-ocr-engine.mjs](scripts/trace-ocr-engine.mjs)). `outputFileTracingIncludes` was
 tried first and silently did nothing: Next 13.5 applies it to pages-router routes only, and the
-first live check failed with `ENOENT … tesseract-core-simd.wasm`. The English language
+first live check failed with `ENOENT … tesseract-core-simd.wasm`. The reader runs in
+**sparse-text** page mode (`PSM.SPARSE_TEXT`). In tesseract.js's default single-block mode it read
+every line of a receipt except the huge amount at the top, so no screenshot could pass; the live
+`pay-e2e.mjs` run caught it, and passes all 15 checks since (20 November 2026). The English language
 data (about 2 MB) downloads from jsdelivr on a cold start and is cached in the function's tmp
 directory. A real screenshot reads in about 10 seconds locally, so the route has `maxDuration` 60
 and a 40-second reading limit; a picture it cannot read fails safe and waits for a person.
