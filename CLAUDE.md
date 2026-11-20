@@ -315,11 +315,44 @@ double effect in development once left every below-fold card invisible, so a mou
 `hidden` elements. `prefers-reduced-motion` now stops every transition and animation
 site-wide, as the reference does.
 
+**The app shell** was built on 20 November 2026 from the same reference store, at the owner's
+request ("make it a web app and desktop app").
+- **Phone tab bar** ([tab-bar.tsx](components/layout/tab-bar.tsx)), below `md`: Home, Shop,
+  Wishlist, Account and Cart on an ink bar, with counts on Wishlist and Cart and a 3px rule that
+  slides over the active tab. It is hidden on checkout. While it shows it sets `data-tabbar` on
+  `<html>`, and the unlayered rules at the foot of globals.css pad the page and lift the
+  WhatsApp/Telegram buttons (`data-float-widget`) and the product buy bar (`data-buybar-el`)
+  above it. `viewport-fit=cover` in the root metadata makes the safe-area insets real on
+  iPhones. It reads `?tab=wishlist` from `location` after navigation, never through
+  `useSearchParams`, which would push every static page into client rendering.
+- **Header**: frosted paper (`bg-[hsl(var(--paper)/0.9)] backdrop-blur-md`), still sticky.
+  Transparency on our colour tokens must be written as `hsl(var(--token)/a)`, because
+  `bg-paper/85` paints nothing: the tokens are bare HSL triplets.
+- **Splash** ([splash.tsx](components/layout/splash.tsx)) plays once per session: the bull and
+  the name rise, a pigment rule fills, and the sheet wipes up. It takes about two seconds, and a
+  tap skips it. `SPLASH_BOOT`, inline in the storefront layout, marks `data-splash="seen"` before
+  the first paint when the session has had it or motion is reduced. A Windows machine with
+  animations turned off reports reduced motion, so its user never sees the splash.
+- **The theme switch** moves its knob first and calls `setTheme` two frames later, and
+  `MarbleBath` recomposes on a theme change only when the browser is idle. Chrome had flagged
+  the switch for a 200ms INP.
+- **BullMark** sets `aspect-ratio: 320/292` because `h-auto` overrides its height attribute.
+  Chrome's Issues panel reported the lazy bull as an image with no explicit dimensions, and
+  after the fix it reports nothing on the home, shop and account pages.
+
 **Craft rules this build holds to** (from the Impeccable craft floor — violating them is a regression):
 - Chips and cards sitting over live pigment are **opaque**. Translucent ones lost legibility against the field.
 - No kicker/eyebrow labels above headings. `SectionHeading` has no `eyebrow` prop by design.
 - No glass/blur as decoration, no gradient text, no glowing accents. Shadows carry offset *and* blur.
-- **There is no motion** — except the home page's featured carousel, which slides every six seconds at the owner's request (see "The hero's right-hand column is the promotion"). The build carried a hero reveal, image zooms on hover, card lifts, arrow slides and dot pops; all of it is gone at the user's direction. `MarbleBath` still accepts `animate`, but it defaults to `false` — the bath paints composed. Hover still responds, in colour only. `framer-motion` is in `package.json` and imported by nothing; the client bundle does not carry it. There is no scrolling marquee.
+- **Motion is limited to what the owner has asked for.** Since 20 November 2026 that list is:
+  - the home page's featured carousel (see "The hero's right-hand column is the promotion");
+  - the product card's photo zoom and press feedback, and the scroll reveal (above);
+  - the phone tab bar's sliding rule;
+  - the once-per-session splash (below).
+
+  Everything else stays still, and `prefers-reduced-motion` stops all of it. Before that the
+  build carried a hero reveal, card lifts, arrow slides and dot pops; all of them were removed at
+  the owner's direction and are not to come back unasked. `MarbleBath` still accepts `animate`, but it defaults to `false` — the bath paints composed. Hover still responds, in colour only. `framer-motion` is in `package.json` and imported by nothing; the client bundle does not carry it. There is no scrolling marquee.
 - Icons are lucide or authored SVG at consistent stroke weight — never emoji.
 - Browser surfaces (selection, caret, scrollbars, focus rings, tabular numerals) are themed in `globals.css`.
 
