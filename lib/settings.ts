@@ -27,7 +27,8 @@ export type SettingDef = {
   default: string;
   /** Shown under the field in the admin. Say what it affects and where. */
   help: string;
-  group: 'general' | 'commerce' | 'email' | 'privacy';
+  /** 'automation' settings are shown and written only on /admin/automation, with its own controls. */
+  group: 'general' | 'commerce' | 'email' | 'privacy' | 'automation';
 };
 
 /**
@@ -183,18 +184,87 @@ export const SETTINGS: SettingDef[] = [
     key: 'email_footer',
     label: 'Email footer',
     type: 'longtext',
-    default: 'You are receiving this because you subscribed at mranabolics.example.com.',
+    /* It said "mranabolics.example.com", a placeholder domain, until 21 November 2026. */
+    default: 'You are receiving this because you subscribed at www.mrsanabolics.com.',
     help: 'Appears under every campaign, above the postal address and the unsubscribe link.',
     group: 'email',
   },
+
+  /*
+    Automation (lib/automation, /admin/automation). Every switch is off by default, and the job
+    switches and approvals are written only by that screen's own controls: switching a customer
+    job on records the template version the owner approved after his test.
+  */
   {
-    key: 'basket_reminders_enabled',
-    label: 'Send basket reminders',
+    key: 'automation_paused',
+    label: 'Pause all automation',
     type: 'boolean',
     default: 'false',
-    help: 'Once a day, emails a subscriber who left items in their basket for more than 24 hours: their items, a Restore my basket button, and WELCOME15 if they have never ordered. Once per basket, at most weekly per person, never after an order, never to anyone unsubscribed.',
-    group: 'email',
+    help: 'Ticked, no automated job sends anything, whatever its own switch says. Each run is still logged as paused.',
+    group: 'automation',
   },
+  {
+    key: 'automation_max_per_run',
+    label: 'Most emails per run',
+    type: 'number',
+    default: '40',
+    help: 'A job stops after this many emails in one run and carries on the next day. Emails go out about two a second.',
+    group: 'automation',
+  },
+  {
+    key: 'automation_copy_to',
+    label: 'Copy of the first email of each run, and template tests, to',
+    type: 'email',
+    default: '',
+    help: 'The owner’s address. Each run’s first customer email is copied here (with the unsubscribe link disabled), and the "Send a test" buttons send here and nowhere else.',
+    group: 'automation',
+  },
+  {
+    key: 'automation_report_to',
+    label: 'Weekly report and alerts to',
+    type: 'text',
+    default: 'support@mrsanabolics.com',
+    help: 'One or more addresses, separated by commas.',
+    group: 'automation',
+  },
+  {
+    key: 'basket_reminders_enabled',
+    label: 'Basket reminders: on',
+    type: 'boolean',
+    default: 'false',
+    help: 'Switched from /admin/automation, which also records the approved template.',
+    group: 'automation',
+  },
+  ...(
+    [
+      ['auto_unpaid', 'Unpaid order reminders'],
+      ['auto_basket', 'Basket reminders'],
+      ['auto_welcome', 'Welcome emails 2 and 3'],
+      ['auto_enquiry_alert', 'Waiting enquiries alert'],
+      ['auto_weekly_report', 'Weekly report'],
+    ] as const
+  ).flatMap(([prefix, name]): SettingDef[] => [
+    ...(prefix === 'auto_basket'
+      ? []
+      : [
+          {
+            key: `${prefix}_enabled`,
+            label: `${name}: on`,
+            type: 'boolean' as const,
+            default: 'false',
+            help: 'Switched from /admin/automation.',
+            group: 'automation' as const,
+          },
+        ]),
+    {
+      key: `${prefix}_approved`,
+      label: `${name}: approved template`,
+      type: 'text' as const,
+      default: '',
+      help: 'The template version the owner approved. Written by /admin/automation.',
+      group: 'automation' as const,
+    },
+  ]),
 
   {
     key: 'chat_enabled',

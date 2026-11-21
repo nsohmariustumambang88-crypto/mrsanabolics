@@ -31,7 +31,12 @@ export function renderBasketReminderHTML(input: {
   unsubscribeUrl: string;
   offer: boolean;
   reachedCheckout: boolean;
-  /** The `postal_address` setting. CAN-SPAM wants one in every marketing email; blank omits the line. */
+  /**
+   * The `postal_address` setting. CAN-SPAM wants one in every marketing email. The automation's
+   * sender (lib/automation/sender.ts) adds it itself and leaves this blank; kept for old callers.
+   * The footer no longer states the minimum order or a free-delivery threshold: marketing email
+   * does not mention the minimum (owner's rule), and a typed threshold drifts from the zones.
+   */
   postalAddress?: string;
 }): string {
   const { lines, offer } = input;
@@ -93,9 +98,9 @@ export function renderBasketReminderHTML(input: {
   ${offerBlock}
   <tr><td style="background:#ffffff; padding:20px 18px; border-radius:0 0 8px 8px; border-top:1px solid #e3e1da;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,Helvetica,sans-serif; text-align:center;"><tr>
-      <td width="33%" style="padding:6px; font-size:13px; color:#33312c;"><strong style="color:#16181f;">Tracked, unmarked</strong><br>US from $9, free over $150</td>
+      <td width="33%" style="padding:6px; font-size:13px; color:#33312c;"><strong style="color:#16181f;">Tracked and insured</strong><br>In plain, unmarked packaging</td>
       <td width="33%" style="padding:6px; font-size:13px; color:#33312c;"><strong style="color:#16181f;">Support 24/7</strong><br>Reply here, or <a href="https://t.me/mrsanabolics" style="color:#2a3f8f;">Telegram</a></td>
-      <td width="33%" style="padding:6px; font-size:13px; color:#33312c;"><strong style="color:#16181f;">Minimum order</strong><br>$100, delivery included</td>
+      <td width="33%" style="padding:6px; font-size:13px; color:#33312c;"><strong style="color:#16181f;">Certificate of analysis</strong><br>For your batch, with every order</td>
     </tr></table>
   </td></tr>
   <tr><td align="center" style="padding:20px 20px 10px 20px; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:1.6; color:#8a877e;">

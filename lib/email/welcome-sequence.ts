@@ -1,136 +1,54 @@
 import 'server-only';
 
 import { prisma } from '@/lib/prisma';
-import {
-  sendWelcomeEmail1,
-  sendWelcomeEmail2,
-  sendWelcomeEmail3,
-} from './resend';
+import { sendWelcomeEmail1 } from './resend';
 
-export type WelcomeSequenceStep = 1 | 2 | 3;
+/*
+  The welcome sequence's first step: email 1 at sign-up, and the dates emails 2 and 3 fall due.
 
-export interface WelcomeSequenceSchedule {
-  email1: 'immediate';
-  email2: 'day-3';
-  email3: 'day-7';
-}
+  Emails 2 and 3 are sent by the automation's daily job (lib/automation/jobs/welcome.ts), which
+  replaced `sendScheduledWelcomeEmail2/3` here on 21 November 2026. Those moved a subscriber's
+  `welcomeStep` on without looking at Resend's answer, so a refused email counted as sent.
+*/
 
-const WELCOME_SEQUENCE_SCHEDULE: Record<WelcomeSequenceStep, number> = {
-  1: 0, // immediate
-  2: 3 * 24 * 60 * 60 * 1000, // 3 days
-  3: 7 * 24 * 60 * 60 * 1000, // 7 days
-};
+const DAY = 24 * 60 * 60 * 1000;
+const EMAIL_2_AFTER = 3 * DAY;
+const EMAIL_3_AFTER = 7 * DAY;
 
 /**
- * Send welcome email 1 immediately when subscriber signs up.
- * Schedule emails 2 and 3 for later delivery.
+ * Send welcome email 1 immediately when a subscriber signs up, and set the dates emails 2 and 3
+ * fall due. Nothing is recorded as sent when Resend refuses.
  */
 export async function initiateWelcomeSequence(email: string, unsubscribeToken: string) {
   try {
-    // Send email 1 immediately
     const emailResult = await sendWelcomeEmail1(email, unsubscribeToken);
 
     if (emailResult.error) {
       console.error(`Welcome email 1 failed for ${email}:`, emailResult.error);
-      return { ok: false, error: `Email send failed: ${emailResult.error}` };
+      return { ok: false, error: `Email send failed: ${emailResult.error.message}` };
     }
 
-    // Get the subscriber to update tracking
     const subscriber = await prisma.subscriber.findUnique({
       where: { email },
-      select: { id: true, welcomeStep: true },
+      select: { id: true },
     });
-
     if (!subscriber) {
       return { ok: false, error: 'Subscriber not found after creation' };
     }
 
-    // Schedule emails 2 and 3
-    const now = new Date();
-    const email2Scheduled = new Date(now.getTime() + WELCOME_SEQUENCE_SCHEDULE[2]);
-    const email3Scheduled = new Date(now.getTime() + WELCOME_SEQUENCE_SCHEDULE[3]);
-
+    const now = Date.now();
     await prisma.subscriber.update({
       where: { id: subscriber.id },
       data: {
         welcomeStep: 1,
-        welcomeEmail2At: email2Scheduled,
-        welcomeEmail3At: email3Scheduled,
+        welcomeEmail2At: new Date(now + EMAIL_2_AFTER),
+        welcomeEmail3At: new Date(now + EMAIL_3_AFTER),
       },
     });
 
-    console.log(`Welcome sequence initiated for ${email} (step 1 sent)`);
     return { ok: true };
   } catch (error) {
     console.error('Welcome sequence error:', error);
     return { ok: false, error: error instanceof Error ? error.message : 'Failed to start welcome sequence' };
-  }
-}
-
-/**
- * Process scheduled welcome emails (call this in a cron job).
- * Sends email 2 for subscribers due at this time.
- */
-export async function sendScheduledWelcomeEmail2() {
-  try {
-    const now = new Date();
-    const subscribers = await prisma.subscriber.findMany({
-      where: {
-        status: 'SUBSCRIBED',
-        welcomeStep: 1,
-        welcomeEmail2At: { lte: now },
-      },
-      select: { email: true, unsubscribeToken: true, id: true },
-      take: 100, // Batch to avoid overload
-    });
-
-    if (subscribers.length === 0) return { ok: true, sent: 0 };
-
-    for (const subscriber of subscribers) {
-      await sendWelcomeEmail2(subscriber.email, subscriber.unsubscribeToken);
-      await prisma.subscriber.update({
-        where: { id: subscriber.id },
-        data: { welcomeStep: 2 },
-      });
-    }
-
-    return { ok: true, sent: subscribers.length };
-  } catch (error) {
-    console.error('Welcome email 2 error:', error);
-    return { ok: false, error: error instanceof Error ? error.message : 'Failed to send welcome email 2' };
-  }
-}
-
-/**
- * Process scheduled welcome emails (call this in a cron job).
- * Sends email 3 for subscribers due at this time.
- */
-export async function sendScheduledWelcomeEmail3() {
-  try {
-    const now = new Date();
-    const subscribers = await prisma.subscriber.findMany({
-      where: {
-        status: 'SUBSCRIBED',
-        welcomeStep: 2,
-        welcomeEmail3At: { lte: now },
-      },
-      select: { email: true, unsubscribeToken: true, id: true },
-      take: 100, // Batch to avoid overload
-    });
-
-    if (subscribers.length === 0) return { ok: true, sent: 0 };
-
-    for (const subscriber of subscribers) {
-      await sendWelcomeEmail3(subscriber.email, subscriber.unsubscribeToken);
-      await prisma.subscriber.update({
-        where: { id: subscriber.id },
-        data: { welcomeStep: 3 },
-      });
-    }
-
-    return { ok: true, sent: subscribers.length };
-  } catch (error) {
-    console.error('Welcome email 3 error:', error);
-    return { ok: false, error: error instanceof Error ? error.message : 'Failed to send welcome email 3' };
   }
 }

@@ -10,16 +10,33 @@ import { SITE } from '@/lib/site';
   built-in view, and if the bundle fails to load. Someone trying to leave a mailing list must
   never be blocked by a script that did not run — that is how a complaint becomes a spam
   report, which costs the sending domain far more than the subscriber was worth.
+
+  It is also the RFC 8058 one-click target. Marketing email carries
+  `List-Unsubscribe: <…/api/unsubscribe?token=…>` and `List-Unsubscribe-Post:
+  List-Unsubscribe=One-Click`; the mailbox provider then POSTs `List-Unsubscribe=One-Click` to
+  that address, with the token in the query string, and expects a plain 200, not a redirect.
+  Only a POST unsubscribes: a GET of the same address does nothing, because mail scanners fetch
+  links.
 */
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
-  const form = await request.formData();
-  const token = String(form.get('token') ?? '');
+  const query = new URL(request.url).searchParams;
+  const form = await request.formData().catch(() => null);
+  const oneClick = form?.get('List-Unsubscribe') === 'One-Click';
+  const token = String(form?.get('token') ?? query.get('token') ?? '');
 
   const result = await unsubscribeByToken(token);
+
+  if (oneClick) {
+    /* Whatever the outcome, the provider only needs to know the request was received. */
+    return new NextResponse(result.ok ? 'Unsubscribed.' : 'Received.', {
+      status: 200,
+      headers: { 'content-type': 'text/plain; charset=utf-8' },
+    });
+  }
   const url = new URL('/unsubscribe', SITE.url);
 
   if (result.ok) {
