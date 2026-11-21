@@ -80,7 +80,7 @@ export async function buildWeeklyReport(now: Date, settings: Record<string, stri
         _count: { _all: true },
       }),
       prisma.automationRun.findMany({
-        where: { startedAt: inWeek, dryRun: false },
+        where: { startedAt: inWeek, dryRun: false, trigger: { not: 'test' } },
         select: { job: true, period: true, status: true, note: true },
       }),
     ]);

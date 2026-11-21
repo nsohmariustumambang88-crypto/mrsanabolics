@@ -18,6 +18,8 @@ import { JobControls, PauseControl } from '@/components/admin/automation-panel';
 */
 
 export const dynamic = 'force-dynamic';
+/* The Run now and Dry run buttons run a job inside this page's server action. */
+export const maxDuration = 60;
 
 const when = (d: Date | null | undefined) =>
   d

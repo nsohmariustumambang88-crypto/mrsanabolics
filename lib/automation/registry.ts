@@ -17,7 +17,10 @@ export const JOB_FNS: Record<JobId, JobFn> = {
   'weekly-report': weeklyReportJob,
 };
 
-export function runJobNow(job: JobId, opts: { trigger: 'cron' | 'admin' | 'test'; dryRun: boolean; now?: Date; ignoreSwitches?: boolean }): Promise<RunReport> {
+export function runJobNow(
+  job: JobId,
+  opts: Parameters<typeof runJob>[2]
+): Promise<RunReport> {
   return runJob(job, JOB_FNS[job], opts);
 }
 

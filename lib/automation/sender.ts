@@ -64,7 +64,6 @@ export async function sendAutomatedEmail(req: SendRequest): Promise<SendOutcome>
 
   let unsubscribeToken: string | null = null;
   if (req.kind === 'MARKETING') {
-    if (!req.postalAddress.trim()) return { status: 'skipped', reason: 'postal address missing' };
     const subscriber = await prisma.subscriber.findFirst({
       where: { email: { equals: to, mode: 'insensitive' }, status: 'SUBSCRIBED' },
       select: { unsubscribeToken: true },
@@ -90,6 +89,11 @@ export async function sendAutomatedEmail(req: SendRequest): Promise<SendOutcome>
   });
   if (existing && existing.status !== 'FAILED') return { status: 'skipped', reason: 'already sent' };
   if (existing && existing.attempts >= MAX_ATTEMPTS) return { status: 'skipped', reason: 'failed 3 times; not retried' };
+
+  /* Checked last, so a dry run still shows who would otherwise get it. */
+  if (req.kind === 'MARKETING' && !req.postalAddress.trim()) {
+    return { status: 'skipped', reason: req.dryRun ? 'postal address missing (would otherwise send)' : 'postal address missing' };
+  }
 
   if (req.dryRun) return { status: 'dry-run' };
 

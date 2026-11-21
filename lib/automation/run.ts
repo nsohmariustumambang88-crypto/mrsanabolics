@@ -33,6 +33,8 @@ export type JobContext = {
   now: Date;
   settings: Record<string, string>;
   postalAddress: string;
+  /** Tests only: limit the run to these orders. Never set by the cron or the admin. */
+  only?: { orderIds?: string[] };
   /** Count an outcome. */
   count: (outcome: string, by?: number) => void;
   /** False once the cap or the time budget is reached: stop picking more work. */
@@ -83,24 +85,39 @@ async function recordSkipped(def: JobDef, period: string, trigger: string, dryRu
 
 async function takeLock(key: string, runId: string): Promise<boolean> {
   const expiresAt = new Date(Date.now() + LOCK_MINUTES * 60_000);
+  /* A lock left by a run that died: take it over once it has expired. Conditional, so two
+     runs cannot both take it. */
+  const takeOver = async () =>
+    (
+      await prisma.automationLock.updateMany({
+        where: { key, expiresAt: { lt: new Date() } },
+        data: { runId, lockedAt: new Date(), expiresAt },
+      })
+    ).count > 0;
+
+  /* Looked up first so the usual case (already ran today) does not log a constraint error. */
+  if (await prisma.automationLock.findUnique({ where: { key }, select: { key: true } })) return takeOver();
   try {
     await prisma.automationLock.create({ data: { key, runId, expiresAt } });
     return true;
   } catch (error) {
     if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002')) throw error;
-    /* A lock left by a run that died: take it over once it has expired. */
-    const taken = await prisma.automationLock.updateMany({
-      where: { key, expiresAt: { lt: new Date() } },
-      data: { runId, lockedAt: new Date(), expiresAt },
-    });
-    return taken.count > 0;
+    return takeOver();
   }
 }
 
 export async function runJob(
   jobId: JobId,
   fn: JobFn,
-  opts: { trigger: 'cron' | 'admin' | 'test'; dryRun: boolean; now?: Date; ignoreSwitches?: boolean }
+  opts: {
+    trigger: 'cron' | 'admin' | 'test';
+    dryRun: boolean;
+    now?: Date;
+    ignoreSwitches?: boolean;
+    only?: { orderIds?: string[] };
+    /** Scripts only: a longer budget for a slow connection. Functions keep 45 seconds. */
+    timeBudgetMs?: number;
+  }
 ): Promise<RunReport> {
   const def = jobDef(jobId);
   if (!def) throw new Error(`Unknown job ${jobId}`);
@@ -137,6 +154,7 @@ export async function runJob(
     counts[outcome] = (counts[outcome] ?? 0) + by;
   };
   const cap = Math.max(1, asNumber(settings.automation_max_per_run, 40));
+  const budget = opts.trigger === 'test' && opts.timeBudgetMs ? opts.timeBudgetMs : TIME_BUDGET_MS;
   const started = Date.now();
   let attempted = 0;
   let stoppedBy: string | null = null;
@@ -145,7 +163,7 @@ export async function runJob(
 
   const canSend = () => {
     if (attempted >= cap) stoppedBy = `Stopped at the cap of ${cap} emails; the rest go next time.`;
-    else if (Date.now() - started > TIME_BUDGET_MS) stoppedBy = 'Stopped at the 45-second budget; the rest go next time.';
+    else if (Date.now() - started > budget) stoppedBy = `Stopped at the ${Math.round(budget / 1000)}-second budget; the rest go next time.`;
     return stoppedBy === null;
   };
 
@@ -155,6 +173,7 @@ export async function runJob(
     now,
     settings,
     postalAddress: settings.postal_address ?? '',
+    only: opts.trigger === 'test' ? opts.only : undefined,
     count,
     canSend,
     send: async (req) => {

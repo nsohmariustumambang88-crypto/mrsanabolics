@@ -40,6 +40,7 @@ export async function unpaidOrdersJob(ctx: JobContext): Promise<void> {
     where: {
       status: 'NEW',
       createdAt: { lte: new Date(now - FIRST_AT), gte: new Date(now - MAX_AGE) },
+      ...(ctx.only?.orderIds ? { id: { in: ctx.only.orderIds } } : {}),
     },
     orderBy: { createdAt: 'asc' },
     select: {
@@ -61,7 +62,7 @@ export async function unpaidOrdersJob(ctx: JobContext): Promise<void> {
     },
   });
 
-  const older = await prisma.order.count({ where: { status: 'NEW', createdAt: { lt: new Date(now - MAX_AGE) } } });
+  const older = ctx.only ? 0 : await prisma.order.count({ where: { status: 'NEW', createdAt: { lt: new Date(now - MAX_AGE) } } });
   if (older) ctx.count('skipped: over 7 days old', older);
 
   let cashApp: Awaited<ReturnType<typeof cashAppDetails>> | undefined;
