@@ -15,6 +15,7 @@ import {
   Images,
   FileText,
   Mail,
+  Timer,
   Users,
   BarChart3,
   Truck,
@@ -111,6 +112,7 @@ const MENU: MenuItem[] = [
   { href: '/admin/blog', label: 'Journal', icon: FileText },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard },
   { href: '/admin/email', label: 'Email', icon: Mail },
+  { href: '/admin/automation', label: 'Automation', icon: Timer },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
