@@ -1183,3 +1183,110 @@ enum ChatStatus {
   ANSWERED
   CLOSED
 }
+
+/// One run of an automated job (lib/automation): the run log on /admin/automation and in the
+/// weekly report. Every run is recorded, including the ones that stopped before sending anything
+/// (switched off, paused, no postal address, already ran this period), so "did it run?" always
+/// has an answer.
+model AutomationRun {
+  id     String @id @default(cuid())
+  /// unpaid-orders | basket-reminders | welcome | enquiry-alert | weekly-report
+  job    String
+  /// The period the run belongs to: the New York calendar date (2026-11-21).
+  period String
+  /// cron | admin | test
+  trigger String
+  dryRun  Boolean             @default(false)
+  status  AutomationRunStatus @default(RUNNING)
+  /// Outcomes counted: { "sent": 3, "skipped: not subscribed": 2 }.
+  counts  Json?
+  /// Why it stopped, or what failed. Written for a person.
+  note    String?             @db.Text
+
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  emails EmailLog[]
+
+  @@index([job, startedAt])
+  @@index([startedAt])
+  @@map("automation_runs")
+}
+
+enum AutomationRunStatus {
+  RUNNING
+  OK
+  /// Stopped at the per-run cap or the time budget; the rest goes next time.
+  PARTIAL
+  FAILED
+  /// Did not send: switched off, paused, missing postal address, or already ran this period.
+  SKIPPED
+}
+
+/// One lock per job per period. A real run takes it before it starts, so a second invocation
+/// of the same job on the same day (Vercel may deliver a cron twice) stops at once. Released when
+/// a run fails, so it can be retried; `expiresAt` frees a lock left by a run that died mid-way.
+model AutomationLock {
+  /// `${job}:${period}`
+  key       String   @id
+  runId     String
+  lockedAt  DateTime @default(now())
+  expiresAt DateTime
+
+  @@map("automation_locks")
+}
+
+/// Every email the automation sends, one row per person per message.
+///
+/// `key` is unique and names the message (unpaid:<orderId>:1, welcome:<subscriberId>:2,
+/// basket:<basketId>), and the row is written BEFORE the email goes out. A second run, a retry or
+/// a duplicate cron delivery finds the row and sends nothing, so nobody can get the same email
+/// twice. A send Resend refused is FAILED, and only a FAILED row may be tried again.
+model EmailLog {
+  id  String @id @default(cuid())
+  key String @unique
+
+  job     String
+  kind    EmailKind
+  toEmail String
+  subject String
+
+  status   EmailLogStatus @default(PENDING)
+  attempts Int            @default(1)
+  /// Resend's id for the email, to look up its delivery status.
+  resendId String?
+  error    String?        @db.Text
+
+  contactId    String?
+  subscriberId String?
+  orderId      String?
+
+  runId String?
+  run   AutomationRun? @relation(fields: [runId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  sentAt    DateTime?
+
+  @@index([toEmail, kind, createdAt])
+  @@index([job, createdAt])
+  @@index([status])
+  @@map("email_logs")
+}
+
+enum EmailKind {
+  /// About an order the person placed. No consent needed; no sales content.
+  TRANSACTIONAL
+  /// Needs a SUBSCRIBED row at send time, an unsubscribe link and a postal address.
+  MARKETING
+  /// To the shop itself: alerts, the weekly report, the owner's copy of a run's first email.
+  INTERNAL
+  /// A test of a template, to the owner only.
+  TEST
+}
+
+enum EmailLogStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
