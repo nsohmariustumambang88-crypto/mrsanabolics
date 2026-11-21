@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { AccountView, type AccountOrder } from '@/components/account/account-view';
+import { accountTabHref, asAccountTab } from '@/components/account/account-tabs';
 import { getCurrentCustomer } from '@/lib/account';
 import { prisma } from '@/lib/prisma';
 
@@ -25,9 +26,20 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: { tab?: string | string[] };
+}) {
+  const asked = typeof searchParams.tab === 'string' ? searchParams.tab : null;
+  /* The saved products moved to their own page, which needs no account; old links still land. */
+  if (asked === 'wishlist') redirect('/wishlist');
+
   const customer = await getCurrentCustomer();
-  if (!customer) redirect('/auth?next=/account');
+  if (!customer) {
+    const tab = asAccountTab(asked);
+    redirect(`/auth?next=${encodeURIComponent(accountTabHref(tab))}`);
+  }
 
   const orders: AccountOrder[] = customer.contactId
     ? await prisma.order

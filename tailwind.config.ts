@@ -132,6 +132,19 @@ const config: Config = {
         '.mask-none': { '-webkit-mask-image': 'none', 'mask-image': 'none' },
       });
     },
+    /*
+      `size-*` (width and height together) arrived in Tailwind 3.4; this project is on 3.3, where
+      the class silently generates nothing. The product card, the tab bar and the account pages
+      were written with it (20–21 November 2026), so the card's stock dot rendered at 0×0 and its
+      heart button lost its 32px square. This adds the utility from the spacing scale, with
+      arbitrary values (`size-[1.125rem]`) and every variant, as 3.4 does.
+    */
+    function sizeUtility({ matchUtilities, theme }: any) {
+      matchUtilities(
+        { size: (value: string) => ({ width: value, height: value }) },
+        { values: theme('spacing') }
+      );
+    },
   ],
 };
 export default config;

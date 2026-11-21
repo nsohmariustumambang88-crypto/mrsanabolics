@@ -7,6 +7,13 @@
       "app/admin/**",
       "lib/email/**"
     ],
-    "ignoreValues": []
+    "ignoreValues": [
+      {
+        "rule": "design-system-font-size",
+        "value": "0.625rem",
+        "createdAt": "2026-11-21T01:34:58.785Z",
+        "reason": "Count badge numerals in the phone tab bar (18px circle), carried over from the reference store the owner asked to copy on 20 Nov 2026; existing code, unchanged in this edit"
+      }
+    ]
   }
 }

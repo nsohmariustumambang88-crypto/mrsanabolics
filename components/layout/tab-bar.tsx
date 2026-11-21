@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Heart, Home, ShoppingBag, Store, User } from 'lucide-react';
 import { useStore } from '@/components/providers/store-provider';
 import { useDictionary } from '@/components/i18n/use-locale';
+import { ACCOUNT_OPEN_EVENT } from '@/components/account/account-tabs';
 import { cn } from '@/lib/utils';
 
 /*
@@ -19,8 +20,9 @@ import { cn } from '@/lib/utils';
   WhatsApp/Telegram buttons and the product page's buy bar above it. It is left out of checkout,
   where a way out of the payment step is a distraction rather than a help.
 
-  No useSearchParams here: in the storefront layout that would push every static page into
-  client rendering. "Wishlist" is told apart from "Account" by reading location after navigation.
+  Wishlist opens /wishlist, which needs no account. Account, pressed while the account page is
+  already open on one of its sections, takes it back to the overview without a server round
+  trip (ACCOUNT_OPEN_EVENT, components/account/account-tabs.ts).
 */
 
 const LANG_PREFIX = /^\/(es|fr|de|it)(?=\/|$)/;
@@ -29,11 +31,6 @@ export function TabBar() {
   const pathname = usePathname() ?? '/';
   const { cartCount, wishlist, setCartOpen } = useStore();
   const t = useDictionary();
-  const [onWishlist, setOnWishlist] = React.useState(false);
-
-  React.useEffect(() => {
-    setOnWishlist(new URLSearchParams(window.location.search).get('tab') === 'wishlist');
-  }, [pathname]);
 
   const path = pathname.replace(LANG_PREFIX, '') || '/';
   const lang = pathname.match(LANG_PREFIX)?.[0] ?? '';
@@ -51,6 +48,16 @@ export function TabBar() {
   if (hidden) return null;
 
   const onAccount = path.startsWith('/account') || path.startsWith('/auth');
+
+  /* On the account page, let the page switch to its overview itself, if it is listening. */
+  const openAccountOverview = (event: React.MouseEvent) => {
+    if (!path.startsWith('/account')) return;
+    const handled = !window.dispatchEvent(
+      new CustomEvent(ACCOUNT_OPEN_EVENT, { detail: 'dashboard', cancelable: true })
+    );
+    if (handled) event.preventDefault();
+  };
+
   const tabs = [
     { key: 'home', label: t.collection.home, href: lang || '/', icon: Home, active: path === '/' },
     {
@@ -63,9 +70,9 @@ export function TabBar() {
     {
       key: 'wishlist',
       label: t.footer.wishlist,
-      href: '/account?tab=wishlist',
+      href: '/wishlist',
       icon: Heart,
-      active: onAccount && onWishlist,
+      active: path.startsWith('/wishlist'),
       count: wishlist.length,
     },
     {
@@ -73,7 +80,7 @@ export function TabBar() {
       label: t.nav.account,
       href: '/account',
       icon: User,
-      active: onAccount && !onWishlist,
+      active: onAccount,
     },
   ];
   const cartLabel = t.nav.cart(cartCount).split(',')[0];
@@ -106,7 +113,7 @@ export function TabBar() {
             key={key}
             href={href}
             aria-current={active ? 'page' : undefined}
-            onClick={() => setOnWishlist(key === 'wishlist')}
+            onClick={key === 'account' ? openAccountOverview : undefined}
             className={item(active)}
           >
             <span className={rule(active)} aria-hidden="true" />

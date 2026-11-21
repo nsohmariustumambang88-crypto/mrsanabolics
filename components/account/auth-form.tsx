@@ -3,12 +3,24 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Mail, Lock, User, ArrowRight, Info } from 'lucide-react';
+import { Mail, Lock, User, ArrowLeft, ArrowRight, Eye, EyeOff, Info } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { MarbleBath } from '@/components/ebru/marble-bath';
-import { BullMark } from '@/components/brand/bull-mark';
+import { cn } from '@/lib/utils';
 
 type Mode = 'login' | 'register' | 'forgot';
+
+/*
+  The look follows the reference store the owner chose (20–21 November 2026): one switch at the
+  top for "Sign in / Create account", filled 48px fields with small bold labels, and a full-width
+  ink button, all at the 4px radius the product cards use. The header already carries the bull
+  and the name, so the form no longer repeats them; on a phone that repeat pushed the button
+  below the fold.
+*/
+
+/** The primary button of the account forms (this one and the password reset). */
+export const AUTH_BUTTON =
+  'flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-ink px-6 text-sm font-bold text-paper transition-colors hover:bg-ink-soft disabled:opacity-50';
 
 /*
   Sign in, and open an account.
@@ -29,7 +41,7 @@ type Mode = 'login' | 'register' | 'forgot';
 const COPY: Record<Mode, { title: string; body: string; action: string }> = {
   login: {
     title: 'Welcome back',
-    body: 'Sign in for your orders, saved compounds, and batch certificates.',
+    body: 'Sign in for your orders and batch certificates.',
     action: 'Sign in',
   },
   register: {
@@ -125,23 +137,48 @@ export function AuthForm() {
   }
 
   return (
-    <div className="grid min-h-[calc(100vh-8rem)] lg:grid-cols-2">
-      <div className="flex flex-col justify-center px-4 py-12 sm:px-6 sm:py-16 lg:px-16">
+    <div className="grid lg:min-h-[calc(100vh-8rem)] lg:grid-cols-2">
+      <div className="flex flex-col px-4 pb-12 pt-7 sm:px-6 sm:pt-14 lg:justify-center lg:px-16 lg:py-16">
         <div className="mx-auto w-full max-w-sm">
-          <Link href="/" className="inline-flex items-center gap-3">
-            <BullMark className="w-20 shrink-0" />
-            <span className="font-display text-lg font-semibold tracking-[-0.03em]">
-              MrsAnabolics
-            </span>
-          </Link>
+          {mode === 'forgot' ? (
+            <button
+              type="button"
+              onClick={() => switchMode('login')}
+              className="-ml-2 inline-flex h-10 items-center gap-1.5 rounded-lg px-2 text-sm font-bold transition-colors hover:bg-paper-sunk"
+            >
+              <ArrowLeft className="size-[1.125rem]" strokeWidth={2} />
+              Back to sign in
+            </button>
+          ) : (
+            /*
+              The two ways in, as one switch at the top (the reference store's pattern), rather
+              than a link at the foot of the form that a phone keyboard covers.
+            */
+            <div className="grid grid-cols-2 gap-1 rounded-lg bg-paper-sunk p-1" role="group" aria-label="Sign in or open an account">
+              {(['login', 'register'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  aria-pressed={mode === m}
+                  onClick={() => switchMode(m)}
+                  className={cn(
+                    'h-10 rounded-[3px] text-sm font-bold transition-colors',
+                    mode === m ? 'bg-paper text-ink shadow-[0_1px_3px_hsl(var(--ink)/0.14)]' : 'text-ink-soft hover:text-ink'
+                  )}
+                >
+                  {m === 'login' ? 'Sign in' : 'Create account'}
+                </button>
+              ))}
+            </div>
+          )}
 
-          <h1 className="mt-8 font-display text-3xl font-semibold tracking-[-0.035em] sm:mt-10">
+          <h1 className="mt-7 font-display text-3xl font-semibold leading-[1.1] tracking-[-0.035em] sm:mt-9">
             {copy.title}
           </h1>
-          <p className="mt-3 text-sm leading-relaxed text-ink-soft">{copy.body}</p>
+          <p className="mt-2 text-sm leading-relaxed text-ink-soft">{copy.body}</p>
 
           {mode === 'forgot' && sent && (
-            <div role="status" className="mt-6 border border-pigment-verdigris/40 bg-paper-sunk p-4 text-sm leading-relaxed">
+            <div role="status" className="mt-6 rounded-lg border border-pigment-verdigris/40 bg-paper-sunk p-4 text-sm leading-relaxed">
               <p className="flex gap-2.5 text-ink">
                 <Mail className="mt-0.5 h-4 w-4 shrink-0 text-pigment-verdigris" strokeWidth={1.75} />
                 <span>{sent}</span>
@@ -166,7 +203,7 @@ export function AuthForm() {
           )}
 
           {mode === 'forgot' && !sent && (
-            <p className="mt-6 flex gap-2.5 border border-rule bg-paper-sunk p-3.5 text-xs leading-relaxed text-ink-soft">
+            <p className="mt-6 flex gap-2.5 rounded-lg bg-paper-sunk p-3.5 text-xs leading-relaxed text-ink-soft">
               <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-pigment-indigo" strokeWidth={1.75} />
               <span>The link works once and expires after 60 minutes.</span>
             </p>
@@ -175,13 +212,13 @@ export function AuthForm() {
           {error && (
             <p
               role="alert"
-              className="mt-6 border border-pigment-madder/40 bg-paper-sunk p-3.5 text-xs leading-relaxed text-pigment-madder"
+              className="mt-6 rounded-lg border border-pigment-madder/40 bg-paper-sunk p-3.5 text-sm leading-relaxed text-pigment-madder"
             >
               {error}
             </p>
           )}
 
-          <form onSubmit={submit} className="mt-8 space-y-5">
+          <form onSubmit={submit} className="mt-7 space-y-4">
             {mode === 'register' && (
               <Field
                 id="name"
@@ -247,24 +284,20 @@ export function AuthForm() {
             )}
 
             {mode === 'login' && (
-              <div className="flex justify-end text-sm">
+              <div className="-mt-1 flex justify-end">
                 <button
                   type="button"
                   onClick={() => switchMode('forgot')}
-                  className="text-pigment-indigo underline underline-offset-4"
+                  className="py-1 text-sm font-semibold text-ink-soft underline underline-offset-4 transition-colors hover:text-ink"
                 >
                   Forgot password?
                 </button>
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={busy}
-              className="flex w-full items-center justify-center gap-2.5 rounded-full bg-pigment-indigo px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift disabled:opacity-50"
-            >
+            <button type="submit" disabled={busy} className={cn(AUTH_BUTTON, 'mt-2')}>
               {busy ? 'One moment…' : mode === 'forgot' && sent ? 'Send it again' : copy.action}
-              {!busy && <ArrowRight className="h-4 w-4" strokeWidth={1.75} />}
+              {!busy && <ArrowRight className="size-4" strokeWidth={2} />}
             </button>
 
             {mode === 'register' && (
@@ -274,39 +307,6 @@ export function AuthForm() {
               </p>
             )}
           </form>
-
-          <p className="mt-8 border-t border-rule pt-6 text-sm text-ink-soft">
-            {mode === 'login' && (
-              <>
-                No account yet?{' '}
-                <button
-                  onClick={() => switchMode('register')}
-                  className="font-medium text-pigment-indigo underline underline-offset-4"
-                >
-                  Open one
-                </button>
-              </>
-            )}
-            {mode === 'register' && (
-              <>
-                Already registered?{' '}
-                <button
-                  onClick={() => switchMode('login')}
-                  className="font-medium text-pigment-indigo underline underline-offset-4"
-                >
-                  Sign in
-                </button>
-              </>
-            )}
-            {mode === 'forgot' && (
-              <button
-                onClick={() => switchMode('login')}
-                className="font-medium text-pigment-indigo underline underline-offset-4"
-              >
-                Back to sign in
-              </button>
-            )}
-          </p>
         </div>
       </div>
 
@@ -338,17 +338,20 @@ export function Field({
   autoComplete: string;
   required?: boolean;
 }) {
+  const [shown, setShown] = React.useState(false);
+  const isPassword = type === 'password';
+
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium">
+      <label htmlFor={id} className="mb-1.5 block text-xs font-bold text-ink-soft">
         {label}
       </label>
-      <div className="relative mt-2 flex items-center border-b border-rule-strong focus-within:border-pigment-indigo">
-        <Icon className="h-4 w-4 shrink-0 text-ink-faint" strokeWidth={1.6} />
+      <div className="flex h-12 items-center gap-2.5 rounded-lg border border-transparent bg-paper-sunk pl-3.5 pr-1.5 transition-colors focus-within:border-ink">
+        <Icon className="size-[1.125rem] shrink-0 text-ink-faint" strokeWidth={1.75} aria-hidden="true" />
         <input
           id={id}
           name={id}
-          type={type}
+          type={isPassword && shown ? 'text' : type}
           inputMode={type === 'email' ? 'email' : undefined}
           /* Phones would otherwise capitalise the first letter of an address or a password. */
           autoCapitalize={type === 'email' || type === 'password' ? 'none' : undefined}
@@ -358,8 +361,24 @@ export function Field({
           onChange={onChange}
           placeholder={placeholder}
           autoComplete={autoComplete}
-          className="w-full bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-ink-faint"
+          /*
+            16px, not 14: iPhones zoom the whole page into any field set smaller than 16px when
+            it is tapped, and leave it zoomed after, which is the least app-like thing a form
+            can do on a phone.
+          */
+          className="h-full min-w-0 flex-1 bg-transparent pr-2 text-base outline-none placeholder:text-ink-faint"
         />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShown((s) => !s)}
+            aria-pressed={shown}
+            aria-label={shown ? 'Hide password' : 'Show password'}
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-[3px] text-ink-soft transition-colors hover:bg-paper hover:text-ink"
+          >
+            {shown ? <EyeOff className="size-[1.125rem]" strokeWidth={1.75} /> : <Eye className="size-[1.125rem]" strokeWidth={1.75} />}
+          </button>
+        )}
       </div>
     </div>
   );

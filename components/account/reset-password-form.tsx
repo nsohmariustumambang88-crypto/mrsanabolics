@@ -4,8 +4,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Lock, ArrowRight, Check } from 'lucide-react';
 import { MarbleBath } from '@/components/ebru/marble-bath';
-import { BullMark } from '@/components/brand/bull-mark';
-import { Field } from '@/components/account/auth-form';
+import { AUTH_BUTTON, Field } from '@/components/account/auth-form';
+import { cn } from '@/lib/utils';
 
 /*
   The page a reset email links to: choose a new password, then go straight into the account.
@@ -67,29 +67,21 @@ export function ResetPasswordForm({
   }
 
   return (
-    <div className="grid min-h-[calc(100vh-8rem)] lg:grid-cols-2">
-      <div className="flex flex-col justify-center px-4 py-12 sm:px-6 sm:py-16 lg:px-16">
+    <div className="grid lg:min-h-[calc(100vh-8rem)] lg:grid-cols-2">
+      <div className="flex flex-col px-4 pb-12 pt-8 sm:px-6 sm:pt-14 lg:justify-center lg:px-16 lg:py-16">
         <div className="mx-auto w-full max-w-sm">
-          <Link href="/" className="inline-flex items-center gap-3">
-            <BullMark className="w-20 shrink-0" />
-            <span className="font-display text-lg font-semibold tracking-[-0.03em]">MrsAnabolics</span>
-          </Link>
-
           {expired ? (
             <>
-              <h1 className="mt-8 font-display text-3xl font-semibold tracking-[-0.035em] sm:mt-10">
+              <h1 className="font-display text-3xl font-semibold leading-[1.1] tracking-[-0.035em]">
                 This link has expired
               </h1>
-              <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+              <p className="mt-2 text-sm leading-relaxed text-ink-soft">
                 Reset links work once and for 60 minutes. Ask for a new one and use the newest email
                 you receive.
               </p>
-              <Link
-                href="/auth?mode=forgot"
-                className="mt-8 flex w-full items-center justify-center gap-2.5 rounded-full bg-pigment-indigo px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift"
-              >
+              <Link href="/auth?mode=forgot" className={cn(AUTH_BUTTON, 'mt-7')}>
                 Send me a new link
-                <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
+                <ArrowRight className="size-4" strokeWidth={2} />
               </Link>
               <p className="mt-8 border-t border-rule pt-6 text-sm text-ink-soft">
                 Remembered it?{' '}
@@ -100,10 +92,10 @@ export function ResetPasswordForm({
             </>
           ) : (
             <>
-              <h1 className="mt-8 font-display text-3xl font-semibold tracking-[-0.035em] sm:mt-10">
+              <h1 className="font-display text-3xl font-semibold leading-[1.1] tracking-[-0.035em]">
                 Choose a new password
               </h1>
-              <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+              <p className="mt-2 text-sm leading-relaxed text-ink-soft">
                 Use at least 10 characters. Once it is saved you will be signed in, and any other
                 device signed in to your account will be signed out.
               </p>
@@ -111,7 +103,7 @@ export function ResetPasswordForm({
               {error && (
                 <p
                   role="alert"
-                  className="mt-6 border border-pigment-madder/40 bg-paper-sunk p-3.5 text-xs leading-relaxed text-pigment-madder"
+                  className="mt-6 rounded-lg border border-pigment-madder/40 bg-paper-sunk p-3.5 text-sm leading-relaxed text-pigment-madder"
                 >
                   {error}
                 </p>
@@ -123,7 +115,7 @@ export function ResetPasswordForm({
                   Password saved. Taking you to your account…
                 </p>
               ) : (
-                <form onSubmit={submit} className="mt-8 space-y-5">
+                <form onSubmit={submit} className="mt-7 space-y-4">
                   {/*
                     Which account this password is for. Password managers read a hidden
                     `username` field on a change-password form to update the right saved login
@@ -159,13 +151,9 @@ export function ResetPasswordForm({
                     onChange={(e) => setConfirm(e.target.value)}
                     autoComplete="new-password"
                   />
-                  <button
-                    type="submit"
-                    disabled={busy}
-                    className="flex w-full items-center justify-center gap-2.5 rounded-full bg-pigment-indigo px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-pigment-indigo-lift disabled:opacity-50"
-                  >
+                  <button type="submit" disabled={busy} className={cn(AUTH_BUTTON, 'mt-2')}>
                     {busy ? 'One moment…' : 'Save password and sign in'}
-                    {!busy && <ArrowRight className="h-4 w-4" strokeWidth={1.75} />}
+                    {!busy && <ArrowRight className="size-4" strokeWidth={2} />}
                   </button>
                 </form>
               )}

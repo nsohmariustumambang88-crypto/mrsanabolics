@@ -4,6 +4,8 @@ import * as React from 'react';
 import type { CartItem, ProductSummary } from '@/lib/types';
 
 type StoreState = {
+  /** False until the saved cart and wishlist have been read from this browser. */
+  hydrated: boolean;
   cart: CartItem[];
   wishlist: string[];
   cartOpen: boolean;
@@ -157,6 +159,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const cartSubtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   const value: StoreState = {
+    hydrated,
     cart,
     wishlist,
     cartOpen,

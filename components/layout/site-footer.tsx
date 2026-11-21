@@ -31,7 +31,7 @@ function linksFor(t: Dictionary, locale: Locale) {
     account: [
       { label: t.footer.yourAccount, href: '/account' },
       { label: t.footer.orders, href: '/account?tab=orders' },
-      { label: t.footer.wishlist, href: '/account?tab=wishlist' },
+      { label: t.footer.wishlist, href: '/wishlist' },
       { label: t.footer.signIn, href: '/auth' },
     ],
     /* The countries with a delivery page of their own, then every zone on one page. */

@@ -339,6 +339,29 @@ request ("make it a web app and desktop app").
 - **BullMark** sets `aspect-ratio: 320/292` because `h-auto` overrides its height attribute.
   Chrome's Issues panel reported the lazy bull as an image with no explicit dimensions, and
   after the fix it reports nothing on the home, shop and account pages.
+- **Sign-in and account pages** (21 November 2026, after the reference store's welcome and
+  profile screens). `/auth` has one "Sign in / Create account" switch at the top, filled 48px
+  fields, and a full-width ink button (`AUTH_BUTTON`, shared with the reset page). It no longer
+  repeats the bull and name under the header. **Form fields must be 16px** (`text-base`): an
+  iPhone zooms the page into any smaller field and leaves it zoomed. `/account` opens on an ink
+  panel with the person's initial, then the sections as rows on phones (a side list from `lg`).
+  **Sections switch in the browser**: everything they show arrives with the page, so a tap
+  calls `history.pushState(window.history.state, …)` and asks the server nothing. Copying
+  Next's state is what lets back and forward restore the page; Next 13.5 ignores a popstate
+  with null state. Because Next's router never sees that `?tab=`, the tab bar's Account button
+  cannot rely on its link there: it sends `ACCOUNT_OPEN_EVENT`
+  ([account-tabs.ts](components/account/account-tabs.ts)), the account view cancels it, and the
+  link's navigation is skipped. A signed-out visitor is sent to `/auth?next=/account?tab=…`.
+- **`/wishlist`** is the saved products, open to everybody (they live in the browser). It was
+  a tab of `/account`, which sent anyone signed out who pressed Wishlist to a sign-in form.
+  `/account?tab=wishlist` redirects there; robots.ts disallows it. `useStore().hydrated` says
+  when the browser's list has been read, so the page does not flash "Nothing saved yet".
+- **`size-*` comes from a plugin in tailwind.config.ts.** This project is on Tailwind 3.3,
+  which has no `size-*` utility, and the class silently generated nothing. Until 21 November
+  2026 the product card's stock dot rendered at 0×0, its heart lost its 32px square, and the
+  tab bar's icons fell back to lucide's 24px. Check a new utility exists in 3.3 before using it.
+  `node --env-file=.env .impeccable/account-shell-e2e.mjs` (with `BASE` set to a running
+  server) drives all of this at 390px and deletes its probe account.
 
 **Craft rules this build holds to** (from the Impeccable craft floor — violating them is a regression):
 - Chips and cards sitting over live pigment are **opaque**. Translucent ones lost legibility against the field.

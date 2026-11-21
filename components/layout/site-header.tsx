@@ -270,7 +270,7 @@ export function SiteHeader() {
           </button>
 
           <Link
-            href="/account?tab=wishlist"
+            href="/wishlist"
             className="relative hidden h-9 w-9 items-center justify-center rounded-sm text-ink-soft transition-colors hover:bg-paper-sunk hover:text-ink sm:flex"
             aria-label={t.nav.wishlist(wishlist.length)}
           >
