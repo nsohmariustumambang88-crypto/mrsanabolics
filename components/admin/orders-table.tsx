@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { OrderStatus } from '@prisma/client';
 import { bulkOrderAction, deleteOrder, type OrderBulkAction } from '@/app/admin/order-actions';
 import { formatPrice } from '@/lib/format';
+import { FRIDAY_LINE, isFridayCode } from '@/lib/offers/friday';
 import { cn } from '@/lib/utils';
 import { runAction } from '@/components/admin/run-action';
 
@@ -386,8 +387,8 @@ export function OrdersTable({ rows, pager }: { rows: OrderRow[]; pager: OrdersPa
                     {(row.discountCode || Number(row.discountTotal) > 0) && (
                       <div>
                         <dt>
-                          Discount
-                          {row.discountCode && (
+                          {isFridayCode(row.discountCode) ? FRIDAY_LINE : 'Discount'}
+                          {row.discountCode && !isFridayCode(row.discountCode) && (
                             <span className="wp-order-sub">{row.discountCode}</span>
                           )}
                         </dt>

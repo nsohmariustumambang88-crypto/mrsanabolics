@@ -138,6 +138,15 @@ export const SETTINGS: SettingDef[] = [
     group: 'commerce',
   },
   {
+    key: 'friday_offer_enabled',
+    label: 'Friday 5% off',
+    type: 'boolean',
+    /* On by default: the owner launched it on 20 November 2026. This is the kill switch. */
+    default: 'true',
+    help: 'Every Friday, from midnight New York time until midnight Los Angeles time, 5% comes off the products (not shipping) of every storefront order, if the total after it is still at least the $100 minimum. One discount per order: the bigger of this and any code. Untick to stop it: checkout, the banner and the cart stop showing it within about a minute.',
+    group: 'commerce',
+  },
+  {
     key: 'reviews_open',
     label: 'Accept new reviews',
     type: 'boolean',

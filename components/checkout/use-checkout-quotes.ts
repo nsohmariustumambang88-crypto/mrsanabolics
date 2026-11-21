@@ -154,6 +154,7 @@ export function useDiscountCode(subtotal: number, shipping: number): DiscountSta
           amount?: number;
           freeShipping?: boolean;
           message?: string;
+          applies?: 'code' | 'friday' | 'none';
         };
         if (ticket !== latest.current) return;
 
@@ -163,7 +164,8 @@ export function useDiscountCode(subtotal: number, shipping: number): DiscountSta
             amount: Number(data.amount) || 0,
             freeShipping: Boolean(data.freeShipping),
           });
-          setMessage(null);
+          /* Kept when Friday 5% beats the code: the shopper is told why the code is not used. */
+          setMessage(data.applies === 'friday' ? data.message ?? null : null);
         } else {
           setApplied(null);
           /*

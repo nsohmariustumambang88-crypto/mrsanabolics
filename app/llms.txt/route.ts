@@ -3,6 +3,8 @@ import { getBlogPosts, getBrands } from '@/lib/db/catalogue';
 import { getCategoryCollections } from '@/lib/db/collections';
 import { getDeliverySummary } from '@/lib/delivery/summary';
 import { MINIMUM_ORDER } from '@/lib/orders/minimum';
+import { FRIDAY_NAME, FRIDAY_PERCENT } from '@/lib/offers/friday';
+import { weeklyOfferSwitchOn } from '@/lib/offers/weekly-offer';
 import { SITE } from '@/lib/site';
 
 /*
@@ -27,7 +29,7 @@ const money = (n: number) => `$${n.toFixed(2)}`;
 
 export async function GET() {
   const base = SITE.url;
-  const [collections, brands, posts, zones, methods] = await Promise.all([
+  const [collections, brands, posts, zones, methods, weeklyOffer] = await Promise.all([
     getCategoryCollections(),
     getBrands(),
     getBlogPosts(),
@@ -35,6 +37,7 @@ export async function GET() {
     prisma.paymentMethod
       .findMany({ where: { enabled: true }, orderBy: { position: 'asc' }, select: { label: true } })
       .catch(() => []),
+    weeklyOfferSwitchOn(),
   ]);
 
   const listings = collections.reduce((n, c) => n + c.facts.listings, 0);
@@ -77,6 +80,11 @@ export async function GET() {
 
   push('', '## Ordering', '');
   push(`- Minimum order: ${money(MINIMUM_ORDER)}, measured on the total paid (goods, minus any discount, plus delivery).`);
+  if (weeklyOffer) {
+    push(
+      `- Weekly offer, ${FRIDAY_NAME}: every Friday from 00:00 New York time until 00:00 Los Angeles time, ${FRIDAY_PERCENT}% off the products (not delivery), applied automatically at checkout when the total after it is still ${money(MINIMUM_ORDER)} or more. One discount per order: the larger of it and any code.`
+    );
+  }
   if (methods.length) push(`- Payment: ${methods.map((m) => m.label).join(', ')}. Checkout charges US dollars.`);
   for (const z of zones) {
     const where = z.countries.length ? z.countries.join(', ') : 'everywhere else';

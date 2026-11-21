@@ -8,6 +8,7 @@ import { SearchDialog } from '@/components/search/search-dialog';
 import { ExitCapture } from '@/components/marketing/exit-capture';
 import { RestockAlertsModal } from '@/components/marketing/restock-alerts-modal';
 import { PromoPopup } from '@/components/marketing/promo-popup';
+import { FridayBanner } from '@/components/offers/friday-banner';
 import { advertisedDiscount, promotedCode } from '@/lib/discounts';
 import { VisitTracker } from '@/components/analytics/visit-tracker';
 import { TelegramWidget } from '@/components/chat/telegram-widget';
@@ -100,6 +101,8 @@ export default async function StorefrontLayout({
         </a>
 
         <div className="relative z-10 flex min-h-screen flex-col">
+          {/* Friday 5%: decided in the visitor's browser, so a cached page never shows it late. */}
+          <FridayBanner />
           <SiteHeader />
           <main id="main" className="flex-1">
             {children}

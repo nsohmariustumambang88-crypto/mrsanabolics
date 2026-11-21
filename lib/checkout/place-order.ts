@@ -31,6 +31,8 @@ export type CheckoutSubmitInput = {
   };
   shippingMethod?: string;
   discountCode?: string;
+  /** The summary showed Friday 5% applied. Not an amount: the server decides that itself. */
+  fridayExpected?: boolean;
   paymentMethod?: string;
   cryptoAsset?: string;
 };
@@ -158,6 +160,9 @@ export async function placeCheckoutOrder(input: CheckoutSubmitInput): Promise<Ch
       discountCode: input.discountCode,
       /* The shopper was shown this code applied; never charge them more than that silently. */
       requireDiscount: Boolean(input.discountCode),
+      /* Friday 5% is a storefront offer; createOrder decides it from the clock. */
+      weeklyOffer: true,
+      expectWeeklyOffer: input.fridayExpected === true,
       notes: formatCheckoutNote(method.key, input.cryptoAsset),
       payment: {
         label: method.label || PAYMENT_METHOD_LABEL[method.key] || method.key,

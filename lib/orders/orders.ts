@@ -12,6 +12,14 @@ import {
 } from '@/lib/email/resend';
 import { SITE } from '@/lib/site';
 import { deadlineEventSummary } from '@/lib/orders/payment-deadline';
+import {
+  FRIDAY_NAME,
+  orderMoney,
+  pickBestDiscount,
+  quoteFriday,
+  type CodeQuote,
+} from '@/lib/offers/friday';
+import { weeklyOfferActiveAt } from '@/lib/offers/weekly-offer';
 
 /* The order event that records the review request, so it is sent at most once per order. */
 const REVIEW_REQUEST_EVENT = 'Review request emailed.';
@@ -128,6 +136,18 @@ export type CreateOrderInput = {
    * admin leaves this off: an order taken by phone is recorded at full price instead.
    */
   requireDiscount?: boolean;
+  /**
+   * Storefront orders only: Friday 5% (lib/offers/friday.ts) is considered, as a clock rule
+   * decided at this moment. Staff-recorded orders leave it off: they record a sale agreed with a
+   * person, often after the fact, and its price must not depend on when staff typed it in.
+   */
+  weeklyOffer?: boolean;
+  /**
+   * The checkout showed Friday 5% applied. If the server no longer applies it (the window closed
+   * or the switch went off between the quote and the click), the order is refused with the new
+   * total rather than created at a price the shopper was not shown.
+   */
+  expectWeeklyOffer?: boolean;
   notes?: string | null;
   actorEmail?: string | null;
   /**
@@ -202,8 +222,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     to record what they bought because a code lapsed between the quote and the write is the
     wrong trade. The order is recorded at full price and the code simply is not applied.
   */
-  let discountCode: string | null = null;
-  let discountTotal = 0;
+  let codeQuote: CodeQuote | null = null;
   let redeemable: { discountId: string; amount: number } | null = null;
 
   if (input.discountCode) {
@@ -216,9 +235,11 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     });
 
     if (evaluated.ok) {
-      discountCode = evaluated.discount.code;
-      discountTotal = evaluated.amount;
-      if (evaluated.freeShipping) shippingCost = 0;
+      codeQuote = {
+        code: evaluated.discount.code,
+        amount: evaluated.amount,
+        freeShipping: evaluated.freeShipping,
+      };
       redeemable = { discountId: evaluated.discount.id, amount: evaluated.amount };
     } else if (input.requireDiscount) {
       return { ok: false, error: reasonMessage(evaluated.reason) };
@@ -226,11 +247,34 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   }
 
   /*
-    `discountTotal` is struck on products plus shipping, so it is taken off the whole. It is the
-    snapshot on the order, and subtotal + shipping − discountTotal = total always holds.
-    Never below zero, whatever a percentage and a minimum conspire to produce.
+    Friday 5%, decided now, by the server's clock and the kill switch, never by the browser.
+    Then ONE discount: the larger of the code and Friday 5% (pickBestDiscount, the same function
+    the checkout and /api/discount/validate run). An order created inside the window keeps it
+    however late it is paid, because the total is stored here; one created outside never has it.
   */
-  const total = Math.round(Math.max(0, subtotal + shippingCost - discountTotal) * 100) / 100;
+  const fridayActive = input.weeklyOffer ? await weeklyOfferActiveAt(new Date()) : false;
+  const friday = quoteFriday({ active: fridayActive, subtotal, shipping: shippingCost });
+  const pick = pickBestDiscount({ code: codeQuote, friday, shipping: shippingCost });
+  /* A code that lost to Friday 5% is not used, so it is not counted as used either. */
+  if (pick.kind !== 'code') redeemable = null;
+
+  /*
+    `discountTotal` is the snapshot on the order, and subtotal + shipping − discountTotal = total
+    always holds. Never below zero, whatever a percentage and a minimum conspire to produce.
+  */
+  const figures = orderMoney({ subtotal, shipping: shippingCost, pick });
+  shippingCost = figures.shipping;
+  const discountCode = figures.discountCode;
+  const discountTotal = figures.discountTotal;
+  const total = figures.total;
+
+  if (input.expectWeeklyOffer && pick.kind === 'none') {
+    return {
+      ok: false,
+      error: `${FRIDAY_NAME} is not running now, so your total is $${total.toFixed(2)}. Check the summary and press Proceed to payment again.`,
+    };
+  }
+
   if (total < MINIMUM_ORDER) {
     return {
       ok: false,

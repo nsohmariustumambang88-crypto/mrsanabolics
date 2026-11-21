@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { evaluateDiscount, reasonMessage } from '@/lib/discounts';
 import { clientIp } from '@/lib/ip-hash';
 import { formatPrice } from '@/lib/format';
+import { FRIDAY_NAME, pickBestDiscount, quoteFriday } from '@/lib/offers/friday';
+import { weeklyOfferActiveAt } from '@/lib/offers/weekly-offer';
 
 /*
   Check a discount code against a basket.
@@ -47,6 +49,11 @@ type ValidateResponse = {
   amount: number;
   freeShipping: boolean;
   message: string;
+  /**
+   * Which single discount createOrder would apply to this basket: the code, or Friday 5% when it
+   * is running and saves at least as much (pickBestDiscount). One discount per order.
+   */
+  applies?: 'code' | 'friday' | 'none';
 };
 
 function reply(body: ValidateResponse, status = 200) {
@@ -118,7 +125,11 @@ export async function POST(request: Request) {
   const shippingRaw = typeof body?.shipping === 'number' ? body.shipping : 0;
   const shipping = Number.isFinite(shippingRaw) && shippingRaw > 0 ? shippingRaw : 0;
 
-  const result = await evaluateDiscount({ code, subtotal: subtotalRaw, shipping });
+  const [result, fridayActive] = await Promise.all([
+    evaluateDiscount({ code, subtotal: subtotalRaw, shipping }),
+    weeklyOfferActiveAt(new Date()),
+  ]);
+  const friday = quoteFriday({ active: fridayActive, subtotal: subtotalRaw, shipping });
 
   if (!result.ok) {
     /*
@@ -129,19 +140,35 @@ export async function POST(request: Request) {
       result.reason === 'below-minimum' && result.minimum !== undefined
         ? `This code needs ${formatPrice(result.minimum)} or more of products in your basket, before shipping.`
         : reasonMessage(result.reason);
-    return reply({ valid: false, amount: 0, freeShipping: false, message });
+    return reply({
+      valid: false,
+      amount: 0,
+      freeShipping: false,
+      message,
+      applies: friday.qualifies ? 'friday' : 'none',
+    });
   }
 
-  const message = result.freeShipping
-    ? result.amount > 0
-      ? `${formatPrice(result.amount)} off and free shipping applied.`
-      : 'Free shipping applied.'
-    : `${formatPrice(result.amount)} off applied.`;
+  const pick = pickBestDiscount({
+    code: { code: result.discount.code, amount: result.amount, freeShipping: result.freeShipping },
+    friday,
+    shipping,
+  });
+
+  const message =
+    pick.kind === 'friday'
+      ? `${FRIDAY_NAME} takes off ${formatPrice(friday.amount)} today, at least as much as this code, so ${FRIDAY_NAME} is applied instead. One discount per order.`
+      : result.freeShipping
+        ? result.amount > 0
+          ? `${formatPrice(result.amount)} off and free shipping applied.`
+          : 'Free shipping applied.'
+        : `${formatPrice(result.amount)} off applied.`;
 
   return reply({
     valid: true,
     amount: result.amount,
     freeShipping: result.freeShipping,
     message,
+    applies: pick.kind,
   });
 }

@@ -130,6 +130,15 @@ export const de: Dictionary = {
     remove: (name) => `${name} aus dem Warenkorb entfernen`,
   },
 
+  offer: {
+    banner: 'Friday 5%: heute 5 % Rabatt auf Ihre Produkte, automatisch an der Kasse abgezogen, bis Mitternacht (pazifische Zeit).',
+    bannerLink: 'So funktioniert es',
+    dismiss: 'Schließen',
+    cartLine: 'Friday 5% Rabatt',
+    cartNote: (minimum) =>
+      `Wird an der Kasse abgezogen, wenn Ihre Summe danach, inklusive Versand, mindestens ${minimum} beträgt. Ein Rabatt pro Bestellung.`,
+  },
+
   section: {
     viewAll: 'Alle ansehen',
   },

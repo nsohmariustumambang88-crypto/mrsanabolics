@@ -130,6 +130,15 @@ export const es: Dictionary = {
     remove: (name) => `Quitar ${name} de la cesta`,
   },
 
+  offer: {
+    banner: 'Friday 5%: hoy, un 5 % de descuento en sus productos, aplicado automáticamente al pagar, hasta la medianoche (hora del Pacífico).',
+    bannerLink: 'Cómo funciona',
+    dismiss: 'Cerrar',
+    cartLine: 'Descuento Friday 5%',
+    cartNote: (minimum) =>
+      `Se descuenta al pagar si el total después del descuento, con el envío incluido, es de ${minimum} o más. Un descuento por pedido.`,
+  },
+
   section: {
     viewAll: 'Ver todo',
   },

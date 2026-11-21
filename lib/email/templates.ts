@@ -2,6 +2,7 @@
  * Email template utilities for React Email components.
  * Provides HTML rendering for emails sent via Resend.
  */
+import { discountLabel } from '@/lib/offers/friday';
 
 export const emailStyles = {
   container: {
@@ -111,7 +112,8 @@ export function renderOrderConfirmationHTML(
   const totalsHTML = [
     row('Subtotal', money(totals.subtotal)),
     totals.discountTotal && totals.discountTotal > 0
-      ? row(`Discount${totals.discountCode ? ` (${totals.discountCode})` : ''}`, `-${money(totals.discountTotal)}`)
+      ? /* "Friday 5% off" for the weekly offer, "Discount (CODE)" for a code. */
+        row(escapeHTML(discountLabel(totals.discountCode)), `-${money(totals.discountTotal)}`)
       : '',
     row(`Shipping${totals.shippingMethod ? ` (${totals.shippingMethod})` : ''}`, money(totals.shipping)),
     row('Total', money(totals.total), true),

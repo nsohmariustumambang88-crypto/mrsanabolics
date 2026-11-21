@@ -9,6 +9,7 @@ import {
 import { getListedPaymentMethodRows, storeFaqs } from '@/lib/catalogue/buying-facts';
 import { getFaqs } from '@/lib/db/catalogue';
 import { getDeliverySummary } from '@/lib/delivery/summary';
+import { weeklyOfferSwitchOn } from '@/lib/offers/weekly-offer';
 import { SITE } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -21,13 +22,14 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default async function FaqPage() {
-  const [written, zones, paymentMethods] = await Promise.all([
+  const [written, zones, paymentMethods, weeklyOffer] = await Promise.all([
     getFaqs(),
     getDeliverySummary(),
     getListedPaymentMethodRows(),
+    weeklyOfferSwitchOn(),
   ]);
-  /* Payment, delivery and the minimum are read from what checkout uses; the rest is written. */
-  const faqs = [...storeFaqs({ zones, paymentMethods }), ...written];
+  /* Payment, delivery, the minimum and Friday 5% are read from what checkout uses; the rest is written. */
+  const faqs = [...storeFaqs({ zones, paymentMethods, weeklyOffer }), ...written];
 
   const schema = {
     '@context': 'https://schema.org',

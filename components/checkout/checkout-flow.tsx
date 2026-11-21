@@ -34,6 +34,8 @@ import { CONSENT } from '@/lib/marketing/consent';
 import { cn } from '@/lib/utils';
 import type { AdvertisedDiscount, CartItem } from '@/lib/types';
 import { MINIMUM_ORDER } from '@/lib/orders/minimum';
+import { FRIDAY_LINE, FRIDAY_NAME, orderMoney, pickBestDiscount, quoteFriday } from '@/lib/offers/friday';
+import { useWeeklyOffer } from '@/components/offers/use-weekly-offer';
 import { checkPhone, PHONE_PLACEHOLDER } from '@/lib/checkout/phone';
 import { submitCheckout, type CheckoutSubmitInput } from '@/app/checkout/checkout-actions';
 import { WhatsAppButton } from '@/components/checkout/payment-help';
@@ -248,12 +250,30 @@ export function CheckoutFlow({
   /* A code comes off products AND shipping, so the quote needs both. */
   const discount = useDiscountCode(cartSubtotal, shippingBase);
 
+  /*
+    Friday 5% and the one-discount rule. Whether the offer is running is the SERVER's answer
+    (/api/offer: its clock and the kill switch), not this browser's clock, because the total here
+    must be the total createOrder stores. The arithmetic is lib/offers/friday.ts, the same
+    functions createOrder and /api/discount/validate run: 5% of the goods, only if goods − 5% +
+    shipping still reaches the minimum, and only the larger of it and an accepted code.
+  */
+  const weekly = useWeeklyOffer({ gateOnClock: false });
+  const friday = quoteFriday({ active: weekly.active, subtotal: cartSubtotal, shipping: shippingBase });
+  const best = pickBestDiscount({
+    code: discount.applied
+      ? { code: discount.applied.code, amount: discount.applied.amount, freeShipping: discount.applied.freeShipping }
+      : null,
+    friday,
+    shipping: shippingBase,
+  });
+  const figures = orderMoney({ subtotal: cartSubtotal, shipping: shippingBase, pick: best });
+
   /* A free-shipping code zeroes the carriage, not the goods. */
-  const shipping = discount.applied?.freeShipping ? 0 : shippingBase;
-  const discountAmount = Math.min(discount.applied?.amount ?? 0, cartSubtotal + shipping);
+  const shipping = figures.shipping;
+  const discountAmount = figures.discountTotal;
 
   /* The same sum createOrder writes: products + shipping − discount. */
-  const total = Math.max(0, cartSubtotal + shipping - discountAmount);
+  const total = figures.total;
 
   /*
     The promotion checkbox. Shown while the code is live (the end date is re-checked here, as
@@ -310,8 +330,11 @@ export function CheckoutFlow({
       city: shippingCity,
     },
     shippingMethod: chosenRate?.name,
-    /* Only a code the server accepted for this basket; a half-typed one is not sent. */
-    discountCode: discount.applied?.code,
+    /* Only a code the server accepted for this basket AND that beats Friday 5%; a half-typed
+       one, or one Friday 5% beat, is not sent. One discount per order. */
+    discountCode: best.kind === 'code' ? discount.applied?.code : undefined,
+    /* Not an amount: it lets the server refuse rather than charge more than was shown. */
+    fridayExpected: best.kind === 'friday',
     paymentMethod,
   });
 
@@ -352,6 +375,8 @@ export function CheckoutFlow({
           window.location.assign(paid.paymentUrl);
         } else {
           setSubmitError(paid.error);
+          /* The server may have refused because Friday 5% ended: ask it again. */
+          weekly.refresh();
         }
         return;
       }
@@ -375,6 +400,7 @@ export function CheckoutFlow({
         setStep(STEPS.length - 1);
       } else {
         setSubmitError(result.error);
+        weekly.refresh();
       }
     } catch (error) {
       setSubmitError('Failed to place order. Please try again.');
@@ -903,8 +929,14 @@ export function CheckoutFlow({
                   {shipping === 0 ? 'Free' : formatPrice(shipping)}
                 </dd>
               </div>
+              {best.kind === 'friday' && discountAmount > 0 && (
+                <div className="flex justify-between" data-friday-line="">
+                  <dt className="text-ink-soft">{FRIDAY_LINE}</dt>
+                  <dd className="tabular text-pigment-verdigris">−{formatPrice(discountAmount)}</dd>
+                </div>
+              )}
               {/* After shipping, because the code is struck on products and shipping together. */}
-              {discountAmount > 0 && discount.applied && (
+              {best.kind === 'code' && discountAmount > 0 && discount.applied && (
                 <div className="flex justify-between">
                   <dt className="text-ink-soft">
                     Discount
@@ -929,6 +961,29 @@ export function CheckoutFlow({
               <p role="status" className="mt-3 text-xs leading-relaxed text-pigment-madder">
                 The minimum order is {formatPrice(MINIMUM_ORDER)}, including shipping and after
                 any discount. Add {formatPrice(MINIMUM_ORDER - total)} more to place this order.
+              </p>
+            )}
+
+            {/*
+              Friday 5% is running but this basket does not reach the minimum with it, so the order
+              goes through at full price. Say how much more would get it. Not shown while a code
+              that beats it is applied, nor while the order is under the minimum anyway.
+            */}
+            {cartCount > 0 &&
+              friday.active &&
+              !friday.qualifies &&
+              friday.shortfall > 0 &&
+              best.kind !== 'code' &&
+              total >= MINIMUM_ORDER && (
+                <p role="status" className="mt-3 text-xs leading-relaxed text-ink-soft" data-friday-shortfall="">
+                  Add {formatPrice(friday.shortfall)} more in products to get {FRIDAY_LINE}. It
+                  applies when your total after it, shipping included, is still{' '}
+                  {formatPrice(MINIMUM_ORDER)} or more.
+                </p>
+              )}
+            {best.kind === 'code' && friday.qualifies && (
+              <p className="mt-3 text-xs leading-relaxed text-ink-soft">
+                Your code saves more than {FRIDAY_NAME}, so the code is used. One discount per order.
               </p>
             )}
 

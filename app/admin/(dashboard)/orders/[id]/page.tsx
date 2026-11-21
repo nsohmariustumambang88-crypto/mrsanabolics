@@ -5,6 +5,7 @@ import { addressLines } from '@/lib/orders/address';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { formatPrice } from '@/lib/format';
+import { discountLabel } from '@/lib/offers/friday';
 import { WpPostbox, WpStaticNotice } from '@/components/admin/wp-ui';
 import { paymentMethodFromNotes } from '@/lib/checkout/order-notes';
 import { signedImageUrl, uploadsConfigured } from '@/lib/cloudinary-server';
@@ -174,7 +175,7 @@ export default async function AdminOrderPage({ params }: { params: { id: string 
               </div>
               {Number(order.discountTotal) > 0 && (
                 <div className="flex justify-between py-1">
-                  <dt>Discount{order.discountCode ? ` (${order.discountCode})` : ''}</dt>
+                  <dt>{discountLabel(order.discountCode)}</dt>
                   <dd className="wp-num">−{formatPrice(Number(order.discountTotal))}</dd>
                 </div>
               )}

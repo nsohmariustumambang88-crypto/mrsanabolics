@@ -18,6 +18,8 @@ import { useDictionary } from '@/components/i18n/use-locale';
 import { ApproxPrice, CurrencyNote } from '@/components/currency/approx-price';
 import { matchZone } from '@/lib/delivery/match';
 import { MINIMUM_ORDER } from '@/lib/orders/minimum';
+import { fridayAmount } from '@/lib/offers/friday';
+import { useWeeklyOffer } from '@/components/offers/use-weekly-offer';
 
 /*
   The free-delivery line follows the visitor's country.
@@ -80,6 +82,10 @@ export function CartDrawer() {
   const remaining = free.freeOver !== null ? Math.max(0, free.freeOver - cartSubtotal) : 0;
   const progress = free.freeOver !== null ? Math.min(100, (cartSubtotal / free.freeOver) * 100) : 0;
   const countryName = free.country === 'OTHER' ? t.delivery.otherCountries : t.country.names[free.country];
+  /* Friday 5%: shown while the visitor's clock and the server agree it is running. The amount is
+     5% of these goods; checkout decides with shipping and any code, and says so. */
+  const weekly = useWeeklyOffer({ gateOnClock: true });
+  const fridayOff = weekly.active ? fridayAmount(cartSubtotal) : 0;
 
   return (
     <Sheet open={cartOpen} onOpenChange={setCartOpen}>
@@ -237,6 +243,17 @@ export function CartDrawer() {
               <p className="mt-0.5 text-right">
                 <ApproxPrice usd={cartSubtotal} className="text-xs" />
               </p>
+              {fridayOff > 0 && (
+                <div className="mt-2" data-friday-line="">
+                  <div className="flex items-baseline justify-between text-sm">
+                    <span className="text-ink-soft">{t.offer.cartLine}</span>
+                    <span className="tabular text-pigment-verdigris">−{formatPrice(fridayOff)}</span>
+                  </div>
+                  <p className="mt-0.5 text-xs leading-relaxed text-ink-faint">
+                    {t.offer.cartNote(formatPrice(MINIMUM_ORDER))}
+                  </p>
+                </div>
+              )}
               <p className="mt-1.5 text-xs text-ink-faint">
                 {t.cart.shippingNote}
               </p>

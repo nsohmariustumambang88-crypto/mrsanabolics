@@ -4,6 +4,7 @@ import { cache } from 'react';
 import { prisma } from '@/lib/prisma';
 import { formatPrice, formatPriceShort } from '@/lib/format';
 import { MINIMUM_ORDER } from '@/lib/orders/minimum';
+import { FRIDAY_NAME, FRIDAY_PERCENT } from '@/lib/offers/friday';
 import type { ZoneSummary } from '@/lib/delivery/summary';
 import type { Product } from '@/lib/types';
 
@@ -117,7 +118,12 @@ export function buyingFaqs(
   and Litecoin, none of which checkout takes. The questions that only a person can answer stay
   in that file; anything the till decides is computed here.
 */
-export function storeFaqs(opts: { zones: ZoneSummary[]; paymentMethods: ListedPaymentMethod[] }): BuyingFaq[] {
+export function storeFaqs(opts: {
+  zones: ZoneSummary[];
+  paymentMethods: ListedPaymentMethod[];
+  /** Friday 5% is switched on (the `friday_offer_enabled` setting). */
+  weeklyOffer?: boolean;
+}): BuyingFaq[] {
   const faqs: BuyingFaq[] = [];
 
   if (opts.paymentMethods.length) {
@@ -157,6 +163,13 @@ export function storeFaqs(opts: { zones: ZoneSummary[]; paymentMethods: ListedPa
     question: 'Is there a minimum order?',
     answer: `Yes, ${formatPriceShort(MINIMUM_ORDER)}. It is counted on the total you pay, including delivery and after any discount code.`,
   });
+
+  if (opts.weeklyOffer) {
+    faqs.push({
+      question: 'Is there a weekly offer?',
+      answer: `Yes: ${FRIDAY_NAME}. Every Friday, from midnight New York time until midnight Los Angeles time, ${FRIDAY_PERCENT}% comes off your products (not delivery) automatically at checkout, if your total after it, delivery included, is still ${formatPriceShort(MINIMUM_ORDER)} or more. It is not added to a discount code: one discount per order, the larger of the two.`,
+    });
+  }
 
   return faqs;
 }

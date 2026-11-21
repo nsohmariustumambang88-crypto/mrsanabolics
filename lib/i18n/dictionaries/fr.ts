@@ -130,6 +130,15 @@ export const fr: Dictionary = {
     remove: (name) => `Retirer ${name} du panier`,
   },
 
+  offer: {
+    banner: 'Friday 5% : aujourd’hui, 5 % de remise sur vos produits, appliquée automatiquement au paiement, jusqu’à minuit (heure du Pacifique).',
+    bannerLink: 'Comment ça marche',
+    dismiss: 'Fermer',
+    cartLine: 'Remise Friday 5%',
+    cartNote: (minimum) =>
+      `Déduite au paiement si le total après remise, livraison comprise, atteint ${minimum} ou plus. Une seule remise par commande.`,
+  },
+
   section: {
     viewAll: 'Tout voir',
   },

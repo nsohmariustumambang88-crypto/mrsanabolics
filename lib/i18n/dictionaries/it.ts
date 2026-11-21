@@ -130,6 +130,15 @@ export const it: Dictionary = {
     remove: (name) => `Rimuovi ${name} dal carrello`,
   },
 
+  offer: {
+    banner: 'Friday 5%: oggi il 5% di sconto sui tuoi prodotti, applicato automaticamente alla cassa, fino a mezzanotte (ora del Pacifico).',
+    bannerLink: 'Come funziona',
+    dismiss: 'Chiudi',
+    cartLine: 'Sconto Friday 5%',
+    cartNote: (minimum) =>
+      `Applicato alla cassa se il totale dopo lo sconto, spedizione inclusa, è di ${minimum} o più. Uno sconto per ordine.`,
+  },
+
   section: {
     viewAll: 'Vedi tutto',
   },

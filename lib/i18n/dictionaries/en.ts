@@ -138,6 +138,16 @@ export const en = {
     remove: (name: string) => `Remove ${name} from cart`,
   },
 
+  /** Friday 5% (lib/offers/friday.ts): the banner and the cart line. The name is never translated. */
+  offer: {
+    banner: 'Friday 5%: 5% off your products today, taken off automatically at checkout until midnight Pacific time.',
+    bannerLink: 'How it works',
+    dismiss: 'Dismiss',
+    cartLine: 'Friday 5% off',
+    cartNote: (minimum: string) =>
+      `Taken off at checkout when your total after it, shipping included, is ${minimum} or more. One discount per order.`,
+  },
+
   section: {
     viewAll: 'View all',
   },
