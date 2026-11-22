@@ -5,7 +5,17 @@
 */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { JOBS, excludedFromMarketing, maskEmail, periodOf } from '../lib/automation/jobs';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import {
+  JOBS,
+  SCREEN_ONLY_SETTING_KEYS,
+  STALE_AFTER_MS,
+  excludedFromMarketing,
+  isStaleRun,
+  maskEmail,
+  periodOf,
+} from '../lib/automation/jobs';
 import {
   UNSUBSCRIBE_PLACEHOLDER,
   asOwnerCopy,
@@ -103,4 +113,56 @@ test('postal address and owner copy are added at send time', () => {
 
 test('maskEmail', () => {
   assert.equal(maskEmail('customer@gmail.com'), 'c***@gmail.com');
+});
+
+test('vercel.json schedules exactly the five jobs, daily at most, within Hobby limits', () => {
+  const config = JSON.parse(readFileSync(join(__dirname, '..', 'vercel.json'), 'utf8')) as {
+    crons: { path: string; schedule: string }[];
+  };
+  /* Hobby: up to 100 cron jobs per project, each at most once a day (vercel.com/docs, 2026). */
+  assert.ok(config.crons.length <= 100);
+  assert.deepEqual(
+    [...config.crons].map((c) => `${c.path} ${c.schedule}`).sort(),
+    JOBS.map((j) => `${j.path} ${j.cron}`).sort()
+  );
+  for (const c of config.crons) {
+    const [min, hour] = c.schedule.split(' ');
+    assert.match(min, /^\d+$/, `${c.path}: a fixed minute, or it runs more than once a day`);
+    assert.match(hour, /^\d+$/, `${c.path}: a fixed hour, or it runs more than once a day`);
+  }
+});
+
+test('switches, approvals and the master pause are written only by the Automation screen', () => {
+  assert.ok(SCREEN_ONLY_SETTING_KEYS.has('automation_paused'));
+  for (const j of JOBS) {
+    assert.ok(SCREEN_ONLY_SETTING_KEYS.has(j.enabledKey), j.enabledKey);
+    assert.ok(SCREEN_ONLY_SETTING_KEYS.has(j.approvedKey), j.approvedKey);
+  }
+  /* The shared limits stay editable in the form on that screen. */
+  for (const k of ['automation_max_per_run', 'automation_copy_to', 'automation_report_to', 'postal_address']) {
+    assert.equal(SCREEN_ONLY_SETTING_KEYS.has(k), false, k);
+  }
+});
+
+test('a run left RUNNING by a dead process is stale after 15 minutes; finished runs never are', () => {
+  const now = new Date('2026-11-22T15:00:00Z');
+  const ago = (ms: number) => new Date(now.getTime() - ms);
+  assert.equal(STALE_AFTER_MS, 15 * 60_000);
+  assert.equal(isStaleRun({ status: 'RUNNING', startedAt: ago(60_000) }, now), false);
+  assert.equal(isStaleRun({ status: 'RUNNING', startedAt: ago(16 * 60_000) }, now), true);
+  for (const status of ['OK', 'PARTIAL', 'FAILED', 'SKIPPED']) {
+    assert.equal(isStaleRun({ status, startedAt: ago(86_400_000) }, now), false, status);
+  }
+});
+
+/*
+  The versions in the subjects of the tests Marius was sent on 21 November 2026 (all delivered).
+  A template change changes its version, and the job then stops sending until he approves the new
+  one after a fresh test. Update this pin only together with that test, so a template can never
+  change silently.
+*/
+test('template versions are the ones the owner was sent as tests', () => {
+  assert.equal(templateVersion('unpaid-orders'), 'u-3955e22e');
+  assert.equal(templateVersion('basket-reminders'), 'b-eecf9518');
+  assert.equal(templateVersion('welcome'), 'w-5a5947f4');
 });
