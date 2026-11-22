@@ -1,15 +1,14 @@
 import { Resend } from 'resend';
 import { SITE } from '@/lib/site';
+import { getSettingsSafe } from '@/lib/settings';
+import { withPostalAddress } from '@/lib/automation/templates';
 import {
   renderOrderConfirmationHTML,
   renderAdminNotificationHTML,
-  renderNewsletterHTML,
   renderPasswordResetHTML,
   renderPasswordChangedHTML,
   renderReviewRequestHTML,
   renderWelcomeEmail1,
-  renderWelcomeEmail2,
-  renderWelcomeEmail3,
   type OrderEmailOffer,
   type OrderEmailPayment,
   type OrderEmailTotals,
@@ -139,29 +138,13 @@ export async function sendPaymentProofNotification(
   if (error) throw new Error(`Resend refused the screenshot notification: ${error.message}`);
 }
 
-export async function sendNewsletterCampaign(
-  to: string | string[],
-  subject: string,
-  message: string,
-  unsubscribeToken: string
-) {
-  const resend = getResend();
-  const unsubscribeLink = `${SITE.url}/unsubscribe?token=${unsubscribeToken}`;
-
-  const recipients = Array.isArray(to) ? to : [to];
-
-  return Promise.all(
-    recipients.map((email) =>
-      resend.emails.send({
-        from: FROM_EMAIL,
-    replyTo: SUPPORT_EMAIL,
-        to: email,
-        subject,
-        html: renderNewsletterHTML(message, unsubscribeLink),
-      })
-    )
-  );
-}
+/*
+  Campaigns, welcome emails 2 and 3 and basket reminders are NOT sent from here. They go through
+  the automation's sender (lib/automation/sender.ts): each subscriber's own unsubscribe token,
+  one-click List-Unsubscribe, consent re-checked at send time, the postal address, one email per
+  person per message. The old senders that lived here (one unsubscribe token for every recipient,
+  no consent check, refusals counted as sent) were removed on 22 November 2026.
+*/
 
 /*
   The two account emails. Resend's client RESOLVES with `{ error }` on an API refusal rather than
@@ -191,19 +174,6 @@ export async function sendReviewRequestEmail(
     html: renderReviewRequestHTML(orderRef, items),
   });
   if (error) throw new Error(`Resend refused the review request email: ${error.message}`);
-}
-
-/* The basket reminder (lib/basket/reminders.ts). Marketing mail, so it carries List-Unsubscribe. */
-export async function sendBasketReminderEmail(to: string, subject: string, html: string, unsubscribeUrl: string) {
-  const { error } = await getResend().emails.send({
-    from: `MrsAnabolics <${FROM_EMAIL}>`,
-    replyTo: SUPPORT_EMAIL,
-    to,
-    subject,
-    html,
-    headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>` },
-  });
-  if (error) throw new Error(`Resend refused the basket reminder: ${error.message}`);
 }
 
 export async function sendPasswordChangedEmail(to: string, signInLink: string) {
@@ -285,41 +255,29 @@ export async function sendCustomerNotification(to: string, subject: string, mess
   });
 }
 
+/*
+  Welcome email 1, sent at sign-up (lib/email/welcome-sequence.ts). Marketing mail: the
+  subscriber's own unsubscribe link, one-click List-Unsubscribe, and the postal address once one
+  is entered (Admin → Email). It is not blocked while the address is empty, because it went out
+  before the automation existed and stopping it would also stop emails 2 and 3; the owner was told
+  on 22 November 2026 that it lacks the address until he enters a real one.
+*/
 export async function sendWelcomeEmail1(to: string, unsubscribeToken: string) {
   const resend = getResend();
-  const unsubscribeLink = `${SITE.url}/unsubscribe?token=${unsubscribeToken}`;
+  const token = encodeURIComponent(unsubscribeToken);
+  const unsubscribeLink = `${SITE.url}/unsubscribe?token=${token}`;
+  const postal = ((await getSettingsSafe()).postal_address ?? '').trim();
+  const html = renderWelcomeEmail1(unsubscribeLink);
 
   return resend.emails.send({
     from: FROM_EMAIL,
     replyTo: SUPPORT_EMAIL,
     to,
     subject: 'What you need to know before buying—a safety guide',
-    html: renderWelcomeEmail1(unsubscribeLink),
-  });
-}
-
-export async function sendWelcomeEmail2(to: string, unsubscribeToken: string) {
-  const resend = getResend();
-  const unsubscribeLink = `${SITE.url}/unsubscribe?token=${unsubscribeToken}`;
-
-  return resend.emails.send({
-    from: FROM_EMAIL,
-    replyTo: SUPPORT_EMAIL,
-    to,
-    subject: '3 things most people get wrong about quality',
-    html: renderWelcomeEmail2(unsubscribeLink),
-  });
-}
-
-export async function sendWelcomeEmail3(to: string, unsubscribeToken: string) {
-  const resend = getResend();
-  const unsubscribeLink = `${SITE.url}/unsubscribe?token=${unsubscribeToken}`;
-
-  return resend.emails.send({
-    from: FROM_EMAIL,
-    replyTo: SUPPORT_EMAIL,
-    to,
-    subject: "Ready to start? Here's where to begin (+ 15% off)",
-    html: renderWelcomeEmail3(unsubscribeLink),
+    html: postal ? withPostalAddress(html, postal) : html,
+    headers: {
+      'List-Unsubscribe': `<${SITE.url}/api/unsubscribe?token=${token}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    },
   });
 }
