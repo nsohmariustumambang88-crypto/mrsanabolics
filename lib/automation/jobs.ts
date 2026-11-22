@@ -104,6 +104,16 @@ export const JOBS: JobDef[] = [
   },
 ];
 
+/**
+ * Settings that only the Automation screen's own buttons may write: the master pause, each job's
+ * switch, and each approved template version. The generic settings form refuses them, so a job
+ * cannot be switched on without its template being approved in the same step.
+ */
+export const SCREEN_ONLY_SETTING_KEYS: ReadonlySet<string> = new Set([
+  'automation_paused',
+  ...JOBS.flatMap((j) => [j.enabledKey, j.approvedKey]),
+]);
+
 export function jobDef(id: string): JobDef | null {
   return JOBS.find((j) => j.id === id) ?? null;
 }

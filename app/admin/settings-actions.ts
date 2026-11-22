@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { SETTINGS, writeSettings } from '@/lib/settings';
 import { looksLikeEmail } from '@/lib/marketing/consent';
+import { SCREEN_ONLY_SETTING_KEYS } from '@/lib/automation/jobs';
 
 /*
   Settings and payment-method mutations.
@@ -73,6 +74,9 @@ export async function saveSettings(form: FormData): Promise<ActionResult> {
 
   for (const def of SETTINGS) {
     if (!rendered.has(def.key)) continue;
+    /* Job switches, approvals and the master pause have their own buttons on /admin/automation,
+       which record the approved template in the same write. Never through this form. */
+    if (SCREEN_ONLY_SETTING_KEYS.has(def.key)) continue;
 
     if (def.type === 'boolean') {
       /* Present in the manifest but absent from the body means the box was unticked. */
@@ -119,6 +123,7 @@ export async function saveSettings(form: FormData): Promise<ActionResult> {
   revalidatePath('/', 'layout');
   revalidatePath('/admin/settings');
   revalidatePath('/admin/email');
+  revalidatePath('/admin/automation');
 
   return { ok: true };
 }

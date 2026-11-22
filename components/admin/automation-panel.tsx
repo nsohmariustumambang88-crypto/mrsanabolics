@@ -63,12 +63,15 @@ export function JobControls({
   needsApproval,
   currentVersion,
   canTest,
+  cannotSwitchOn,
 }: {
   job: string;
   enabled: boolean;
   needsApproval: boolean;
   currentVersion: string;
   canTest: boolean;
+  /** Why the job may not be switched on yet (marketing without a postal address), or null. */
+  cannotSwitchOn: string | null;
 }) {
   const { busy, notice, act } = useAct();
   const confirmOn = () =>
@@ -102,13 +105,15 @@ export function JobControls({
           <button
             type="button"
             className="wp-button wp-button-primary"
-            disabled={busy !== null}
+            disabled={busy !== null || cannotSwitchOn !== null}
+            title={cannotSwitchOn ?? ''}
             onClick={() => confirmOn() && act('on', () => switchAutomationJob(job, true))}
           >
             {needsApproval ? `Approve ${currentVersion} and switch on` : 'Switch on'}
           </button>
         )}
       </div>
+      {cannotSwitchOn && !enabled && <p className="mb-0 mt-2 text-[12px] text-[#646970]">{cannotSwitchOn}</p>}
       <Notice notice={notice} />
     </div>
   );

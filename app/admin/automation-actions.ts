@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/auth';
-import { writeSettings } from '@/lib/settings';
+import { getSettings, invalidateSettings, writeSettings } from '@/lib/settings';
 import { jobDef, type JobId } from '@/lib/automation/jobs';
 import { runJobNow } from '@/lib/automation/registry';
 import { templateVersion } from '@/lib/automation/templates';
@@ -53,6 +53,11 @@ export async function switchAutomationJob(jobId: string, on: boolean): Promise<A
   if (!who) return { ok: false, error: EXPIRED };
   const def = jobDef(jobId);
   if (!def) return { ok: false, error: 'No such job.' };
+  if (on && def.marketing) {
+    invalidateSettings();
+    const postal = ((await getSettings()).postal_address ?? '').trim();
+    if (!postal) return { ok: false, error: 'Enter a real postal address on the Email screen first: marketing email may not go out without one.' };
+  }
   const values: Record<string, string> = { [def.enabledKey]: on ? 'true' : 'false' };
   if (on && def.needsApproval) values[def.approvedKey] = templateVersion(def.id);
   await writeSettings(values, who.email);

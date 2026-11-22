@@ -68,8 +68,8 @@ export default async function AutomationPage() {
       )}
       {!postal && (
         <WpStaticNotice tone="warning">
-          There is no postal address in <Link href="/admin/settings">Settings</Link>. Basket reminders and welcome emails 2 and 3 are
-          marketing, and cannot be switched on to send until a real postal address is entered.
+          There is no postal address yet (<Link href="/admin/email">Email</Link> screen, Postal address box). Basket reminders and
+          welcome emails 2 and 3 are marketing, and cannot be switched on until a real postal address is entered there.
         </WpStaticNotice>
       )}
       {paused && <WpStaticNotice tone="error">All automation is paused. No job sends anything until you resume it.</WpStaticNotice>}
@@ -109,7 +109,14 @@ export default async function AutomationPage() {
                   </dd>
                 </dl>
                 <div className="mt-3">
-                  <JobControls job={job.id} enabled={enabled} needsApproval={job.needsApproval} currentVersion={current} canTest={Boolean(copyTo)} />
+                  <JobControls
+                    job={job.id}
+                    enabled={enabled}
+                    needsApproval={job.needsApproval}
+                    currentVersion={current}
+                    canTest={Boolean(copyTo)}
+                    cannotSwitchOn={job.marketing && !postal ? 'Enter a real postal address on the Email screen first.' : null}
+                  />
                 </div>
               </WpPostbox>
             );
@@ -184,6 +191,8 @@ export default async function AutomationPage() {
               </table>
             </div>
           </WpPostbox>
+
+          <SettingsForm groups={general} values={settings} />
         </div>
 
         <div className="space-y-5">
@@ -198,7 +207,6 @@ export default async function AutomationPage() {
               <li>Test and copy address: {copyTo || 'not set (tests disabled)'}</li>
             </ul>
           </WpPostbox>
-          <SettingsForm groups={general} values={settings} />
         </div>
       </div>
     </>
