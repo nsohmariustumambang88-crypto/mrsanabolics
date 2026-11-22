@@ -140,6 +140,15 @@ export async function basketRemindersJob(ctx: JobContext): Promise<void> {
       continue;
     }
 
+    /* Already emailed by an earlier run whose bookkeeping did not land: mark the basket reminded
+       and leave its restore token alone, so the link in that email keeps working. */
+    const earlier = await prisma.emailLog.findUnique({ where: { key: message.key }, select: { status: true } });
+    if (earlier && earlier.status !== 'FAILED') {
+      await prisma.basket.updateMany({ where: { id: basket.id, remindedAt: null }, data: { remindedAt: new Date() } });
+      ctx.count('skipped: already sent');
+      continue;
+    }
+
     /* Claim the basket before sending, so two overlapping runs cannot both mail it. */
     const claimed = await prisma.basket.updateMany({
       where: { id: basket.id, remindedAt: null },
@@ -152,8 +161,15 @@ export async function basketRemindersJob(ctx: JobContext): Promise<void> {
 
     const outcome = await ctx.send(message);
     if (outcome.status !== 'sent') {
-      /* Not sent (refused, capped, already emailed today): release the claim for another day. */
-      await prisma.basket.update({ where: { id: basket.id }, data: { remindedAt: null, restoreTokenHash: null } });
+      /* Released for another day only when the reason passes (refused by Resend, the run's cap,
+         already had a marketing email today). Kept claimed when it never will: unsubscribed since,
+         no valid address, already sent, or refused three times. Never retried within this run. */
+      const reason = outcome.status === 'skipped' ? outcome.reason : '';
+      const temporary =
+        outcome.status === 'failed' || reason === 'cap reached' || reason === 'already had a marketing email today' || reason.startsWith('postal address');
+      if (temporary) {
+        await prisma.basket.update({ where: { id: basket.id }, data: { remindedAt: null, restoreTokenHash: null } });
+      }
       continue;
     }
 

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { SETTINGS, asBoolean, getSettings } from '@/lib/settings';
-import { JOBS } from '@/lib/automation/jobs';
+import { JOBS, isStaleRun } from '@/lib/automation/jobs';
 import { templateVersion } from '@/lib/automation/templates';
 import { blockedReason } from '@/lib/automation/run';
 import { WpPageHeader, WpPostbox, WpStaticNotice } from '@/components/admin/wp-ui';
@@ -25,6 +25,9 @@ const when = (d: Date | null | undefined) =>
   d
     ? new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }).format(d) + ' UTC'
     : '—';
+
+/* A run left RUNNING by a process that died reads as "did not finish", never as still going. */
+const statusText = (r: { status: string; startedAt: Date }) => (isStaleRun(r) ? 'did not finish' : r.status.toLowerCase());
 
 const countsText = (counts: unknown) => {
   if (!counts || typeof counts !== 'object') return '';
@@ -105,7 +108,7 @@ export default async function AutomationPage() {
                   )}
                   <dt className="font-semibold">Last run</dt>
                   <dd className="m-0">
-                    {last ? `${when(last.startedAt)}: ${last.status.toLowerCase()}${last.note ? `, ${last.note}` : ''}${countsText(last.counts) ? ` (${countsText(last.counts)})` : ''}` : 'Never'}
+                    {last ? `${when(last.startedAt)}: ${statusText(last)}${last.note ? `, ${last.note}` : ''}${countsText(last.counts) ? ` (${countsText(last.counts)})` : ''}` : 'Never'}
                   </dd>
                 </dl>
                 <div className="mt-3">
@@ -146,7 +149,7 @@ export default async function AutomationPage() {
                       <td>{JOBS.find((j) => j.id === r.job)?.label ?? r.job}</td>
                       <td>{r.trigger}{r.dryRun ? ', dry run' : ''}</td>
                       <td>
-                        {r.status.toLowerCase()}
+                        {statusText(r)}
                         {r.note ? <div className="text-[12px] text-[#646970]">{r.note}</div> : null}
                       </td>
                       <td className="text-[12px]">{countsText(r.counts)}</td>

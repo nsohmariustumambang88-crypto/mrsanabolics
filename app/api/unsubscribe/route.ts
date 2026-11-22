@@ -22,6 +22,18 @@ import { SITE } from '@/lib/site';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+/*
+  Some mail apps open the List-Unsubscribe address in a browser instead of POSTing to it. That
+  GET changes nothing (scanners fetch links too): it shows the confirmation page, whose button
+  POSTs back here.
+*/
+export function GET(request: Request) {
+  const token = new URL(request.url).searchParams.get('token') ?? '';
+  const url = new URL('/unsubscribe', SITE.url);
+  if (token) url.searchParams.set('token', token);
+  return NextResponse.redirect(url, 303);
+}
+
 export async function POST(request: Request) {
   const query = new URL(request.url).searchParams;
   const form = await request.formData().catch(() => null);

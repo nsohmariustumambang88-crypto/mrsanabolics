@@ -157,6 +157,20 @@ export function excludedFromMarketing(product: { name: string; categorySlug?: st
   return EXCLUDED_NAMES.some((re) => re.test(product.name));
 }
 
+/*
+  A run left RUNNING by a process that died (killed, cut off at the time limit, lost its
+  connection). No run can last this long: a function stops at 60 seconds. lib/automation/run.ts
+  closes such runs as FAILED with DID_NOT_FINISH; the screen and the weekly report use
+  isStaleRun so one that has not been closed yet never reads as running or as having run.
+*/
+export const STALE_AFTER_MS = 15 * 60_000;
+export const DID_NOT_FINISH =
+  'Did not finish: the process stopped before the run was recorded (killed, cut off at the time limit, or lost its connection).';
+
+export function isStaleRun(run: { status: string; startedAt: Date }, now = new Date()): boolean {
+  return run.status === 'RUNNING' && now.getTime() - run.startedAt.getTime() > STALE_AFTER_MS;
+}
+
 /** "c***@gmail.com": enough for the owner to recognise, not enough to copy around. */
 export function maskEmail(email: string): string {
   const [user, domain] = email.split('@');

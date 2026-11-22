@@ -14,7 +14,9 @@ import type { JobContext } from '@/lib/automation/run';
   non-subscribers too, carry no offer and no sales content, and need no postal address.
 
   Who gets one, all checked here:
-  - a STOREFRONT order (its notes say how it is being paid; staff-recorded orders have none);
+  - a STOREFRONT order: its notes say how it is being paid (crypto, Cash App, bank transfer), and
+    its "created" event has no staff member on it (an order typed in at /admin/orders/new records
+    who typed it, and staff notes are free text that could read like a checkout's);
   - still NEW: not confirmed (paid), not cancelled;
   - between 24 hours and 7 days old. Over 7 days is skipped (decided at launch, and NOWPayments
     expires an unpaid crypto payment at 7 days anyway);
@@ -23,6 +25,8 @@ import type { JobContext } from '@/lib/automation/run';
     expired, nor one that never got a payment address;
   - at most two per order: the first from 24 hours, the second from 72 hours (and at least a day
     after the first). Each is one EmailLog key, so neither can go twice.
+  - and, just before each send, the order is read again: if it was paid, cancelled or given a
+    screenshot while the run was going, nothing is sent.
 
   This reconciles with the payment deadline of 18–19 November 2026 (lib/orders/payment-deadline):
   that 60-minute countdown is a request on the payment page and cancels nothing; these reminders
@@ -57,7 +61,7 @@ export async function unpaidOrdersJob(ctx: JobContext): Promise<void> {
       contactId: true,
       contact: { select: { email: true, name: true } },
       items: { select: { name: true, quantity: true, lineTotal: true } },
-      events: { select: { summary: true } },
+      events: { select: { summary: true, actorEmail: true } },
       _count: { select: { paymentProofs: true } },
     },
   });
@@ -73,7 +77,8 @@ export async function unpaidOrdersJob(ctx: JobContext): Promise<void> {
       continue;
     }
     const method = paymentMethodFromNotes(order.notes);
-    if (method !== 'crypto' && method !== 'cashapp' && method !== 'bank_transfer') {
+    const typedByStaff = order.events.some((e) => e.summary.startsWith(`Order ${order.reference} created`) && e.actorEmail);
+    if ((method !== 'crypto' && method !== 'cashapp' && method !== 'bank_transfer') || typedByStaff) {
       ctx.count('skipped: not a storefront order');
       continue;
     }
@@ -135,6 +140,19 @@ export async function unpaidOrdersJob(ctx: JobContext): Promise<void> {
       payUrl,
       cashApp: method === 'cashapp' ? cashApp ?? null : null,
     });
+
+    if (!ctx.dryRun) {
+      /* Read the order again: a payment, a cancellation or a screenshot may have landed while this
+         run was working through the list. */
+      const still = await prisma.order.findFirst({
+        where: { id: order.id, status: 'NEW', paymentProofs: { none: {} } },
+        select: { events: { where: { summary: { in: [CRYPTO_DETECTED_EVENT, UNPAID_CANCEL_EVENT] } }, select: { id: true } } },
+      });
+      if (!still || still.events.length > 0) {
+        ctx.count('skipped: paid or changed during the run');
+        continue;
+      }
+    }
 
     const outcome = await ctx.send({
       key: `unpaid:${order.id}:${step}`,

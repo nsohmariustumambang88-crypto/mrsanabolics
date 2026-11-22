@@ -4,9 +4,9 @@ import { prisma } from '@/lib/prisma';
 import { SITE } from '@/lib/site';
 import { asBoolean } from '@/lib/settings';
 import { FRIDAY_CODE } from '@/lib/offers/friday';
-import { JOBS, periodOf } from '@/lib/automation/jobs';
+import { JOBS, isStaleRun, periodOf } from '@/lib/automation/jobs';
 import { enquiryAlertEmail, weeklyReportEmail, type WeeklyReport } from '@/lib/automation/templates';
-import type { JobContext } from '@/lib/automation/run';
+import { closeStaleRuns, type JobContext } from '@/lib/automation/run';
 
 /*
   The shop's own two emails: the waiting-enquiries alert (daily) and the weekly report (Saturday).
@@ -56,6 +56,15 @@ export async function buildWeeklyReport(now: Date, settings: Record<string, stri
   const from = new Date(now.getTime() - 7 * DAY);
   const inWeek = { gte: from, lt: to };
 
+  /* The New York days of the week, oldest first, for "did it run every day?". Runs are matched by
+     their day, not by start time: on Hobby a job fires anywhere inside its hour, so last
+     Saturday's run can start a few minutes before `from` and would otherwise read as missed. */
+  const days: string[] = [];
+  for (let i = 7; i >= 1; i -= 1) days.push(periodOf(new Date(now.getTime() - i * DAY)));
+
+  /* A run left RUNNING by a process that died is closed as failed before anything is counted. */
+  await closeStaleRuns(now).catch(() => {});
+
   const [newCustomers, newSubscribers, unsubscribed, orders, enquiriesReceived, stillWaiting, searches, emails, runs] =
     await Promise.all([
       prisma.customer.count({ where: { createdAt: inWeek } }),
@@ -76,12 +85,12 @@ export async function buildWeeklyReport(now: Date, settings: Record<string, stri
       }),
       prisma.emailLog.groupBy({
         by: ['job', 'kind', 'status'],
-        where: { createdAt: inWeek },
+        where: { createdAt: inWeek, kind: { not: 'TEST' } },
         _count: { _all: true },
       }),
       prisma.automationRun.findMany({
-        where: { startedAt: inWeek, dryRun: false, trigger: { not: 'test' } },
-        select: { job: true, period: true, status: true, note: true },
+        where: { period: { in: days }, dryRun: false, trigger: { not: 'test' } },
+        select: { job: true, period: true, status: true, note: true, startedAt: true },
       }),
     ]);
 
@@ -92,12 +101,11 @@ export async function buildWeeklyReport(now: Date, settings: Record<string, stri
   const fridayPaid = friday.filter((o) => o.status !== 'NEW' && o.status !== 'CANCELLED');
   const given = (list: { discountTotal: unknown }[]) => list.reduce((s, o) => s + Number(o.discountTotal), 0);
 
-  /* The New York days of the week, oldest first, for "did it run every day?". */
-  const days: string[] = [];
-  for (let i = 7; i >= 1; i -= 1) days.push(periodOf(new Date(now.getTime() - i * DAY)));
-
   const jobs = JOBS.filter((j) => j.id !== 'weekly-report').map((def) => {
     const mine = runs.filter((r) => r.job === def.id);
+    /* A run that died counts as failed, never as having run. A day is "missed" only when no run
+       was recorded for it at all: the cron did not fire, or CRON_SECRET was missing. */
+    const failedRuns = mine.filter((r) => r.status === 'FAILED' || isStaleRun(r, now));
     const daysRun = new Set(mine.map((r) => r.period));
     const skippedNotes = Array.from(
       new Set(mine.filter((r) => r.status === 'SKIPPED' && r.note && !r.note.startsWith('Already ran')).map((r) => r.note as string))
@@ -106,7 +114,7 @@ export async function buildWeeklyReport(now: Date, settings: Record<string, stri
       label: def.label,
       enabled: asBoolean(settings[def.enabledKey]),
       ran: mine.filter((r) => r.status === 'OK' || r.status === 'PARTIAL').length,
-      failed: mine.filter((r) => r.status === 'FAILED').length,
+      failed: failedRuns.length,
       missedDays: days.filter((d) => !daysRun.has(d)),
       notes: skippedNotes.slice(0, 2),
     };

@@ -3,7 +3,7 @@ import 'server-only';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { asBoolean, asNumber, getSettings, invalidateSettings } from '@/lib/settings';
-import { jobDef, maskEmail, periodOf, type JobDef, type JobId } from '@/lib/automation/jobs';
+import { DID_NOT_FINISH, STALE_AFTER_MS, jobDef, maskEmail, periodOf, type JobDef, type JobId } from '@/lib/automation/jobs';
 import { asOwnerCopy, templateVersion } from '@/lib/automation/templates';
 import { sendAutomatedEmail, sendPlain, type SendOutcome, type SendRequest } from '@/lib/automation/sender';
 
@@ -15,17 +15,47 @@ import { sendAutomatedEmail, sendPlain, type SendOutcome, type SendRequest } fro
       changed since the owner approved it, or (marketing) if there is no postal address;
     - takes the lock for its job and New York day, so a second delivery of the same cron, or a
       second click, does nothing;
-    - sends at most `automation_max_per_run` emails, about two a second (Resend allows more), and
-      stops at a 45-second budget so a Hobby function is never cut off mid-send;
+    - sends at most `automation_max_per_run` emails, about two a second (Resend allows ten), and
+      stops picking new work at a 40-second budget so a function (60 seconds at most) is never
+      cut off mid-send: one send can take up to 10 more seconds before Resend's answer;
     - copies the first customer email of the run to the owner (`automation_copy_to`);
     - is written to the run log whatever happens. A failed run releases its lock.
   A dry run does all the choosing and none of the sending: no lock, no email, no log rows except
   the run itself, which records the counts.
+
+  A run whose process died (killed, cut off at the time limit, lost its connection) stays RUNNING.
+  Nothing waits on that status, but it would read as "still going" for ever, so every run first
+  closes any run older than STALE_AFTER_MS as FAILED ("did not finish") and frees its lock. The
+  weekly report and the admin screen count such a run as failed, never as having run.
 */
 
 const PACE_MS = 550;
-const TIME_BUDGET_MS = 45_000;
-const LOCK_MINUTES = 15;
+const TIME_BUDGET_MS = 40_000;
+/** A lock lives as long as a run may stay RUNNING before it counts as dead (STALE_AFTER_MS). */
+const LOCK_MINUTES = STALE_AFTER_MS / 60_000;
+
+/**
+ * Close runs left RUNNING by a process that died, free their locks, and drop locks for days long
+ * past. Safe to call any time; one round trip when there is nothing to do.
+ */
+export async function closeStaleRuns(now = new Date()): Promise<number> {
+  const stale = await prisma.automationRun.findMany({
+    where: { status: 'RUNNING', startedAt: { lt: new Date(now.getTime() - STALE_AFTER_MS) } },
+    select: { id: true },
+  });
+  if (stale.length) {
+    const ids = stale.map((r) => r.id);
+    await prisma.$transaction([
+      prisma.automationRun.updateMany({
+        where: { id: { in: ids }, status: 'RUNNING' },
+        data: { status: 'FAILED', note: DID_NOT_FINISH, finishedAt: now },
+      }),
+      prisma.automationLock.deleteMany({ where: { runId: { in: ids } } }),
+    ]);
+  }
+  await prisma.automationLock.deleteMany({ where: { expiresAt: { lt: new Date(now.getTime() - 7 * 86_400_000) } } });
+  return stale.length;
+}
 
 export type JobContext = {
   runId: string;
@@ -123,6 +153,9 @@ export async function runJob(
   if (!def) throw new Error(`Unknown job ${jobId}`);
   const now = opts.now ?? new Date();
   const period = periodOf(now);
+
+  /* Housekeeping first, so a dead run never reads as running and its lock never lingers. */
+  await closeStaleRuns(new Date()).catch((error) => console.error('[automation] closing stale runs failed:', error));
 
   invalidateSettings();
   const settings = await getSettings();

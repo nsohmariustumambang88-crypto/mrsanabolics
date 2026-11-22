@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { createHash } from 'node:crypto';
 import { Prisma, type EmailKind } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { SITE } from '@/lib/site';
@@ -17,9 +18,16 @@ import { UNSUBSCRIBE_PLACEHOLDER, withPostalAddress } from '@/lib/automation/tem
      POST lands on /api/unsubscribe.
   3. MARKETING: at most one email per person per 24 hours, across every job.
   4. One row per person per message: the EmailLog row (unique `key`) is written BEFORE the send,
-     so a retry, a second run or a duplicate cron delivery finds it and sends nothing. Resend also
-     gets the key as its Idempotency-Key. Only a FAILED row may be tried again, at most 3 times.
+     so a retry, a second run or a duplicate cron delivery finds it and sends nothing. Only a
+     FAILED row may be tried again, by a LATER run (never in a loop here), at most 3 times.
   5. Resend's answer is checked: a refusal is recorded FAILED, never as sent.
+  6. Resend gets an Idempotency-Key: the message key plus a hash of what is sent. A request that
+     timed out but did reach Resend, resent with the same content within 24 hours, is not sent
+     twice; a retry whose content differs (a basket reminder carries a fresh restore token) gets a
+     new key, because Resend answers 409 to a reused key with a different payload.
+
+  The one-click unsubscribe is the HTTPS link only. A `mailto:` alternative would send opt-outs to
+  the support mailbox, where nothing processes them, and an unhandled opt-out is a breach.
 
   Mail goes through Resend's REST API with fetch, from orders@ with replies to support@.
 */
@@ -28,6 +36,12 @@ const FROM = 'MrsAnabolics <orders@mrsanabolics.com>';
 const REPLY_TO = 'support@mrsanabolics.com';
 const MAX_ATTEMPTS = 3;
 const DAY_MS = 86_400_000;
+
+/** Resend's Idempotency-Key for a message: its key and a short hash of its content (≤ 256 chars). */
+export function idempotencyKeyFor(key: string, subject: string, html: string): string {
+  const digest = createHash('sha256').update(subject).update('\n').update(html).digest('hex').slice(0, 16);
+  return `${key.slice(0, 200)}:${digest}`;
+}
 
 export type SendRequest = {
   /** Unique per person per message: unpaid:<orderId>:1, welcome:<subscriberId>:2, … */
@@ -137,7 +151,7 @@ export async function sendAutomatedEmail(req: SendRequest): Promise<SendOutcome>
     headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
   }
 
-  const result = await postToResend({ to, subject: req.subject, html, headers, idempotencyKey: req.key });
+  const result = await postToResend({ to, subject: req.subject, html, headers, idempotencyKey: idempotencyKeyFor(req.key, req.subject, html) });
   if (result.ok) {
     await prisma.emailLog.update({
       where: { key: req.key },
@@ -200,7 +214,7 @@ export async function sendPlain(req: {
     if (isUniqueViolation(error)) return { status: 'skipped', reason: 'already sent' };
     throw error;
   }
-  const result = await postToResend({ to: req.to, subject: req.subject, html: req.html, headers: {}, idempotencyKey: req.key });
+  const result = await postToResend({ to: req.to, subject: req.subject, html: req.html, headers: {}, idempotencyKey: idempotencyKeyFor(req.key, req.subject, req.html) });
   await prisma.emailLog.update({
     where: { key: req.key },
     data: result.ok
@@ -226,7 +240,7 @@ async function postToResend(input: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         /* Resend keeps an idempotency key for 24 hours; 256 characters at most. */
-        'Idempotency-Key': input.idempotencyKey.slice(0, 256),
+        'Idempotency-Key': input.idempotencyKey,
       },
       body: JSON.stringify({
         from: FROM,
@@ -236,7 +250,8 @@ async function postToResend(input: {
         html: input.html,
         ...(Object.keys(input.headers).length ? { headers: input.headers } : {}),
       }),
-      signal: AbortSignal.timeout(20_000),
+      /* Short enough that the run's 40-second budget plus one send stays inside 60 seconds. */
+      signal: AbortSignal.timeout(10_000),
     });
     const body = (await response.json().catch(() => ({}))) as { id?: string; message?: string; name?: string };
     if (!response.ok) return { ok: false, error: `Resend ${response.status}: ${body.message ?? body.name ?? 'refused'}` };

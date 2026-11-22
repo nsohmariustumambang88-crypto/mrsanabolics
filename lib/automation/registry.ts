@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import type { JobId } from '@/lib/automation/jobs';
 import { runJob, type JobFn, type RunReport } from '@/lib/automation/run';
@@ -29,12 +30,20 @@ export function runJobNow(
   and with one it answers 401 to anything but `Authorization: Bearer <CRON_SECRET>`, which Vercel
   sends by itself on every scheduled call. `?dry=1` counts without sending.
 */
+/** Constant-time comparison of the Authorization header with the expected value. */
+function sameSecret(given: string | null, expected: string): boolean {
+  if (!given) return false;
+  const a = createHash('sha256').update(given).digest();
+  const b = createHash('sha256').update(expected).digest();
+  return timingSafeEqual(a, b);
+}
+
 export async function handleCron(request: NextRequest, job: JobId): Promise<NextResponse> {
-  const secret = process.env.CRON_SECRET;
+  const secret = process.env.CRON_SECRET?.trim();
   if (!secret) {
     return NextResponse.json({ ok: false, error: 'CRON_SECRET is not set on this deployment.' }, { status: 503 });
   }
-  if (request.headers.get('authorization') !== `Bearer ${secret}`) {
+  if (!sameSecret(request.headers.get('authorization'), `Bearer ${secret}`)) {
     return NextResponse.json({ ok: false, error: 'Unauthorised.' }, { status: 401 });
   }
   const dryRun = request.nextUrl.searchParams.get('dry') === '1';
