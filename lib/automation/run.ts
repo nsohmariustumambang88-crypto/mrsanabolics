@@ -216,8 +216,10 @@ export async function runJob(
       if (outcome.status === 'sent' || outcome.status === 'failed') attempted += 1;
       count(outcome.status === 'skipped' ? `skipped: ${outcome.reason}` : outcome.status === 'failed' ? 'failed' : outcome.status);
 
-      /* The owner's copy of the first customer email of the run. */
-      if (outcome.status === 'sent' && !copied && copyTo && def.audience !== 'shop') {
+      /* The owner's copy of the first customer email of a real run (cron or Run now). A script's
+         test run makes no copy: its "customer" is a throwaway address, and a copy would put a
+         made-up order in the owner's inbox. */
+      if (outcome.status === 'sent' && !copied && copyTo && def.audience !== 'shop' && opts.trigger !== 'test') {
         copied = true;
         const when = new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(new Date());
         const html = asOwnerCopy(
