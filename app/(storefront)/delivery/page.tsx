@@ -12,7 +12,7 @@ import { CollectionBreadcrumb, SectionTitle } from '@/components/shop/collection
   link here for any country without a page of its own.
 */
 
-export const revalidate = 3600;
+export const revalidate = 604800;
 
 const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
 const countryName = (code: string) => {

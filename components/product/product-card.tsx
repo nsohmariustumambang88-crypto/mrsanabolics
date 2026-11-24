@@ -83,8 +83,14 @@ export function ProductCard({
 
   return (
     <article data-reveal className={cn('group relative flex h-full flex-col', className)}>
+      {/*
+        prefetch={false}: Next would otherwise fetch every product page whose card scrolls into
+        view, and each one it had not built yet is a server render and an ISR write against
+        Vercel's free allowance, for a page nobody opened. A tap still opens the cached page.
+      */}
       <Link
         href={href}
+        prefetch={false}
         aria-label={product.name}
         className="block rounded-[4px] outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-pigment-indigo"
       >
@@ -135,6 +141,7 @@ export function ProductCard({
         <h3 className="line-clamp-2 min-h-[2.5em] text-[0.875rem] font-bold leading-[1.25] text-ink">
           <Link
             href={href}
+            prefetch={false}
             tabIndex={-1}
             className="underline-offset-2 hover:underline group-hover:underline"
           >

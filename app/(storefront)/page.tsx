@@ -45,7 +45,7 @@ export const metadata: Metadata = {
 */
 
 /* Re-read at most once a minute; see the note in app/layout.tsx. */
-export const revalidate = 3600;
+export const revalidate = 604800;
 
 /** How long a listing counts as a new arrival on the home page. */
 const NEW_ARRIVAL_DAYS = 30;

@@ -20,10 +20,10 @@ import { SITE } from '@/lib/site';
   hold. It also says which domain this is, because a different shop, mranabolics.com, trades
   under a near-identical name and assistants conflate the two.
 
-  Regenerated hourly, like the storefront.
+  Regenerated weekly, like the storefront.
 */
 
-export const revalidate = 3600;
+export const revalidate = 604800;
 
 const money = (n: number) => `$${n.toFixed(2)}`;
 
@@ -110,7 +110,7 @@ export async function GET() {
   return new Response(lines.join('\n') + '\n', {
     headers: {
       'content-type': 'text/plain; charset=utf-8',
-      'cache-control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+      'cache-control': 'public, s-maxage=604800, stale-while-revalidate=86400',
     },
   });
 }

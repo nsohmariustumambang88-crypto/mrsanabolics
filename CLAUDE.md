@@ -30,7 +30,7 @@ A Next.js 13.5 App Router storefront, originally scaffolded from the Bolt `nextj
 - **Payments are connected** and the storefront checkout **creates real orders** — see "Payments and checkout, as built".
 - **Email is sent** through Resend ([lib/email/resend.ts](lib/email/resend.ts)) — see "Email, as built".
 - The live chat widget is **unmounted**; the storefront shows Telegram and WhatsApp buttons instead — see "Live chat".
-- Storefront pages regenerate **hourly** (`revalidate = 3600`); checkout and admin are dynamic.
+- Storefront pages are kept for a **week** (`revalidate = 604800`) and refreshed on demand by admin saves; account, payment pages and admin are dynamic. See "Staying inside Vercel's free allowance".
 - The storefront is in **five languages** with a country selector — see "Countries and languages".
 - Reviews have **no rate limit**, and the admin can **edit** them — see "Reviews".
 - **Testing, as the owner states it (3 November 2026):** an independent laboratory tests every batch, and the certificate of analysis for the batch goes out with every order. The FAQ, the home page (assurance line, trust badges, newsletter box), checkout, the About page, the welcome email and the testosterone enanthate buying guide all say so. Notes below that say "the catalogue holds no assay" or "the shop has no certificates" predate this statement: do not remove testing claims on their strength. Nothing in the code sends a certificate (the order confirmation email has no attachment), so it goes out by hand. If that ever changes, every one of those lines must change together. The owner also confirmed the same day that **parcels are insured** as well as tracked.
@@ -38,6 +38,55 @@ A Next.js 13.5 App Router storefront, originally scaffolded from the Bolt `nextj
 - `/faq` computes its **payment, delivery and minimum-order answers** from what checkout uses (`storeFaqs` in [lib/catalogue/buying-facts.ts](lib/catalogue/buying-facts.ts)); only the questions a person must answer live in [lib/data/faqs.ts](lib/data/faqs.ts), written to the database by `npm run db:seed`.
 
 It is a full-featured production e-commerce platform. It has a Supabase Postgres database read through Prisma, a dozen route handlers under `app/api/`, server actions behind every admin screen, and a full back office at `/admin`. The catalogue, the CRM, orders, and "The admin, in full" are each real subsystems powering this business.
+
+## Staying inside Vercel's free allowance
+
+**On 24 November 2026 the `marz3` Hobby team was blocked** ("exceeded our fair use limits").
+The site answered 402, and the blocked account refused even DNS changes. The domain's DNS then
+moved to Hostinger's nameservers and the site to a new Vercel account. That evening the owner
+set the rule: **only payments and the visit count may call the server on their own.** What
+changed, and what to keep:
+
+- **ISR writes are billed in 8 KB units**, so a ~110 KB product page costs ~28 per rebuild. One
+  bot pass over ~800 product pages is ~20K of the 200K monthly allowance. At hourly
+  revalidation that recurred all day.
+- **Storefront pages are kept for a week** (`revalidate = 604800`, a literal in every page and
+  in both layouts, because Next takes the smallest). Nothing on them changes except through the
+  admin, and orders do not change stock. A save therefore marks stale every page that shows
+  what changed:
+  - `refresh()` + `pagesShowing()` in app/admin/actions.ts: the product page, its category,
+    compound and maker pages, `/` and `/shop`, and the `/es` `/fr` `/de` `/it` copies of any
+    translated one.
+  - Settings and delivery saves: `revalidatePath('/', 'layout')`, the whole storefront.
+  - Changes to the advertised code (`hero_promo_code`): the same, through
+    `refreshIfAdvertised`; no other code touches the storefront.
+  - Payments: `/checkout` and `/faq`.
+
+  A new storefront read that an admin screen can change needs its own revalidation, or it lags
+  a week.
+- **In-memory caches last 10 seconds on the live site** (a minute while building):
+  `lib/db/catalogue.ts`, `lib/settings.ts`, `lib/delivery/summary.ts`. An admin save clears
+  only its own instance, so a page rebuilt elsewhere from an older copy would keep the old
+  value for the week.
+- **Stopped, by the owner's rule:**
+  - the cart copy to `/api/basket` (store-provider and checkout);
+  - the basket-reminder cron (`vercel.json` deleted);
+  - search logging (`useSearchLog` is a no-op);
+  - `/api/geo`: the country preselection now comes from the browser's time zone, in
+    country-provider.tsx.
+
+  The routes stay, unused.
+- **Still on:** payments (the payment page polls status every 10 s, not 5, while visible), the
+  visit counter `/api/track`, Vercel Web Analytics, and the Friday offer check.
+- **No prefetch** where it costs server work: product cards, and links to `/account` and `/auth`
+  (`rendersPerRequest()` in lib/site.ts). Next prefetches every link on screen in production,
+  so a shop page built up to 24 product pages nobody opened.
+- **robots.txt turns away SEO-tool crawlers** (Ahrefs, Semrush, MJ12, Dot, BLEX, DataForSeo,
+  Barkrowler, serpstat, Seekport, Petal, Bytespider). Search engines and AI assistants keep
+  full access.
+- **Every deploy empties the page cache**, so the next bot pass rebuilds everything. Batch
+  changes into fewer pushes, and do not run live e2e suites more than needed. `hero-offer-e2e.mjs`
+  assumes the old 60-second cache and needs rewriting before it is run again.
 
 ## Architecture
 
@@ -998,8 +1047,9 @@ the task while it runs kills that run (`0xC000013A` in the log), which is harmle
 A **country selector** sits beside the theme toggle ([components/layout/country-selector.tsx](components/layout/country-selector.tsx);
 inside the menu sheet on phones, because the 360px header row is full). Countries are in
 [lib/countries.ts](lib/countries.ts): US, GB, CA, AU, ES, FR, DE, IT and "Other". The choice is a
-`mra_country` cookie plus localStorage; with none, `/api/geo` returns the CDN's country header once
-per tab as a **preselection only — nothing ever redirects**.
+`mra_country` cookie plus localStorage; with none, the browser's time zone gives a
+**preselection only — nothing ever redirects** (until 24 November 2026 `/api/geo` returned the
+CDN's country header; it was stopped to save server calls).
 
 **Languages: English at bare paths, Spanish/French/German/Italian under `/es` `/fr` `/de` `/it`**
 ([lib/i18n/](lib/i18n/), pages in `app/(storefront)/[lang]/`). Only the paths listed in
@@ -1042,7 +1092,11 @@ The failed searches that drove this (October 2026): "Sistaplex like 5 minutes", 
 
 ## Saved baskets and basket reminders
 
-The cart still lives in localStorage; since October 2026 the server also keeps a **copy** per
+**Stopped on 24 November 2026** (see "Staying inside Vercel's free allowance"): the browser no
+longer copies the cart to `/api/basket` and the cron is gone with `vercel.json`. What follows
+describes the system as built; the code and the table remain.
+
+The cart still lives in localStorage; from October 2026 the server also kept a **copy** per
 browser, in the `Basket` table ([lib/basket/](lib/basket/)), keyed on the analytics visitor
 (`mra_vid`). It exists for two things the browser cannot do: remind a subscriber about a basket
 they left, and restore that exact basket on another device from a link.
@@ -1281,9 +1335,11 @@ throws: a failed analytics write must never be the reason a page misbehaves.
 
 `/admin/search` is the more valuable of the two screens. A term that returned nothing is a
 customer telling you in their own words what they came for and could not find — the only
-analytics row that names a gap in the catalogue rather than describing traffic. Searches are
+analytics row that names a gap in the catalogue rather than describing traffic. Searches were
 reported by `components/analytics/use-search-log.ts`, debounced ~900ms so "test" arrives as one
-row rather than four prefixes, and deduplicated per mount.
+row rather than four prefixes, and deduplicated per mount. **Search logging is off since
+24 November 2026** (the hook is a no-op, to save server calls); the screen shows what was
+logged before. Restore the hook from git history to turn it back on.
 
 ### Discounts
 

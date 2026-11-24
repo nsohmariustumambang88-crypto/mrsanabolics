@@ -31,7 +31,7 @@ import {
 
 type Params = { params: { lang: string; category: string } };
 
-export const revalidate = 3600;
+export const revalidate = 604800;
 
 export function generateStaticParams() {
   return TRANSLATED_CATEGORIES.map((category) => ({ category }));

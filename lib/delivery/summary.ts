@@ -35,7 +35,8 @@ export type ZoneSummary = {
   rates: RateSummary[];
 };
 
-const TTL_MS = 60_000;
+/* 10 seconds on the live site, a minute while building: see lib/db/catalogue.ts. */
+const TTL_MS = process.env.NEXT_PHASE === 'phase-production-build' ? 60_000 : 10_000;
 let at = 0;
 let inFlight: Promise<ZoneSummary[]> | null = null;
 

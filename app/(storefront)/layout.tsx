@@ -37,11 +37,18 @@ import { getDeliverySummary } from '@/lib/delivery/summary';
 */
 
 /*
-  Regenerated at most once an hour: every regeneration counts against Vercel's ISR write
-  allowance, and at once a minute the Hobby plan ran out. Admin edits refresh their own pages
-  through revalidatePath, so price and stock changes still appear at once.
+  Regenerated at most once a week. Every regeneration counts against Vercel's ISR write
+  allowance, which is billed in 8 KB units, so one product page (~110 KB) costs about 28. At once
+  a minute the Hobby plan ran out. At once an hour, with search engines revisiting ~800 product
+  pages, the `marz3` team was blocked for fair use (24 November 2026).
+
+  Nothing on these pages changes on its own. Prices, stock, flags, settings, delivery zones and
+  the advertised code change only through the admin, and every such save marks the pages that
+  show it stale (refresh() in app/admin/actions.ts, settings-actions.ts, delivery-actions.ts,
+  discount-actions.ts). Orders do not change stock. The week is a fallback for the exchange
+  rates behind the approximate local prices.
 */
-export const revalidate = 3600;
+export const revalidate = 604800;
 
 export default async function StorefrontLayout({
   children,

@@ -4,7 +4,7 @@ import { getSettingsSafe } from '@/lib/settings';
 
 /* The policy text is the original, plus the phone number checkout and the contact form ask for and the Cash App payment screenshot (November 2026); the frame around it, the metadata and the contact address are new. */
 
-export const revalidate = 3600;
+export const revalidate = 604800;
 
 const PATH = '/legal/privacy';
 const TITLE = 'Privacy Policy: How We Handle Your Data';

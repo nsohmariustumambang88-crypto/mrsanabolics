@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title, description, alternates: alternatesFor('en', '/shop'), openGraph: { type: 'website', url: `${SITE.url}/shop`, title, description } };
 }
 
-export const revalidate = 3600;
+export const revalidate = 604800;
 
 /*
   The shop has two layers, and only one of them is visible to a crawler.

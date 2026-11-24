@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/faq' },
 };
 
-export const revalidate = 3600;
+export const revalidate = 604800;
 
 export default async function FaqPage() {
   const [written, zones, paymentMethods, weeklyOffer] = await Promise.all([

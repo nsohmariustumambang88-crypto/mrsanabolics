@@ -136,7 +136,11 @@ export function PaymentConfirmationClient({
       } catch {
         /* the next tick tries again */
       }
-    }, 5000);
+      /*
+        Every 10 seconds (it was 5): each check is a server call, and a page left open for the
+        full hour made 720 of them. Paused while the tab is hidden.
+      */
+    }, 10_000);
 
     return () => clearInterval(interval);
   }, [orderReference, orderStatus]);

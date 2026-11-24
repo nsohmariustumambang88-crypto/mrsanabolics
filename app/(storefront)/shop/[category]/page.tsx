@@ -32,7 +32,7 @@ import {
 
 type Params = { params: { category: string } };
 
-export const revalidate = 3600;
+export const revalidate = 604800;
 
 export async function generateStaticParams() {
   const categories = await getCategoryCollections();

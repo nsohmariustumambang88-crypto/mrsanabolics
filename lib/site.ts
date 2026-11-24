@@ -71,6 +71,16 @@ export function categoryPigment(slug: string): string {
 export const UNDER_HEADER_INSET =
   'px-4 pb-3 pt-5 sm:pl-[10.75rem] sm:pr-6 sm:pt-3 lg:pl-[11.75rem] lg:pr-10';
 
+/**
+ * Whether a link points at a page rendered afresh for every request (it reads the visitor's
+ * session). Next prefetches every link on screen, and a prefetch of such a page is a server call
+ * on every page view: the Account links in the header, tab bar and footer alone made one per
+ * view. Links to these pages pass `prefetch={false}`.
+ */
+export function rendersPerRequest(href: string): boolean {
+  return /^\/(account|auth)(\/|\?|$)/.test(href);
+}
+
 /** Deterministic per-slug seed, so a category's marbling is the same sheet on every visit. */
 export function slugSeed(slug: string): number {
   let h = 2166136261;

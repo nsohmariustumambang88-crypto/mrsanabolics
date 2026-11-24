@@ -31,7 +31,7 @@ import type {
   unstable_cache did not dedupe across prerenders here, so the reads go through a small
   in-process TTL memo instead. It is deliberately boring: one in-flight promise per key, held
   for TTL_MS, shared by every render in the process. A build therefore issues one query per
-  entity total, and a running server refreshes at most once a minute per instance. Failures
+  entity total, and a running server refreshes at most once every 10 seconds per instance. Failures
   are not cached — a rejected promise is dropped so the next caller retries.
 
   Everything derived — by slug, by category, by brand, related, sitemap params — filters those
@@ -40,8 +40,15 @@ import type {
 
 export const CATALOGUE_TAG = 'catalogue';
 
-/** How long a memoised read stays warm. Matches the route-level `revalidate`. */
-const TTL_MS = 60_000;
+/*
+  How long a memoised read stays warm: a minute during a build, which is what the memo is for,
+  and 10 seconds on the live site. Since 24 November 2026 storefront pages are kept for a week,
+  and an admin edit's invalidateCatalogue() reaches only the instance that ran it. A page rebuilt
+  on another instance from a list read before the edit would keep the old price for the week, so
+  the live window is kept short. 10 seconds still serves the layout and the page of one render,
+  and a burst of shop or search requests, from one read.
+*/
+const TTL_MS = process.env.NEXT_PHASE === 'phase-production-build' ? 60_000 : 10_000;
 
 /*
   One memo per reader, not a keyed map: each call site closes over its own slot, so there are

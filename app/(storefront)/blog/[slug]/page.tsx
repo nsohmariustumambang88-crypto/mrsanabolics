@@ -17,7 +17,7 @@ export async function generateStaticParams() {
   return slugs.map((slug) => ({ slug }));
 }
 
-export const revalidate = 3600;
+export const revalidate = 604800;
 
 /**
  * The lead image at a fixed crop, as an absolute URL. Search engines and link previews need a

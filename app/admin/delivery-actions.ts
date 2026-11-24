@@ -44,6 +44,12 @@ async function guard(): Promise<boolean> {
 function refresh() {
   revalidatePath('/admin/delivery');
   revalidatePath('/admin');
+  /*
+    The zones reach every storefront page (the storefront layout reads them for the country
+    selector) and the delivery, FAQ and checkout pages. Those are kept for a week, so a change to
+    the zones or rates refreshes the whole storefront at once.
+  */
+  revalidatePath('/', 'layout');
 }
 
 /* ---------------------------------------------------------------- parsing */

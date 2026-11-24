@@ -25,7 +25,7 @@ import { CollectionBreadcrumb, SectionTitle } from '@/components/shop/collection
 
 type Params = { params: { country: string } };
 
-export const revalidate = 3600;
+export const revalidate = 604800;
 export const dynamicParams = false;
 
 export function generateStaticParams() {

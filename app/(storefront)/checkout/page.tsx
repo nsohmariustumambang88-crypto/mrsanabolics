@@ -27,8 +27,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/* The methods are configuration, not catalogue: re-read every minute like everything else. */
-export const revalidate = 60;
+/*
+  Kept a week, like the storefront. Saving the Payments screen revalidates /checkout
+  (settings-actions.ts), so a change to the methods still shows at once.
+*/
+export const revalidate = 604800;
 
 export default async function CheckoutPage() {
   /*

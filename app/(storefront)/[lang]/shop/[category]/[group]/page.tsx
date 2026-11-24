@@ -46,7 +46,7 @@ import {
 
 type Params = { params: { lang: string; category: string; group: string } };
 
-export const revalidate = 3600;
+export const revalidate = 604800;
 
 export function generateStaticParams() {
   return TRANSLATED_GROUPS.map((key) => {

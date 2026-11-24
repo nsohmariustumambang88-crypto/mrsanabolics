@@ -111,12 +111,12 @@ export async function saveSettings(form: FormData): Promise<ActionResult> {
   if (rejected.length) return fail(`These could not be saved: ${rejected.join(', ')}.`);
 
   /*
-    The storefront reads settings in the layout and on these routes. Settings' own memo is
-    dropped inside writeSettings, so this is only about Next's render cache.
+    The storefront reads settings in its layout, so every storefront page shows them. Those pages
+    are kept for a week (see the storefront layout), so a save refreshes the whole storefront at
+    once: each page rebuilds on its next visit. Settings' own memo is dropped inside
+    writeSettings, so this is only about Next's render cache.
   */
-  revalidatePath('/');
-  revalidatePath('/shop');
-  revalidatePath('/contact');
+  revalidatePath('/', 'layout');
   revalidatePath('/admin/settings');
   revalidatePath('/admin/email');
 
@@ -128,6 +128,8 @@ export async function saveSettings(form: FormData): Promise<ActionResult> {
 function refreshPayments() {
   revalidatePath('/admin/payments');
   revalidatePath('/checkout');
+  /* The FAQ's payment answer is computed from the same methods (lib/catalogue/buying-facts.ts). */
+  revalidatePath('/faq');
 }
 
 /**

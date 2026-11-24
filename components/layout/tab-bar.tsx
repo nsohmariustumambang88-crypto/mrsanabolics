@@ -112,6 +112,8 @@ export function TabBar() {
           <Link
             key={key}
             href={href}
+            /* /account renders per request; prefetching it was a server call on every page view. */
+            prefetch={key === 'account' ? false : undefined}
             aria-current={active ? 'page' : undefined}
             onClick={key === 'account' ? openAccountOverview : undefined}
             className={item(active)}

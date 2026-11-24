@@ -12,7 +12,7 @@ import { getSettingsSafe } from '@/lib/settings';
   he decides, neither is changed here and the questions do not repeat the period.
 */
 
-export const revalidate = 3600;
+export const revalidate = 604800;
 
 const PATH = '/legal/returns';
 const TITLE = 'Returns and Refund Policy: How to Return an Order';

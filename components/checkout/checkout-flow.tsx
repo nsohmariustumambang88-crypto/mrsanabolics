@@ -182,23 +182,9 @@ export function CheckoutFlow({
   }, [selectedCountry]);
 
   /*
-    Note that this browser reached the checkout with these items (lib/basket), once per visit to
-    the page. It is what tells a basket reminder "they were one step away". Fire and forget.
+    The checkout used to tell /api/basket it had been reached, for basket reminders. That stopped
+    on 24 November 2026 with the cart copy (see components/providers/store-provider.tsx).
   */
-  const checkoutNoted = React.useRef(false);
-  React.useEffect(() => {
-    if (checkoutNoted.current || cart.length === 0) return;
-    checkoutNoted.current = true;
-    fetch('/api/basket', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        items: cart.map((i) => ({ productId: i.productId, quantity: i.quantity })),
-        checkout: true,
-      }),
-      keepalive: true,
-    }).catch(() => {});
-  }, [cart]);
 
   /* Re-select the delivery option they chose, by name, whenever the options are (re)quoted. */
   const { options: rateOptions, selectedId: selectedRateId, select: selectRate } = delivery;
@@ -478,6 +464,7 @@ export function CheckoutFlow({
           </Link>
           <Link
             href="/account?tab=orders"
+            prefetch={false}
             className="rounded-full border border-rule-strong px-6 py-3 text-sm font-medium transition-colors hover:border-pigment-indigo"
           >
             Your orders

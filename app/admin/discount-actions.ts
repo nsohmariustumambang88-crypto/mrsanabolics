@@ -4,7 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { Prisma, type DiscountStatus, type DiscountType } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
-import { normaliseCode } from '@/lib/discounts';
+import { normaliseCode, promotedCode } from '@/lib/discounts';
+import { getSettingsSafe } from '@/lib/settings';
 
 /*
   Discount mutations.
@@ -40,6 +41,26 @@ async function admin(): Promise<boolean> {
 function refresh(id?: string) {
   revalidatePath('/admin/discounts');
   if (id) revalidatePath(`/admin/discounts/${id}`);
+}
+
+/*
+  The storefront advertises one code, the `hero_promo_code` setting: the popup in the storefront
+  layout, the home page and the checkout. Those pages are kept for a week (see the storefront
+  layout), so a change to THAT code refreshes the whole storefront at once. A change to any other
+  code touches no storefront page. Expiry needs nothing here: the popup hides an expired code in
+  the visitor's browser.
+*/
+async function refreshIfAdvertised(codes: (string | null | undefined)[]) {
+  const settings = await getSettingsSafe();
+  const advertised = normaliseCode(promotedCode(settings.hero_promo_code));
+  if (advertised && codes.some((c) => c && normaliseCode(c) === advertised)) {
+    revalidatePath('/', 'layout');
+  }
+}
+
+async function codesOf(ids: string[]): Promise<string[]> {
+  const rows = await prisma.discount.findMany({ where: { id: { in: ids } }, select: { code: true } });
+  return rows.map((r) => r.code);
 }
 
 /* ------------------------------------------------------------------ parsing */
@@ -254,6 +275,7 @@ export async function createDiscount(form: FormData): Promise<CreateDiscountResu
     });
 
     refresh(created.id);
+    await refreshIfAdvertised([parsed.code]);
     return { ok: true, id: created.id };
   } catch (error) {
     return { ok: false, error: writeError(error, parsed.code) };
@@ -267,6 +289,9 @@ export async function updateDiscount(id: string, form: FormData): Promise<Action
 
   const parsed = parse(form);
   if ('error' in parsed) return fail(parsed.error);
+
+  /* The code as it was, in case this edit renames the advertised one. */
+  const before = await codesOf([id]);
 
   try {
     await prisma.discount.update({
@@ -295,6 +320,7 @@ export async function updateDiscount(id: string, form: FormData): Promise<Action
   }
 
   refresh(id);
+  await refreshIfAdvertised([...before, parsed.code]);
   return { ok: true };
 }
 
@@ -310,6 +336,7 @@ export async function updateDiscount(id: string, form: FormData): Promise<Action
 export async function deleteDiscount(id: string): Promise<ActionResult> {
   if (!(await admin())) return fail(EXPIRED_SESSION);
 
+  const before = await codesOf([id]);
   try {
     await prisma.discount.delete({ where: { id } });
   } catch (error) {
@@ -317,6 +344,7 @@ export async function deleteDiscount(id: string): Promise<ActionResult> {
   }
 
   refresh();
+  await refreshIfAdvertised(before);
   return { ok: true };
 }
 
@@ -331,7 +359,7 @@ export async function setDiscountStatus(
 
   const existing = await prisma.discount.findUnique({
     where: { id },
-    select: { endsAt: true },
+    select: { endsAt: true, code: true },
   });
   if (!existing) return fail('That discount no longer exists.');
 
@@ -355,6 +383,7 @@ export async function setDiscountStatus(
   }
 
   refresh(id);
+  await refreshIfAdvertised([existing.code]);
   return { ok: true };
 }
 
@@ -370,9 +399,12 @@ export async function bulkDiscountAction(
   if (ids.length === 0) return fail('Select at least one code.');
 
   try {
+    /* Read before the change, so a delete still knows which codes it removed. */
+    const codes = await codesOf(ids);
     if (action === 'delete') {
       const result = await prisma.discount.deleteMany({ where: { id: { in: ids } } });
       refresh();
+      await refreshIfAdvertised(codes);
       return { ok: true, message: `Deleted ${result.count}.` };
     }
 
@@ -382,6 +414,7 @@ export async function bulkDiscountAction(
         data: { status: 'PAUSED' },
       });
       refresh();
+      await refreshIfAdvertised(codes);
       return { ok: true, message: `Paused ${result.count}.` };
     }
 
@@ -400,6 +433,7 @@ export async function bulkDiscountAction(
         data: { status: 'ACTIVE' },
       });
       refresh();
+      await refreshIfAdvertised(codes);
 
       const skipped = ids.length - result.count;
       return {

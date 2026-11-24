@@ -37,7 +37,7 @@ import { SITE } from '@/lib/site';
 
 type Params = { params: { lang: string } };
 
-export const revalidate = 3600;
+export const revalidate = 604800;
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   if (!isIntlLocale(params.lang)) return {};

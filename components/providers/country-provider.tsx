@@ -14,8 +14,9 @@ import type { ApproxCurrency } from '@/lib/countries';
     1. the `mra_country` cookie, which a choice in the selector writes (a cookie rather than
        localStorage so a server component can read it when one needs to);
     2. localStorage, in case the cookie was cleared or refused;
-    3. the CDN's geo header, asked for once per tab through /api/geo — a preselection only, not
-       written to the cookie, because the visitor did not choose it.
+    3. the browser's time zone (Europe/London → GB), read without any request — a
+       preselection only, not written to the cookie, because the visitor did not choose it.
+       Until 24 November 2026 this asked /api/geo for the CDN's geo header instead.
   None of these ever redirects. Static pages render without a country and fill it in after
   hydration, which is why every consumer renders nothing until `country` is set.
 
@@ -64,6 +65,40 @@ function safeGet(storage: () => Storage, key: string): string | null {
   }
 }
 
+/*
+  The browser's IANA time zone, as a two-letter country, for the countries the selector names.
+  Every other zone answers null rather than a guess. Canada is listed zone by zone because it
+  shares the `America/` prefix with the United States; any other `America/` zone that is a US
+  one is matched by the list below.
+*/
+const ZONE_COUNTRY: Record<string, string> = {
+  'Europe/London': 'GB',
+  'Europe/Belfast': 'GB',
+  'Europe/Madrid': 'ES',
+  'Atlantic/Canary': 'ES',
+  'Africa/Ceuta': 'ES',
+  'Europe/Paris': 'FR',
+  'Europe/Berlin': 'DE',
+  'Europe/Busingen': 'DE',
+  'Europe/Rome': 'IT',
+};
+const CANADA = /^America\/(Toronto|Montreal|Vancouver|Edmonton|Winnipeg|Regina|Swift_Current|Halifax|Glace_Bay|Moncton|Goose_Bay|St_Johns|Whitehorse|Dawson|Dawson_Creek|Fort_Nelson|Creston|Yellowknife|Inuvik|Cambridge_Bay|Rankin_Inlet|Resolute|Iqaluit|Atikokan|Nipigon|Thunder_Bay|Rainy_River|Blanc-Sablon|Pangnirtung)$/;
+const UNITED_STATES = /^(America\/(New_York|Chicago|Denver|Los_Angeles|Phoenix|Anchorage|Juneau|Sitka|Metlakatla|Yakutat|Nome|Adak|Boise|Detroit|Menominee|Indiana\/.+|Kentucky\/.+|North_Dakota\/.+)|Pacific\/Honolulu|US\/.+)$/;
+
+function countryFromTimeZone(): string | null {
+  let zone = '';
+  try {
+    zone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? '';
+  } catch {
+    return null;
+  }
+  if (ZONE_COUNTRY[zone]) return ZONE_COUNTRY[zone];
+  if (zone.startsWith('Australia/')) return 'AU';
+  if (CANADA.test(zone)) return 'CA';
+  if (UNITED_STATES.test(zone)) return 'US';
+  return null;
+}
+
 function safeSet(storage: () => Storage, key: string, value: string) {
   try {
     storage().setItem(key, value);
@@ -98,22 +133,17 @@ export function CountryProvider({
       return;
     }
 
-    let cancelled = false;
-    fetch('/api/geo', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((body: { country?: string | null } | null) => {
-        const guess = countryFromGeo(body?.country);
-        if (cancelled || !guess) return;
-        safeSet(() => window.sessionStorage, GEO_KEY, guess);
-        setCountryState(guess);
-        setInferred(true);
-      })
-      .catch(() => {
-        /* No geo answer: the selector simply shows no country until one is chosen. */
-      });
-    return () => {
-      cancelled = true;
-    };
+    /*
+      A preselection from the browser's own time zone, with no request. This used to ask
+      /api/geo once per tab, one server call per new visitor; since 24 November 2026 only
+      payments and the visit count call the server on their own, to stay inside Vercel's free
+      allowance. A time zone it does not know leaves the selector empty until one is chosen.
+    */
+    const guess = countryFromGeo(countryFromTimeZone());
+    if (!guess) return;
+    safeSet(() => window.sessionStorage, GEO_KEY, guess);
+    setCountryState(guess);
+    setInferred(true);
   }, []);
 
   const setCountry = React.useCallback((code: CountryCode) => {

@@ -28,18 +28,6 @@ const StoreContext = React.createContext<StoreState | null>(null);
 
 const CART_KEY = 'mranabolics-cart';
 const WISHLIST_KEY = 'mranabolics-wishlist';
-/* The cart last copied to the server this session, so a reload does not send it again. */
-const SYNCED_KEY = 'mranabolics-cart-synced';
-const SYNC_DELAY_MS = 1500;
-
-/** What the server needs to know about a cart: ids and quantities, in a stable order. */
-function cartSignature(cart: CartItem[]): string {
-  return JSON.stringify(
-    cart
-      .map((i) => ({ productId: i.productId, quantity: i.quantity }))
-      .sort((a, b) => a.productId.localeCompare(b.productId))
-  );
-}
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = React.useState<CartItem[]>([]);
@@ -67,37 +55,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [wishlist, hydrated]);
 
   /*
-    Copy the cart to the server (lib/basket) a moment after it changes, so a subscriber who
-    leaves can be reminded and the basket restored on another device. Ids and quantities only —
-    the server prices them. Skipped while unchanged since the last copy this session, and never
-    allowed to affect the cart: a failed save is simply not retried until the next change.
+    The cart is NOT copied to the server any more (24 November 2026, the owner's decision): only
+    payments and the visit count may call the server on their own, to keep the site inside
+    Vercel's free allowance. It used to post to /api/basket 1.5s after every change, for basket
+    reminders, which were never switched on. /api/basket and lib/basket stay, unused; restoring a
+    basket from an old reminder link still works.
   */
-  React.useEffect(() => {
-    if (!hydrated) return;
-    const signature = cartSignature(cart);
-    let last: string | null = null;
-    try {
-      last = sessionStorage.getItem(SYNCED_KEY);
-    } catch {}
-    /* A first visit with an empty cart has nothing to save or clear. */
-    if (signature === last || (last === null && cart.length === 0)) return;
-
-    const timer = window.setTimeout(() => {
-      fetch('/api/basket', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ items: JSON.parse(signature) }),
-        keepalive: true,
-      })
-        .then(() => {
-          try {
-            sessionStorage.setItem(SYNCED_KEY, signature);
-          } catch {}
-        })
-        .catch(() => {});
-    }, SYNC_DELAY_MS);
-    return () => window.clearTimeout(timer);
-  }, [cart, hydrated]);
 
   const addToCart = React.useCallback((product: ProductSummary, quantity = 1) => {
     setCart((prev) => {

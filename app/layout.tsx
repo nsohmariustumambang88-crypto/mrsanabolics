@@ -107,12 +107,12 @@ const directionContract = `
 /*
   Revalidate rather than freeze.
 
-  The catalogue is read from the database at build time and regenerated at most once an hour, so
-  an edit reaches the site without a redeploy while pages still serve as static HTML. Admin edits
-  refresh their own pages immediately through revalidatePath.
+  The catalogue is read from the database at build time and regenerated at most once a week, so
+  pages serve as static HTML and cost Vercel's ISR allowance little (see the storefront layout).
+  Admin edits refresh the pages they affect immediately through revalidatePath.
   For per-request freshness instead, swap this for `export const dynamic = 'force-dynamic'`.
 */
-export const revalidate = 3600;
+export const revalidate = 604800;
 
 /*
   The document shell, and nothing else.

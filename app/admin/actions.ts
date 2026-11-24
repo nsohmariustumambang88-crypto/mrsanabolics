@@ -4,6 +4,9 @@ import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { invalidateCatalogue } from '@/lib/db/catalogue';
+import { categoryPath, collectionPathFor } from '@/lib/catalogue/paths';
+import { hasTranslation } from '@/lib/i18n/routes';
+import { INTL_LOCALES, withLocale } from '@/lib/i18n/locales';
 
 /*
   Admin mutations.
@@ -12,14 +15,40 @@ import { invalidateCatalogue } from '@/lib/db/catalogue';
   generated URL — being unreachable from the UI is not access control, and middleware does not
   cover it. The check has to be inside the action itself.
 
-  After a write, two caches must be dropped or the site keeps serving the old value for up to
-  a minute: the in-process memo in lib/db/catalogue.ts, and Next's rendered route cache.
-  `refresh()` does both.
+  After a write, two caches must be dropped: the in-process memo in lib/db/catalogue.ts, and
+  Next's rendered route cache. `refresh()` does both. Since 24 November 2026 storefront pages are
+  kept for a WEEK (see the storefront layout), so a page left out here keeps the old price or
+  stock for that long. A product edit must therefore name every page that shows the product,
+  through `pagesShowing()`: its own page, its category and compound pages, its maker's page,
+  and the translated copies of any of those.
 */
 
 async function refresh(...paths: string[]) {
   invalidateCatalogue();
-  for (const path of ['/', '/shop', ...paths]) revalidatePath(path);
+  for (const path of new Set(['/', '/shop', ...paths])) {
+    revalidatePath(path);
+    if (hasTranslation(path)) for (const locale of INTL_LOCALES) revalidatePath(withLocale(locale, path));
+  }
+}
+
+/** Every storefront page that shows one of these products. Read BEFORE a delete. */
+async function pagesShowing(productIds: string[]): Promise<string[]> {
+  if (productIds.length === 0) return [];
+  const rows = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+    select: {
+      slug: true,
+      subcategoryName: true,
+      category: { select: { slug: true } },
+      brand: { select: { slug: true } },
+    },
+  });
+  return rows.flatMap((p) => [
+    `/product/${p.slug}`,
+    categoryPath(p.category.slug),
+    collectionPathFor({ categorySlug: p.category.slug, subcategoryName: p.subcategoryName }),
+    `/brands/${p.brand.slug}`,
+  ]);
 }
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -129,12 +158,7 @@ export async function updateProduct(
     return fail(error instanceof Error ? error.message : 'Could not save.');
   }
 
-  const product = await prisma.product.findUnique({
-    where: { id: productId },
-    select: { slug: true },
-  });
-
-  await refresh(`/product/${product?.slug ?? ''}`, '/admin/products');
+  await refresh(...(await pagesShowing([productId])), '/admin/products');
   return { ok: true };
 }
 
@@ -151,13 +175,13 @@ export async function setProductImage(
   const trimmed = publicId.trim();
   if (!trimmed) return fail('No image reference given.');
 
-  const product = await prisma.product.update({
+  await prisma.product.update({
     where: { id: productId },
     data: { images: [trimmed] },
-    select: { slug: true },
+    select: { id: true },
   });
 
-  await refresh(`/product/${product.slug}`, '/admin/products');
+  await refresh(...(await pagesShowing([productId])), '/admin/products');
   return { ok: true };
 }
 
@@ -172,12 +196,13 @@ export async function updateCategory(id: string, form: FormData): Promise<Action
   const description = requiredText(form, 'description');
   if (!name || !description) return fail('Name and description are required.');
 
-  await prisma.category.update({
+  const category = await prisma.category.update({
     where: { id },
     data: { name, description, productCount: intOr(form, 'productCount', 0) },
+    select: { slug: true },
   });
 
-  await refresh('/categories', '/admin/categories');
+  await refresh('/categories', categoryPath(category.slug), '/admin/categories');
   return { ok: true };
 }
 
@@ -338,7 +363,7 @@ export async function createProduct(
       select: { id: true, slug: true },
     });
 
-    await refresh('/categories', '/brands', '/admin/products');
+    await refresh('/categories', '/brands', ...(await pagesShowing([created.id])), '/admin/products');
     return { ok: true, id: created.id, slug: created.slug };
   } catch (error) {
     return fail(error instanceof Error ? error.message : 'Could not create the product.');
@@ -360,11 +385,9 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
   }
 
   try {
-    const product = await prisma.product.delete({
-      where: { id: productId },
-      select: { slug: true },
-    });
-    await refresh(`/product/${product.slug}`, '/admin/products');
+    const pages = await pagesShowing([productId]);
+    await prisma.product.delete({ where: { id: productId }, select: { id: true } });
+    await refresh(...pages, '/admin/products');
     return { ok: true };
   } catch (error) {
     return fail(error instanceof Error ? error.message : 'Could not delete.');
@@ -392,6 +415,14 @@ export async function bulkUpdateProducts(
   }
 
   if (ids.length === 0) return fail('Nothing selected.');
+
+  /* Read before the change, so a bulk delete still knows which pages showed the products. */
+  let pages: string[];
+  try {
+    pages = await pagesShowing(ids);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : 'Bulk update failed.');
+  }
 
   try {
     switch (action) {
@@ -425,7 +456,7 @@ export async function bulkUpdateProducts(
     return fail(error instanceof Error ? error.message : 'Bulk update failed.');
   }
 
-  await refresh('/admin/products');
+  await refresh(...pages, '/admin/products');
   return { ok: true };
 }
 
@@ -439,13 +470,13 @@ export async function setStock(productId: string, stockCount: number): Promise<A
 
   const units = Number.isFinite(stockCount) && stockCount >= 0 ? Math.floor(stockCount) : 0;
 
-  const product = await prisma.product.update({
+  await prisma.product.update({
     where: { id: productId },
     data: { stockCount: units, inStock: units > 0 },
-    select: { slug: true },
+    select: { id: true },
   });
 
-  await refresh(`/product/${product.slug}`, '/admin/products');
+  await refresh(...(await pagesShowing([productId])), '/admin/products');
   return { ok: true };
 }
 

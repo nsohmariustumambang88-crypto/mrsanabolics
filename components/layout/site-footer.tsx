@@ -7,7 +7,7 @@ import { MarbleBath } from '@/components/ebru/marble-bath';
 import { BullMark } from '@/components/brand/bull-mark';
 import { useCategories, useBrands } from '@/components/providers/catalogue-provider';
 import { useLocale } from '@/components/i18n/use-locale';
-import { categoryPigment } from '@/lib/site';
+import { categoryPigment, rendersPerRequest } from '@/lib/site';
 import { categoryPath } from '@/lib/catalogue/paths';
 import { categoryName, dictionary, type Dictionary } from '@/lib/i18n/dictionaries';
 import { localizedHref } from '@/lib/i18n/routes';
@@ -59,6 +59,7 @@ function LinkColumn({
           <li key={l.href + l.label}>
             <Link
               href={l.href}
+              prefetch={rendersPerRequest(l.href) ? false : undefined}
               className="text-sm text-ink-soft transition-colors hover:text-pigment-indigo"
             >
               {l.label}

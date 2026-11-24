@@ -234,7 +234,12 @@ export function settingDefaults(): Record<string, string> {
   return out;
 }
 
-const TTL_MS = 60_000;
+/*
+  10 seconds on the live site (a minute while building). Storefront pages are kept for a week
+  and a save drops this memo only in the instance that ran it, so a page rebuilt elsewhere from
+  an older copy would keep the old setting for the week. See lib/db/catalogue.ts.
+*/
+const TTL_MS = process.env.NEXT_PHASE === 'phase-production-build' ? 60_000 : 10_000;
 let cache: { at: number; value: Promise<Record<string, string>> } | null = null;
 
 /** Drop the memo. Call after writing a setting. */

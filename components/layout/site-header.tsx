@@ -23,7 +23,7 @@ import { CountrySelector } from '@/components/layout/country-selector';
 import { BullMark } from '@/components/brand/bull-mark';
 import { useCategories, useBrands } from '@/components/providers/catalogue-provider';
 import { useLocale } from '@/components/i18n/use-locale';
-import { categoryPigment } from '@/lib/site';
+import { categoryPigment, rendersPerRequest } from '@/lib/site';
 import { categoryPath } from '@/lib/catalogue/paths';
 import { categoryDescription, categoryName, dictionary, type Dictionary } from '@/lib/i18n/dictionaries';
 import { localizedHref } from '@/lib/i18n/routes';
@@ -282,6 +282,7 @@ export function SiteHeader() {
 
           <Link
             href="/account"
+            prefetch={false}
             className="hidden h-9 w-9 items-center justify-center rounded-sm text-ink-soft transition-colors hover:bg-paper-sunk hover:text-ink sm:flex"
             aria-label={t.nav.account}
           >
@@ -355,6 +356,7 @@ export function SiteHeader() {
                       <Link
                         key={link.href}
                         href={link.href}
+                        prefetch={rendersPerRequest(link.href) ? false : undefined}
                         onClick={() => setMobileOpen(false)}
                         className="border-b border-rule py-3.5 font-display text-sm font-medium last:border-0"
                       >
