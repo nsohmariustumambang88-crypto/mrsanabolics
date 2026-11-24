@@ -258,26 +258,37 @@ export async function sendCustomerNotification(to: string, subject: string, mess
 /*
   Welcome email 1, sent at sign-up (lib/email/welcome-sequence.ts). Marketing mail: the
   subscriber's own unsubscribe link, one-click List-Unsubscribe, and the postal address once one
-  is entered (Admin → Email). It is not blocked while the address is empty, because it went out
-  before the automation existed and stopping it would also stop emails 2 and 3; the owner was told
-  on 22 November 2026 that it lacks the address until he enters a real one.
+  is entered (Admin → Email). It is not part of the daily jobs and has no switch: the owner chose
+  on 24 November 2026 to keep it running. The same function builds the owner's test of it
+  (lib/automation/template-tests.ts), so the test is exactly what a new subscriber gets.
 */
-export async function sendWelcomeEmail1(to: string, unsubscribeToken: string) {
-  const resend = getResend();
-  const token = encodeURIComponent(unsubscribeToken);
-  const unsubscribeLink = `${SITE.url}/unsubscribe?token=${token}`;
-  const postal = ((await getSettingsSafe()).postal_address ?? '').trim();
-  const html = renderWelcomeEmail1(unsubscribeLink);
+export const WELCOME_1_SUBJECT = 'What you need to know before buying—a safety guide';
 
-  return resend.emails.send({
+export function welcomeEmail1Message(
+  unsubscribeToken: string | null,
+  postalAddress: string
+): { subject: string; html: string; headers: Record<string, string> } {
+  const token = unsubscribeToken ? encodeURIComponent(unsubscribeToken) : null;
+  const html = renderWelcomeEmail1(token ? `${SITE.url}/unsubscribe?token=${token}` : `${SITE.url}/unsubscribe`);
+  const postal = postalAddress.trim();
+  return {
+    subject: WELCOME_1_SUBJECT,
+    html: postal ? withPostalAddress(html, postal) : html,
+    headers: token
+      ? { 'List-Unsubscribe': `<${SITE.url}/api/unsubscribe?token=${token}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' }
+      : {},
+  };
+}
+
+export async function sendWelcomeEmail1(to: string, unsubscribeToken: string) {
+  const postal = (await getSettingsSafe()).postal_address ?? '';
+  const message = welcomeEmail1Message(unsubscribeToken, postal);
+  return getResend().emails.send({
     from: FROM_EMAIL,
     replyTo: SUPPORT_EMAIL,
     to,
-    subject: 'What you need to know before buying—a safety guide',
-    html: postal ? withPostalAddress(html, postal) : html,
-    headers: {
-      'List-Unsubscribe': `<${SITE.url}/api/unsubscribe?token=${token}>`,
-      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-    },
+    subject: message.subject,
+    html: message.html,
+    headers: message.headers,
   });
 }

@@ -205,6 +205,8 @@ export async function sendPlain(req: {
   subject: string;
   html: string;
   runId?: string | null;
+  /** A marketing template test carries the same List-Unsubscribe headers a real send would. */
+  headers?: Record<string, string>;
 }): Promise<SendOutcome> {
   try {
     await prisma.emailLog.create({
@@ -214,7 +216,13 @@ export async function sendPlain(req: {
     if (isUniqueViolation(error)) return { status: 'skipped', reason: 'already sent' };
     throw error;
   }
-  const result = await postToResend({ to: req.to, subject: req.subject, html: req.html, headers: {}, idempotencyKey: idempotencyKeyFor(req.key, req.subject, req.html) });
+  const result = await postToResend({
+    to: req.to,
+    subject: req.subject,
+    html: req.html,
+    headers: req.headers ?? {},
+    idempotencyKey: idempotencyKeyFor(req.key, req.subject, req.html),
+  });
   await prisma.emailLog.update({
     where: { key: req.key },
     data: result.ok
