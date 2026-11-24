@@ -22,7 +22,7 @@ Windows note: several source files use CRLF. A `String.replace` with an LF-only 
 
 A Next.js 13.5 App Router storefront, originally scaffolded from the Bolt `nextjs-shadcn` template, live at **https://www.mrsanabolics.com** (the bare domain 308s to `www`). **Deployed to Vercel** from `main` of the GitHub repo `nsohmariustumambang88-crypto/mrsanabolics` — git remote **`newrepo`**. The remote `origin` (`marztuma/mranabolics`) is retired: never push to it. The new repo is **public**, so nothing secret may ever be committed: `.env*`, `backups/` and `black-friday-email.html` stay out of every commit.
 
-**Working rules from the owner.** Run `npm run typecheck` (and `lint`) before committing. Commit and push only when the owner says "push". Customer or subscriber email goes to `mariustuma88@gmail.com` as a test first and is sent for real only on the owner's approval. API keys are not rotated unless the owner asks.
+**Working rules from the owner.** Run `npm run typecheck` (and `lint`) before committing. Commit and push only when the owner says "push". Customer or subscriber email goes to `mariustuma88@gmail.com` as a test first and is sent for real only on the owner's approval. API keys are not rotated unless the owner asks. **Automated jobs** (see "Automation") follow the owner's approval rule of 20 November 2026: he approves each email template once, after a test to his Gmail; from then on it sends by itself, he gets a copy of the first email of each run plus the weekly report, and any change to a template needs his OK again (its version changes and the job stops until he re-approves). One-off campaigns keep the old rule: test first, sent only on his approval.
 
 **Current state (October 2026)**, which some older sections below predate:
 
@@ -928,11 +928,103 @@ every alert showed `last_event: suppressed` and nobody received one. support@ is
 mailbox (MX `mx1`/`mx2.hostinger.com`); a test from `orders@` showed `delivered`. If alerts stop
 arriving, check `GET https://api.resend.com/emails/<id>` for `suppressed` or `bounced` first.
 
-**Known bug, not yet fixed:** `lib/email/campaigns.ts` builds every recipient's unsubscribe link
-from `subscribers[0].unsubscribeToken`. Each subscriber must get their own token.
+**Fixed 21–22 November 2026** (it was the known bug here): `lib/email/campaigns.ts` gave every
+recipient the first subscriber's unsubscribe token, sent all at once, and marked the campaign SENT
+whatever Resend said. It now sends through the automation's sender (each subscriber's own token,
+one-click unsubscribe, consent re-checked, postal address required, about two a second) and is
+marked SENT only when nobody is left. The old `sendNewsletterCampaign`, `sendWelcomeEmail2/3` and
+`sendBasketReminderEmail` in resend.ts were deleted. Nothing in the admin calls `sendCampaign`; a
+one-off campaign is still sent by script, test first, on the owner's word. Two more fixed the same
+week: the welcome sequence no longer counts an email Resend refused as sent, and the
+`email_footer` default no longer says "mranabolics.example.com".
 
 Several sections below ("Customer accounts", the CRM's enquiries, "Campaigns and Messages") still
 say this build sends no email; that was true when they were written.
+
+## Automation
+
+Built 20–22 November 2026. Five daily jobs send email on their own, each **off until the owner
+switches it on** at **Admin → Automation** (`/admin/automation`). Code: [lib/automation/](lib/automation/)
+(`jobs.ts` the list, `run.ts` the runner, `sender.ts` the one door every automated email goes
+through, `templates.ts`, `template-tests.ts`, `jobs/*`) and [lib/basket/reminders.ts](lib/basket/reminders.ts);
+routes `app/api/cron/<job>`; tables `automation_runs` (run log), `automation_locks`, `email_logs`
+(all with RLS on).
+
+| Job | Cron (UTC) | Sends | Kind | Switch |
+|---|---|---|---|---|
+| Waiting enquiries alert | `0 13 * * *` | enquiries New/Open over 24h, to the report addresses; nothing if none | internal | `auto_enquiry_alert_enabled` |
+| Unpaid order reminders | `0 14 * * *` | up to 2 per order (≈24h, ≈72h) | transactional | `auto_unpaid_enabled` |
+| Basket reminders | `0 15 * * *` | see "Saved baskets and basket reminders" | marketing | `basket_reminders_enabled` |
+| Welcome emails 2 and 3 | `0 16 * * *` | email 2 at 3 days, 3 at 7 days after sign-up | marketing | `auto_welcome_enabled` |
+| Weekly report | `0 13 * * 6` | Saturday: people, orders, Friday 5%, enquiries, failed searches, emails by type, jobs that failed or did not run | internal | `auto_weekly_report_enabled` |
+
+**Vercel stays on Hobby** (owner's decision): at most 100 cron jobs per project, each at most once
+a day, fired **anywhere inside the scheduled hour**. Five fit; `tests/automation.test.ts` fails if
+`vercel.json` and `JOBS` disagree or a schedule runs more than daily. Crons run only on the
+production deployment and are listed in Vercel under **Schedules → Cron Jobs**.
+
+**Switches and approval.** Every switch defaults off; **Pause all automation** stops every job at
+once. Switches, approvals and the pause are written only by the screen's own buttons: the generic
+settings form refuses them (`SCREEN_ONLY_SETTING_KEYS`). Switching a customer job on records
+`templateVersion(job)` (a hash of the template rendered with fixed sample data) as the approved
+version; a template change changes the version and the job stops ("its template changed since it
+was approved") until the owner gets a new test ("Send me a test" puts the version in the subject)
+and switches it on again. The tests pin the versions he was sent on 21 November 2026 (all
+delivered): `u-3955e22e`, `b-eecf9518`, `w-5a5947f4`; update the pin only with a new test. The
+first customer email of each real run is copied to `automation_copy_to` (the owner, unsubscribe
+link disabled); script test runs make no copy. Alerts and the report go to `automation_report_to`:
+support@ and the owner's Gmail, which Resend showed delivered (not suppressed) on 21 November.
+
+**Marketing is blocked without a postal address** (CAN-SPAM), in three places: the switch refuses,
+`blockedReason` stops a run, and the sender refuses each email. The address is entered at
+**Admin → Email → Postal address** (the same setting as Settings → General). **There is none yet.**
+The one the owner first gave ("4517 Washington Ave. Manchester, Kentucky 39495") is not real: ZIP
+39495 is in Mississippi and the line is a stock design-template address. Never enter it. Until a
+real one is given, only the unpaid reminders and the two internal emails can be switched on.
+Welcome email 1, sent at sign-up since before the automation, is not blocked; it now carries
+one-click unsubscribe and picks up the address once one is entered.
+
+**What every run does** (`run.ts`): stop if paused, switched off, unapproved or (marketing) no
+address, each recorded as a SKIPPED run; take the lock `<job>:<New York date>` so a duplicate
+cron delivery or a second click does nothing; at most `automation_max_per_run` (40) emails, about
+two a second (Resend allows ten), no new work after 40 seconds, Resend timeout 10 seconds, so a
+run ends inside the 60-second function limit; record counts and a note. A FAILED run releases its
+lock. A run left RUNNING by a process that died is closed as FAILED ("Did not finish") after
+15 minutes (`STALE_AFTER_MS`), its lock freed; the weekly report matches runs by their New York
+day (not start time, because Hobby fires anywhere in the hour) and counts a dead run as failed.
+
+**The sender** (`sender.ts`) guarantees, per email: marketing needs a SUBSCRIBED row at the moment
+of sending, that subscriber's own unsubscribe token in the link, `List-Unsubscribe` (HTTPS only; a
+`mailto` would send opt-outs to a mailbox nobody processes) with `List-Unsubscribe-Post: One-Click`
+(the POST lands on `/api/unsubscribe`; a GET there shows the confirmation page), the postal address,
+and at most one marketing email per person per 24 hours across all jobs. Every email has a unique
+`email_logs.key` per person per message (`unpaid:<orderId>:1`, `welcome:<subscriberId>:2`,
+`basket:<basketId>`), written BEFORE the send, so nothing goes twice. A refusal is FAILED, never
+sent; only a later run retries it, three attempts at most. Resend's `Idempotency-Key` is the key
+plus a hash of the content (a reused key with a different payload gets 409).
+
+**Unpaid order reminders** are transactional (no consent, no address, no sales content, no
+offer): storefront orders only (payment method in the notes, and no staff member on the "created"
+event), still NEW, between 24 hours and 7 days old (older ones are left alone, the owner's
+decision), not a Cash App order with a screenshot, not a crypto order with a detected payment, an
+expired payment or no address; the order is read again just before sending. They cancel nothing.
+**Welcome 2 and 3**: emails that fell due before 21 November 2026 (the backlog, 21 people) are
+skipped, as is anyone more than 7 days overdue; the step moves on only after Resend accepted.
+**Excluded from every marketing email** (`excludedFromMarketing`): Cialis, Levitra, Actos, T3,
+Aromasin and their generic names, and the sexual-health category.
+
+**Checks**, from the repo root, `node --env-file=.env --conditions=react-server --import tsx
+scripts/automation-check.ts <mode>`: `dry [job]` (counts only), `switches`, `cron` (503 without
+`CRON_SECRET`, 401 with a wrong one), `twice` (the no-double-send proof, Resend stubbed in-process,
+cleans up after itself; run it in the background, killing it mid-way would leave its test order),
+`tests <job>` (template tests to the owner only), `status <id>`. On 23–24 November 2026 all passed;
+the dry runs counted 5 unpaid reminders, 6 basket reminders (all held for the postal address),
+0 welcome emails (21 backlog skipped), 4 waiting enquiries and the report to 2 addresses.
+
+**Not switched on yet, and not by an agent:** `CRON_SECRET` is not on Vercel, every job is off,
+there is no postal address. The owner's switch-on order: push, `CRON_SECRET` (Production) and a
+redeploy, then the unpaid reminders, the enquiry alert and the weekly report; the marketing jobs
+only after a real postal address.
 
 ## Marketing consent
 
@@ -1112,16 +1204,17 @@ they left, and restore that exact basket on another device from a link.
   its last change and within 14 days, only when the browser is linked to a Contact whose
   Subscriber is SUBSCRIBED, never if they ordered since, at most once a week per person, in-stock
   lines only. WELCOME15 is offered only to someone with no paid order who has not redeemed it.
-  The basket is claimed (`remindedAt`) before sending and released if the send fails. A
+  The basket is claimed (`remindedAt`) before sending and released only for a passing reason
+  (refused by Resend, the run's cap, already had a marketing email today). A
   `MESSAGE_RECORDED` line goes on the contact's timeline. Template:
-  [lib/email/basket-reminder.ts](lib/email/basket-reminder.ts), sent with a List-Unsubscribe header.
+  [lib/email/basket-reminder.ts](lib/email/basket-reminder.ts), sent through the automation's
+  sender with one-click List-Unsubscribe and the postal address.
 - **Restoring.** The email's button opens `/basket/restore?token=…` (32 random bytes; only the
   SHA-256 is stored, valid 30 days). It replaces the cart with the saved lines at today's prices,
   in stock only, and opens the checkout. `/basket` is disallowed in robots.ts.
-- **Switching it on.** Vercel Cron (`vercel.json`) calls `/api/cron/basket-reminders` daily at
-  15:00 UTC. The route **fails closed**: it refuses everything unless the `CRON_SECRET`
-  environment variable is set in Vercel, and it sends nothing while the `basket_reminders_enabled`
-  setting (Admin → Email) is off — which is the default.
+- **Switching it on.** It is one of the daily jobs in "Automation": switched on at Admin →
+  Automation (setting `basket_reminders_enabled`, off by default), which also needs the
+  owner's template approval, `CRON_SECRET` on Vercel and a real postal address.
 
 Holding a basket is not consent: a visitor who never subscribed is never mailed, whatever is in
 their basket.
