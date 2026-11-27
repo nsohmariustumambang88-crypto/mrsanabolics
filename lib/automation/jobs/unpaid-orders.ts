@@ -23,8 +23,10 @@ import type { JobContext } from '@/lib/automation/run';
   - not a Cash App order with a screenshot uploaded (staff are checking it);
   - not a crypto order NOWPayments has already seen a payment for, nor one whose payment has
     expired, nor one that never got a payment address;
-  - at most two per order: the first from 24 hours, the second from 72 hours (and at least a day
-    after the first). Each is one EmailLog key, so neither can go twice.
+  - at most two per order. The first from 24 hours; an order that never had it gets it whatever its
+    age within the 7 days (the owner's decision B, 27 November 2026: never open with "the last
+    reminder"). The second only after a first was actually sent, from 72 hours and at least a day
+    after the first. Each is one EmailLog key, so neither can go twice.
   - and, just before each send, the order is read again: if it was paid, cancelled or given a
     screenshot while the run was going, nothing is sent.
 
@@ -106,13 +108,20 @@ export async function unpaidOrdersJob(ctx: JobContext): Promise<void> {
     }
 
     const age = now - order.createdAt.getTime();
-    const step: 1 | 2 = age >= SECOND_AT ? 2 : 1;
-    if (step === 2) {
-      const first = await prisma.emailLog.findUnique({ where: { key: `unpaid:${order.id}:1` }, select: { sentAt: true, status: true } });
-      if (first?.status === 'SENT' && first.sentAt && now - first.sentAt.getTime() < 24 * HOUR) {
-        ctx.count('skipped: first reminder less than a day ago');
-        continue;
-      }
+    /* Decision B: the second ("last") reminder only after a first one was really sent. */
+    const first = await prisma.emailLog.findUnique({ where: { key: `unpaid:${order.id}:1` }, select: { sentAt: true, status: true } });
+    const firstSentAt = first?.status === 'SENT' && first.sentAt ? first.sentAt.getTime() : null;
+    let step: 1 | 2;
+    if (firstSentAt === null) {
+      step = 1;
+    } else if (age < SECOND_AT) {
+      ctx.count('skipped: first reminder sent, second not due yet');
+      continue;
+    } else if (now - firstSentAt < 24 * HOUR) {
+      ctx.count('skipped: first reminder less than a day ago');
+      continue;
+    } else {
+      step = 2;
     }
 
     let payUrl: string | null = null;

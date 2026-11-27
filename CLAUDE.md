@@ -1022,6 +1022,9 @@ offer): storefront orders only (payment method in the notes, and no staff member
 event), still NEW, between 24 hours and 7 days old (older ones are left alone, the owner's
 decision), not a Cash App order with a screenshot, not a crypto order with a detected payment, an
 expired payment or no address; the order is read again just before sending. They cancel nothing.
+An order that never had the first reminder gets the first one, whatever its age within the 7 days;
+the second ("the last reminder") goes only after a first was really sent, from 72 hours and at
+least a day after it (the owner's decision B, 27 November 2026).
 **Welcome 2 and 3**: emails that fell due before 21 November 2026 (the backlog, 21 people) are
 skipped, as is anyone more than 7 days overdue; the step moves on only after Resend accepted.
 **Excluded from every marketing email** (`excludedFromMarketing`): Cialis, Levitra, Actos, T3,

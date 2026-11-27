@@ -50,7 +50,7 @@ export const JOBS: JobDef[] = [
   {
     id: 'unpaid-orders',
     label: 'Unpaid order reminders',
-    does: 'Reminds a customer whose storefront order is still unpaid: once about a day after the order, once about three days after. Never after payment, a cancellation, a Cash App screenshot or an expired crypto payment, and never for orders over 7 days old.',
+    does: 'Reminds a customer whose storefront order is still unpaid: once about a day after the order, once about three days after. An order that never had the first reminder gets the first one, never "the last reminder". Never after payment, a cancellation, a Cash App screenshot or an expired crypto payment, and never for orders over 7 days old.',
     timer: 'daily',
     timerOnlyIfOn: false,
     when: `${DAILY_WHEN}, first of the day's jobs`,
