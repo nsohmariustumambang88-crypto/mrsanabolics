@@ -182,9 +182,25 @@ export function CheckoutFlow({
   }, [selectedCountry]);
 
   /*
-    The checkout used to tell /api/basket it had been reached, for basket reminders. That stopped
-    on 24 November 2026 with the cart copy (see components/providers/store-provider.tsx).
+    Save this basket once per visit to the checkout (lib/basket), for basket reminders: the
+    owner's decision of 27 November 2026. It is the only time the cart reaches the server; the
+    per-change copy in the store provider stays off (24 November 2026, Vercel's free allowance).
+    Saving is not consent: a reminder goes only to a SUBSCRIBED person. Fire and forget.
   */
+  const checkoutNoted = React.useRef(false);
+  React.useEffect(() => {
+    if (checkoutNoted.current || cart.length === 0) return;
+    checkoutNoted.current = true;
+    fetch('/api/basket', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        items: cart.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+        checkout: true,
+      }),
+      keepalive: true,
+    }).catch(() => {});
+  }, [cart]);
 
   /* Re-select the delivery option they chose, by name, whenever the options are (re)quoted. */
   const { options: rateOptions, selectedId: selectedRateId, select: selectRate } = delivery;

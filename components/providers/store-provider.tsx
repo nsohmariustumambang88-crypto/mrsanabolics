@@ -58,8 +58,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     The cart is NOT copied to the server any more (24 November 2026, the owner's decision): only
     payments and the visit count may call the server on their own, to keep the site inside
     Vercel's free allowance. It used to post to /api/basket 1.5s after every change, for basket
-    reminders, which were never switched on. /api/basket and lib/basket stay, unused; restoring a
-    basket from an old reminder link still works.
+    reminders. Since 27 November 2026 the checkout saves the basket once per visit instead
+    (components/checkout/checkout-flow.tsx); nothing here posts it. Restoring a basket from a
+    reminder link still works.
   */
 
   const addToCart = React.useCallback((product: ProductSummary, quantity = 1) => {

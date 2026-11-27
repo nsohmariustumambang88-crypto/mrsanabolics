@@ -4,8 +4,9 @@ import { saveBasket } from '@/lib/basket';
 /*
   The browser's copy of its cart, saved against its analytics visitor (`mra_vid`).
 
-  Called by the store provider a moment after the cart changes, and by the checkout when it
-  opens (`checkout: true`). The body is product ids and quantities only; lib/basket prices them.
+  Called only by the checkout, once per visit (`checkout: true`), since 27 November 2026; the
+  store provider's copy on every cart change stays off (24 November 2026, Vercel's free
+  allowance). The body is product ids and quantities only; lib/basket prices them.
   Like /api/track it always answers 204 and never throws: saving a basket must never be the
   reason the cart or the checkout misbehaves. Rate limited per visitor, in memory.
 */
