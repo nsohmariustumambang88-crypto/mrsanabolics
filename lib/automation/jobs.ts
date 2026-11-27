@@ -154,7 +154,9 @@ export function periodOf(at: Date): string {
 /*
   Never in a marketing email (the owner's decision, 20 November 2026): prescription-only
   medicines he does not want promoted by email, and the whole sexual-health category. Matched on
-  the product name and its active ingredient, so a listing named either way is caught.
+  the product name AND its compound group (Product.subcategoryName): a brand name alone can hide
+  the medicine, as "Aromalyn 25" (group "Aromasin (Exemestane)") and "Cytobull 50" (group
+  "Liothyronine (T3)") did until 27 November 2026. Callers must pass the group.
 */
 const EXCLUDED_NAMES = [
   /cialis/i,
@@ -171,9 +173,9 @@ const EXCLUDED_NAMES = [
 ];
 export const EXCLUDED_CATEGORY_SLUGS = ['sexual-health'];
 
-export function excludedFromMarketing(product: { name: string; categorySlug?: string | null }): boolean {
+export function excludedFromMarketing(product: { name: string; categorySlug?: string | null; group?: string | null }): boolean {
   if (product.categorySlug && EXCLUDED_CATEGORY_SLUGS.includes(product.categorySlug)) return true;
-  return EXCLUDED_NAMES.some((re) => re.test(product.name));
+  return EXCLUDED_NAMES.some((re) => re.test(product.name) || (product.group ? re.test(product.group) : false));
 }
 
 /*

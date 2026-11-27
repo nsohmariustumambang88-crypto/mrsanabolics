@@ -80,11 +80,13 @@ export async function sendTemplateTests(jobId: string): Promise<TemplateTestResu
 
   const sample = await prisma.product.findMany({
     where: { inStock: true, price: { gte: 40, lte: 120 }, NOT: { images: { isEmpty: true } } },
-    select: { name: true, slug: true, brand: { select: { name: true } }, images: true, price: true, category: { select: { slug: true } } },
+    select: { name: true, slug: true, subcategoryName: true, brand: { select: { name: true } }, images: true, price: true, category: { select: { slug: true } } },
     orderBy: { name: 'asc' },
     take: 40,
   });
-  const products = sample.filter((p) => !excludedFromMarketing({ name: p.name, categorySlug: p.category?.slug })).slice(0, 2);
+  const products = sample
+    .filter((p) => !excludedFromMarketing({ name: p.name, categorySlug: p.category?.slug, group: p.subcategoryName }))
+    .slice(0, 2);
 
   const emails: { subject: string; html: string; headers?: Record<string, string>; code?: string }[] = [];
   if (def.id === 'unpaid-orders') {

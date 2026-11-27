@@ -98,10 +98,12 @@ export async function basketRemindersJob(ctx: JobContext): Promise<void> {
     const priced = await priceLines(saved.map((l) => ({ productId: l.productId, quantity: l.quantity })));
     const rows = await prisma.product.findMany({
       where: { id: { in: priced.map((l) => l.productId) }, inStock: true },
-      select: { id: true, name: true, category: { select: { slug: true } } },
+      select: { id: true, name: true, subcategoryName: true, category: { select: { slug: true } } },
     });
     const allowed = new Set(
-      rows.filter((p) => !excludedFromMarketing({ name: p.name, categorySlug: p.category?.slug })).map((p) => p.id)
+      rows
+        .filter((p) => !excludedFromMarketing({ name: p.name, categorySlug: p.category?.slug, group: p.subcategoryName }))
+        .map((p) => p.id)
     );
     const lines = priced.filter((l) => allowed.has(l.productId));
     if (lines.length === 0) {

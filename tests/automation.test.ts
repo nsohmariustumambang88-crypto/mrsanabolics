@@ -72,6 +72,10 @@ test('excluded from marketing: the five medicines and the sexual-health category
   for (const name of ['Testosterone Enanthate 250', 'Andropen 450', 'Mass-Stack 500', 'Test E 300']) {
     assert.equal(excludedFromMarketing({ name, categorySlug: 'injectables' }), false, name);
   }
+  /* Brand names that hide the medicine are caught by their compound group (found 27 Nov 2026). */
+  assert.equal(excludedFromMarketing({ name: 'Aromalyn 25', categorySlug: 'post-cycle', group: 'Aromasin (Exemestane)' }), true);
+  assert.equal(excludedFromMarketing({ name: 'Cytobull 50', categorySlug: 'fat-burners', group: 'Liothyronine (T3)' }), true);
+  assert.equal(excludedFromMarketing({ name: 'Ena Test 250', categorySlug: 'injectables', group: 'Testosterone Enanthate' }), false);
 });
 
 test('template versions are stable and differ per job', () => {
