@@ -69,13 +69,17 @@ changed, and what to keep:
   only its own instance, so a page rebuilt elsewhere from an older copy would keep the old
   value for the week.
 - **Stopped, by the owner's rule:**
-  - the cart copy to `/api/basket` (store-provider and checkout);
-  - the basket-reminder cron (`vercel.json` deleted);
+  - the cart copy to `/api/basket` on every cart change (store-provider);
   - search logging (`useSearchLog` is a no-op);
   - `/api/geo`: the country preselection now comes from the browser's time zone, in
     country-provider.tsx.
 
   The routes stay, unused.
+- **The owner's one exception (27 November 2026): ONE daily timer for the reminders, and the
+  basket saved at checkout only.** `vercel.json` holds exactly one cron, `/api/cron/daily` at
+  14:00 UTC (15:00–16:00 Lagos time), which runs the reminder jobs in one call (see
+  "Automation"); a test fails if a second cron is added. The checkout saves the basket once per
+  visit (`checkout: true`), never on every cart change. Everything else above stays stopped.
 - **Still on:** payments (the payment page polls status every 10 s, not 5, while visible), the
   visit counter `/api/track`, Vercel Web Analytics, and the Friday offer check.
 - **No prefetch** where it costs server work: product cards, and links to `/account` and `/auth`
@@ -943,25 +947,34 @@ say this build sends no email; that was true when they were written.
 
 ## Automation
 
-Built 20–22 November 2026. Five daily jobs send email on their own, each **off until the owner
+Built 20–27 November 2026. Five jobs send email on their own, each **off until the owner
 switches it on** at **Admin → Automation** (`/admin/automation`). Code: [lib/automation/](lib/automation/)
-(`jobs.ts` the list, `run.ts` the runner, `sender.ts` the one door every automated email goes
-through, `templates.ts`, `template-tests.ts`, `jobs/*`) and [lib/basket/reminders.ts](lib/basket/reminders.ts);
-routes `app/api/cron/<job>`; tables `automation_runs` (run log), `automation_locks`, `email_logs`
-(all with RLS on).
+(`jobs.ts` the list, `run.ts` the runner, `registry.ts` the daily run, `sender.ts` the one door
+every automated email goes through, `templates.ts`, `template-tests.ts`, `jobs/*`) and
+[lib/basket/reminders.ts](lib/basket/reminders.ts); one route, `app/api/cron/daily`; tables
+`automation_runs` (run log), `automation_locks`, `email_logs` (all with RLS on).
 
-| Job | Cron (UTC) | Sends | Kind | Switch |
-|---|---|---|---|---|
-| Waiting enquiries alert | `0 13 * * *` | enquiries New/Open over 24h, to the report addresses; nothing if none | internal | `auto_enquiry_alert_enabled` |
-| Unpaid order reminders | `0 14 * * *` | up to 2 per order (≈24h, ≈72h) | transactional | `auto_unpaid_enabled` |
-| Basket reminders | `0 15 * * *` | see "Saved baskets and basket reminders" | marketing | `basket_reminders_enabled` |
-| Welcome emails 2 and 3 | `0 16 * * *` | email 2 at 3 days, 3 at 7 days after sign-up | marketing | `auto_welcome_enabled` |
-| Weekly report | `0 13 * * 6` | Saturday: people, orders, Friday 5%, enquiries, failed searches, emails by type, jobs that failed or did not run | internal | `auto_weekly_report_enabled` |
+**ONE daily timer** (the owner's decision, 27 November 2026, his one exception to "only payments
+and the visit count call the server on their own"): `vercel.json` holds a single cron,
+`/api/cron/daily` at `0 14 * * *`, which on Hobby fires anywhere between **15:00 and 16:00 Lagos
+time** (14:00–15:00 UTC; Lagos has no daylight saving). It runs the jobs in `DAILY_ORDER` one
+after another inside one function call (50 seconds of work, `maxDuration` 60): each job gets what
+is left minus 12 seconds held back for its last send, a job with under 5 seconds left is logged
+"no time left" and tomorrow's run picks its work up, and one job failing never stops the next.
+`tests/automation.test.ts` fails if `vercel.json` gains a second cron. The cron is listed in
+Vercel under **Schedules → Cron Jobs** (project `mranabolics`, team `og-2066` since the move of
+24 November 2026) and runs only on the production deployment.
 
-**Vercel stays on Hobby** (owner's decision): at most 100 cron jobs per project, each at most once
-a day, fired **anywhere inside the scheduled hour**. Five fit; `tests/automation.test.ts` fails if
-`vercel.json` and `JOBS` disagree or a schedule runs more than daily. Crons run only on the
-production deployment and are listed in Vercel under **Schedules → Cron Jobs**.
+| Order | Job | On the timer | Sends | Kind | Switch |
+|---|---|---|---|---|---|
+| 1 | Unpaid order reminders | every day | up to 2 per order (≈24h, ≈72h) | transactional | `auto_unpaid_enabled` |
+| 2 | Basket reminders | every day | see "Saved baskets and basket reminders" | marketing | `basket_reminders_enabled` |
+| 3 | Waiting enquiries alert | every day, only while on | enquiries New/Open over 24h, to the report addresses; nothing if none | internal | `auto_enquiry_alert_enabled` |
+| 4 | Weekly report | Saturdays (New York), only while on | people, orders, Friday 5%, enquiries, failed searches (none since search logging stopped), emails by type, jobs that failed or did not run | internal | `auto_weekly_report_enabled` |
+| — | Welcome emails 2 and 3 | **not on the timer**: Run now only | email 2 at 3 days, 3 at 7 days after sign-up | marketing | `auto_welcome_enabled` |
+
+A switched-off reminder job (1, 2) is still started and logged as SKIPPED ("switched off"), so the
+run log shows the timer fired; 3 and 4 are not started at all while off.
 
 **Switches and approval.** Every switch defaults off; **Pause all automation** stops every job at
 once. Switches, approvals and the pause are written only by the screen's own buttons: the generic
@@ -977,18 +990,19 @@ support@ and the owner's Gmail, which Resend showed delivered (not suppressed) o
 
 **Marketing is blocked without a postal address** (CAN-SPAM), in three places: the switch refuses,
 `blockedReason` stops a run, and the sender refuses each email. The address is entered at
-**Admin → Email → Postal address** (the same setting as Settings → General). **There is none yet.**
-The one the owner first gave ("4517 Washington Ave. Manchester, Kentucky 39495") is not real: ZIP
-39495 is in Mississippi and the line is a stock design-template address. Never enter it. Until a
-real one is given, only the unpaid reminders and the two internal emails can be switched on.
-Welcome email 1, sent at sign-up since before the automation, is not blocked; it now carries
-one-click unsubscribe and picks up the address once one is entered.
+**Admin → Email → Postal address** (the same setting as Settings → General). **It is set**: entered
+in the admin on 24 November 2026 and kept exactly as typed there, at the owner's decision of
+27 November. The one he first gave ("4517 Washington Ave. Manchester, Kentucky 39495") is not
+real: ZIP 39495 is in Mississippi and the line is a stock design-template address. Never enter
+it. Welcome email 1, sent at sign-up, is not on any switch (the owner chose on 24 November to keep
+it running); it carries one-click unsubscribe and the postal address.
 
 **What every run does** (`run.ts`): stop if paused, switched off, unapproved or (marketing) no
 address, each recorded as a SKIPPED run; take the lock `<job>:<New York date>` so a duplicate
 cron delivery or a second click does nothing; at most `automation_max_per_run` (40) emails, about
-two a second (Resend allows ten), no new work after 40 seconds, Resend timeout 10 seconds, so a
-run ends inside the 60-second function limit; record counts and a note. A FAILED run releases its
+two a second (Resend allows ten), no new work after its time budget (40 seconds at most, less when
+the daily run has less left), Resend timeout 10 seconds, so the run ends inside the 60-second
+function limit; record counts and a note. A FAILED run releases its
 lock. A run left RUNNING by a process that died is closed as FAILED ("Did not finish") after
 15 minutes (`STALE_AFTER_MS`), its lock freed; the weekly report matches runs by their New York
 day (not start time, because Hobby fires anywhere in the hour) and counts a dead run as failed.
@@ -1014,17 +1028,17 @@ skipped, as is anyone more than 7 days overdue; the step moves on only after Res
 Aromasin and their generic names, and the sexual-health category.
 
 **Checks**, from the repo root, `node --env-file=.env --conditions=react-server --import tsx
-scripts/automation-check.ts <mode>`: `dry [job]` (counts only), `switches`, `cron` (503 without
-`CRON_SECRET`, 401 with a wrong one), `twice` (the no-double-send proof, Resend stubbed in-process,
-cleans up after itself; run it in the background, killing it mid-way would leave its test order),
-`tests <job>` (template tests to the owner only), `status <id>`. On 23–24 November 2026 all passed;
-the dry runs counted 5 unpaid reminders, 6 basket reminders (all held for the postal address),
-0 welcome emails (21 backlog skipped), 4 waiting enquiries and the report to 2 addresses.
+scripts/automation-check.ts <mode>`: `dry [job]` (counts only), `switches`, `cron` (the daily
+route: 503 without `CRON_SECRET`, 401 with a wrong one), `daily` (the whole daily run, dry),
+`twice` (the no-double-send proof, Resend stubbed in-process, cleans up after itself; run it in
+the background, killing it mid-way would leave its test order), `tests <job>` (template tests to
+the owner only), `status <id>`. From this machine a database round trip takes seconds, so `daily`
+runs out of time locally (105 seconds on 27 November, the unpaid job stopping at its budget and
+basket reminders logged "no time left"); on Vercel, next to the database, it does not.
 
-**Not switched on yet, and not by an agent:** `CRON_SECRET` is not on Vercel, every job is off,
-there is no postal address. The owner's switch-on order: push, `CRON_SECRET` (Production) and a
-redeploy, then the unpaid reminders, the enquiry alert and the weekly report; the marketing jobs
-only after a real postal address.
+**Switching on is the owner's, not an agent's.** Every job stays off until he presses its button.
+The template tests he approves from are the ones in his Gmail: `u-3955e22e` (unpaid), `b-eecf9518`
+(basket), `w-5a5947f4` (welcome 2 and 3); welcome 1 (`s-dde2c3e3`) has no switch.
 
 ## Marketing consent
 
@@ -1184,20 +1198,23 @@ The failed searches that drove this (October 2026): "Sistaplex like 5 minutes", 
 
 ## Saved baskets and basket reminders
 
-**Stopped on 24 November 2026** (see "Staying inside Vercel's free allowance"): the browser no
-longer copies the cart to `/api/basket` and the cron is gone with `vercel.json`. What follows
-describes the system as built; the code and the table remain.
+**Since 27 November 2026 the basket is saved at checkout only** (the owner's decision; see
+"Staying inside Vercel's free allowance"). From 24 to 27 November nothing was saved; before that
+the cart was copied on every change. Reminders run on the one daily timer (see "Automation").
+Measured that day: of the 19 saved baskets that reached the checkout and were not ordered, 5 came
+from a browser already linked to a SUBSCRIBED contact, so no extra visitor linking was added.
 
 The cart still lives in localStorage; from October 2026 the server also kept a **copy** per
 browser, in the `Basket` table ([lib/basket/](lib/basket/)), keyed on the analytics visitor
 (`mra_vid`). It exists for two things the browser cannot do: remind a subscriber about a basket
 they left, and restore that exact basket on another device from a link.
 
-- **Saving.** `StoreProvider` posts the cart's ids and quantities to `/api/basket` 1.5s after it
-  changes (skipped when unchanged this session; a first visit with an empty cart sends nothing).
-  The checkout posts once more with `checkout: true`, stamping `checkoutAt`. The server prices
-  every line from the database — the browser's names and prices are never stored. An emptied
-  cart deletes the row. No `mra_vid` cookie, nothing saved. Always 204, never throws.
+- **Saving.** Only the checkout posts the cart's ids and quantities to `/api/basket`, once per
+  visit, with `checkout: true`, stamping `checkoutAt` (components/checkout/checkout-flow.tsx).
+  `StoreProvider` no longer posts on every change. The server prices every line from the
+  database — the browser's names and prices are never stored. No `mra_vid` cookie, nothing
+  saved. Always 204, never throws. A browser is linked to a person (`Visitor.contactId`) only when
+  they subscribe or send an enquiry, including ticking the box at checkout.
 - **Ordering.** `submitCheckout` calls `markBasketOrdered` with the visitor cookie, so a basket
   that became an order is never reminded about.
 - **Reminding.** [lib/basket/reminders.ts](lib/basket/reminders.ts): once per basket, 24h after
@@ -1212,9 +1229,9 @@ they left, and restore that exact basket on another device from a link.
 - **Restoring.** The email's button opens `/basket/restore?token=…` (32 random bytes; only the
   SHA-256 is stored, valid 30 days). It replaces the cart with the saved lines at today's prices,
   in stock only, and opens the checkout. `/basket` is disallowed in robots.ts.
-- **Switching it on.** It is one of the daily jobs in "Automation": switched on at Admin →
-  Automation (setting `basket_reminders_enabled`, off by default), which also needs the
-  owner's template approval, `CRON_SECRET` on Vercel and a real postal address.
+- **Switching it on.** It is the second job of the daily timer in "Automation": switched on at
+  Admin → Automation (setting `basket_reminders_enabled`, off by default), which also needs the
+  owner's template approval, `CRON_SECRET` on Vercel and the postal address (set).
 
 Holding a basket is not consent: a visitor who never subscribed is never mailed, whatever is in
 their basket.
