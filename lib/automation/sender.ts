@@ -147,7 +147,7 @@ export async function sendAutomatedEmail(req: SendRequest): Promise<SendOutcome>
     const oneClick = `${SITE.url}/api/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`;
     html = html.split(UNSUBSCRIBE_PLACEHOLDER).join(pageUrl);
     html = withPostalAddress(html, req.postalAddress);
-    headers['List-Unsubscribe'] = `<${oneClick}>, <mailto:${REPLY_TO}?subject=unsubscribe>`;
+    headers['List-Unsubscribe'] = `<${oneClick}>`;
     headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
   }
 
