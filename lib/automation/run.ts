@@ -105,6 +105,13 @@ export function blockedReason(def: JobDef, settings: Record<string, string>): st
   return null;
 }
 
+/** A run that did not start (the daily timer ran out of time for it): logged, so the report sees it. */
+export async function recordSkippedRun(jobId: JobId, trigger: 'cron' | 'admin' | 'test', dryRun: boolean, note: string): Promise<RunReport> {
+  const def = jobDef(jobId);
+  if (!def) throw new Error(`Unknown job ${jobId}`);
+  return recordSkipped(def, periodOf(new Date()), trigger, dryRun, note);
+}
+
 async function recordSkipped(def: JobDef, period: string, trigger: string, dryRun: boolean, note: string): Promise<RunReport> {
   const run = await prisma.automationRun.create({
     data: { job: def.id, period, trigger, dryRun, status: 'SKIPPED', note, finishedAt: new Date(), counts: {} },
@@ -145,7 +152,11 @@ export async function runJob(
     now?: Date;
     ignoreSwitches?: boolean;
     only?: { orderIds?: string[] };
-    /** Scripts only: a longer budget for a slow connection. Functions keep 45 seconds. */
+    /**
+     * The time this run may spend sending. The daily timer passes what is left of its one
+     * function's time (never more than the 40-second default); a script's test run may pass a
+     * longer budget for a slow connection.
+     */
     timeBudgetMs?: number;
   }
 ): Promise<RunReport> {
@@ -187,7 +198,12 @@ export async function runJob(
     counts[outcome] = (counts[outcome] ?? 0) + by;
   };
   const cap = Math.max(1, asNumber(settings.automation_max_per_run, 40));
-  const budget = opts.trigger === 'test' && opts.timeBudgetMs ? opts.timeBudgetMs : TIME_BUDGET_MS;
+  const budget =
+    opts.timeBudgetMs === undefined
+      ? TIME_BUDGET_MS
+      : opts.trigger === 'test'
+        ? opts.timeBudgetMs
+        : Math.max(0, Math.min(opts.timeBudgetMs, TIME_BUDGET_MS));
   const started = Date.now();
   let attempted = 0;
   let stoppedBy: string | null = null;

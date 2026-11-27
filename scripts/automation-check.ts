@@ -15,8 +15,10 @@
            no lock. Each dry run is one row in the run log, marked "test, dry run".
   switches Why each job would not send right now, from the live settings (switch, pause, approved
            template, postal address). Reads only.
-  cron     The cron routes fail closed: no CRON_SECRET answers 503, a wrong one 401. The secret is
-           set only inside this process, never on Vercel. Touches no data.
+  cron     The daily timer's route fails closed: no CRON_SECRET answers 503, a wrong one 401. The
+           secret is set only inside this process, never on Vercel. Touches no data.
+  daily    The daily timer's whole run as a DRY run: which jobs it would start, in order, and their
+           counts. Sends nothing, takes no lock; each job it starts is one "cron, dry run" row.
   twice    The no-double-send proof, with Resend STUBBED in this process so no email can leave
            (test email goes only to the owner). Makes a throwaway contact at an .invalid address
            and one unpaid order 26 hours old, runs the unpaid-orders job for that order only, then
@@ -30,7 +32,7 @@ import { prisma } from '../lib/prisma';
 import { getSettings, invalidateSettings } from '../lib/settings';
 import { JOBS, type JobId } from '../lib/automation/jobs';
 import { blockedReason } from '../lib/automation/run';
-import { handleCron, runJobNow } from '../lib/automation/registry';
+import { handleDailyCron, runDailyJobs, runJobNow } from '../lib/automation/registry';
 import { sendTemplateTests } from '../lib/automation/template-tests';
 import { resendStatus } from '../lib/automation/sender';
 
@@ -55,10 +57,7 @@ async function switches() {
 async function cron() {
   const saved = process.env.CRON_SECRET;
   const call = (auth?: string) =>
-    handleCron(
-      new NextRequest('https://www.mrsanabolics.com/api/cron/unpaid-orders', auth ? { headers: { authorization: auth } } : undefined),
-      'unpaid-orders'
-    );
+    handleDailyCron(new NextRequest('https://www.mrsanabolics.com/api/cron/daily', auth ? { headers: { authorization: auth } } : undefined));
   try {
     delete process.env.CRON_SECRET;
     const none = await call('Bearer anything');
@@ -69,12 +68,22 @@ async function cron() {
     console.log(`secret set, no header: ${missing.status} (want 401)`);
     console.log(`secret set, wrong header: ${wrong.status} (want 401)`);
     const pass = none.status === 503 && missing.status === 401 && wrong.status === 401;
-    console.log(pass ? 'PASS: the cron routes fail closed' : 'FAIL');
+    console.log(pass ? 'PASS: the daily timer route fails closed' : 'FAIL');
     if (!pass) process.exitCode = 1;
   } finally {
     if (saved === undefined) delete process.env.CRON_SECRET;
     else process.env.CRON_SECRET = saved;
   }
+}
+
+async function daily() {
+  const started = Date.now();
+  const steps = await runDailyJobs({ dryRun: true });
+  for (const s of steps) {
+    console.log(`\n${s.job} [${s.status}]${s.note ? ` ${s.note}` : ''}`);
+    for (const [k, v] of Object.entries(s.counts ?? {})) console.log(`  ${k}: ${v}`);
+  }
+  console.log(`\nwhole run: ${Math.round((Date.now() - started) / 1000)} s (the function allows 60)`);
 }
 
 /** Replace Resend with a stub for this process: every send "succeeds" and nothing leaves. */
@@ -169,10 +178,11 @@ async function status(ids: string[]) {
   if (mode === 'dry') await dry(args[0]);
   else if (mode === 'switches') await switches();
   else if (mode === 'cron') await cron();
+  else if (mode === 'daily') await daily();
   else if (mode === 'twice') await twice();
   else if (mode === 'tests') await tests(args[0] as JobId);
   else if (mode === 'status') await status(args);
-  else console.log('modes: dry [job] | switches | cron | twice | tests <job> | status <id>…');
+  else console.log('modes: dry [job] | switches | cron | daily | twice | tests <job> | status <id>…');
   await prisma.$disconnect();
 })().catch(async (error) => {
   console.error(error);

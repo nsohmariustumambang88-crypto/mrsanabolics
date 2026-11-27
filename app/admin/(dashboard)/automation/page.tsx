@@ -61,12 +61,18 @@ export default async function AutomationPage() {
     <>
       <WpPageHeader
         title="Automation"
-        subtitle="The daily jobs that send email on their own. Each one is off until you switch it on, and every run is logged below."
+        subtitle="The jobs that send email on their own. Each one is off until you switch it on, and every run is logged below."
       />
 
+      <WpStaticNotice tone="info">
+        One daily timer runs every day between 15:00 and 16:00 Lagos time (14:00–15:00 UTC): unpaid order reminders first,
+        then basket reminders, then the waiting-enquiries alert and, on Saturdays, the weekly report, those two only while
+        switched on. A job that is switched off is skipped. Welcome emails 2 and 3 are not on the timer: they go only when
+        you press Run now.
+      </WpStaticNotice>
       {!cronSecret && (
         <WpStaticNotice tone="warning">
-          CRON_SECRET is not set on this deployment, so Vercel cannot start any job yet. The buttons below still work.
+          CRON_SECRET is not set on this deployment, so the daily timer cannot start any job yet. The buttons below still work.
         </WpStaticNotice>
       )}
       {!postal && (

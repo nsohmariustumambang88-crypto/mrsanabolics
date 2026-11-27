@@ -8,10 +8,14 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
+  DAILY_CRON,
+  DAILY_ORDER,
+  DAILY_PATH,
   JOBS,
   SCREEN_ONLY_SETTING_KEYS,
   STALE_AFTER_MS,
   excludedFromMarketing,
+  isSaturdayInNewYork,
   isStaleRun,
   maskEmail,
   periodOf,
@@ -26,17 +30,26 @@ import {
   withPostalAddress,
 } from '../lib/automation/templates';
 
-test('five jobs, each a once-a-day cron (Hobby allows one run a day)', () => {
+test('five jobs; the daily timer runs unpaid reminders first, then basket reminders, then the optional two', () => {
   assert.equal(JOBS.length, 5);
-  for (const j of JOBS) {
-    const [min, hour, dom, mon] = j.cron.split(' ');
-    assert.match(min, /^\d+$/, j.id);
-    assert.match(hour, /^\d+$/, j.id);
-    assert.equal(dom, '*');
-    assert.equal(mon, '*');
-    assert.ok(j.path.startsWith('/api/cron/'));
-  }
   assert.equal(new Set(JOBS.map((j) => j.enabledKey)).size, 5);
+  assert.deepEqual(DAILY_ORDER, ['unpaid-orders', 'basket-reminders', 'enquiry-alert', 'weekly-report']);
+  for (const j of JOBS) {
+    /* On the timer exactly when listed in DAILY_ORDER. */
+    assert.equal(j.timer !== 'no', DAILY_ORDER.includes(j.id), j.id);
+  }
+  const by = (id: string) => JOBS.find((j) => j.id === id)!;
+  assert.equal(by('unpaid-orders').timerOnlyIfOn, false);
+  assert.equal(by('basket-reminders').timerOnlyIfOn, false);
+  assert.equal(by('enquiry-alert').timerOnlyIfOn, true);
+  assert.equal(by('weekly-report').timer, 'saturdays');
+  assert.equal(by('weekly-report').timerOnlyIfOn, true);
+});
+
+test('the weekly report day is Saturday in New York', () => {
+  assert.equal(isSaturdayInNewYork(new Date('2026-11-28T14:30:00Z')), true); // Sat 09:30 New York
+  assert.equal(isSaturdayInNewYork(new Date('2026-11-27T14:30:00Z')), false); // Fri
+  assert.equal(isSaturdayInNewYork(new Date('2026-11-29T03:00:00Z')), true); // still Sat 22:00 New York
 });
 
 test('customer-facing jobs need approval; marketing jobs are the subscriber ones', () => {
@@ -115,21 +128,20 @@ test('maskEmail', () => {
   assert.equal(maskEmail('customer@gmail.com'), 'c***@gmail.com');
 });
 
-test('vercel.json schedules exactly the five jobs, daily at most, within Hobby limits', () => {
+/*
+  The owner's rule (24 November 2026): only payments and the visit count call the server on their
+  own. His one exception (27 November 2026): ONE daily timer for the reminders. Adding a second
+  cron breaks his rule, so this test fails if anyone does.
+*/
+test('vercel.json has exactly one cron: the daily timer, once a day, at 15:00 Lagos time', () => {
   const config = JSON.parse(readFileSync(join(__dirname, '..', 'vercel.json'), 'utf8')) as {
     crons: { path: string; schedule: string }[];
   };
-  /* Hobby: up to 100 cron jobs per project, each at most once a day (vercel.com/docs, 2026). */
-  assert.ok(config.crons.length <= 100);
-  assert.deepEqual(
-    [...config.crons].map((c) => `${c.path} ${c.schedule}`).sort(),
-    JOBS.map((j) => `${j.path} ${j.cron}`).sort()
-  );
-  for (const c of config.crons) {
-    const [min, hour] = c.schedule.split(' ');
-    assert.match(min, /^\d+$/, `${c.path}: a fixed minute, or it runs more than once a day`);
-    assert.match(hour, /^\d+$/, `${c.path}: a fixed hour, or it runs more than once a day`);
-  }
+  assert.deepEqual(config.crons, [{ path: DAILY_PATH, schedule: DAILY_CRON }]);
+  const [min, hour, dom, mon, dow] = DAILY_CRON.split(' ');
+  assert.match(min, /^\d+$/);
+  assert.equal(hour, '14'); // 14:00 UTC = 15:00 in Lagos (WAT, UTC+1, no daylight saving)
+  assert.deepEqual([dom, mon, dow], ['*', '*', '*']);
 });
 
 test('switches, approvals and the master pause are written only by the Automation screen', () => {

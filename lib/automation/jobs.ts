@@ -1,9 +1,12 @@
 /*
   The automated jobs, declared once.
 
-  Each job is a daily Vercel cron (vercel.json; the Hobby plan allows one run a day per job, at
-  some minute inside the scheduled hour) and a row on /admin/automation. A plain module: the
-  admin page, the cron routes, the runner and the tests read the same list.
+  ONE daily timer (the owner's decision, 27 November 2026, inside his rule that only payments and
+  the visit count call the server on their own): a single Vercel cron, DAILY_CRON in vercel.json,
+  calls DAILY_PATH, which runs the jobs in DAILY_ORDER one after another inside one function's
+  time. Hobby fires it anywhere inside the scheduled hour. Every job is also a row on
+  /admin/automation with its own Run now button. A plain module: the admin page, the daily route,
+  the runner and the tests read the same list.
 
   Every switch defaults OFF. A customer-facing job also needs the owner's approval of its
   template (the owner's rule, 20 November 2026): he is sent a test, and switching the job on
@@ -18,8 +21,13 @@ export type JobDef = {
   label: string;
   /** One sentence for the owner. */
   does: string;
-  /** When Vercel runs it (UTC cron), and the same in words. */
-  cron: string;
+  /**
+   * Whether the daily timer runs it: every day, on Saturdays only, or never (Run now only).
+   * Optional jobs (`timerOnlyIfOn`) are not even started by the timer while switched off.
+   */
+  timer: 'daily' | 'saturdays' | 'no';
+  timerOnlyIfOn: boolean;
+  /** When it runs, in words for the owner (Lagos time first: that is where he is). */
   when: string;
   /** Who receives it. */
   audience: 'customers' | 'subscribers' | 'shop';
@@ -31,78 +39,89 @@ export type JobDef = {
   enabledKey: string;
   /** The setting that records the template version the owner approved. */
   approvedKey: string;
-  /** The cron route. */
-  path: string;
 };
+
+/** The one daily timer: 14:00–15:00 UTC, which is 15:00–16:00 in Lagos (WAT, no daylight saving). */
+export const DAILY_CRON = '0 14 * * *';
+export const DAILY_PATH = '/api/cron/daily';
+const DAILY_WHEN = 'With the daily timer, between 15:00 and 16:00 Lagos time (14:00–15:00 UTC)';
 
 export const JOBS: JobDef[] = [
   {
     id: 'unpaid-orders',
     label: 'Unpaid order reminders',
     does: 'Reminds a customer whose storefront order is still unpaid: once about a day after the order, once about three days after. Never after payment, a cancellation, a Cash App screenshot or an expired crypto payment, and never for orders over 7 days old.',
-    cron: '0 14 * * *',
-    when: 'Every day between 14:00 and 15:00 UTC (9–10 am New York)',
+    timer: 'daily',
+    timerOnlyIfOn: false,
+    when: `${DAILY_WHEN}, first of the day's jobs`,
     audience: 'customers',
     marketing: false,
     needsApproval: true,
     enabledKey: 'auto_unpaid_enabled',
     approvedKey: 'auto_unpaid_approved',
-    path: '/api/cron/unpaid-orders',
   },
   {
     id: 'basket-reminders',
     label: 'Basket reminders',
-    does: 'Emails a subscriber who left products in their basket for a day: their products and a Restore my basket button. Once per basket, at most weekly per person, never after an order.',
-    cron: '0 15 * * *',
-    when: 'Every day between 15:00 and 16:00 UTC (10–11 am New York)',
+    does: 'Emails a subscriber who reached the checkout and left without ordering, a day later: their products and a Restore my basket button. Once per basket, at most weekly per person, never after an order. Baskets are saved only when a shopper opens the checkout.',
+    timer: 'daily',
+    timerOnlyIfOn: false,
+    when: `${DAILY_WHEN}, after the unpaid order reminders`,
     audience: 'subscribers',
     marketing: true,
     needsApproval: true,
     /* The setting the first version of this job used; kept so its history carries on. */
     enabledKey: 'basket_reminders_enabled',
     approvedKey: 'auto_basket_approved',
-    path: '/api/cron/basket-reminders',
   },
   {
     id: 'welcome',
     label: 'Welcome emails 2 and 3',
     does: 'Sends a new subscriber the second welcome email 3 days after they sign up and the third after 7 days. Anyone more than 7 days overdue is skipped.',
-    cron: '0 16 * * *',
-    when: 'Every day between 16:00 and 17:00 UTC (11 am–noon New York)',
+    timer: 'no',
+    timerOnlyIfOn: true,
+    when: 'Not on the daily timer: only when you press Run now',
     audience: 'subscribers',
     marketing: true,
     needsApproval: true,
     enabledKey: 'auto_welcome_enabled',
     approvedKey: 'auto_welcome_approved',
-    path: '/api/cron/welcome',
   },
   {
     id: 'enquiry-alert',
     label: 'Waiting enquiries alert',
     does: 'Emails support@ a list of contact-form enquiries that have waited more than 24 hours for an answer. Nothing is sent when none are waiting.',
-    cron: '0 13 * * *',
-    when: 'Every day between 13:00 and 14:00 UTC (8–9 am New York)',
+    timer: 'daily',
+    timerOnlyIfOn: true,
+    when: `${DAILY_WHEN}, only while switched on`,
     audience: 'shop',
     marketing: false,
     needsApproval: false,
     enabledKey: 'auto_enquiry_alert_enabled',
     approvedKey: 'auto_enquiry_alert_approved',
-    path: '/api/cron/enquiry-alert',
   },
   {
     id: 'weekly-report',
     label: 'Weekly report',
-    does: 'Every Saturday morning: new customers and subscribers, paid and unpaid orders, what Friday 5% gave away, enquiries, failed searches, every automated email by type, and every job that failed or did not run.',
-    cron: '0 13 * * 6',
-    when: 'Saturdays between 13:00 and 14:00 UTC (8–9 am New York)',
+    does: 'Every Saturday: new customers and subscribers, paid and unpaid orders, what Friday 5% gave away, enquiries, failed searches, every automated email by type, and every job that failed or did not run.',
+    timer: 'saturdays',
+    timerOnlyIfOn: true,
+    when: 'With the daily timer on Saturdays only (15:00–16:00 Lagos time), only while switched on',
     audience: 'shop',
     marketing: false,
     needsApproval: false,
     enabledKey: 'auto_weekly_report_enabled',
     approvedKey: 'auto_weekly_report_approved',
-    path: '/api/cron/weekly-report',
   },
 ];
+
+/** The order the daily timer runs them in: the customer's own order first. */
+export const DAILY_ORDER: JobId[] = ['unpaid-orders', 'basket-reminders', 'enquiry-alert', 'weekly-report'];
+
+/** Saturday in New York, the day the weekly report goes. */
+export function isSaturdayInNewYork(at: Date): boolean {
+  return new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'America/New_York' }).format(at) === 'Sat';
+}
 
 /**
  * Settings that only the Automation screen's own buttons may write: the master pause, each job's
